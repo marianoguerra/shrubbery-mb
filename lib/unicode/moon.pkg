@@ -1,0 +1,11 @@
+formatter(ignore: [ "parity_test.mbt" ])
+
+import {
+  "marianoguerra/shrubbery/unicode/tables",
+  "kawaz/grapheme",
+}
+
+import {
+  "marianoguerra/shrubbery/unicode",
+  "moonbitlang/core/test",
+} for "test"

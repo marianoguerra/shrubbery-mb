@@ -1,0 +1,46 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/column"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn count_graphemes(String, lines? : Int, col? : Column) -> (Int, Column)
+
+pub let zero : Column
+
+// Errors
+
+// Types and methods
+pub enum Column {
+  Plain(Int)
+  Tabbed(Array[Int])
+} derive(Eq, @debug.Debug)
+pub fn Column::add_chars(Self, Int) -> Self
+pub fn Column::add_tab(Self) -> Self
+pub fn Column::cmp(Self, Self) -> ColumnOrder
+pub fn Column::eq(Self, Self) -> Bool
+pub fn Column::floor(Self) -> Self
+pub fn Column::ge(Self, Self) -> Bool
+pub fn Column::gt(Self, Self) -> Bool
+pub fn Column::half_up(Self) -> Self
+pub fn Column::le(Self, Self) -> Bool
+pub fn Column::lt(Self, Self) -> Bool
+pub fn Column::of_chars(Int) -> Self
+pub fn Column::plus(Self, Self) -> Self
+pub fn Column::sub(Self, Self) -> Int
+pub fn Column::to_display(Self) -> String
+
+pub(all) enum ColumnOrder {
+  Lt
+  Eq
+  Gt
+  Unordered
+  Incomparable
+} derive(Eq, @debug.Debug)
+pub fn ColumnOrder::name(Self) -> String
+
+// Type aliases
+
+// Traits

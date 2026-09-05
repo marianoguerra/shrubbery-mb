@@ -15,7 +15,7 @@ and covers all four.
 | directory | module | published |
 |---|---|---|
 | `error-report/` | `marianoguerra/error-report` | yes — **and it has no dependencies**; keep it that way |
-| `lib/` | `marianoguerra/shrubbery` | yes; `error-report` is its only module dependency |
+| `lib/` | `marianoguerra/shrubbery` | yes; only `error-report` and `kawaz/grapheme` |
 | `cli/` | `marianoguerra/shrubbery-cli` | yes; `moonbitlang/x` lives here |
 | `.` (root) | `marianoguerra/shrubbery-dev` | no: `test/`, `tools/` |
 
@@ -102,7 +102,10 @@ diff is the point: it shows exactly what changed.
   a comparison failure to default to `Eq`. There is also a `+0.5` convention: a
   `|` at column N takes part in comparisons as N.5.
 - **Column advance is per extended grapheme cluster** (UAX #29), not per code
-  point. Racket uses `string-grapheme-span`.
+  point. Racket uses `string-grapheme-span`. The segmenter is a dependency and
+  is gated by `lib/unicode/parity_test.mbt`, which compares against Racket's own
+  `string-grapheme-count`. That gate has already rejected one candidate package
+  for splitting Hangul L+V+T into three clusters and CRLF into two.
 - **Two things are called "column".** The port position Racket reports
   (`port-next-location`, in code points, what `raw-srcloc` carries and what the
   oracle compares) and the indentation column above. Conflating them is the

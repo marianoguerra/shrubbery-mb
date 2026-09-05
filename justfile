@@ -118,6 +118,38 @@ ci:
     tools/boundary-check.sh
 
 # ---------------------------------------------------------------------------
+# Regenerating committed artifacts (needs Racket; never in CI)
+# ---------------------------------------------------------------------------
+#
+# Each of these rewrites a committed file from the reference's own answers. The
+# resulting diff IS the review artifact: it shows exactly what upstream, or
+# Racket's Unicode version, changed. Never edit the outputs by hand.
+
+# Sweeps `char-alphabetic?` and friends over the whole code-point space and
+# expands the reference's own emoji table, then writes the boundary probes that
+# test the lookup rather than the data.
+#
+# Regenerate the Unicode tables and their parity test.
+[group('regen')]
+unicode-regen:
+    racket tools/gen-unicode-tables.rkt
+    racket tools/gen-unicode-tests.rkt
+
+# The 612 .rhm files in the reference tree contain no tabs, so nothing in the
+# corpus exercises the partial order. These probes are that coverage.
+#
+# Regenerate the column parity test.
+[group('regen')]
+column-regen:
+    racket tools/gen-column-tests.rkt
+
+# Every generated artifact, then check nothing moved.
+[group('regen')]
+regen-all: unicode-regen column-regen
+    moon fmt
+    git diff --stat
+
+# ---------------------------------------------------------------------------
 # The reference (needs Racket; never in CI)
 # ---------------------------------------------------------------------------
 

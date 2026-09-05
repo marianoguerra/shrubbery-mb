@@ -1,0 +1,10 @@
+formatter(ignore: [ "parity_test.mbt" ])
+
+import {
+  "marianoguerra/shrubbery/unicode",
+}
+
+import {
+  "marianoguerra/shrubbery/column",
+  "moonbitlang/core/test",
+} for "test"

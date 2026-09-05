@@ -1,0 +1,4 @@
+// Generated from Racket's own answers by tools/gen-unicode-tables.rkt. The
+// formatter is told to leave it alone: reflowing 2400 lines of table would
+// bury the next real diff.
+formatter(ignore: [ "tables.mbt" ])
