@@ -1,0 +1,106 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/error-report"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct Fix {
+  source : SourceId
+  span : Span
+  replacement : String
+  description : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Label {
+  source : SourceId
+  span : Span
+  style : LabelStyle
+  message : String?
+  priority : Int
+} derive(Eq, @debug.Debug)
+pub fn Label::primary(SourceId, Span, message? : String) -> Self
+pub fn Label::secondary(SourceId, Span, message? : String) -> Self
+pub fn Label::with_priority(Self, Int) -> Self
+
+pub(all) enum LabelStyle {
+  Primary
+  Secondary
+} derive(Eq, ToJson, @debug.Debug)
+
+pub(all) struct Report {
+  severity : Severity
+  code : String?
+  message : String
+  labels : Array[Label]
+  notes : Array[String]
+  help : String?
+  url : String?
+  related : Array[Report]
+  fixes : Array[Fix]
+}
+pub fn Report::advice(String) -> Self
+pub fn Report::anchor(Self) -> Label?
+pub fn Report::error(String) -> Self
+pub fn Report::new(Severity, String) -> Self
+pub fn Report::warning(String) -> Self
+pub fn Report::with_code(Self, String) -> Self
+pub fn Report::with_fix(Self, Fix) -> Self
+pub fn Report::with_help(Self, String) -> Self
+pub fn Report::with_label(Self, Label) -> Self
+pub fn Report::with_note(Self, String) -> Self
+pub fn Report::with_related(Self, Self) -> Self
+pub fn Report::with_url(Self, String) -> Self
+
+pub(all) enum Severity {
+  Error
+  Warning
+  Advice
+} derive(Compare, Eq, Hash, ToJson, @debug.Debug)
+pub fn Severity::name(Self) -> String
+
+pub struct Source {
+  name : String
+  text : String
+  line_starts : Array[Int]
+}
+pub fn Source::line_col(Self, Int) -> (Int, Int)
+pub fn Source::line_count(Self) -> Int
+pub fn Source::line_of(Self, Int) -> Int
+pub fn Source::line_text(Self, Int) -> String
+pub fn Source::new(String, String) -> Self
+pub fn Source::offset_of_char(Self, Int) -> Int
+pub fn Source::slice(Self, Span) -> String
+pub fn Source::span_of_chars(Self, Int, Int) -> Span
+
+pub(all) struct SourceId(Int) derive(Compare, Eq, Hash, ToJson, @debug.Debug)
+
+pub struct Sources {
+  entries : Array[Source]
+}
+pub fn Sources::add(Self, String, String) -> SourceId
+pub fn Sources::new() -> Self
+pub impl SourceCache for Sources
+
+pub(all) struct Span {
+  start : Int
+  len : Int
+} derive(Compare, Eq, Hash, ToJson, @debug.Debug)
+pub fn Span::at(Int) -> Self
+pub fn Span::end(Self) -> Int
+pub fn Span::is_empty(Self) -> Bool
+pub fn Span::merge(Self, Self) -> Self
+pub fn Span::of_range(Int, Int) -> Self
+pub fn Span::overlaps(Self, Self) -> Bool
+
+// Type aliases
+
+// Traits
+pub(open) trait SourceCache {
+  fn fetch(Self, SourceId) -> Source?
+}

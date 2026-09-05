@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/error-report/render"
+
+import {
+  "marianoguerra/error-report",
+  "marianoguerra/error-report/style",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn char_width(Char) -> Int
+
+pub let default_config : Config
+
+pub fn expand_tabs(String, Int) -> (String, Array[Int])
+
+pub fn json(@error-report.Report, &@error-report.SourceCache, StringBuilder) -> Unit
+
+pub fn render(@error-report.Report, &@error-report.SourceCache, Config, StringBuilder, is_tty? : Bool) -> Unit
+
+pub fn render_string(@error-report.Report, &@error-report.SourceCache, Config, is_tty? : Bool) -> String
+
+pub fn report_json(@error-report.Report, &@error-report.SourceCache) -> Json
+
+pub fn rich(@error-report.Report, &@error-report.SourceCache, Config, StringBuilder, is_tty? : Bool) -> Unit
+
+pub fn short(@error-report.Report, &@error-report.SourceCache, Config, StringBuilder, is_tty? : Bool) -> Unit
+
+pub fn str_width(String) -> Int
+
+// Errors
+
+// Types and methods
+pub(all) struct Config {
+  format : Format
+  chars : @style.CharSet
+  theme : @style.Theme
+  color : @style.ColorMode
+  tab_width : Int
+  context_lines : Int
+}
+pub fn Config::use_color(Self, is_tty~ : Bool) -> Bool
+
+pub(all) enum Format {
+  Rich
+  Compact
+  Short
+  Json
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits

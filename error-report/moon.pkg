@@ -1,0 +1,14 @@
+// The data model. Nothing here renders anything, and nothing here imports
+// anything -- see the note in ../moon.mod about why that is enforced rather
+// than intended.
+//
+// The test block imports the sibling packages because README.mbt.md is compiled
+// as a doctest of this package and shows the whole library. A blackbox test
+// importing a package that imports this one is not a cycle.
+
+import {
+  "marianoguerra/error-report" @report,
+  "marianoguerra/error-report/render",
+  "marianoguerra/error-report/style",
+  "moonbitlang/core/test",
+} for "test"

@@ -1,0 +1,83 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/error-report/style"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let ascii_chars : CharSet
+
+pub let default_theme : Theme
+
+pub let mono_theme : Theme
+
+pub let plain : Style
+
+pub let unicode_chars : CharSet
+
+// Errors
+
+// Types and methods
+pub(all) struct CharSet {
+  hbar : Char
+  vbar : Char
+  top_left : Char
+  bottom_left : Char
+  left_tee : Char
+  primary_underline : Char
+  secondary_underline : Char
+  stem_top : Char
+  stem : Char
+  elbow : Char
+  multi_top : Char
+  multi_mid : Char
+  multi_end : Char
+  ellipsis : Char
+}
+
+pub(all) enum Color {
+  Default
+  Black
+  Red
+  Green
+  Yellow
+  Blue
+  Magenta
+  Cyan
+  White
+} derive(Eq, @debug.Debug)
+
+pub(all) enum ColorMode {
+  Always
+  Never
+  Auto
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Style {
+  color : Color
+  bold : Bool
+  dim : Bool
+} derive(Eq, @debug.Debug)
+pub fn Style::is_plain(Self) -> Bool
+pub fn Style::of(Color, bold? : Bool, dim? : Bool) -> Self
+pub fn Style::write(Self, StringBuilder, String, color~ : Bool) -> Unit
+
+pub(all) struct Theme {
+  error : Style
+  warning : Style
+  advice : Style
+  code : Style
+  message : Style
+  primary : Style
+  secondary : Style
+  gutter : Style
+  source : Style
+  help : Style
+  note : Style
+  url : Style
+}
+
+// Type aliases
+
+// Traits
