@@ -27,7 +27,7 @@ pub fn Diagnostic::new(
 ///
 /// One error type for the whole library. `Diagnostic` carries the structure, so
 /// nothing is lost by there being a single constructor.
-pub suberror ShrubberyError {
+pub(all) suberror ShrubberyError {
   ShrubberyError(Diagnostic)
 }
 

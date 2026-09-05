@@ -7,7 +7,7 @@
 ;; artifact for that move.
 ;;
 ;;   racket tools/collect-corpus.rkt        (or: just corpus)
-(require racket/file racket/path racket/string racket/list
+(require racket/file racket/path racket/string racket/list racket/format
          (prefix-in in: (file "../reference/shrubbery/shrubbery/tests/input.rkt")))
 
 (define corpus "test/corpus")
@@ -83,10 +83,37 @@
                                   (path->complete-path p)))
   (string-replace (path->string rel) "/" "__"))
 
+;; The 66 `check-fail` cases from the reference's own parse suite: each is an
+;; input it must reject, paired with a regexp its message must match. They are
+;; the only systematic coverage of the error paths in existence, so they are
+;; extracted rather than rewritten -- and extracted by EVALUATING the input
+;; expressions, because several are built with the suite's own `lines` and
+;; `add-prefix` helpers rather than written out.
+(define (fail-cases)
+  (define path "reference/shrubbery/shrubbery/tests/parse.rkt")
+  (define forms
+    (with-input-from-file path
+      (lambda ()
+        (read-line)
+        (let loop ([acc '()])
+          (define v (read))
+          (if (eof-object? v) (reverse acc) (loop (cons v acc)))))))
+  (define ns (make-base-namespace))
+  (parameterize ([current-namespace ns])
+    (eval '(define (lines s . ss)
+             (apply string-append s (for/list ([s (in-list ss)])
+                                      (string-append "\n" s)))))
+    (for/list ([f (in-list forms)]
+               #:when (and (pair? f) (eq? 'check-fail (car f))))
+      (eval (cadr f)))))
+
 (define (main)
   (make-directory* corpus)
   (for ([c (in-list spec-cases)]) (write-case "spec" (car c) (cdr c)))
   (for ([c (in-list tab-cases)]) (write-case "tabs" (car c) (cdr c)))
+  (define fails (fail-cases))
+  (for ([src (in-list fails)] [i (in-naturals)])
+    (write-case "fail" (format "fail~a" (~r i #:min-width 2 #:pad-string "0")) src))
   (define rhm (rhm-files))
   (make-directory* (build-path corpus "rhm"))
   ;; A `.rhm` file has a `#lang` line the host reader consumes before shrubbery
@@ -98,13 +125,15 @@
     (lambda (o)
       (fprintf o "{\n")
       (fprintf o "  \"_comment\": \"Provenance for every corpus file. Regenerate with `just corpus`. Committed so the differential suite runs without the reference checkout.\",\n")
-      (fprintf o "  \"counts\": { \"spec\": ~a, \"tabs\": ~a, \"rhm\": ~a },\n"
-               (length spec-cases) (length tab-cases) (length rhm))
+      (fprintf o "  \"counts\": { \"spec\": ~a, \"tabs\": ~a, \"fail\": ~a, \"rhm\": ~a },\n"
+               (length spec-cases) (length tab-cases) (length fails) (length rhm))
       (fprintf o "  \"origin\": {\n")
       (fprintf o "    \"spec\": \"shrubbery/shrubbery/tests/input.rkt\",\n")
       (fprintf o "    \"tabs\": \"hand-written; the .rhm corpus contains no tabs\",\n")
+      (fprintf o "    \"fail\": \"the check-fail cases from shrubbery/tests/parse.rkt\",\n")
       (fprintf o "    \"rhm\": \"every .rhm file in the reference checkout\"\n")
       (fprintf o "  }\n}\n")))
-  (printf "spec: ~a, tabs: ~a, rhm: ~a\n" (length spec-cases) (length tab-cases) (length rhm)))
+  (printf "spec: ~a, tabs: ~a, fail: ~a, rhm: ~a\n"
+          (length spec-cases) (length tab-cases) (length fails) (length rhm)))
 
 (main)

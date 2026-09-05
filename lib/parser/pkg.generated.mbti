@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/parser"
+
+import {
+  "marianoguerra/shrubbery/ast",
+  "marianoguerra/shrubbery/column",
+  "marianoguerra/shrubbery/error",
+  "marianoguerra/shrubbery/lexer",
+}
+
+// Values
+pub fn parse(String, mode? : Mode, variant? : @lexer.Variant, start_column? : @column.Column, recover? : Bool) -> Parsed raise @error.ShrubberyError
+
+pub fn parse_tokens(Array[@lexer.Token], mode? : Mode, variant? : @lexer.Variant, recover? : Bool) -> Parsed raise @error.ShrubberyError
+
+// Errors
+
+// Types and methods
+pub(all) enum Mode {
+  Top
+  Text
+} derive(Eq)
+
+pub struct Parsed {
+  root : @ast.Node
+  diagnostics : Array[@error.Diagnostic]
+}
+pub fn Parsed::diagnostics(Self) -> Array[@error.Diagnostic]
+pub fn Parsed::root(Self) -> @ast.Node
+
+// Type aliases
+
+// Traits

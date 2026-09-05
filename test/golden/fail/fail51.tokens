@@ -1,0 +1,5 @@
+literal	1	0	"1"	1
+whitespace	1	1	" "	-
+continue-operator	1	2	"\\"	-
+whitespace	1	3	" "	-
+literal	1	4	"2"	2

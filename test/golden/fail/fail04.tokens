@@ -1,0 +1,4 @@
+opener	1	0	"("	-
+identifier	1	1	"x"	-
+block-operator	1	2	":"	-
+closer	1	3	")"	-

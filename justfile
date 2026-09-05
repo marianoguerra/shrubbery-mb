@@ -19,6 +19,7 @@
 
 # The differential harness, and the built binary it drives.
 diff := justfile_directory() / "tools/shrubdiff.py"
+impl := justfile_directory() / "_build/native/debug/build/marianoguerra/shrubbery-cli/shrubbery/shrubbery.exe"
 
 # Where the read-only Racket reference lives. Never a build or CI input.
 reference := justfile_directory() / "reference"
@@ -121,6 +122,7 @@ ci:
     tools/boundary-check.sh
     moon build --target native
     tools/shrubdiff.py tokens --show 0
+    tools/shrubdiff.py parse --show 0
 
 # ---------------------------------------------------------------------------
 # The differential suite -- the project's real correctness gate
@@ -138,14 +140,31 @@ diff-tokens *args: build
 #
 #     just diff-only spec/input5
 #
-# Run the token oracle over only the files whose path contains PATTERN.
+# Run both oracles over only the files whose path contains PATTERN.
 [group('diff')]
 diff-only pattern: build
     {{diff}} tokens --filter {{pattern}} --show 3
+    {{diff}} parse --filter {{pattern}} --show 3
+
+# The inner loop when the port rejects something the reference accepts.
+#
+# Parse a file and show whatever goes wrong, with the source.
+[group('diff')]
+explain file: build
+    {{impl}} check {{file}}
+
+# One comparison rather than two: a file the reference rejects has its error
+# message as its golden, so accepting such a file is a failure HERE rather than
+# a silence in one oracle and a pass in another.
+#
+# Compare our parse trees, and our errors, against the reference's.
+[group('diff')]
+diff-parse *args: build
+    {{diff}} parse --show 0 {{args}}
 
 # Everything hermetic that gates.
 [group('diff')]
-diff: diff-tokens
+diff: diff-tokens diff-parse
 
 # ---------------------------------------------------------------------------
 # Regenerating committed artifacts (needs Racket; never in CI)

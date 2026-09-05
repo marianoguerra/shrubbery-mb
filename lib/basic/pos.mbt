@@ -19,12 +19,17 @@ pub(all) struct Pos {
   pos : Int
   /// 0-based UTF-16 code units from the start of the source. Slicing only.
   idx : Int
+  /// 0-based CODE POINTS from the start of the line — Racket's port column,
+  /// and what its `syntax-column` reports. Not the indentation column below:
+  /// a tab advances this by one and `col` to a new run, and de-indenting a
+  /// block of `@` text is measured in this one.
+  col0 : Int
   /// The indentation column.
   col : @column.Column
 } derive(Eq)
 
 ///|
-pub let start : Pos = { line: 1, pos: 1, idx: 0, col: @column.zero, }
+pub let start : Pos = { line: 1, pos: 1, idx: 0, col0: 0, col: @column.zero, }
 
 ///|
 /// A half-open range of a source file.

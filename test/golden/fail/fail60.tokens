@@ -1,0 +1,16 @@
+identifier	1	0	"pick"	-
+whitespace	1	4	" "	-
+bar-operator	1	5.5	"\|"	-
+whitespace	1	6	" "	-
+identifier	1	7	"one"	-
+whitespace	1	10	" "	-
+opener	1	11	"("	-
+whitespace	1	12	"\u{a}"	-
+whitespace	2	0	"         "	-
+identifier	2	9	"b"	-
+whitespace	2	10	"\u{a}"	-
+closer	3	0	")"	-
+whitespace	3	1	" "	-
+bar-operator	3	2.5	"\|"	-
+whitespace	3	3	" "	-
+identifier	3	4	"two"	-

@@ -1,8 +1,20 @@
 ///|
 fn span(a : Int, b : Int) -> @basic.Span {
   {
-    start: { line: 1, pos: a + 1, idx: a, col: @column.Column::of_chars(a), },
-    end: { line: 1, pos: b + 1, idx: b, col: @column.Column::of_chars(b), },
+    start: {
+      line: 1,
+      pos: a + 1,
+      idx: a,
+      col0: a,
+      col: @column.Column::of_chars(a),
+    },
+    end: {
+      line: 1,
+      pos: b + 1,
+      idx: b,
+      col0: b,
+      col: @column.Column::of_chars(b),
+    },
   }
 }
 

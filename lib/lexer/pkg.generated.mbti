@@ -38,6 +38,7 @@ pub(all) struct Token {
   kind : TokenKind
   text : String
   raw : String?
+  value : @sexp.Datum?
   span : @basic.Span
   partner : String?
 }
@@ -45,6 +46,7 @@ pub fn Token::column(Self) -> @column.Column
 pub fn Token::end_line(Self) -> Int
 pub fn Token::is_trivia(Self) -> Bool
 pub fn Token::line(Self) -> Int
+pub fn Token::name(Self) -> String
 pub fn Token::raw_text(Self) -> String
 
 pub(all) enum TokenKind {

@@ -87,6 +87,13 @@ because the expectations flip as the port grows. Each bucket has a floor:
 dropping below it fails, and rising above it also fails, so that an improvement
 is recorded deliberately in a commit whose diff says what got better.
 
+Two oracles today. `tokens` compares the scanned stream; `parse` compares the
+parse tree AND, for a file the reference rejects, its error message — one
+comparison rather than two, so that accepting a file the reference rejects is a
+failure rather than a silence in one oracle and a pass in another. Eleven
+corpus files are skipped by the token oracle because the reference's own
+`lex-all` stops at the first failure token; the parse oracle covers them.
+
 ## Conventions
 
 - Config is the **new DSL**, not JSON: `moon.work`, `moon.mod`, `moon.pkg`. Deps
@@ -134,3 +141,16 @@ is recorded deliberately in a commit whose diff says what got better.
   equality of the whole file.
 - **Numeric literals stay raw strings** through the front end. Parsing them
   early would break round-tripping.
+- **`parse_alts_block` does not consume its `|`.** The block's group sequence
+  starts AT the bar, and the bar branch of `parse_groups` takes it — which is
+  how the sequence comes to have the bar's own column, and how a second `|`
+  there is a sibling rather than a mistake.
+- **A `|` on a NEW line goes straight to `parse_block`**, not through
+  `parse_alts_block`: on that path the operator-column and
+  alternative-before-group-column checks do not apply.
+- **`keep` preserves the operator column** rather than clearing it. A group
+  continued by an operator must be continued at the same column on every later
+  line.
+- **`make_group_state`'s defaults** are `check_column = count` and
+  `can_empty = true`, not false. Both were wrong here at first and both showed
+  up only as parse divergences.

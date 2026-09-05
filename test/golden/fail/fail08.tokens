@@ -1,0 +1,4 @@
+identifier	1	0	"x"	-
+whitespace	1	1	"\u{a}"	-
+whitespace	2	0	" "	-
+identifier	2	1	"y"	-

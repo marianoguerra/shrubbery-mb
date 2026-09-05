@@ -1,0 +1,5 @@
+whitespace	1	0	"\u{9}"	-
+literal	1	0+1tab+0	"1"	1
+whitespace	1	0+1tab+1	"\u{a}"	-
+whitespace	2	0	"\u{9} "	-
+literal	2	0+1tab+1	"2"	2

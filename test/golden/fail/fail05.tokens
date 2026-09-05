@@ -1,0 +1,7 @@
+opener	1	0	"("	-
+literal	1	1	"1"	1
+comma-operator	1	2	","	-
+whitespace	1	3	" "	-
+identifier	1	4	"x"	-
+block-operator	1	5	":"	-
+closer	1	6	")"	-

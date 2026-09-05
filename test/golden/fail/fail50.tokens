@@ -1,0 +1,7 @@
+literal	1	0	"\"x\u{9}y\""	"x\u{9}y"
+block-operator	1	2+1tab+2	":"	-
+whitespace	1	2+1tab+3	" "	-
+literal	1	2+1tab+4	"1"	1
+whitespace	1	2+1tab+5	"\u{a}"	-
+whitespace	2	0	"       "	-
+literal	2	7	"2"	2

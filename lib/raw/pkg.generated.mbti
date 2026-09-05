@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/raw"
+
+import {
+  "marianoguerra/shrubbery/basic",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct Meta {
+  mut prefix : Raw
+  mut inner_prefix : Raw
+  mut raw : Raw
+  mut opaque_content : Raw
+  mut opaque_raw : Raw
+  mut tail : Raw
+  mut inner_suffix : Raw
+  mut suffix : Raw
+  mut srcloc : @basic.Span?
+}
+pub fn Meta::is_empty(Self) -> Bool
+pub fn Meta::new() -> Self
+
+pub(all) enum Raw {
+  Empty
+  Str(String)
+  Cons(Raw, Raw)
+} derive(Eq)
+pub fn Raw::combine(Self, Self) -> Self
+pub fn Raw::is_empty(Self) -> Bool
+pub fn Raw::to_text(Self) -> String
+pub fn Raw::write_to(Self, StringBuilder) -> Unit
+
+// Type aliases
+
+// Traits

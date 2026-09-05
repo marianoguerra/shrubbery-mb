@@ -24,9 +24,11 @@ pub fn Column::eq(Self, Self) -> Bool
 pub fn Column::floor(Self) -> Self
 pub fn Column::ge(Self, Self) -> Bool
 pub fn Column::gt(Self, Self) -> Bool
+pub fn Column::half_next(Self) -> Self
 pub fn Column::half_up(Self) -> Self
 pub fn Column::le(Self, Self) -> Bool
 pub fn Column::lt(Self, Self) -> Bool
+pub fn Column::next(Self) -> Self
 pub fn Column::of_chars(Int) -> Self
 pub fn Column::plus(Self, Self) -> Self
 pub fn Column::sub(Self, Self) -> Int

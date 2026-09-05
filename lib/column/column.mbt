@@ -90,6 +90,38 @@ pub fn Column::add_chars(self : Column, n : Int) -> Column {
 }
 
 ///|
+/// The next whole column after this one.
+///
+/// Floors first: the column after 2.5 is 3, not 3.5. That is what makes a
+/// block opened by a `|` at 2.5 demand content at 3.
+pub fn Column::next(self : Column) -> Column {
+  match self {
+    Plain(c) => Plain(c / 2 * 2 + 2)
+    Tabbed(rs) => {
+      let out = rs.copy()
+      let last = out.length() - 1
+      out[last] = out[last] / 2 * 2 + 2
+      Tabbed(out)
+    }
+  }
+}
+
+///|
+/// Half a column further right, or the next whole column if already halfway.
+///
+/// The reference's `column-half-next`. It is not simply `half_up`: applying it
+/// twice must not reach 3.0 by way of 2.5, or a `|` under a `|` would line up
+/// with a block's content.
+pub fn Column::half_next(self : Column) -> Column {
+  let runs = self.runs()
+  if runs[runs.length() - 1] % 2 == 1 {
+    self.next()
+  } else {
+    self.half_up()
+  }
+}
+
+///|
 /// This column plus half a character width — the `|` convention.
 ///
 /// A `|` at column N takes part in comparisons as N.5, which is what lets a

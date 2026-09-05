@@ -9,6 +9,13 @@
     "is recorded here deliberately, in a commit whose diff says what got better."
   ],
   "tokens": {
+    "fail": 55,
+    "rhm": 610,
+    "spec": 12,
+    "tabs": 8
+  },
+  "parse": {
+    "fail": 66,
     "rhm": 610,
     "spec": 12,
     "tabs": 8

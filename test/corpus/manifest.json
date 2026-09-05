@@ -1,9 +1,10 @@
 {
   "_comment": "Provenance for every corpus file. Regenerate with `just corpus`. Committed so the differential suite runs without the reference checkout.",
-  "counts": { "spec": 12, "tabs": 8, "rhm": 610 },
+  "counts": { "spec": 12, "tabs": 8, "fail": 66, "rhm": 610 },
   "origin": {
     "spec": "shrubbery/shrubbery/tests/input.rkt",
     "tabs": "hand-written; the .rhm corpus contains no tabs",
+    "fail": "the check-fail cases from shrubbery/tests/parse.rkt",
     "rhm": "every .rhm file in the reference checkout"
   }
 }

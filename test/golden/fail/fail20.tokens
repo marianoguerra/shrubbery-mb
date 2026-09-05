@@ -1,0 +1,9 @@
+opener	1	0	"("	-
+group-comment	1	1	"#//"	-
+whitespace	1	4	" "	-
+identifier	1	5	"x"	-
+comma-operator	1	6	","	-
+whitespace	1	7	"\u{a}"	-
+whitespace	2	0	"     "	-
+identifier	2	5	"y"	-
+closer	2	6	")"	-

@@ -9,7 +9,7 @@ import {
 // Values
 
 // Errors
-pub suberror ShrubberyError {
+pub(all) suberror ShrubberyError {
   ShrubberyError(Diagnostic)
 }
 pub fn ShrubberyError::diagnostic(Self) -> Diagnostic

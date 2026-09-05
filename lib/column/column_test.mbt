@@ -82,3 +82,21 @@ test "floor drops the half" {
   )
   assert_eq(col(" \t ").half_up().floor(), col(" \t "))
 }
+
+///|
+test "next floors before stepping" {
+  let two = @column.Column::of_chars(2)
+  assert_eq(two.next(), @column.Column::of_chars(3))
+  // 2.5 is inside column 2, so the next whole column is 3 and not 3.5.
+  assert_eq(two.half_up().next(), @column.Column::of_chars(3))
+  assert_eq(col(" \t ").next(), col(" \t  "))
+}
+
+///|
+test "half_next does not accumulate halves" {
+  let two = @column.Column::of_chars(2)
+  assert_eq(two.half_next(), two.half_up())
+  // Applying it twice reaches 3, not 3.5: a `|` under a `|` must not line up
+  // with the content of the block that `|` opened.
+  assert_eq(two.half_next().half_next(), @column.Column::of_chars(3))
+}

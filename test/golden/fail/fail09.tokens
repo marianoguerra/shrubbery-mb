@@ -1,0 +1,11 @@
+literal	1	0	"1"	1
+whitespace	1	1	"\u{a}"	-
+whitespace	2	0	" "	-
+operator	2	1	"+"	-
+whitespace	2	2	" "	-
+literal	2	3	"2"	2
+whitespace	2	4	"\u{a}"	-
+whitespace	3	0	"   "	-
+operator	3	3	"+"	-
+whitespace	3	4	" "	-
+literal	3	5	"3"	3

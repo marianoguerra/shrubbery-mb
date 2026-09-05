@@ -118,16 +118,33 @@ def bucket_of(rel):
     return rel.split("/", 1)[0]
 
 
-def cmd_tokens(args):
-    index = read_index("tokens.index")
+def read_lex_failures():
+    """Files the reference's own lexer aborts on.
+
+    `lex-all` reports the first failure token and stops, so there is no token
+    stream to compare -- by design, since those files exist to be rejected.
+    They are skipped by the token oracle and covered by the parse oracle, whose
+    golden records the error instead.
+    """
+    path = GOLDEN / "lex-failures.txt"
+    if not path.exists():
+        return set()
+    return {line.split("\t", 1)[0] for line in path.read_text().splitlines() if line}
+
+
+def compare(oracle, index_name, suffix, args, what, skip=frozenset()):
+    index = read_index(index_name)
     files = corpus_files(args.filter)
     if not files:
         sys.exit("no corpus files matched")
-    sections = run_impl("tokens", files)
+    sections = run_impl(oracle, files)
 
-    passed, failures = 0, []
+    passed, failures, skipped = 0, [], 0
     for path in files:
         rel = str(path.relative_to(CORPUS))
+        if rel in skip:
+            skipped += 1
+            continue
         got = sections.get(str(path))
         if got is None:
             failures.append((rel, "no output from the port", None))
@@ -140,11 +157,31 @@ def cmd_tokens(args):
         if got_digest == want_digest:
             passed += 1
             continue
-        full = GOLDEN / Path(rel).with_suffix(".tokens")
+        full = GOLDEN / Path(rel).with_suffix(suffix)
         detail = unified(full.read_text(), got, rel) if full.exists() else None
-        failures.append((rel, "token streams differ", detail))
+        failures.append((rel, what, detail))
+    return files, passed, failures, skipped
 
-    print(f"tokens: {passed}/{len(files)} files agree with the reference")
+
+def cmd_parse(args):
+    files, passed, failures, skipped = compare(
+        "parse", "parse.index", ".sexp", args, "parse trees differ"
+    )
+    return report("parse", files, passed, failures, skipped, args)
+
+
+def cmd_tokens(args):
+    skip = read_lex_failures()
+    files, passed, failures, skipped = compare(
+        "tokens", "tokens.index", ".tokens", args, "token streams differ", skip=skip
+    )
+    return report("tokens", files, passed, failures, skipped, args)
+
+
+def report(oracle, files, passed, failures, skipped, args):
+    total = len(files) - skipped
+    tail = f" ({skipped} the reference cannot lex)" if skipped else ""
+    print(f"{oracle}: {passed}/{total} files agree with the reference{tail}")
     for i, (rel, why, detail) in enumerate(failures):
         if args.show and i < args.show:
             print(f"  FAIL {rel}: {why}")
@@ -157,14 +194,18 @@ def cmd_tokens(args):
         # A filtered run is the inner loop, not a gate.
         return 1 if failures else 0
 
-    floors = load_policy().get("tokens", {})
+    floors = load_policy().get(oracle, {})
     if not floors:
         return 1 if failures else 0
+    skip = read_lex_failures() if oracle == "tokens" else frozenset()
+    skipped_paths = skip
     status = 0
     for bucket, floor in sorted(floors.items()):
+        failed_paths = {f[0] for f in failures}
         got = sum(1 for p in files
                   if bucket_of(str(p.relative_to(CORPUS))) == bucket
-                  and str(p.relative_to(CORPUS)) not in {f[0] for f in failures})
+                  and str(p.relative_to(CORPUS)) not in failed_paths
+                  and str(p.relative_to(CORPUS)) not in skipped_paths)
         if got < floor:
             print(f"  REGRESSION {bucket}: {got} agree, floor is {floor}")
             status = 1
@@ -173,7 +214,7 @@ def cmd_tokens(args):
                   "raise it in test/oracle-policy.json")
             status = 1
     if status == 0:
-        print("tokens: at the floor in every bucket")
+        print(f"{oracle}: at the floor in every bucket")
     return status
 
 
@@ -181,11 +222,15 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="command", required=True)
-    t = sub.add_parser("tokens", help="compare token streams")
-    t.add_argument("--filter", help="only paths containing this substring")
-    t.add_argument("--show", type=int, default=1, help="print this many diffs")
-    t.add_argument("--verbose", action="store_true", help="list every failing file")
-    t.set_defaults(func=cmd_tokens)
+    for name, fn, help_text in (
+        ("tokens", cmd_tokens, "compare token streams"),
+        ("parse", cmd_parse, "compare parse trees, and the errors for files that are rejected"),
+    ):
+        sp = sub.add_parser(name, help=help_text)
+        sp.add_argument("--filter", help="only paths containing this substring")
+        sp.add_argument("--show", type=int, default=1, help="print this many diffs")
+        sp.add_argument("--verbose", action="store_true", help="list every failing file")
+        sp.set_defaults(func=fn)
     args = ap.parse_args()
     sys.exit(args.func(args))
 

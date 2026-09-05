@@ -1,0 +1,4 @@
+identifier	1	0	"x"	-
+block-operator	1	1	":"	-
+whitespace	1	2	"\u{a}"	-
+identifier	2	0	"y"	-

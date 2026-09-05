@@ -9,7 +9,8 @@
 ;;
 ;;   racket tools/oracle/collect-goldens.rkt        (or: just goldens)
 (require racket/file racket/path racket/string racket/list file/sha1
-         "tokens.rkt")
+         "tokens.rkt"
+         "parse.rkt")
 
 (define corpus "test/corpus")
 (define golden "test/golden")
@@ -28,11 +29,21 @@
 ;; line -- so both implementations read exactly the same bytes.
 (define (source-of p) (file->string p))
 
+;; Which buckets carry the reference's FULL answer rather than a digest: the
+;; ones a person reads when something breaks. The 610-file real-world bucket
+;; would be 26 MB of committed intermediate artifact, and a digest detects a
+;; divergence just as well.
+(define (full-golden? rel)
+  (or (string-prefix? rel "spec/")
+      (string-prefix? rel "tabs/")
+      (string-prefix? rel "fail/")))
+
 (define (main)
   (define files (corpus-files))
   (define ok 0)
   (define failed '())
   (define hashes '())
+  (define parse-hashes '())
   (for ([p (in-list files)])
     (define rel (path->string (find-relative-path (path->complete-path corpus)
                                                   (path->complete-path p))))
@@ -47,12 +58,22 @@
       ;; a divergence, which is what CI needs; `just golden-for FILE` recreates
       ;; the full answer for the one file that diverged, which is what a person
       ;; needs.
-      (when (or (string-prefix? rel "spec/") (string-prefix? rel "tabs/"))
+      (when (full-golden? rel)
         (define out (build-path golden (path-replace-extension rel #".tokens")))
         (make-directory* (path-only out))
         (call-with-output-file out #:exists 'replace
           (lambda (o) (write-string text o))))
-      (set! ok (add1 ok))))
+      (set! ok (add1 ok)))
+    ;; The parse tree, as its own oracle. A file the reference REJECTS gets a
+    ;; golden too -- `!error <message>` -- so that error parity is checked by
+    ;; the same comparison rather than by a second one that could disagree.
+    (define ptext (dump-parse (source-of p)))
+    (set! parse-hashes (cons (cons rel (sha1 (open-input-string ptext))) parse-hashes))
+    (when (full-golden? rel)
+      (define pout (build-path golden (path-replace-extension rel #".sexp")))
+      (make-directory* (path-only pout))
+      (call-with-output-file pout #:exists 'replace
+        (lambda (o) (write-string ptext o)))))
   (make-directory* golden)
   (call-with-output-file (build-path golden "tokens.index") #:exists 'replace
     (lambda (o)
@@ -60,15 +81,19 @@
       (fprintf o "# Regenerate with `just goldens`; a diff here is a behaviour change.\n")
       (for ([h (in-list (sort (reverse hashes) string<? #:key car))])
         (fprintf o "~a  ~a\n" (cdr h) (car h)))))
+  (call-with-output-file (build-path golden "parse.index") #:exists 'replace
+    (lambda (o)
+      (fprintf o "# sha1 of the reference's parse, one line per corpus file.\n")
+      (fprintf o "# Regenerate with `just goldens`; a diff here is a behaviour change.\n")
+      (for ([h (in-list (sort (reverse parse-hashes) string<? #:key car))])
+        (fprintf o "~a  ~a\n" (cdr h) (car h)))))
   (call-with-output-file (build-path golden "lex-failures.txt") #:exists 'replace
     (lambda (o)
       (for ([f (in-list (sort (reverse failed) string<? #:key car))])
         (fprintf o "~a\t~a\n" (car f) (string-replace (cdr f) "\n" " ")))))
   (printf "tokens: ~a hashed, ~a full goldens, ~a failed\n"
           ok
-          (length (filter (lambda (h) (or (string-prefix? (car h) "spec/")
-                                          (string-prefix? (car h) "tabs/")))
-                          hashes))
+          (length (filter (lambda (h) (full-golden? (car h))) hashes))
           (length failed))
   (for ([f (in-list (reverse failed))])
     (printf "  ~a: ~a\n" (car f) (string-replace (cdr f) "\n" " "))))

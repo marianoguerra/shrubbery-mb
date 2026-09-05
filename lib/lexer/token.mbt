@@ -55,10 +55,26 @@ pub(all) struct Token {
   /// stay true -- while raw-text metadata still reproduces what the reference
   /// would have reproduced.
   raw : String?
+  /// The value an `#{...}` escape denotes, when that is not already in `kind`.
+  /// An escape naming a symbol lexes as an `Identifier`, and its NAME is the
+  /// symbol rather than the source text — `#{treelist-ref}` is the identifier
+  /// `treelist-ref` — so the name has to travel somewhere.
+  value : @sexp.Datum?
   span : @basic.Span
   /// For a paired at-opener like `|<<{`, the closer it demands: `}>>|`.
   /// Computed once here so the parser never re-derives the reverse-and-flip.
   partner : String?
+}
+
+///|
+/// The name this token denotes: the escape's symbol where there is one, and the
+/// source text otherwise.
+pub fn Token::name(self : Token) -> String {
+  match self.value {
+    Some(Sym(name)) => name
+    Some(Kw(name)) => name
+    _ => self.text
+  }
 }
 
 ///|

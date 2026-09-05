@@ -1,0 +1,19 @@
+identifier	1	0	"outer"	-
+block-operator	1	5	":"	-
+whitespace	1	6	"\u{a}"	-
+whitespace	2	0	"    "	-
+identifier	2	4	"a"	-
+whitespace	2	5	" "	-
+opener	2	6	"{"	-
+whitespace	2	7	" "	-
+identifier	2	8	"b"	-
+whitespace	2	9	"\u{a}"	-
+whitespace	3	0	" "	-
+closer	3	1	"}"	-
+whitespace	3	2	" "	-
+bar-operator	3	3.5	"\|"	-
+whitespace	3	4	" "	-
+identifier	3	5	"c"	-
+whitespace	3	6	"\u{a}"	-
+whitespace	4	0	"     "	-
+identifier	4	5	"d"	-

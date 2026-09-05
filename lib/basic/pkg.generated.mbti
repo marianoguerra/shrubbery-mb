@@ -15,6 +15,7 @@ pub(all) struct Pos {
   line : Int
   pos : Int
   idx : Int
+  col0 : Int
   col : @column.Column
 } derive(Eq)
 pub fn Pos::to_display(Self) -> String

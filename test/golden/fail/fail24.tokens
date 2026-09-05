@@ -1,0 +1,5 @@
+identifier	1	0	"x"	-
+whitespace	1	1	" "	-
+group-comment	1	2	"#//"	-
+whitespace	1	5	" "	-
+identifier	1	6	"y"	-

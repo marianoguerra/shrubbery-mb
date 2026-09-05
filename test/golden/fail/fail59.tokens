@@ -1,0 +1,7 @@
+whitespace	1	0	" "	-
+opener	1	1	"("	-
+identifier	1	2	"e"	-
+whitespace	1	3	"\u{a}"	-
+comma-operator	2	0	","	-
+identifier	2	1	"f"	-
+closer	2	2	")"	-

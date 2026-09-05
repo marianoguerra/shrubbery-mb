@@ -1,0 +1,8 @@
+import {
+  "marianoguerra/shrubbery/basic",
+}
+
+import {
+  "marianoguerra/shrubbery/raw",
+  "moonbitlang/core/test",
+} for "test"

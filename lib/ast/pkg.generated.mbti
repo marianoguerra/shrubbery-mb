@@ -1,0 +1,46 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/ast"
+
+import {
+  "marianoguerra/shrubbery/basic",
+  "marianoguerra/shrubbery/raw",
+  "marianoguerra/shrubbery/sexp",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct Node {
+  it : Shrub
+  span : @basic.Span
+  meta : @raw.Meta
+}
+pub fn Node::canonical(Self) -> String
+pub fn Node::children(Self) -> Array[Self]
+pub fn Node::new(Shrub, @basic.Span, meta? : @raw.Meta) -> Self
+pub fn Node::to_source(Self) -> String
+pub fn Node::write_canonical(Self, StringBuilder) -> Unit
+pub fn Node::write_source(Self, StringBuilder) -> Unit
+
+pub(all) enum Shrub {
+  Id(String)
+  Kw(String)
+  Op(String)
+  Lit(@sexp.Datum)
+  Parsed(@sexp.Datum)
+  Group(Array[Node])
+  Block(Array[Node])
+  Alts(Array[Node])
+  Parens(Array[Node])
+  Brackets(Array[Node])
+  Braces(Array[Node])
+  Quotes(Array[Node])
+  Multi(Array[Node])
+}
+pub fn Shrub::tag(Self) -> String
+
+// Type aliases
+
+// Traits

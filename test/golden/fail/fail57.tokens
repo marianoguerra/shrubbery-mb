@@ -1,0 +1,11 @@
+identifier	1	0	"f"	-
+opener	1	1	"("	-
+identifier	1	2	"a"	-
+comma-operator	1	3	","	-
+whitespace	1	4	" "	-
+identifier	1	5	"b"	-
+block-operator	1	6	":"	-
+whitespace	1	7	"\u{a}"	-
+whitespace	2	0	"   "	-
+identifier	2	3	"c"	-
+closer	2	4	")"	-

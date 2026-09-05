@@ -1,0 +1,12 @@
+opener	1	0	"("	-
+identifier	1	1	"x"	-
+comma-operator	1	2	","	-
+whitespace	1	3	" "	-
+identifier	1	4	"y"	-
+comma-operator	1	5	","	-
+whitespace	1	6	"\u{a}"	-
+whitespace	2	0	" "	-
+bar-operator	2	1.5	"\|"	-
+whitespace	2	2	" "	-
+identifier	2	3	"z"	-
+closer	2	4	")"	-

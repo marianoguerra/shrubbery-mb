@@ -1,0 +1,12 @@
+whitespace	1	0	"\u{9}"	-
+identifier	1	0+1tab+0	"a"	-
+whitespace	1	0+1tab+1	"\u{a}"	-
+whitespace	2	0	"\u{9}"	-
+bar-operator	2	0+1tab+0.5	"\|"	-
+whitespace	2	0+1tab+1	" "	-
+literal	2	0+1tab+2	"1"	1
+whitespace	2	0+1tab+3	"\u{a}"	-
+whitespace	3	0	" "	-
+bar-operator	3	1.5	"\|"	-
+whitespace	3	2	" "	-
+literal	3	3	"2"	2

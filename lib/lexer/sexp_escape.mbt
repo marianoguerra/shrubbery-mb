@@ -30,8 +30,14 @@ fn Scanner::scan_sexp_escape(
           if keyword {
             match datum {
               Sym(name) =>
-                self.finish(start, j, Keyword, raw=Some(raw), mode=Continuing)
-                |> with_kw(name)
+                self.finish(
+                  start,
+                  j,
+                  Keyword,
+                  raw=Some(raw),
+                  value=Some(Sym(name)),
+                  mode=Continuing,
+                )
               _ =>
                 self.finish(
                   start,
@@ -58,6 +64,7 @@ fn Scanner::scan_sexp_escape(
                   j,
                   Identifier,
                   raw=Some(raw),
+                  value=Some(datum),
                   mode=Continuing,
                 )
               _ =>
@@ -88,13 +95,6 @@ fn Scanner::scan_sexp_escape(
       }
     }
   }
-}
-
-///|
-/// A keyword token carries the name without its `~`; a `~#{name}` escape has
-/// no `~` in its source, so the name comes from the datum.
-fn with_kw(t : Token, _name : String) -> Token {
-  t
 }
 
 ///|

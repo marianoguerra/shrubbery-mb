@@ -1,0 +1,13 @@
+identifier	1	0	"a"	-
+opener	1	1	"("	-
+semicolon-operator	1	2	";"	-
+opener	1	3	"\u{ab}"	-
+literal	1	4	"1"	1
+semicolon-operator	1	5	";"	-
+whitespace	1	6	" "	-
+literal	1	7	"2"	2
+closer	1	8	"\u{bb}"	-
+comma-operator	1	9	","	-
+whitespace	1	10	" "	-
+literal	1	11	"2"	2
+closer	1	12	")"	-

@@ -1,0 +1,7 @@
+identifier	1	0	"cond"	-
+whitespace	1	4	"\u{a}"	-
+group-comment	2	0	"#//"	-
+whitespace	2	3	" "	-
+bar-operator	2	4.5	"\|"	-
+whitespace	2	5	" "	-
+identifier	2	6	"x"	-

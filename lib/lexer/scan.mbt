@@ -12,6 +12,7 @@ priv struct Scanner {
   mut idx : Int
   mut pos : Int
   mut line : Int
+  mut col0 : Int
   mut col : @column.Column
   mut mode : LexMode
   /// The `@` forms currently being scanned, innermost last. A stack rather than
@@ -23,7 +24,13 @@ priv struct Scanner {
 
 ///|
 fn Scanner::here(self : Scanner) -> @basic.Pos {
-  { line: self.line, pos: self.pos, idx: self.idx, col: self.col, }
+  {
+    line: self.line,
+    pos: self.pos,
+    idx: self.idx,
+    col0: self.col0,
+    col: self.col,
+  }
 }
 
 ///|
@@ -79,6 +86,7 @@ fn Scanner::finish(
   kind : TokenKind,
   partner? : String? = None,
   raw? : String? = None,
+  value? : @sexp.Datum? = None,
   mode? : LexMode = Initial,
 ) -> Token {
   let text = self.src.clamped_view(start=start.idx, end=end_idx).to_owned()
@@ -91,8 +99,44 @@ fn Scanner::finish(
   } else {
     col_advance
   }
+  // The port column counts code points and resets at every line break, which
+  // is a different question from the indentation column above.
+  self.col0 = advance_col0(text, start.col0)
   self.mode = mode
-  { kind, text, raw, span: { start, end: self.here(), }, partner, }
+  { kind, text, raw, value, span: { start, end: self.here(), }, partner, }
+}
+
+///|
+/// The port column after `text`, starting from `col0`.
+fn advance_col0(text : String, col0 : Int) -> Int {
+  let mut c = col0
+  let mut i = 0
+  while i < text.length() {
+    let ch = text.get_char(i)
+    match ch {
+      Some('\r') => {
+        c = 0
+        i = if i + 1 < text.length() && text.at(i + 1) == 0x0A {
+          i + 2
+        } else {
+          i + 1
+        }
+      }
+      Some('\n') => {
+        c = 0
+        i = i + 1
+      }
+      Some(x) => {
+        c = c + 1
+        i = if x.to_int() > 0xFFFF { i + 2 } else { i + 1 }
+      }
+      None => {
+        c = c + 1
+        i = i + 1
+      }
+    }
+  }
+  c
 }
 
 ///|
@@ -112,6 +156,7 @@ pub fn lex_all(
     idx: 0,
     pos: 1,
     line: 1,
+    col0: 0,
     col: start_column,
     mode: Initial,
     at_stack: [],
