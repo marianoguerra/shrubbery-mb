@@ -1,0 +1,10 @@
+.DS_Store
+_build/
+target/
+target
+.mooncakes/
+.moonagent/
+
+# The reference checkout: read-only material, never a build or CI input.
+# Restore with tools/fetch-reference.sh.
+/reference

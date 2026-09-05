@@ -1,0 +1,49 @@
+# The hermetic gate. Everything here runs with neither Racket nor the
+# `reference/` checkout present -- that is the property `test/corpus/` and
+# `test/golden/` being committed exists to preserve, and it is what keeps a
+# pull request checkable by someone who has not set up the reference.
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> $GITHUB_PATH
+
+      - name: Update dependencies
+        run: |
+          moon version --all
+          moon update
+
+      - name: Type-check, warnings fatal
+        run: moon check --deny-warn
+
+      # A diff in a `.mbti` is a public-API change. Catching it here is what
+      # stops one landing unreviewed.
+      - name: Interfaces are current
+        run: |
+          moon info --target all
+          git diff --exit-code
+
+      - name: Sources are formatted
+        run: |
+          moon fmt
+          git diff --exit-code
+
+      - name: Tests, every backend
+        run: moon test --target all
+
+      # `error-report` is meant to leave this repository unchanged.
+      - name: error-report is still self-contained
+        run: tools/boundary-check.sh

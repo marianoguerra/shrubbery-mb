@@ -1,0 +1,6 @@
+members = [
+  ".",
+  "./error-report",
+  "./lib",
+  "./cli",
+]
