@@ -1,13 +1,15 @@
 import {
+  "marianoguerra/shrubbery/doc",
   "marianoguerra/shrubbery/lexer",
   "marianoguerra/shrubbery/parser",
+  "marianoguerra/shrubbery/sexp",
   "marianoguerra/shrubbery/write",
-  "marianoguerra/shrubbery/doc",
   "marianoguerra/error-report" @report,
   "marianoguerra/error-report/render",
-  "marianoguerra/shrubbery/sexp",
+  "marianoguerra/error-report/style",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
+  "moonbitlang/x/sys",
 }
 
 pkgtype(kind: "executable")

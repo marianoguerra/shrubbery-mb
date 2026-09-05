@@ -61,3 +61,7 @@ jobs:
           tools/shrubdiff.py parse --show 0
           tools/shrubdiff.py source --show 0
           tools/shrubdiff.py print --show 0
+
+      # Exit codes and flag handling: nothing else runs the binary.
+      - name: CLI behaviour
+        run: tools/cli-test.sh

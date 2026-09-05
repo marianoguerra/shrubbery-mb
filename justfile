@@ -112,9 +112,18 @@ boundary-check:
 embed-smoke:
     tools/embed-smoke.sh
 
+# The only coverage of the BINARY's behaviour rather than the library's: exit
+# codes, flag handling, which stream things land on. No oracle runs the binary,
+# so none of them would notice `--width` being ignored.
+#
+# Run the CLI's own tests.
+[group('gates')]
+cli-test: build
+    tools/cli-test.sh
+
 # Check, format, unit tests, boundaries -- run before committing.
 [group('gates')]
-quick: check fmt test boundary-check embed-smoke diff
+quick: check fmt test boundary-check embed-smoke diff cli-test
 
 # Mirrors .github/workflows/check.yml, including the two `git diff --exit-code`
 # steps -- which is how a stale `.mbti` or an unformatted file is caught.
@@ -135,6 +144,7 @@ ci:
     tools/shrubdiff.py parse --show 0
     tools/shrubdiff.py source --show 0
     tools/shrubdiff.py print --show 0
+    tools/cli-test.sh
 
 # ---------------------------------------------------------------------------
 # The differential suite -- the project's real correctness gate
