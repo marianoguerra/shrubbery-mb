@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery"
+
+import {
+  "marianoguerra/error-report",
+  "marianoguerra/shrubbery/ast",
+  "marianoguerra/shrubbery/doc",
+  "marianoguerra/shrubbery/error",
+  "marianoguerra/shrubbery/lexer",
+  "marianoguerra/shrubbery/parser",
+  "marianoguerra/shrubbery/write",
+}
+
+// Values
+pub fn layout(@ast.Node, style? : @write.Style) -> @doc.Doc
+
+pub fn parse(String, variant? : @lexer.Variant, recover? : Bool) -> @parser.Parsed raise @error.ShrubberyError
+
+pub fn parse_text(String, variant? : @lexer.Variant, recover? : Bool) -> @parser.Parsed raise @error.ShrubberyError
+
+pub fn to_report(@error.Diagnostic, @error-report.SourceId) -> @error-report.Report
+
+pub fn to_source(@ast.Node) -> String
+
+pub fn tokens(String, variant? : @lexer.Variant) -> Array[@lexer.Token]
+
+pub fn write(@ast.Node, style? : @write.Style, width? : Int?) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

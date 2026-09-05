@@ -103,9 +103,18 @@ update:
 boundary-check:
     tools/boundary-check.sh
 
+# A consumer that builds trees and prints them -- a code generator -- should not
+# pay for the lexer or the parser. This reads the `-i` flags off the real
+# compile command rather than trusting the manifest.
+#
+# Check that an AST-and-printer consumer does not link the front end.
+[group('gates')]
+embed-smoke:
+    tools/embed-smoke.sh
+
 # Check, format, unit tests, boundaries -- run before committing.
 [group('gates')]
-quick: check fmt test boundary-check diff
+quick: check fmt test boundary-check embed-smoke diff
 
 # Mirrors .github/workflows/check.yml, including the two `git diff --exit-code`
 # steps -- which is how a stale `.mbti` or an unformatted file is caught.
@@ -120,6 +129,7 @@ ci:
     git diff --exit-code
     moon test --target all
     tools/boundary-check.sh
+    tools/embed-smoke.sh
     moon build --target native
     tools/shrubdiff.py tokens --show 0
     tools/shrubdiff.py parse --show 0

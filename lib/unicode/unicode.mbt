@@ -32,6 +32,17 @@ pub fn is_alphabetic(c : Char) -> Bool {
 }
 
 ///|
+/// A Unicode letter: Lu, Ll, Lt, Lm, Lo — what `\p{L}` matches.
+///
+/// NOT the same as `is_alphabetic`, which also takes in Nl and the
+/// Other_Alphabetic marks. The distinction is real and it is the printer's:
+/// the notation admits an identifier this rejects, and such a name has to be
+/// written as a `#{...}` escape.
+pub fn is_letter(c : Char) -> Bool {
+  in_table(@tables.letter, c.to_int())
+}
+
+///|
 /// Racket's `char-numeric?`.
 pub fn is_numeric(c : Char) -> Bool {
   in_table(@tables.numeric, c.to_int())

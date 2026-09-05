@@ -1,0 +1,19 @@
+// The modularity claim, as a package rather than a sentence.
+//
+// A consumer that builds trees and prints them -- a code generator, say --
+// should not pay for the lexer or the parser. This package imports exactly what
+// such a consumer would, and `tools/embed-smoke.sh` checks what the compiler
+// actually links for it.
+
+import {
+  "marianoguerra/shrubbery/ast",
+  "marianoguerra/shrubbery/write",
+  "marianoguerra/shrubbery/basic",
+  "marianoguerra/shrubbery/sexp",
+  "moonbitlang/core/bigint",
+}
+
+import {
+  "marianoguerra/shrubbery-dev/test/embed",
+  "moonbitlang/core/test",
+} for "test"

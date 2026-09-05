@@ -12,6 +12,11 @@
 /// `parens`, `block` or `alts` keeps its leading prefix and trailing suffix
 /// INSIDE, because moving them out would put them on the wrong side of the
 /// delimiter.
+///
+/// The reference needs a helper here to find where a node's properties live --
+/// on the operator rather than on the `op` wrapper it writes around it. This
+/// representation puts them on the node itself in every case, so there is
+/// nothing to look up.
 fn normalize_group_raw(node : @ast.Node) -> Unit {
   match node.it {
     // A document's own suffix is already the end-of-file trail, so nothing is
@@ -26,7 +31,7 @@ fn normalize_group_raw(node : @ast.Node) -> Unit {
         None => ()
       }
       if children.length() > 0 {
-        let first = anchor_of(children[0])
+        let first = children[0]
         node.meta.prefix = node.meta.prefix.combine(first.meta.prefix)
         first.meta.prefix = Empty
       }
@@ -44,17 +49,6 @@ fn normalize_group_raw(node : @ast.Node) -> Unit {
 }
 
 ///|
-/// Where an element's prefix and suffix actually live.
-///
-/// For a compound the properties are on the node itself; for an operator they
-/// are on the operator rather than on the `op` wrapper the reference writes.
-/// Both are already true of this representation, so this is the identity — it
-/// exists to say so at the one place that would otherwise have to guess.
-fn anchor_of(node : @ast.Node) -> @ast.Node {
-  node
-}
-
-///|
 /// Returns the suffix lifted off the last element, when asked for it.
 fn shift_prefix_to_suffix(
   elems : Array[@ast.Node],
@@ -67,9 +61,9 @@ fn shift_prefix_to_suffix(
     return None
   }
   for i in 1..<elems.length() {
-    let next = anchor_of(elems[i])
+    let next = elems[i]
     if !next.meta.prefix.is_empty() {
-      let prev = anchor_of(elems[i - 1])
+      let prev = elems[i - 1]
       prev.meta.suffix = prev.meta.suffix.combine(next.meta.prefix)
       next.meta.prefix = Empty
     }
@@ -77,7 +71,7 @@ fn shift_prefix_to_suffix(
   if !extract_suffix {
     return None
   }
-  let last = anchor_of(elems[elems.length() - 1])
+  let last = elems[elems.length() - 1]
   if last.meta.suffix.is_empty() {
     None
   } else {

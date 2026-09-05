@@ -10,6 +10,8 @@ pub fn grapheme_spans(String) -> Iter[(Int, Int)]
 
 pub fn is_alphabetic(Char) -> Bool
 
+pub fn is_letter(Char) -> Bool
+
 pub fn is_numeric(Char) -> Bool
 
 pub fn is_one_char_emoji(Char) -> Bool

@@ -6,23 +6,51 @@
 /// line depends on whether it is at the tail of its group, which depends on
 /// whether the enclosing form armours itself, and so on. Splitting them apart
 /// would mean recomputing the same conditions in five places.
+/// A delimiter that has two spellings.
+///
+/// Only `'…'` needs both: when its contents expose a `'`, it has to be written
+/// `'«…»'`. The reference says this by making the field either a string or a
+/// pair and picking with `car`/`cadr`; naming the two readings says the same
+/// thing and puts the choice in one place.
+priv struct Delim {
+  guillemets : String
+  plain : String
+}
+
+///|
+/// The spelling to use, given whether the contents expose a quote.
+fn Delim::choose(self : Delim, quoted : Bool) -> String {
+  if quoted {
+    self.guillemets
+  } else {
+    self.plain
+  }
+}
+
+///|
+/// The same, for a delimiter that is always spelled one way.
+fn same(text : String) -> Delim {
+  { guillemets: text, plain: text, }
+}
+
+///|
 priv struct Shape {
   /// Whether the multi-line reading is indented from the current column rather
   /// than from the enclosing indentation.
   align : Bool
   /// Opener for the multi-line reading; a pair when a `'…'` may need `«»`.
-  open : (String, String)
+  open : Delim
   /// Opener for the single-line reading.
-  line_open : (String, String)
+  line_open : Delim
   /// Separator with no space, used at a line break.
   sep : String
   /// Separator between terms on one line.
   sep_space : String
   /// Separator before a block, which joins rather than separates.
   block_sep_space : String
-  line_close : (String, String)
+  line_close : Delim
   /// `None` where the form has no closer at all.
-  close : (String, String)?
+  close : Delim?
   /// Whether the multi-line reading is still one line, with `;` separators.
   one_line_ish : Bool
   is_quotes : Bool
@@ -80,13 +108,13 @@ fn build_compound(
       (
         {
           align: true,
-          open: ("", ""),
-          line_open: ("", ""),
+          open: same(""),
+          line_open: same(""),
           sep: "",
           sep_space: " ",
           block_sep_space: "",
-          line_close: ("", ""),
-          close: Some(("", "")),
+          line_close: same(""),
+          close: Some(same("")),
           one_line_ish: true,
           is_quotes: false,
           use_non_tail: true,
@@ -98,23 +126,8 @@ fn build_compound(
     Block(_) =>
       {
         align: false,
-        open: (if a_mt { ":«" } else { ":" }, if a_mt { ":«" } else { ":" }),
-        line_open: (
-          if mt {
-            ":«"
-          } else if a_nt {
-            ":« "
-          } else {
-            ": "
-          },
-          if mt {
-            ":«"
-          } else if a_nt {
-            ":« "
-          } else {
-            ": "
-          },
-        ),
+        open: same(if a_mt { ":«" } else { ":" }),
+        line_open: same(if mt { ":«" } else if a_nt { ":« " } else { ": " }),
         sep: if armor {
           ";"
         } else {
@@ -122,24 +135,9 @@ fn build_compound(
         },
         sep_space: "; ",
         block_sep_space: "; ",
-        line_close: (
-          if mt {
-            "»"
-          } else if a_nt {
-            " »"
-          } else {
-            ""
-          },
-          if mt {
-            "»"
-          } else if a_nt {
-            " »"
-          } else {
-            ""
-          },
-        ),
+        line_close: same(if mt { "»" } else if a_nt { " »" } else { "" }),
         close: if a_mt {
-          Some(("»", "»"))
+          Some(same("»"))
         } else {
           None
         },
@@ -160,8 +158,8 @@ fn build_compound(
     Quotes(_) =>
       {
         align: false,
-        open: ("'«", "'"),
-        line_open: ("'«", "'"),
+        open: { guillemets: "'«", plain: "'", },
+        line_open: { guillemets: "'«", plain: "'", },
         sep: if armor {
           ";"
         } else {
@@ -169,8 +167,8 @@ fn build_compound(
         },
         sep_space: "; ",
         block_sep_space: "; ",
-        line_close: ("»'", "'"),
-        close: Some(("»'", "'")),
+        line_close: { guillemets: "»'", plain: "'", },
+        close: Some({ guillemets: "»'", plain: "'", }),
         one_line_ish: false,
         is_quotes: true,
         use_non_tail: true,
@@ -188,13 +186,13 @@ fn build_compound(
 fn bracket_shape(open : String, close : String) -> Shape {
   {
     align: false,
-    open: (open, open),
-    line_open: (open, open),
+    open: same(open),
+    line_open: same(open),
     sep: ",",
     sep_space: ", ",
     block_sep_space: ", ",
-    line_close: (close, close),
-    close: Some((close, close)),
+    line_close: same(close),
+    close: Some(same(close)),
     one_line_ish: false,
     is_quotes: false,
     use_non_tail: false,
@@ -214,7 +212,6 @@ fn assemble(
   target : Target,
   head~ : Bool,
 ) -> Built {
-  let armor = target is ArmorDoc
   let prefer_multi = target is MultiDoc
   // One line, with separators.
   let mut singles : Array[@doc.Doc]? = Some([])
@@ -291,11 +288,10 @@ fn assemble(
   let quotes = shape.is_quotes || (!shape.wraps && inner_quotes)
   // A `'…'` whose contents expose a `'` needs its guillemets; otherwise the
   // plain form reads the same and is shorter.
-  let sel = (p : (String, String)) => if inner_quotes { p.0 } else { p.1 }
-  let line_open = sel(shape.line_open)
-  let line_close = sel(shape.line_close)
-  let open = sel(shape.open)
-  let close = shape.close.map(sel)
+  let line_open = shape.line_open.choose(inner_quotes)
+  let line_close = shape.line_close.choose(inner_quotes)
+  let open = shape.open.choose(inner_quotes)
+  let close = shape.close.map(d => d.choose(inner_quotes))
   let line : @doc.Doc? = match singles {
     Some(parts) => {
       let out : Array[@doc.Doc] = [Str(line_open)]
@@ -359,7 +355,6 @@ fn assemble(
       }
     None => ()
   }
-  ignore(armor)
   {
     single: if shape.no_line {
       None

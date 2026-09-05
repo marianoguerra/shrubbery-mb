@@ -37,9 +37,27 @@ just ci         # everything CI enforces
 
 `AGENTS.md` is the guide for the details that are easy to get wrong.
 
+## Correctness
+
+Four oracles, over a 696-file corpus — the reference's own test inputs, its 66
+rejection cases, and 610 real Rhombus modules. All at 100%:
+
+| oracle | claim |
+|---|---|
+| `tokens` | the token stream, with values and columns |
+| `parse` | the parse tree, and the error message for a file that is rejected |
+| `source` | the source rebuilt from the tree's metadata |
+| `print` | re-formatted output, in all eleven layout modes |
+
+The suite is hermetic: the corpus and the goldens are committed, so it runs with
+neither Racket nor the reference checkout present.
+
 ## Status
 
-Early. `error-report` is usable; the notation itself is being built.
+Usable. Lexer, parser, raw-text metadata, both printers, `@` notation and
+`#{}` escapes are done and checked against the reference. The DrRacket editor
+services — the incremental colourer, indentation, navigation, armouring — are
+not ported.
 
 ## Licence
 

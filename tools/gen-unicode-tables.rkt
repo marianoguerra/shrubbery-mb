@@ -28,6 +28,9 @@
 ;; Whether `write` prints this character as itself inside a string literal.
 ;; `"` and `\\` are handled by name on the MoonBit side, so they are excluded
 ;; here to keep the table about printability alone.
+(define (letter? ch)
+  (memq (char-general-category ch) '(lu ll lt lm lo)))
+
 (define (string-literal-plain? ch)
   (and (not (char=? ch #\"))
        (not (char=? ch #\\))
@@ -183,6 +186,12 @@
                   (sweep char-punctuation?) 12)
       (emit-table o "whitespace" "Racket's `char-whitespace?`."
                   (sweep char-whitespace?) 12)
+      ;; `\\p{L}`, which is what the WRITER's identifier rule admits -- a
+      ;; narrower set than the notation's own `char-alphabetic?`, so a name the
+      ;; notation accepts can still have to be written as an escape.
+      (emit-table o "letter"
+                  "The Unicode letter categories (Lu, Ll, Lt, Lm, Lo), which is\nwhat `\\p{L}` matches. NOT the same as `alphabetic` above."
+                  (sweep letter?) 12)
       ;; Which characters Racket's `write` leaves alone inside a string. Asked
       ;; of `write` itself rather than derived from a property, because the rule
       ;; is the printer's and not the character database's: U+10FFFF is a

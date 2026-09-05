@@ -48,6 +48,10 @@ jobs:
       - name: error-report is still self-contained
         run: tools/boundary-check.sh
 
+      # A code generator should not pay for the lexer or the parser.
+      - name: An AST-and-printer consumer does not link the front end
+        run: tools/embed-smoke.sh
+
       # The real correctness gate. Hermetic: the corpus and the goldens are
       # committed, so this needs neither Racket nor the reference checkout.
       - name: Differential suite

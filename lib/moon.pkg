@@ -1,0 +1,23 @@
+// The façade. Importing this pulls in everything; a consumer that wants only
+// part of the library imports that part directly, and `just embed-smoke`
+// checks that doing so really does cost less.
+
+import {
+  "marianoguerra/shrubbery/ast",
+  "marianoguerra/shrubbery/doc",
+  "marianoguerra/shrubbery/error" @err,
+  "marianoguerra/shrubbery/lexer",
+  "marianoguerra/shrubbery/parser",
+  "marianoguerra/shrubbery/write",
+  "marianoguerra/error-report" @report,
+}
+
+// README.mbt.md is compiled as a doctest of this package, so it needs the
+// aliases a consumer would write in their own manifest.
+import {
+  "marianoguerra/shrubbery" @shrub,
+  "marianoguerra/error-report" @report,
+  "marianoguerra/error-report/render",
+  "marianoguerra/error-report/style",
+  "moonbitlang/core/test",
+} for "test"

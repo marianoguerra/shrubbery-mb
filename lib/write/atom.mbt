@@ -21,9 +21,9 @@ fn is_plain_identifier(s : String) -> Bool {
   let mut first = true
   for c in body {
     let ok = if first {
-      is_letter(c) || c == '_'
+      @unicode.is_letter(c) || c == '_'
     } else {
-      is_letter(c) || @unicode.is_numeric(c) || c == '_'
+      @unicode.is_letter(c) || @unicode.is_numeric(c) || c == '_'
     }
     if !ok {
       return false
@@ -31,16 +31,6 @@ fn is_plain_identifier(s : String) -> Bool {
     first = false
   }
   true
-}
-
-///|
-/// `\p{L}`: a Unicode letter.
-///
-/// Approximated by the Alphabetic property minus the marks and the numeric
-/// forms it also covers. The distinction only bites on characters that are
-/// alphabetic without being letters, which no identifier in the corpus is.
-fn is_letter(c : Char) -> Bool {
-  @unicode.is_alphabetic(c) && !@unicode.is_numeric(c)
 }
 
 ///|

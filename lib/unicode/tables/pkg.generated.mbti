@@ -8,6 +8,8 @@ pub let emoji_edges : FixedArray[Int]
 
 pub let emoji_nodes : FixedArray[Int]
 
+pub let letter : FixedArray[Int]
+
 pub let numeric : FixedArray[Int]
 
 pub let one_char_emoji : FixedArray[Int]
