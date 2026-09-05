@@ -262,9 +262,10 @@ corpus:
 goldens:
     racket tools/oracle/collect-goldens.rkt
 
-# Recreate the reference's full answer for ONE file, for reading. The
-# real-world bucket carries digests only, so this is how you see what a
+# The real-world bucket carries digests only, so this is how you see what a
 # divergence there actually is.
+#
+# Recreate the reference's full answer for ONE file, for reading.
 [group('regen')]
 golden-for file:
     racket tools/oracle/tokens.rkt {{file}}
@@ -282,6 +283,15 @@ regen-all: unicode-regen column-regen
 # The acceptance test for the reference checkout: if this fails, every oracle
 # below is meaningless.
 #
+# `reference/` is gitignored read-only material. It is used for exactly two
+# things -- as the source this port is written from, and as the input to
+# `corpus` and `goldens` -- and is never a build or CI input.
+#
+# Restore the reference checkout at the pinned commit.
+[group('reference')]
+reference-fetch:
+    tools/fetch-reference.sh
+
 # Prove the reference implementation loads and its own suite passes.
 [group('reference')]
 reference-check:

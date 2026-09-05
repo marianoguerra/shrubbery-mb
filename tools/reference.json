@@ -1,0 +1,28 @@
+{
+  "_comment": [
+    "The two pins this port is checked against, and they must agree.",
+    "",
+    "`upstream_commit` fixes the SOURCES being ported and the corpus taken from",
+    "them; `racket_version` fixes the BINARY that answers as the oracle. Skew",
+    "between them is silent and destructive -- the goldens would record what one",
+    "version does while the code was written against another -- which is why",
+    "they live in one file and are restored by a script rather than by hand.",
+    "",
+    "Restore with tools/fetch-reference.sh. Regenerating the corpus or the",
+    "goldens after moving either pin is a deliberate act, and the diff it",
+    "produces is the review artifact for the move."
+  ],
+  "upstream": "https://github.com/racket/rhombus",
+  "upstream_commit": "cefc758d80738d2305b1d40ef7ae4ddc03d026cd",
+  "upstream_date": "2026-09-03T09:41:35-04:00",
+  "racket_version": "8.18",
+  "collection_path": "reference/shrubbery-lib",
+  "notes": [
+    "Nothing is installed into Racket: shrubbery-lib/info.rkt declares",
+    "`collection 'multi`, so PLTCOLLECTS pointing at the checkout is enough and",
+    "the checkout stays read-only.",
+    "shrubbery-lib declares base >= 8.8.0.5, syntax-color-lib and",
+    "parser-tools-lib; its only version-sensitive API is string-grapheme-span,",
+    "added in Racket 8.5."
+  ]
+}

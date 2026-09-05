@@ -46,8 +46,15 @@ lives in `lib/error`.
 
 ## The reference checkout
 
-`reference/` is gitignored — a read-only clone of `racket/rhombus`, pinned at
-`cefc758d`. **Never edit it**, and never let it become a build or CI input.
+`reference/` is gitignored — a read-only clone of `racket/rhombus`. **Never edit
+it**, and never let it become a build or CI input.
+
+`tools/reference.json` holds the two pins, and they must agree:
+`upstream_commit` fixes the sources being ported and the corpus taken from them;
+`racket_version` fixes the binary that answers as the oracle. Skew between them
+is silent and destructive — the goldens would record what one version does while
+the code was written against another — which is why they live in one file and
+are restored by `just reference-fetch` rather than by hand.
 
 Nothing is installed into Racket: `shrubbery-lib/info.rkt` declares
 `collection 'multi`, so putting the checkout on `PLTCOLLECTS` is enough. That is
