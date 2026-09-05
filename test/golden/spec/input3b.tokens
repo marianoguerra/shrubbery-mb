@@ -1,0 +1,17 @@
+identifier	1	0	"x"	-
+block-operator	1	1	":"	-
+whitespace	1	2	"\u{a}"	-
+whitespace	2	0	"  "	-
+literal	2	2	"#{#(let f)}"	#(#<syntax>|let| #<syntax>|f|)
+whitespace	3	11	"\u{a}"	-
+whitespace	4	0	"  "	-
+keyword	4	2	"~subst"	-
+whitespace	4	8	"\u{a}"	-
+identifier	5	0	"#{x}"	-
+opener	5	4	"("	-
+identifier	5	5	"y"	-
+comma-operator	5	6	","	-
+whitespace	5	7	"\u{a}"	-
+whitespace	6	0	"     "	-
+identifier	6	5	"z"	-
+closer	6	6	")"	-

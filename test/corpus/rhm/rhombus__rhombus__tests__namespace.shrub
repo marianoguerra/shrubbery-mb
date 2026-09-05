@@ -1,0 +1,452 @@
+
+namespace home:
+  def x = "x"
+  class Posn(x, y)
+  export:
+    x
+    Posn
+    rename: List as XList
+
+check:
+  home.x
+  ~is "x"
+
+check:
+  use_static
+  home.Posn(1, 2).x
+  ~is 1
+
+check:
+  match home.Posn(1, 2)
+  | home.Posn(x, y):
+      x
+  ~is 1
+
+check:
+  match home.XList(1, 2)
+  | home.XList(x, y):
+      for home.XList:
+        each i in x..3
+        i
+  ~is [1, 2]
+
+check:
+  import: .home open
+  match XList(1, 2)
+  | XList(x, y):
+      for XList:
+        each i in x..3
+        i
+  ~is [1, 2]
+
+check:
+  import: .home open
+  match Posn(1, 2)
+  | Posn(x, y):
+      x
+  ~is 1
+
+check:
+  namespace like_home:
+    export: home.x
+  like_home.x
+  ~is "x"
+
+check:
+  namespace n:
+    let y = 11
+    export:
+      y
+  n.y
+  ~is 11
+
+check:
+  def y = 8
+  namespace n:
+    export:
+      y
+    let y = 11
+  n.y
+  ~is 8
+
+check:
+  namespace ~open:
+    export:
+      x
+    def x = 10
+  x
+  ~is 10
+
+check:
+  namespace ~open:
+    let y = 11
+    export:
+      y
+  y
+  ~is 11
+
+check:
+  import rhombus/meta open
+  defn.macro 'gen':
+    'namespace ~open:
+       let y = 12
+       export:
+         y
+     y'
+  gen
+  ~is 12
+
+check:
+  ~eval
+  namespace ~open:
+    export:
+      nonesuch
+  nonesuch
+  ~throws "undefined"
+
+check:
+  import rhombus/meta open
+  namespace ~open:
+    export: Num
+    annot.macro 'Num': 'Real'
+  1 :: Num
+  ~is 1
+
+check:
+  ~eval
+  module m ~lang rhombus:
+    namespace ~open:
+      export:
+        nonesuch
+  ~throws "exported identifier not defined"
+
+check:
+  ~eval
+  module m ~lang rhombus:
+    namespace ~open:
+      export:
+        nonesuch
+      let nonesuch = 8
+  ~throws "exported identifier defined later"
+
+block:
+  namespace ns:
+    export def x = 1
+  namespace ~open:
+    export def ns.y = 10
+    export def z = 8
+  check y ~is 10
+  check ns.x ~is 1
+  check z ~is 8
+
+check:
+  ~eval
+  module m ~lang rhombus:
+    namespace ns:
+      export def x = 1
+    def y = 8
+    //operator (a +++ b): a
+    namespace ~open:
+      //export operator (a ns.(+++) b): a
+      export def ns.y = 10
+  ~throws "identifier already defined"
+
+check:
+  ~eval
+  module m ~lang rhombus:
+    namespace ns:
+      export def x = 1
+    operator (a +++ b): a
+    namespace ~open:
+      export operator (a ns.(+++) b): a
+  ~throws "identifier already defined"
+
+block:
+  namespace a:
+    export b
+    def b = 164
+  namespace ~open:
+    export a.b
+  check b ~is 164
+
+block:
+  namespace a
+  namespace ~open:
+    export a.b
+    def a.b = 172
+  check b ~is 172
+
+block:
+  import rhombus/meta open
+  namespace A:
+    export:
+      only_space namespace:
+        B
+    namespace B:
+      export x
+      def x = "x"
+
+  check A.B.x ~is "x"
+
+block:
+  import rhombus/meta open
+  namespace A:
+    export:
+      except_space namespace:
+        y
+      only_space namespace:
+        rename:
+          B as y
+    def y = 7
+    namespace B:
+      export x
+      def x = "x"
+
+  check A.y ~is 7
+  check A.y.x ~is "x"
+
+block:
+  import rhombus/meta open
+  namespace A:
+    export:
+      except_space namespace:
+        y
+      only_space namespace:
+        rename:
+          B as y
+    def y = 7
+    namespace B:
+      export x
+      def x = "x"
+
+  check A.y.x ~is "x"
+  check A.y ~is 7
+
+block:
+  import rhombus/meta open
+  namespace Q:
+    namespace N:
+      export:
+        x
+      def x = "x"
+      annot.macro 'x': 'Int'
+    export:
+      N.x
+  check Q.x ~is "x"
+  check 10 :: Q.x ~is 10
+
+block:
+  import rhombus/meta open
+  namespace Q:
+    namespace N:
+      export:
+        only_space expr:
+          x
+      def x = "x"
+      annot.macro 'x': 'Int'
+    export:
+      N.x
+  check Q.x ~is "x"
+
+check:
+  ~eval
+  import rhombus/meta open
+  namespace Q:
+    namespace N:
+      export:
+        only_space expr:
+          x
+      def x = "x"
+      annot.macro 'x': 'Int'
+    export:
+      N.x
+  10 :: Q.x
+  ~throws "identifier not provided by Q"
+
+block:
+  namespace ns:
+    export f Posn Pointy
+    fun f(x :: Int):
+      x
+    class Posn(x, y):
+      nonfinal
+      method d():
+        ~name alt_d
+        x + y
+      final method h():
+        ~name alt_h
+        x + y
+    interface Pointy:
+      abstract method q()
+      method r():
+        ~name alt_r
+        1
+  check print(ns.f) ~prints "#<function:ns.f>"
+  check ns.f("x") ~throws values("ns.f:", error.annot_msg("argument"))
+  check ns.f(1, 2, 3) ~throws values("ns.f:", "wrong number of arguments")
+  check print(ns.Posn) ~prints "#<function:ns.Posn>"
+  check print(ns.Posn(1, 2).d) ~prints "#<function:alt_d>"
+  check print(ns.Posn(1, 2).h) ~prints "#<function:alt_h>"
+  check print(ns.Posn.d) ~prints "#<function:alt_d>"
+  check print(ns.Posn.h) ~prints "#<function:alt_h>"
+  check print(ns.Pointy.q) ~prints "#<function:ns.Pointy.q>"
+  check print(ns.Pointy.r) ~prints "#<function:alt_r>"
+
+block:
+  namespace ns:
+    export sub
+    namespace sub:
+      export f g
+      fun f(x :: Int):
+        x
+      fun g(x :: Int):
+        ~name gee
+        x
+  check print(ns.sub.f) ~prints "#<function:ns.sub.f>"
+  check ns.sub.f("x") ~throws values("ns.sub.f:", error.annot_msg("argument"))
+  check ns.sub.f(1, 2, 3) ~throws values("ns.sub.f:", "wrong number of arguments")
+  check print(ns.sub.g) ~prints "#<function:gee>"
+  check ns.sub.g("x") ~throws values("gee:", error.annot_msg("argument"))
+  check ns.sub.g(1, 2, 3) ~throws values("gee:", "wrong number of arguments")
+
+// check that static info is propagated for namespace extensions
+block:
+  use_static
+
+  namespace n
+  fun n.x() :: String:
+    "ok"
+  def n.lst = []
+  def (n.str :: String, n.bstr :: Bytes) = values("", #"")
+  class n.Posn(x, y):
+    method m(): 1
+
+  check:
+    import .n as n2
+    [n2.x().length(),
+     n2.lst.length(),
+     n2.str.length(),
+     n2.bstr.length(),
+     n2.Posn(1, 2).m()]
+    ~is [2, 0, 0, 0, 1]
+
+block:
+  namespace ns:
+    ~name example.longer.name
+    export fun f(x :: Int):
+      x
+  check ns.f("apple") ~throws values("example.longer.name.f",
+                                     error.annot_msg("argument"))
+
+
+block:
+  namespace ns:
+    ~name: another.example.longer.name
+    export fun f(x :: Int):
+      x
+  check ns.f("apple") ~throws values("another.example.longer.name.f",
+                                     error.annot_msg("argument"))
+
+
+block:
+  import rhombus/meta open
+  namespace ns:
+    def bovine = "cow"
+    annot.macro 'bovine': 'Any.of("cow")'
+    export:
+      bovine
+      only_space expr:
+        bovine
+  check ns.bovine ~is "cow"
+  check "cow" :: ns.bovine ~is "cow"
+
+block:
+  import rhombus/meta open
+  namespace ns:
+    def bovine = "cow"
+    annot.macro 'bovine': 'Any.of("cow")'
+    export:
+      only_space expr:
+        bovine
+      bovine
+  check ns.bovine ~is "cow"
+  check "cow" :: ns.bovine ~is "cow"
+
+block:
+  namespace ns:
+    export def x = 1
+  namespace ~extend ns:
+    export def y = 2
+    export namespace sub:
+      export def x = 0
+  def plain_z = 3
+  alias 'ns.z': 'plain_z'
+  check [ns.sub.x, ns.x, ns.y, ns.z] ~is [0, 1, 2, 3]
+
+block:
+  namespace ns:
+    export def x = 1
+  namespace ~extend ns:
+    export namespace sub:
+      export def x = 0
+  namespace ~extend ns.sub:
+    export def y = 2
+  check [ns.sub.x, ns.sub.y] ~is [0, 2]
+
+block:
+  namespace ns:
+    export def x = 1
+  namespace ns2:
+    export def y = 2
+  namespace ~extend ns:
+    export import .ns2 open
+  check [ns.x, ns.y] ~is [1, 2]
+
+block:
+  namespace ns:
+    export def x = 1
+  block:
+    namespace ~extend ns:
+      export def y = 2
+    def plain_z = 3
+    alias 'ns.z': 'plain_z'
+    check [ns.x, ns.y, ns.z] ~is [1, 2, 3]  
+  check ns.x ~is 1
+
+block:
+  import rhombus/meta open
+  namespace ns
+  namespace ~extend ns:
+    export annot.macro 'x': 'Int'
+    export def x = 2
+  check ns.x :: ns.x ~is 2
+
+block:
+  import rhombus/meta open
+  namespace ns
+  namespace ~extend ns:
+    export:
+      only_space expr: x
+    annot.macro 'x': 'Int'
+    def x = 2
+  import .ns.x
+  annot.macro 'x': 'Int'
+  check x :: x ~is 2
+
+block:
+  import rhombus/meta open
+  namespace ns
+  namespace ~extend ns:
+    export:
+      except_space annot: x
+    annot.macro 'x': 'Int'
+    def x = 2
+  import .ns.x
+  annot.macro 'x': 'Int'
+  check x :: x ~is 2
+
+check:
+  ~eval
+  namespace ~extend nonesuch:
+    #void
+  ~throws "name to extend is not bound as a namespace"

@@ -1,0 +1,196 @@
+import:
+  lib("racket/base.rkt").mcons
+
+use_static
+
+class Posn(x, y)
+
+check:
+  "apple" == "apple"
+  ~is #true
+
+check:
+  [1, 2, 3] == 1
+  ~is #false
+
+check:
+  [1, "apple", {"alice": 97}] == [1, "apple", {"alice": 97}]
+  ~is #true
+
+check:
+  1 == 1.0
+  ~is #false
+
+check:
+  "yes" == "yes"
+  ~is #true
+
+check:
+  "yes" == "no"
+  ~is #false
+
+check:
+  6 * 7 == 42
+  ~is #true
+
+check:
+  math.expt(2, 100) == math.expt(2, 100)
+  ~is #true
+
+check:
+  2 == 2.0
+  ~is #false
+
+check:
+  [1, 2] == [1, 2]
+  ~is #true
+
+check:
+  block:
+    def v = mcons(1, 2)
+    v == v
+  ~is #true
+
+check:
+  mcons(1, 2) == mcons(1, 2)
+  ~is #false
+
+check:
+  {[1, 2]: 3}[[1, 2]]
+  ~is 3
+
+check:
+  {mcons(1, 2): 3}[mcons(1, 2)]
+  ~throws "Map.get: no value found for key"
+
+block:
+  def a = mcons(1, 2)
+  def b = mcons(1, 2)
+  def m = {a: "a", b: "b"}
+  check:
+    m[a]
+    ~is "a"
+  check:
+    m[b]
+    ~is "b"
+
+check:
+  [1, 2] in {[1, 2]}
+  ~is #true
+
+check:
+  mcons(1, 2) in {mcons(1, 2)}
+  ~is #false
+
+check:
+  block:
+    def v = mcons(1, 2)
+    v in {v}
+  ~is #true
+
+block:
+  def a = mcons(1, 2)
+  def b = mcons(1, 2)
+  def c = mcons(1, 2)
+  def s = {a, b}
+  check:
+    a in s
+    ~is #true
+  check:
+    b in s
+    ~is #true
+  check:
+    c in s
+    ~is #false
+
+// empty map, not empty set
+check {} ~is Map()
+check {} == Set() ~is #false
+check Map.empty ~is {}
+check {"a": 1, "b": 2} ~is {"b": 2, "a": 1}
+check {"a": 1, "b": 2} ~is Map{"b": 2, "a": 1}
+check {"a": 1, "b": 2} ~is Map(["b", 2], ["a", 1])
+block:
+  def a = mcons(1, 2)
+  def b = mcons(1, 2)
+  check {a: 1, b: 2} ~is {b: 2, a: 1}
+  check {a: 1} == {b: 1} ~is #false
+check:
+  match {}
+  | Map.empty: "Map.empty"
+  | _: #false
+  ~is "Map.empty"
+check:
+  match MutableMap()
+  | Map.empty: "Map.empty"
+  | _: #false
+  ~is #false
+check:
+  match {}
+  | ReadableMap.empty: "ReadableMap.empty"
+  | _: #false
+  ~is "ReadableMap.empty"
+check:
+  match MutableMap()
+  | ReadableMap.empty: "ReadableMap.empty"
+  | _: #false
+  ~is "ReadableMap.empty"
+check:
+  match {"a": 1}
+  | Map.empty: "Map.empty"
+  | {}: "{}"
+  | _: #false
+  ~is "{}"
+
+check Set.empty ~is Set()
+check:
+  match Set()
+  | Set.empty: "Set.empty"
+  | _: #false
+  ~is "Set.empty"
+check:
+  match MutableSet()
+  | Set.empty: "Set.empty"
+  | _: #false
+  ~is #false
+check:
+  match Set()
+  | ReadableSet.empty: "ReadableSet.empty"
+  | _: #false
+  ~is "ReadableSet.empty"
+check:
+  match MutableSet()
+  | ReadableSet.empty: "ReadableSet.empty"
+  | _: #false
+  ~is "ReadableSet.empty"
+
+def local_map = Map{#'alice: Posn(4, 5),
+                    #'bob: Posn(7, 9)}
+
+fun locale(who, neighborhood :: Map.of(Symbol, Posn)):
+  def p = neighborhood[who]
+  p.x +& ", " +& p.y
+
+check:
+  locale(#'alice, local_map)
+  ~is "4, 5"
+
+def {#'bob: bob_loc} = local_map
+check:
+  bob_loc
+  ~is Posn(7, 9)
+
+def Map{#'alice: alice_loc2, #'bob: bob_loc2} = local_map
+check:
+  [alice_loc2, bob_loc2]
+  ~is [Posn(4, 5), Posn(7, 9)]
+
+check Set() ~is Set()
+check {"a", "b"} ~is {"b", "a"}
+check {"a", "b"} ~is Set{"b", "a"}
+check {"a", "b"} ~is Set("b", "a")
+block:
+  def a = mcons(1, 2)
+  def b = mcons(1, 2)
+  check {a, b} ~is {b, a}
+  check {a} == {b} ~is #false

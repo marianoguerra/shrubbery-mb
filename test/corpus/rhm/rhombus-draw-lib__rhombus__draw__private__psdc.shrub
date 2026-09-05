@@ -1,0 +1,35 @@
+import:
+  "rkt.rhm"
+  "size.rhm":
+    expose:
+      Size
+      SizeLike
+  "dc.rhm".DC
+  "dc.rhm"!internal.SomeDC
+  "pageddc.rhm":
+    expose:
+      PagedDC
+
+export:
+  PSDC
+
+class PSDC():
+  extends SomeDC
+  implements PagedDC
+
+  constructor (size :: PagedDC.PaperSize,
+               ~output: output :: Path || Port.Output,
+               ~as_eps: as_eps = #true,
+               ~config: config :: PagedDC.Config = PagedDC.Config.current()):
+    let size = (size != #'paper) && (size :: SizeLike.to_size)
+    let hand:
+      parameterize { rkt.#{current-ps-setup}: config.handle }:
+        rkt.make_object(rkt.#{post-script-dc%},
+                        #false, // never interactive
+                        #false, // no GUI parent
+                        !size, // use paper bbox if given `size` is #'paper
+                        as_eps,
+                        size && Size.width(size),
+                        size && Size.height(size),
+                        output)
+    super(hand)()

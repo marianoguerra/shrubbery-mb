@@ -1,0 +1,261 @@
+
+import:
+  draw
+  pict:
+    expose:
+      Pict
+      StaticPict
+  pict/text
+  rhombus/pict/text!ly.ly
+  slideshow/config
+  slideshow/content open
+  slideshow/content!private open
+  lib("slideshow/main.rkt") as rkt
+  lib("pict/main.rkt") as rkt_pict
+  lib("slideshow/play.rkt") as rkt_play
+  lib("racket/string.rkt")
+
+export:
+  all_from(.pict)
+  all_from(.text)
+
+  current_title_font
+  titlet
+  titlely
+
+  SlideContent
+  SlideLayout
+  Aspect
+  current_assembler
+  blank_client
+
+  // flattens nested lists in arguments:
+  slide
+  slide_pict
+  slide_content_pict
+  slide_transition
+
+  nonarchival
+  continued
+
+  interactive
+
+  is_printing
+  is_condensing
+
+  start_at_recent
+
+  retract_recent
+  Slide
+
+namespace slide:
+  export:
+    next
+    sync
+    Next
+    gap
+    alts
+    Alts
+
+    align
+
+    right
+    center
+    left
+    horiz
+
+    Sep
+    HorizAlignment
+
+// ----------------------------------------
+
+Parameter.def current_title_font :: draw.Font:
+  text.current_font() with (size = 40)
+
+ly titlely: current_title_font()
+
+fun titlet(a, ...) :~ Pict:
+  titlely(a, ...)
+
+// ----------------------------------------
+
+def mutable previous_slide_data = #false
+def mutable pending_transition = #false
+
+enum SlideLayout
+| auto
+| center
+| top
+| tall
+
+enum Aspect
+| widescreen
+| fullscreen
+
+def can_page_mode:
+  let (_, _, allowed_kws) = Function.arity(rkt.slide)
+  allowed_kws?.contains(#'~#{page-mode})
+
+fun slide(~title: title :: maybe(String || Pict) = #false,
+          ~name: name = title,
+          ~layout: layout :: SlideLayout = #'auto,
+          ~sep: sep :: Real = gap,
+          ~horiz: horiz :: pict.HorizAlignment = #'center,
+          ~lead_in: lead_in = #false,
+          ~aspect: aspect :: Aspect= #'widescreen,
+          content :: SlideContent, ...):
+  let p = slide_content_pict(~sep: sep, ~horiz: horiz,
+                             flatten_slide_content(#'slide, [content, ...]))
+  let name = if name is_a String | name | to_string(name)
+  let p: assemble_slide(title, layout, aspect, p, ~lead_in: lead_in)
+  let (p, lead_in):
+    if pending_transition
+    | apply_pending_transition(p, { #'name: name,
+                                    #'lead_in: lead_in,
+                                    #'aspect: aspect })
+    | values(p, lead_in)
+  when lead_in && !rkt.#{condense?}
+  | rkt_play.#{play-n}(~name: name,
+                       ~#{skip-first?}: #true,
+                       ~#{skip-last?}: #true,
+                       ~& if can_page_mode
+                       | { #'~#{page-mode}: #'none }
+                       | {},
+                       fun (n): p.snapshot(-1, n).draw_handle)
+  for (i in 0..p.duration):
+    let continued = p.epoch_metadata(i).get(#'continued, #false)
+    if rkt.#{condense?} && p.epoch_metadata(i).get(#'nonarchival, #false)
+    | unless continued
+      | rkt.#{skip-slides}(1)
+    | let extent = p.epoch_extent(i)
+      if extent .= 0
+      | rkt.slide(~name: name,
+                  ~aspect: aspect,
+                  ~& if can_page_mode
+                  | { #'~#{page-mode}: if continued | #'none | #'all }
+                  | {},
+                  & (if p == pict.nothing
+                     | []
+                     | [p.snapshot(i, 0).draw_handle]))
+      | rkt_play.#{play-n}(~name: name,
+                           ~aspect: aspect,
+                           ~steps: math.exact(math.round(10 * extent / 0.5)),
+                           ~#{skip-last?}: #true,
+                           ~& if can_page_mode
+                           | { #'~#{page-mode}: if continued | #'none | #'epoch }
+                           | {},
+                           fun (n): p.snapshot(i, n).draw_handle)
+  previous_slide_data := p.duration > 0 && { #'pict: p.snapshot(p.duration-1, 0),
+                                             #'prev_name: name,
+                                             #'prev_aspect: aspect }
+
+fun slide_pict(~title: title :: maybe(String || Pict) = #false,
+               ~full: full = title && #true,
+               ~sep: sep :: Real = gap,
+               ~horiz: horiz :: pict.HorizAlignment = #'center,
+               ~layout: layout :: SlideLayout = #'auto,
+               ~aspect: aspect = #'widescreen,
+               content :: SlideContent, ...) :~ Pict:
+  let p = slide_content_pict(~sep: sep, ~horiz: horiz,
+                             flatten_slide_content(#'slide_pict, [content, ...]))
+  if full
+  | assemble_slide(title, layout, aspect, p)
+  | p
+
+fun assemble_slide(title, layout, aspect, p, ~lead_in = #false) :~ Pict:
+  match title
+  | _ :: pict.NothingPict:
+      current_assembler()(#false, layout, aspect, p)
+  | _ :: String:
+      let title = titlet(title)
+      let title = if lead_in | title.sustain(1).time_pad(~before: -1) | title
+      current_assembler()(title, layout, aspect, p)
+  | ~else:
+      current_assembler()(title, layout, aspect, p)
+
+Parameter.def current_assembler :: Function.of_arity(4):
+  fun (title :: False || Pict, layout:: SlideLayout, aspect :: Aspect, p :: Pict):
+    recur retry(title = title, p :~ Pict = p):
+      cond
+      | layout == #'auto && !(p is_a pict.StaticPict):
+          // layout decision depends on size, so use size
+          // at each step, instead of only the starting size
+          if title
+          | pict.animate_map(~deps: [title, p], fun (~deps: [title, p], epoch, n): retry(title, p))
+          | pict.animate_map(~deps: [p], fun (~deps: [p], epoch, n): retry(title, p))
+      | ~else:
+          let back: Pict.from_handle(rkt.#{get-full-page}(~aspect: aspect))
+          let head :~ Pict:
+            if title
+            | Pict.pad(title, ~bottom: if layout == #'tall | gap | 2*gap)
+            | pict.blank()
+          let layout:
+            match layout
+            | #'auto:
+                if p.height > (back.height - 2 * head.height) | #'top | #'center
+            | ~else: layout
+          let body:
+            match layout
+            | #'center: back
+            | ~else: back.pad(~top: -head.height)
+          pict.overlay(~vert: #'bottom,
+                       pict.overlay(~vert: #'top,
+                                    back,
+                                    head),
+                       pict.overlay(~vert: match layout
+                                           | #'tall: #'top
+                                           | ~else: layout,
+                                    body,
+                                    p)
+                         .refocus(body))
+            .refocus(back)
+
+fun blank_client(~aspect: aspect :: Aspect = #'widescreen,
+                 ~title: title :: maybe(String || Pict) = #false,
+                 ~layout: layout :: SlideLayout = #'auto) :~ Pict:
+  let b = Pict.from_handle(rkt.#{get-full-page}(~aspect: aspect))
+  if title
+  | let title = titlet(title)
+    b.pad(~top: -title.height - (if layout == #'tall | gap | 2 * gap))
+  | b
+
+// ----------------------------------------
+
+fun slide_transition(transition :: (StaticPict, Pict, Map) -> (Pict, Boolean)):
+  pending_transition := transition
+
+fun apply_pending_transition(p, data :~ Map) :~ values(Pict, Boolean):
+  let prev_data :~ Map = previous_slide_data
+  unless prev_data
+  | error("no previous slide for transition")
+  let transition = pending_transition
+  pending_transition := #false
+  transition(prev_data[#'pict], p, data ++ prev_data.remove(#'pict))
+
+// ----------------------------------------
+
+fun interactive(p :: Pict, callback :: Function.of_arity(1)) :~ Pict:
+  Pict.from_handle(rkt.interactive(p.snapshot().handle, callback))
+
+fun is_printing():
+  rkt.#{printing?}
+
+fun is_condensing():
+  rkt.#{condense?}
+
+fun start_at_recent():
+  rkt.#{start-at-recent-slide}()
+
+// ----------------------------------------
+
+class Slide(private _handle, private _slide_data):
+  internal _Slide
+  constructor ~none
+  property handle: _handle
+  method reissue():
+    previous_slide_data := _slide_data
+    rkt.#{re-slide}(_handle)
+
+fun retract_recent() :~ Slide:
+  _Slide(rkt.#{retract-most-recent-slide}(),
+         previous_slide_data)

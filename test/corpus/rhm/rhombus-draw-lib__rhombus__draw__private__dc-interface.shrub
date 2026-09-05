@@ -1,0 +1,11 @@
+
+export:
+  DC
+  _DC
+  DCForward
+
+interface DC:
+  internal _DC
+  property handle
+
+annot.delayed_declare DCForward

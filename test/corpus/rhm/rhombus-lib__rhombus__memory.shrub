@@ -1,0 +1,34 @@
+import:
+  lib("racket/base.rkt")
+
+export:
+  gc
+  minor_gc
+  incremental_gc
+
+  current_use
+  cumulative_use
+
+  order_acquire
+  order_release
+
+fun gc():
+  base.#{collect-garbage}()
+
+fun minor_gc():
+  base.#{collect-garbage}(#'minor)
+
+fun incremental_gc():
+  base.#{collect-garbage}(#'incremental)
+
+fun current_use():
+  base.#{current-memory-use}()
+  
+fun cumulative_use():
+  base.#{current-memory-use}(#'cumulative)
+
+fun order_acquire():
+  base.#{memory-order-acquire}()
+
+fun order_release():
+  base.#{memory-order-release}()

@@ -1,0 +1,32 @@
+import:
+  "when_unless.rhm" open
+  "error.rhm" open
+
+use_static
+
+export:
+  RXMatch
+
+class RXMatch(whole, captures :: List, capture_names :: Map):
+  implements Listable
+  implements Indexable
+
+  override method to_list():
+    [whole] ++ captures
+  override method get(index):
+    match index
+    | 0: whole
+    | (index :: PosInt) when index <= captures.length():
+        captures[index - 1]
+    | sym :: Symbol:
+        let index = Map.get(capture_names, sym, #false)
+        if index
+        | captures[index - 1]
+        | error(~who: #'#{RX.get},
+                "no capture group by given name",
+                error.val(~label: "name", sym))
+    | ~else:
+       error(~who: #'#{RX.get},
+             ~exn: Exn.Fail.Annot,
+             "invalid match index",
+             error.val(~label: "index", index))

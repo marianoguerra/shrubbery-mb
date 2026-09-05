@@ -1,0 +1,4 @@
+import:
+  shrubbery/render/private/typeset_meta open
+export:
+  all_from(shrubbery/render/private/typeset_meta)

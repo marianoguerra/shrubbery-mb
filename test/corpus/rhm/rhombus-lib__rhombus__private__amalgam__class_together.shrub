@@ -1,0 +1,53 @@
+import:
+  "core-meta.rkt" open
+  "alias.rkt" open
+
+use_static
+
+export:
+  only_space namespace:
+    class
+
+namespace class:
+  export together
+
+defn.macro 'together:
+              $defn
+              ...':
+  ~all_stx all_stx
+  let [[name, annot_id, class_id, new_defn], ...]:
+    for List (defn in [defn, ...]):
+      match defn
+      | '$(tag && ((bound_as defn_meta.space: 'class')
+                     || (bound_as defn_meta.space: 'interface')))
+           $(name :: IdentifierName) $tail ...':
+          let '$name_t ...' = name
+          let name_sym = name.name_to_symbol()
+          let annot_id = Syntax.make_temp_id(name_sym, ~keep_name: #true).relocate_span([name_t, ...])
+          let class_id = Syntax.make_temp_id(name_sym, ~keep_name: #true).relocate_span([name_t, ...])
+          let new_defn = '$tag $class_id $tail ...'
+          [name, annot_id, class_id, new_defn]
+      | ~else:
+          syntax_meta.error("not a class or interface definition",
+                            all_stx,
+                            defn)
+  '$('«
+        // namespaces need to be declared early, in case any later
+        // names extend earlier names
+        namespace $name
+        annot.delayed_declare $annot_id
+        alias '$name':
+          ~only_space annot
+          '$annot_id'
+      »')
+   ...
+   $('«
+        $new_defn
+        namespace ~extend $name:
+          export all_from(. $class_id)
+        annot.delayed_complete $annot_id: $class_id
+        alias '$name':
+          ~except_space namespace annot
+          '$class_id'
+      »')
+   ...'

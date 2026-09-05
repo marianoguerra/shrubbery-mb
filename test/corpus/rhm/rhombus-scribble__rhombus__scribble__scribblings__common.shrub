@@ -1,0 +1,29 @@
+import:
+  meta_label:
+    rhombus open:
+      except:
+        #{#%module-begin}
+    rhombus/meta open:
+      except:
+        #{#%module-begin}
+        space_meta_clause
+    rhombus/scribble/manual open
+  rhombus/scribble/manual
+
+export:
+  epsilon
+  meta_label:
+    all_from(rhombus)
+    all_from(rhombus/meta)
+    all_from(rhombus/scribble/manual)
+  veneer_same
+  annot_same
+
+def epsilon = "ϵ"
+
+macro 'veneer_same($rhm, $rkt)':
+  '@manual.elem{The @manual.rhombus($rhm, ~annot) veneer recognizes the same values
+ as the Racket Scribble library's @($rkt).}'
+macro 'annot_same($rhm, $rkt)':
+  '@manual.elem{The @manual.rhombus($rhm, ~annot) annotation recognizes the same values
+ as the Racket Scribble library's @($rkt).}'

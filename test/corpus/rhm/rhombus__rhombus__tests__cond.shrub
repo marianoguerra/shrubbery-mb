@@ -1,0 +1,523 @@
+
+check:
+  cond
+  | #true: 17
+  | ~else: 18
+  ~is 17
+
+check:
+  cond
+  | #false: 17
+  | ~else: 18
+  ~is 18
+
+check:
+  cond
+  | #false: 17
+  | #false: 18
+  ~throws "no successful case"
+
+check:
+  use_static
+  (if #true | [1] | ["one"])[0]
+  ~is 1
+
+check:
+  ~eval
+  use_static
+  (if #true | [1] | "one")[0]
+  ~throws "specialization not known"
+
+check:
+  use_static
+  (cond | 1 == 2: [1] | 2 == 2: ["one"])[0]
+  ~is "one"
+
+check:
+  use_static
+  (cond | 1 == 2: [1] | ~else: ["one"])[0]
+  ~is "one"
+
+check:
+  use_static
+  (cond | 1 == 2: [1] | ~else ["one"])[0]
+  ~is "one"
+
+check:
+  ~eval
+  use_static
+  (if #true | [1] | "one")[0]
+  ~throws "specialization not known"
+
+check:
+  ~eval
+  use_static
+  (cond | #true: [1] | ~else: "one")[0]
+  ~throws "specialization not known"
+
+check:
+  use_static
+  (cond
+   | 1 == 2: {1, 2, 3}
+   | ~else: MutableSet{1, 2, 3})
+    .length()
+  ~is 3
+
+check:
+  use_static
+  (cond
+   | 1 == 2: {1: "1", 2: "2", 3: "3"}
+   | ~else: MutableMap{1: "1", 2: "2", 3: "3"})
+    .length()
+  ~is 3
+
+check:
+  use_static
+  (cond
+   | 1 == 2: 1..
+   | ~else: 1..5)
+    .start()
+  ~is 1
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y)
+  def p = (if #true
+           | Posn(1, 2)
+           | #void)
+  p.x
+  ~throws "no such field or method (based on static information)"
+
+check:
+  use_static
+  class Posn(x, y):
+    nonfinal
+    method d(): x + y
+  class Posn3D(z):
+    extends Posn
+    override method d(): x + y + z
+  def p = (if #false
+           | Posn(1, 2)
+           | Posn3D(1, 2, 3))
+  p.d() + p.x + p.y
+  ~is 9
+
+check:
+  use_static
+  class Posn(x, y):
+    nonfinal
+    method d(): x + y
+  class Posn3D(z):
+    extends Posn
+    override method d(): x + y + z
+  def p = (if #false
+           | Posn(1, 2) :: Posn
+           | Posn3D(1, 2, 3) :: Posn3D)
+  p.d() + p.x + p.y
+  ~is 9
+
+check:
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    extends A
+    internal _B
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  (if #false
+   | A()
+   | _B()())
+    .whoami()
+  ~is "B"
+
+check:
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    extends A
+    internal _B
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  (if #false
+   | A() :: A
+   | _B()() :: _B)
+    .whoami()
+  ~is "B"
+
+check:
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    extends A
+    constructor ():
+      super()()
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  (if #false
+   | A()
+   | B())
+    .whoami()
+  ~is "B"
+
+check:
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    nonfinal
+    extends A
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  class C():
+    extends B
+    override whoami():
+      "C"
+    override whoarewe():
+      "A, B, and C"
+  (if #false
+   | A()
+   | if #false
+     | B()
+     | C())
+    .whoami()
+  ~is "C"
+
+check:
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    extends A
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  class C():
+    extends A
+    override whoami():
+      "C"
+    method whoarewe():
+      "A and C"
+  (if #false
+   | A()
+   | if #false
+     | B()
+     | C())
+    .whoami()
+  ~is "C"
+
+check:
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class A1():
+    nonfinal
+    extends A
+  class B():
+    extends A1
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  class A2():
+    nonfinal
+    extends A
+  class C():
+    extends A2
+    override whoami():
+      "C"
+    method whoarewe():
+      "A and C"
+  (if #false
+   | A()
+   | if #false
+     | B()
+     | C())
+    .whoami()
+  ~is "C"
+
+check:
+  ~eval
+  use_static
+  (cond
+   | 1 == 2: {1, 2, 3}
+   | ~else: MutableSet{1, 2, 3})
+    .append()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  (cond
+   | 1 == 2: {1: "1", 2: "2", 3: "3"}
+   | ~else: MutableMap{1: "1", 2: "2", 3: "3"})
+    .append()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  (cond
+   | 1 == 2: 1..
+   | ~else: 1..5)
+    .to_list()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y):
+    nonfinal
+    method d(): x + y
+  class Posn3D(z):
+    extends Posn
+    override method d(): x + y + z
+  def p = (if #false
+           | Posn(1, 2)
+           | Posn3D(1, 2, 3))
+  p.z
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y):
+    nonfinal
+    method d(): x + y
+  class Posn3D(z):
+    extends Posn
+    override method d(): x + y + z
+  def p = (if #false
+           | Posn(1, 2) :: Posn
+           | Posn3D(1, 2, 3) :: Posn3D)
+  p.z
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    extends A
+    internal _B
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  (if #false
+   | A()
+   | _B()())
+    .whoarewe()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    extends A
+    internal _B
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  (if #false
+   | A() :: A
+   | _B()() :: _B)
+    .whoarewe()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    extends A
+    constructor ():
+      super()()
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  (if #false
+   | A()
+   | B())
+    .whoarewe()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    nonfinal
+    extends A
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  class C():
+    extends B
+    override whoami():
+      "C"
+    override whoarewe():
+      "A, B, and C"
+  (if #false
+   | A()
+   | if #false
+     | B()
+     | C())
+    .whoarewe()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class B():
+    extends A
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  class C():
+    extends A
+    override whoami():
+      "C"
+    method whoarewe():
+      "A and C"
+  (if #false
+   | A()
+   | if #false
+     | B()
+     | C())
+    .whoarewe()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  class A():
+    nonfinal
+    method whoami():
+      "A"
+  class A1():
+    nonfinal
+    extends A
+  class B():
+    extends A1
+    override whoami():
+      "B"
+    method whoarewe():
+      "A and B"
+  class A2():
+    nonfinal
+    extends A
+  class C():
+    extends A2
+    override whoami():
+      "C"
+    method whoarewe():
+      "A and C"
+  (if #false
+   | A()
+   | if #false
+     | B()
+     | C())
+    .whoarewe()
+  ~throws "no such field or method (based on static information)"
+
+// empty block, no alts after
+check:
+  cond:«»
+  ~throws "no successful case"
+
+// `~else` only
+check:
+  cond
+  | ~else: "else"
+  ~is "else"
+
+check:
+  cond
+  | ~else "else"
+  ~is "else"
+
+check:
+  ~eval
+  if 1 | 2
+  ~throws "expected two alternatives"
+
+check:
+  ~eval
+  if | 1 | 2
+  ~throws "missing test expression"
+
+check:
+  ~eval
+  if 1 |«» | 2
+  ~throws "block has no expressions"
+
+check:
+  ~eval
+  if 1 | 2 |«»
+  ~throws "block has no expressions"
+
+check:
+  ~eval
+  [if 1 | 2, ...]
+  ~throws "expected two alternatives"
+
+check:
+  ~eval
+  [if | 1 | 2, ...]
+  ~throws "missing test repetition"
+
+check:
+  ~eval
+  [if 1 |«» | 2, ...]
+  ~throws "block has no repetitions"
+
+check:
+  ~eval
+  [if 1 | 2 |«», ...]
+  ~throws "block has no repetitions"

@@ -1,0 +1,113 @@
+literal	1	0	"1"	1
+whitespace	1	1	"\u{a}"	-
+literal	2	0	"1."	#f64:3ff0000000000000
+whitespace	2	2	"\u{a}"	-
+literal	3	0	"1.0"	#f64:3ff0000000000000
+whitespace	3	3	"\u{a}"	-
+literal	4	0	"1.0e1"	#f64:4024000000000000
+whitespace	4	5	"\u{a}"	-
+literal	5	0	"1.e1"	#f64:4024000000000000
+whitespace	5	4	"\u{a}"	-
+literal	6	0	"1.0e+1"	#f64:4024000000000000
+whitespace	6	6	"\u{a}"	-
+literal	7	0	"1.0e-1"	#f64:3fb999999999999a
+whitespace	7	6	"\u{a}"	-
+literal	8	0	"-1.0e-1"	#f64:bfb999999999999a
+whitespace	8	7	"\u{a}"	-
+whitespace	9	0	"\u{a}"	-
+literal	10	0	"1.2"	#f64:3ff3333333333333
+whitespace	10	3	"\u{a}"	-
+literal	11	0	"1"	1
+whitespace	11	1	" "	-
+literal	11	2	".2"	#f64:3fc999999999999a
+whitespace	11	4	"\u{a}"	-
+literal	12	0	"1"	1
+whitespace	12	1	" "	-
+operator	12	2	"."	-
+whitespace	12	3	" "	-
+literal	12	4	"2"	2
+whitespace	12	5	"\u{a}"	-
+literal	13	0	"1"	1
+operator	13	1	".+"	-
+literal	13	3	"2"	2
+whitespace	13	4	"\u{a}"	-
+literal	14	0	"1"	1
+operator	14	1	".="	-
+literal	14	3	"2"	2
+whitespace	14	4	"\u{a}"	-
+literal	15	0	"1"	1
+operator	15	1	".."	-
+literal	15	3	"2"	2
+whitespace	15	4	"\u{a}"	-
+literal	16	0	"1.2"	#f64:3ff3333333333333
+operator	16	3	".."	-
+whitespace	16	5	"\u{a}"	-
+whitespace	17	0	"\u{a}"	-
+literal	18	0	"1"	1
+whitespace	18	1	" "	-
+operator	18	2	"+"	-
+whitespace	18	3	" "	-
+literal	18	4	"2"	2
+whitespace	18	5	"\u{a}"	-
+literal	19	0	"1"	1
+operator	19	1	"+"	-
+whitespace	19	2	" "	-
+literal	19	3	"2"	2
+whitespace	19	4	"\u{a}"	-
+literal	20	0	"1"	1
+whitespace	20	1	" "	-
+operator	20	2	"+"	-
+whitespace	20	3	" "	-
+literal	20	4	"-2"	-2
+whitespace	20	6	"\u{a}"	-
+literal	21	0	"1"	1
+whitespace	21	1	" "	-
+literal	21	2	"-2"	-2
+whitespace	21	4	"\u{a}"	-
+literal	22	0	"1"	1
+whitespace	22	1	" "	-
+operator	22	2	"-"	-
+whitespace	22	3	" "	-
+literal	22	4	"2"	2
+whitespace	22	5	"\u{a}"	-
+literal	23	0	"1"	1
+whitespace	23	1	" "	-
+operator	23	2	"+-"	-
+whitespace	23	4	" "	-
+literal	23	5	"2"	2
+whitespace	23	6	"\u{a}"	-
+literal	24	0	"1"	1
+whitespace	24	1	" "	-
+operator	24	2	"-+"	-
+whitespace	24	4	" "	-
+literal	24	5	"2"	2
+whitespace	24	6	"\u{a}"	-
+literal	25	0	"1"	1
+whitespace	25	1	" "	-
+operator	25	2	"+"	-
+whitespace	25	3	" "	-
+literal	25	4	"+2"	2
+whitespace	25	6	"\u{a}"	-
+literal	26	0	"1"	1
+whitespace	26	1	" "	-
+operator	26	2	"++"	-
+whitespace	26	4	" "	-
+literal	26	5	"2"	2
+whitespace	26	6	"\u{a}"	-
+whitespace	27	0	"\u{a}"	-
+literal	28	0	"1"	1
+whitespace	28	1	" "	-
+operator	28	2	"+/"	-
+whitespace	28	4	" "	-
+literal	28	5	"2"	2
+whitespace	28	6	"\u{a}"	-
+literal	29	0	"1"	1
+whitespace	29	1	" "	-
+operator	29	2	"+"	-
+comment	29	3	"// 2"	-
+whitespace	29	7	"\u{a}"	-
+literal	30	0	"1"	1
+whitespace	30	1	" "	-
+operator	30	2	"+/!"	-
+whitespace	30	5	" "	-
+literal	30	6	"2"	2

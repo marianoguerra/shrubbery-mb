@@ -1,0 +1,229 @@
+
+// The "example-c.rhm" module exports `exint`
+// as a variable, a binding form (matches any integer)
+// and an annotation (matches any integer)
+
+check:
+  namespace n:
+    import "example-c.rhm" open
+    export:
+      only_space expr:
+        exint
+  n.exint
+  ~is 10
+
+check:
+  namespace n:
+    import "example-c.rhm" open
+    export:
+      only_space annot:
+        exint
+  3 :: n.exint
+  ~is 3
+
+check:
+  namespace n:
+    import "example-c.rhm" open
+    export:
+      only_space expr:
+        except_space annot:
+          exint
+  n.exint
+  ~is 10
+
+check:
+  namespace n:
+    import "example-c.rhm" open
+    export:
+      except_space annot:
+        only_space expr annot:
+          exint
+  n.exint
+  ~is 10
+
+check:
+  ~eval
+  import rhombus/meta open
+  namespace n:
+    import lib("rhombus/tests/example-c.rhm") open
+    export:
+      only_space annot:
+        exint
+  n.exint
+  ~throws "identifier not provided"
+
+check:
+  ~eval
+  import rhombus/meta open
+  namespace n:
+    import lib("rhombus/tests/example-c.rhm") open
+    export:
+      only_space expr:
+        exint
+  1 :: n.exint
+  ~throws "identifier not provided"
+
+check:
+  ~eval
+  import rhombus/meta open
+  namespace n:
+    import lib("rhombus/tests/example-c.rhm") open
+    export:
+      only_space expr:
+        except_space expr:
+          exint
+  ~throws "space excluded in nested modification"
+
+check:
+  ~eval
+  import rhombus/meta open
+  namespace n:
+    import lib("rhombus/tests/example-c.rhm") open
+    export:
+      except_space expr:
+        only_space annot:
+          exint
+  ~throws "space not included in nested modification"
+
+check:
+  namespace ns:
+    let z = 200
+    export all_defined
+  ns.z
+  ~is 200
+
+check:
+  decl.nestable_macro 'out_all $id':
+    'export all_defined ~scope_like $id'
+  namespace ns:
+    let z = 200
+    out_all here
+  ns.z
+  ~is 200
+
+check:
+  ~eval
+  def x = 0
+  namespace ns:
+    def z = 200
+    export all_defined
+  ns.x
+  ~throws "identifier not provided by ns"
+
+block:
+  import "example-d.rhm" as d
+  check:
+    d.one ~is "one"
+    "ok" is_a d.Streeng ~is #true
+    "ok" is_a d.DPosn ~is #false
+    d.DPosn(1, 2) is_a d.DPosn ~is #true
+
+check:
+  ~eval
+  import lib("rhombus/tests/example-d.rhm") as d
+  d.two
+  ~throws "no such imported identifier"
+
+block:
+  def thing = 1
+  namespace ns:
+    export:
+      only_space expr:
+        thing
+      only_space annot:
+        thing
+    annot.macro 'thing': 'Int'
+  check:
+    ns.thing ~is 1
+    10 :: ns.thing ~is 10
+
+block:
+  def thing = 1
+  namespace ns:
+    export:
+      except_space annot:
+        thing
+      only_space annot:
+        thing
+    annot.macro 'thing': 'Int'
+  check:
+    ns.thing ~is 1
+    10 :: ns.thing ~is 10
+
+block:
+  def thing = 1
+  namespace ns:
+    export:
+      only_space expr:
+        thing
+      except_space expr:
+        thing
+    annot.macro 'thing': 'Int'
+  check:
+    ns.thing ~is 1
+    10 :: ns.thing ~is 10
+
+
+block:
+  namespace ns:
+    annot.macro 'thing': 'Int'
+    export:
+      only_space annot:
+        thing
+    let thing = 1
+    export:
+      only_space expr:
+        thing
+  check:
+    ns.thing ~is 1
+    10 :: ns.thing ~is 10
+
+block:
+  def thing = 1
+  namespace ns:
+    export:
+      except_space annot:
+        thing
+      except_space expr:
+        thing
+    annot.macro 'thing': 'Int'
+  check:
+    ns.thing ~is 1
+    10 :: ns.thing ~is 10
+
+check:
+  ~eval
+  import rhombus/meta open
+  block:
+    namespace ns:
+      annot.macro 'thing': 'Int'
+      export:
+        except_space expr:
+          thing
+      let thing = 1
+      export:
+        except_space annot:
+          thing
+    "ok"
+  ~throws "duplicate export name with different bindings"
+
+check:
+  namespace ~open:
+    export only_space defn:
+      foo
+    defn.macro 'foo $x':
+      'def $x = 42'
+  foo y
+  y
+  ~is 42
+
+check:
+  ~eval
+  import rhombus/meta open
+  namespace ~open:
+    export except_space defn:
+      foo
+    defn.macro 'foo $x':
+      'def $x = 42'
+  foo
+  ~throws "foo: undefined"

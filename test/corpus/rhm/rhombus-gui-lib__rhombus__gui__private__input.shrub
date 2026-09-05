@@ -1,0 +1,102 @@
+import:
+  lib("racket/gui/easy.rkt")
+  rhombus/draw:
+    expose:
+      Color
+      Font
+  rhombus/draw/private/symbol_map.symbol_map_annot
+  "window-child-help.rkt".mix_window_child_callbacks
+  "window-callback.rhm".WindowCallbacks
+  "obs.rhm":
+    expose:
+      Obs
+      ObsOrValue
+  "view.rhm".View
+  "view.rhm"!private.BaseWindowView
+  "view-help.rkt"
+  "label-style.rhm".check_label_styles
+
+export:
+  Input
+
+class Input(private _at_content :: Obs):
+  extends BaseWindowView
+
+  constructor (content :: ObsOrValue.of(Any) = "",
+               ~action: callback :: (Input.Event, String) -> ~any = values,
+               ~label: label :: ObsOrValue.of(View.LabelString) = "",
+               ~choices: choices :: maybe(ObsOrValue.of(List.of(View.LabelString))) = #false,
+               ~enable: enable :: ObsOrValue.of(Boolean) = #true,
+               ~background_color: bg_color :: ObsOrValue.of(maybe(Color)) = #false,
+               ~style: style :: List.of(Input.StyleSymbol) = [#'single],
+               ~font : font :: Font = View.normal_control_font,
+               // ~keymap: ... TODO
+               ~margin: margin :: ObsOrValue.of(View.Margin) = [2, 2],
+               ~min_size: min_size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~stretch: stretch :: ObsOrValue.of(View.Stretch) = [#true, #'multiple in style],
+               ~is_equal_value: is_equal :: Function.of_arity(2) = fun (a, b): a == b,
+               ~value_to_text: val_to_txt :: Function = values,
+               ~window_callbacks: wcb :: WindowCallbacks = WindowCallbacks()):
+    let at_content = obs.reflect_obs(content, "at_content")
+    #{view-help}.#{mix-wrap}(
+      fun (mixin):
+        let mixin = mix_window_child_callbacks(mixin, wcb)
+        super(easy.input(obs.unwrap(at_content),
+                         fun (action, str):
+                           at_content.value := str
+                           callback(unconvert_action(action), to_string(str))
+                           #void,
+                         ~label: obs.unwrap(label),
+                         ~choices: choices && obs.unwrap_list(choices, values),
+                         ~#{enabled?}: obs.unwrap(enable),
+                         ~#{background-color}: obs.unwrap_convert(bg_color, fun (c): c && (c :~ draw.Color).handle),
+                         ~style: obs.unwrap_list(style, convert_style, make_check_styles(! !choices)),
+                         ~font: obs.unwrap_convert(font, fun (f): f && (f :~ Font).handle),
+                         ~margin: obs.unwrap_list(margin, values),
+                         ~#{min-size}: obs.unwrap_list(min_size, values),
+                         ~stretch: obs.unwrap_list(stretch, values),
+                         ~mixin: mixin,
+                         ~#{value=?}: is_equal,
+                         ~#{value->text}: val_to_txt))
+          <| (at_content)
+    )
+
+  property at_content :: Obs:
+    _at_content.map(values)
+
+  export:
+    StyleSymbol
+    Event
+
+  symbol_map_annot StyleSymbol convert_style
+  | single
+  | multiple
+  | password
+  | hscroll
+  | horizontal_label = #{horizontal-label}
+  | vertical_label = #{vertical-label}
+
+  symbol_map_annot Event convert_action unconvert_action
+  | input
+  | return
+  | focus_in = #{has-focus}
+  | focus_out = #{lost-focus}
+
+fun make_check_styles(has_choices):
+  fun (styles :~ List):
+    let who = #'Input
+    when has_choices && #'multiple in styles
+    | error(~who: who,
+            "style list for an input with choices cannot include `#'multiple`",
+            error.val(~label: "style list", styles))
+    when (#'single in styles
+            && #'multiple in styles)
+    | error(~who: who,
+            "style list for input cannot include both `#'single` and `#'multiple`",
+            error.val(~label: "style list", styles))
+    unless has_choices || (#'single in styles
+                             || #'multiple in styles)
+    | error(~who: who,
+            "style list must include `#'single` or `#'multiple`",
+            error.val(~label: "style list", styles))
+    check_label_styles(who, styles)

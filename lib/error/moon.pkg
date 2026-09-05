@@ -1,0 +1,12 @@
+import {
+  "marianoguerra/shrubbery/basic",
+  "marianoguerra/error-report" @report,
+}
+
+import {
+  "marianoguerra/shrubbery/error" @err,
+  "marianoguerra/shrubbery/column",
+  "marianoguerra/error-report/render",
+  "marianoguerra/error-report/style",
+  "moonbitlang/core/test",
+} for "test"

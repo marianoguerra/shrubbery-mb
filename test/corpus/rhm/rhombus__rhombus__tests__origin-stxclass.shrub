@@ -1,0 +1,141 @@
+
+// binding arrows in this file checked by "origin.rhm"
+
+match '1':
+| '$(_ :: Int)':
+    0
+
+syntax_class NumStr:
+  kind: ~sequence
+| '$(x :: Int) $(y :: String)'
+
+match '1 "two" !'
+| '$(ns :: NumStr) !':
+    ns.x +& ns.y
+
+syntax_class NumStrGroup:
+  kind: ~group
+| '$(x :: Int) $(y :: String)'
+
+match '1 "two"'
+| '$(ns :: NumStrGroup)':
+    ns.x +& ns.y
+
+match '1 "two"'
+| '1 $(g :: Group)':
+    g
+
+syntax_class_clause.macro 'splice:
+                             $clause
+                             ...':
+  ': $clause
+     ...'
+
+syntax_class JustTerm:
+  splice:
+    kind: ~term
+  splice:
+    splice:
+      fields: t
+    root_swap: t match
+    description: "just a term"
+  error_mode: ~opaque
+| '$t'
+
+syntax_class_clause.macro 'splice_alt:
+                             $clause
+                             ...
+                           | $pat
+                           | ...':
+  ': $clause
+     ...
+   | $pat
+     ...'
+
+syntax_class JustTermToo:
+  splice_alt:
+    splice:
+      kind: ~term
+    splice:
+      splice:
+        fields: t
+      root_swap: t match
+      description: "just a term too"
+    error_mode: ~opaque
+  | '$t'
+
+pattern_clause.macro 'splice:
+                        $clause
+                        ...':
+  '$clause
+   ...'
+
+syntax_class Converting(fn):
+| '$t ...':
+    splice:
+      def converted = fn('$t ...')
+    splice:
+      splice:
+        match_when converted
+      match_unless !converted
+    match_def '$new_t ...' = converted
+
+match '1'
+| '$(x :: (syntax_class:
+             splice:
+               kind: ~term
+             splice:
+               splice:
+                 fields: t
+               root_swap: t match
+               description: "just a term"
+             error_mode: ~opaque
+           | '$t'))':
+    x
+
+match '1'
+| '$(_ :: (syntax_class:
+             splice:
+               kind: ~term
+             splice:
+               splice:
+                 fields: t
+               root_swap: t match
+               description: "just a term"
+             error_mode: ~opaque
+           | '$t'))' as x:
+    x
+
+match '1'
+| '$(pattern:
+       splice:
+         kind: ~term
+       splice:
+         splice:
+           fields: t
+         root_swap: t match
+         description: "just a term"
+       error_mode: ~opaque
+     | '$t')' as x:
+    x
+
+match '1'
+| (pattern:
+     splice:
+       kind: ~term
+     splice:
+       splice:
+         fields: t
+       root_swap: t match
+       description: "just a term"
+     error_mode: ~opaque
+   | '$t') as x:
+    x
+
+syntax_class.together:
+  syntax_class A
+  | ''
+  | 'a $(_ :: B)'
+  syntax_class B
+  | ''
+  | 'b $(_ :: A)'

@@ -1,0 +1,1678 @@
+import:
+  meta:
+    rhombus.macro
+
+block:
+  class Posn(x, y)
+  def p = Posn(1, 2)
+  check [p is_a Posn, p.x, p.y] ~is [#true, 1, 2]
+  check p with (x = 10) ~is Posn(10, 2)
+  check p with (y = 20) ~is Posn(1, 20)
+  check p with (x = 10).x ~is 10
+  check p with (x = 10).y ~is 2
+  def mutable c = 10
+  check p with (y = c, x = block: c := c + 1; c) ~is Posn(11, 10)
+  check p with (x = block: c := c + 1; c, y = block: c := c + 2; c) ~is Posn(12, 14)
+  check (Posn).arity() ~is values(4, [], [])
+  block:
+    use_dynamic
+    check dynamic(Posn).arity() ~is values(4, [], [])
+
+check:
+  ~eval
+  class Posn(x, y)
+  class Posn3D(z):
+    extends Posn
+  ~throws "superclass is final"
+
+check:
+  ~eval
+  class Posn(x, x)
+  ~throws "duplicate field name"
+
+check:
+  ~eval
+  class Posn(x, y):
+    field x = 0
+  ~throws "duplicate field name"
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(x):
+    extends Posn
+  ~throws "field name already exists in superclass"
+
+block:
+  class Posn(~x, y)
+  def p = Posn(~x: 1, 2)
+  def p2 = Posn(2, ~x: 1)
+  check [p.x, p.y, p2.x, p2.y] ~is [1, 2, 1, 2]
+  check p with (x = 10) ~is Posn(~x: 10, 2)
+  check p with (y = 20) ~is Posn(~x: 1, 20)
+
+block:
+  class Posn(~x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+  def p = Posn3D(~x: 1, 2, 3)
+  def p2 = Posn3D(2, 3, ~x: 1)
+  check [p.x, p.y, p.z, p2.x, p2.y, p2.z] ~is [1, 2, 3, 1, 2, 3]
+  check p with (x = 10) ~is Posn3D(~x: 10, 2, 3)
+  check p with (y = 20) ~is Posn3D(~x: 1, 20, 3)
+  check p with (z = 30) ~is Posn3D(~x: 1, 2, 30)
+  check (dynamic(p) :: Posn) with (x = 10) ~is Posn3D(~x: 10, 2, 3)
+
+block:
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(~z):
+    extends Posn
+  def p = Posn3D(1, 2, ~z: 3)
+  def p2 = Posn3D(~z: 3, 1, 2)
+  check [p.x, p.y, p.z, p2.x, p2.y, p2.z] ~is [1, 2, 3, 1, 2, 3]
+  check p with (x = 10) ~is Posn3D(10, 2, ~z: 3)
+  check p with (y = 20) ~is Posn3D(1, 20, ~z: 3)
+  check p with (z = 30) ~is Posn3D(1, 2, ~z: 30)
+
+block:
+  class Posn(~x, y):
+    nonfinal
+  class Posn3D(~z: zz):
+    extends Posn
+  def p = Posn3D(~x: 1, 2, ~z: 3)
+  def p2 = Posn3D(~z: 3, 2, ~x: 1)
+  check [p.x, p.y, p.zz, p2.x, p2.y, p2.zz] ~is [1, 2, 3, 1, 2, 3]
+  check p with (x = 10) ~is Posn3D(~x: 10, 2, ~z: 3)
+  check p with (y = 20) ~is Posn3D(~x: 1, 20, ~z: 3)
+  check p with (zz = 30) ~is Posn3D(~x: 1, 2, ~z: 30)
+
+check:
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+  def p = Posn3D(1, 2, 3)
+  [p is_a Posn, p is_a Posn3D, p.x, p.y, p.z,
+   Posn(1, 2) is_a Posn3D]
+  ~is [#true, #true, 1, 2, 3,
+       #false]
+
+check:
+  class Posn(x, y):
+    constructor (z):
+      super(z+1, z-1)
+  def p = Posn(1)
+  [p.x, p.y]
+  ~is [2, 0]
+
+check:
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    constructor (z):
+      super(z+1, z+2)(z+3)
+  def p = Posn3D(1)
+  [p.x, p.y, p.z]
+  ~is [2, 3, 4]
+
+check:
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+  class Posn4D(w):
+    extends Posn3D
+    constructor (z):
+      super(z+1, z+2, z+3)(z+4)
+  def p = Posn4D(1)
+  [p.x, p.y, p.z, p.w]
+  ~is [2, 3, 4, 5]
+
+check:
+  class Posn(x, y):
+    nonfinal
+    constructor:
+      fun (y, x):
+        super(x, y)
+  class Posn3D(z):
+    extends Posn
+    constructor:
+      fun (z):
+        super(z+1, z+2)(z+3)
+  def p = Posn3D(1)
+  [p.x, p.y, p.z]
+  ~is [3, 2, 4]
+
+check:
+  class Posn(x, y):
+    nonfinal
+    constructor:
+      fun (y, x):
+        super(x, y)
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+    constructor:
+      fun (z):
+        super(z+1, z+2)(z+3)
+  class Posn4D(w):
+    extends Posn3D
+    nonfinal
+    constructor:
+      fun (z):
+        super(z+1)(z+5)
+  def p = Posn4D(1)
+  [p.x, p.y, p.z, p.w]
+  ~is [4, 3, 5, 6]
+
+check:
+  class Posn(x, y):
+    nonfinal
+    constructor:
+      fun
+      | (~x: x, ~y: y):
+          super(x, y)
+      | (x):
+          super(x, 0)
+  class Posn3D(z):
+    extends Posn
+    constructor:
+      fun
+      | (z):
+          super(z+1)(z+3)
+      | (x, y, z):
+          super(~x: x, ~y: y)(z)
+  def p = Posn3D(1)
+  def p2 = Posn3D(10, 20, 30)
+  [p.x, p.y, p.z,
+   p2.x, p2.y, p2.z]
+  ~is [2, 0, 4,
+       10, 20, 30]
+
+check:
+  use_dynamic
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+  def p = dynamic(Posn3D(1, 2, 3))
+  [p.x, p.y, p.z]
+  ~is [1, 2, 3]
+
+block:
+  import rhombus/meta open
+  class Posn(x, y):
+    nonfinal
+    internal _Posn
+    // external view flips `y` and `x`
+    constructor:
+      fun (y, x):
+        _Posn(x, y)
+    binding:
+      macro
+      | '()($y, $x)':
+          '_Posn($x, $y)'
+      | '()($v)':
+          '_Posn($v, 0)'
+    annotation 'Posn': '_Posn'
+    annot.macro 'of($x, $y)':
+      '_Posn.of($y, $x)'
+    export: of
+  def p = Posn(0, 2)
+  def Posn(yy, xx) = p
+  def Posn(a) = p
+  check:
+    [p.y, p.x, yy, xx, a,
+     p is_a Posn,
+     Posn(1, "2") is_a Posn.of(Int, String)]
+    ~is [0, 2, 0, 2, 2,
+         #true,
+         #true]
+
+check:
+  class Posn(x, y):
+    nonfinal
+    field w = 0
+  class Posn3D(z):
+    extends Posn
+  def p1 = Posn(10, 20)
+  def p = Posn3D(1, 2, 3)
+  [[p1.x, p1.y, p1.w],
+   [p.x, p.y, p.w, p.z]]
+  ~is [[10, 20, 0],
+       [1, 2, 0, 3]]
+
+check:
+  class Posn(~x, y):
+    nonfinal
+    field w = 0
+  class Posn3D(z):
+    extends Posn
+  def p1 = Posn(20, ~x: -10)
+  def p = Posn3D(2, ~x: 1, 3)
+  [[p1.x, p1.y, p1.w],
+   [p.x, p.y, p.w, p.z]]
+  ~is [[-10, 20, 0],
+       [1, 2, 0, 3]]
+
+check:
+  class Posn(~x, y):
+    nonfinal
+    field w = 0
+    internal _Posn
+  class Posn3D(z):
+    extends Posn
+    internal _Posn3D
+  def p1 = Posn(20, ~x: -10)
+  def p = Posn3D(2, ~x: 1, 3)
+  def ip1 = _Posn(20, ~x: -10)
+  def ip = _Posn3D(2, ~x: 1)(3)
+  fun get(p1 :: Posn, p :: Posn3D):
+    [[p1.x, p1.y, p1.w],
+     [p.x, p.y, p.w, p.z]]
+  [get(p1, p), get(ip1, ip)]
+  ~is [[[-10, 20, 0], [1, 2, 0, 3]],
+       [[-10, 20, 0], [1, 2, 0, 3]]]
+
+check:
+  class Posn(~x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    constructor:
+      fun (x, y, z):
+        super(~x: 1, y)(z)
+  def p2 = Posn(~x: 1, 2)
+  def p3 = Posn3D(1, 2, 3)
+  [[p2.x, p2.y], [p3.x, p3.y, p3.z]]
+  ~is [[1, 2], [1, 2, 3]]
+
+check:
+  class Posn(~x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+    constructor:
+      fun (x, y, z):
+        super(~x: 1, y)(z)
+  class Posn4D(~w):
+    extends Posn3D
+    constructor:
+      fun (x, y, z, w):
+        super(x, y, z)(~w: w)
+  def p2 = Posn(~x: 1, 2)
+  def p3 = Posn3D(1, 2, 3)
+  def p4 = Posn4D(1, 2, 3, 4)
+  [[p2.x, p2.y],
+   [p3.x, p3.y, p3.z],
+   [p4.x, p4.y, p4.z, p4.w]]
+  ~is [[1, 2],
+       [1, 2, 3],
+       [1, 2, 3, 4]]
+
+check:
+  class Posn(~x, y):
+    nonfinal
+    constructor:
+      fun (~ex: x, ~wy: y):
+        super(~x: 1, y)
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+    constructor:
+      fun (x, ~y: y, z):
+        super(~ex: 1, ~wy: y)(z)
+    internal _Posn3D
+  class Posn4D(w):
+    extends Posn3D
+    constructor:
+      fun (x, y, z, w):
+        super(x, ~y: y, z)(w)
+  def p2 = Posn(~ex: 1, ~wy: 2)
+  def p3 = Posn3D(1, ~y: 2, 3)
+  def _p3 = _Posn3D(~ex: 1, ~wy: 2)(3)
+  def p4 = Posn4D(1, 2, 3, 4)
+  [[p2.x, p2.y],
+   [p3.x, p3.y, p3.z],
+   [_p3.x, _p3.y, _p3.z],
+   [p4.x, p4.y, p4.z, p4.w]]
+  ~is [[1, 2],
+       [1, 2, 3],
+       [1, 2, 3],
+       [1, 2, 3, 4]]
+
+check:
+  class Posn(x, y = 0)
+  def p = Posn(1)
+  [p.x, p.y]
+  ~is [1, 0]
+
+check:
+  class Posn(x, y = x):
+    nonfinal
+  def p = Posn(1)
+  [p.x, p.y]
+  ~is [1, 1]
+
+check:
+  class Posn(~x, y = x):
+    nonfinal
+  def p = Posn(~x: 1)
+  def p2 = Posn(~x: -1, 2)
+  [p.x, p.y, p2.x, p2.y]
+  ~is [1, 1, -1, 2]
+
+check:
+  class Posn3D(~x = 10, y, ~z: z = x+y)
+  def p = Posn3D(2)
+  def p2 = Posn3D(2, ~z: 3)
+  def p3 = Posn3D(2, ~x: 3)
+  def p4 = Posn3D(~z: 0, 2, ~x: 3)
+  [[p.x, p.y, p.z],
+   [p2.x, p2.y, p2.z],
+   [p3.x, p3.y, p3.z],
+   [p4.x, p4.y, p4.z]]
+  ~is [[10, 2, 12],
+       [10, 2, 3],
+       [3, 2, 5],
+       [3, 2, 0]]
+
+check:
+  ~eval
+  class Posn(x = 0, y)
+  ~throws "without default after"
+
+check:
+  ~eval
+  class Posn(x, y = 0):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+  ~throws "field needs a default"
+
+check:
+  ~eval
+  class Posn(x, y = no_such_variable)
+  Posn(1)
+  ~throws "no_such_variable: undefined"
+
+check:
+  ~eval
+  class Posn(the_x, the_y = 0):
+    nonfinal
+  class Posn3D(z = the_y):
+    extends Posn
+  Posn3D(0)
+  ~throws "the_y: undefined"
+
+check:
+  class Posn(x :: Int, y :: Int)
+  Posn("x", 0)
+  ~throws "value does not satisfy annotation"
+
+block:
+  class Posn(mutable x :: Int, y :: Int)
+  check:
+    Posn("x", 0) ~throws "value does not satisfy annotation"
+    Posn(1, 2) == Posn(1, 2) ~is #false
+    Posn(1, 2) != Posn(1, 2) ~is #true
+    Posn(1, 2) is_now Posn(1, 2) ~is #true
+    Posn(1, 2) ~is_now Posn(1, 2)
+    Posn.x(Posn(1, 2)) ~is 1
+    Posn.x(Posn(1, 2), 3) ~is #void
+
+check:
+  class Posn(mutable x :: Int, y :: Int):
+    method m():
+      x := 8
+  def p = Posn(2, 0)
+  [p.x, p.x := 5, p.x, p.y, p.m(), p.x]
+  ~is [2, #void, 5, 0, #void, 8]
+
+check:
+  class Posn(x :: Int, mutable y :: Int)
+  def p = Posn(2, 0)
+  [p.y, p.y := 5, p.y, p.x]
+  ~is [0, #void, 5, 2]
+
+check:
+  class Posn(mutable x :: Int, y :: Int)
+  Posn("x", 0).x := "oops"
+  ~throws "value does not satisfy annotation"
+
+check:
+  import rhombus/meta open
+  class Posn(x, ~y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+  class Posn4D(w):
+    extends Posn3D
+    nonfinal
+  def p = Posn4D(1, ~y: 2, 3, 6)
+  def Posn(a2, ~y: b2) = p
+  def Posn3D(a3, ~y: b3, c3) = p
+  def Posn4D(a4, ~y: b4, c4, d4) = p
+  [[a2, b2],
+   [a3, b3, c3],
+   [a4, b4, c4, d4]]
+  ~is [[1, 2],
+       [1, 2, 3],
+       [1, 2, 3, 6]]
+
+check:
+  import rhombus/meta open
+  class Posn(x, ~y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    internal _Posn3D
+    binding:
+      macro '()($x, $y ..., $z)': 'Posn($x, ~y: $y ...) && _Posn3D($z)'
+  def p = Posn3D(1, ~y: 2, 3)
+  def Posn(a2, ~y: b2) = p
+  def Posn3D(a3, b3, c3) = p
+  [[a2, b2],
+   [a3, b3, c3]]
+  ~is [[1, 2],
+       [1, 2, 3]]
+
+check:
+  import rhombus/meta open
+  class Posn(x, ~y):
+    nonfinal
+    internal _Posn
+    binding:
+      macro '()(X $x, Y $y)': '_Posn($x, ~y: $y)'
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+    internal _Posn3D
+    binding:
+      macro '()[$x, $y ..., $z]': 'Posn(X $x, Y $y ...) && _Posn3D($z)'
+  class Posn4D(w):
+    extends Posn3D
+    nonfinal
+    internal _Posn4D
+    binding:
+      macro '()($x, ~y: $y, $z, $w)': 'Posn3D[$x, $y, $z] && _Posn4D($w)'
+  def p = Posn4D(1, ~y: 2, 3, 6)
+  def Posn(X a2, Y b2) = p
+  def Posn3D[a3, b3, c3] = p
+  def Posn4D(a4, ~y: b4, c4, d4) = p
+  [[a2, b2],
+   [a3, b3, c3],
+   [a4, b4, c4, d4]]
+  ~is [[1, 2],
+       [1, 2, 3],
+       [1, 2, 3, 6]]
+
+check:
+  class Posn(x, ~y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+  class Posn4D(w):
+    extends Posn3D
+    nonfinal
+  def p = Posn4D(1, ~y: "2", #'three, #'~four)
+  p :: Posn
+  p :: Posn.of(Int, ~y: String)
+  p :: Posn3D
+  p :: Posn3D.of(Int, ~y: String, Symbol)
+  p :: Posn4D
+  p :: Posn4D.of(Int, ~y: String, Symbol, Keyword)
+  ~completes
+
+check:
+  // mutable field => `now_of`
+  class Posn(mutable x, ~y):
+    internal _Posn
+    nonfinal
+  class Posn3D(z):
+    internal _Posn3D
+    extends Posn
+    nonfinal
+  class Posn4D(w):
+    extends Posn3D
+    nonfinal
+  def p = Posn4D(1, ~y: "2", #'three, #'~four)
+  p :: Posn.now_of(Int, ~y: String)
+  p :: _Posn.now_of(Int, ~y: String)
+  p :: Posn3D.now_of(Int, ~y: String, Symbol)
+  p :: _Posn3D.of(Symbol)
+  p :: Posn4D.now_of(Int, ~y: String, Symbol, Keyword)
+  ~completes
+
+check:
+  // mutable field => `now_of`, but only for public constructor
+  class Posn(x, ~y, private mutable other = 0):
+    nonfinal
+    internal _Posn
+    field also_other = 1
+  class Posn3D(mutable z):
+    extends Posn
+    nonfinal
+  class Posn4D(w):
+    extends Posn3D
+    nonfinal
+  def p = Posn4D(1, ~y: "2", #'three, #'~four)
+  p :: Posn.of(Int, ~y: String)
+  p :: Posn.of(Int)
+  p :: _Posn.now_of(Int, ~y: String, Int)
+  p :: Posn3D.now_of(Int, ~y: String, Symbol)
+  p :: Posn4D.now_of(Int, ~y: String, Symbol, Keyword)
+  ~completes
+
+check:
+  import rhombus/meta open
+  class Posn(x, ~y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    internal _Posn3D
+    annotation:
+      macro | '()': '_Posn3D'
+    annot.macro 'of($x, $y ..., $z)': 'Posn.of($x, ~y: $y ...) && _Posn3D.of($z)'
+    export: of
+  def p = Posn3D(1, ~y: "2", #'three)
+  p :: Posn
+  p :: Posn.of(Int, ~y: String)
+  p :: Posn3D
+  p :: Posn3D.of(Int, String, Symbol)
+  ~completes
+
+check:
+  import rhombus/meta open
+  class Posn(x, ~y):
+    nonfinal
+    internal _Posn
+    annotation:
+      macro | '()': '_Posn'
+    annot.macro 'of(X $x, Y $y)': '_Posn.of($x, ~y: $y)'
+    export: of
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+    internal _Posn3D
+    annotation:
+      macro | '()': '_Posn3D'
+    annot.macro 'of[$x, $y ..., $z]': 'Posn.of(X $x, Y $y ...) && _Posn3D.of($z)'
+    export: of
+  class Posn4D(w):
+    extends Posn3D
+    nonfinal
+    internal _Posn4D
+    annotation:
+      macro | '()': '_Posn4D'
+    annot.macro 'of($x, ~y: $y, $z, $w)': 'Posn3D.of[$x, $y, $z] && _Posn4D.of($w)'
+    export: of
+  def p = Posn4D(1, ~y: "2", #'three, #'~four)
+  p :: Posn
+  p :: Posn.of(X Int, Y String)
+  p :: Posn3D
+  p :: Posn3D.of[Int, String, Symbol]
+  p :: Posn4D
+  p :: Posn4D.of(Int, ~y: String, Symbol, Keyword)
+  ~completes
+
+check:
+  fun lookup_specs(make, model): [12, 25]
+  class Car(make, model, private mpg):
+    private field gas = 0
+    constructor(make, model):
+      def [tank_size, mpg] = lookup_specs(make, model)
+      def car: super(make, model, mpg)
+      car.gas := tank_size
+      car
+    method go(dist):
+      gas := gas - dist/mpg
+      gas
+  def c = Car("Mazda", "Miata")
+  c.go(100)
+  ~is 8
+
+check:
+  class Posn(x, y):
+    field w :: Int = 0
+    field name :~ String: "ok"
+  Posn(1, 2).name +& Posn(3, 4).w
+  ~is "ok0"
+
+check:
+  def mutable n = 0
+  class Posn(x, y):
+    field color: "red" +& block: n := n + 1; n
+  [Posn(1, 2).color, Posn(1, 2).color]
+  ~is ["red1", "red2"]
+
+block:
+  class Posn(x, y)
+  fun f(x :: Posn.of(Any.of(block: println("now"); 1),
+                     Any.of(block: println("then"); 2)),
+        ...):
+    #'ok
+  check f(Posn(1, 2)) ~prints "now\nthen\n"
+  check f(Posn(1, 2)) ~prints "now\nthen\n"
+  check f(Posn(1, 2), Posn(1, 2)) ~prints "now\nthen\n"
+
+block:
+  class Posn(mutable x, mutable y)
+  fun f(x :: Posn.now_of(Any.of(block: println("now"); 1),
+                         Any.of(block: println("then"); 2)),
+        ...):
+    #'ok
+  check f(Posn(1, 2)) ~prints "now\nthen\n"
+  check f(Posn(1, 2)) ~prints "now\nthen\n"
+  check f(Posn(1, 2), Posn(1, 2)) ~prints "now\nthen\n"
+
+// Make sure static info flows through field and method
+// references without `this.`
+check:
+  class Posn(x, y)
+  class PosnUser(p :: Posn):
+    method m():
+      p.x + get().y
+    method get() :: Posn:
+      p
+  PosnUser(Posn(1, 2)).m()
+  ~is 3
+
+block:
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z :: Int):
+    extends Posn
+  check:
+    Posn3D(1, 2, "x")
+    ~throws "annotation"
+  check:
+    Posn3D("1", "2", 3)
+    ~is Posn3D("1", "2", 3)
+
+// refer to class as annotation for a field
+check:
+  class Posn(x, y)
+  class Dir(loc :~ Posn, content :: List.of(Dir))
+  Dir(Posn(0, 0), [Dir(Posn(1, 2), [])]).content[0].loc.x
+  ~is 1
+
+check:
+  class Posn(x, y)
+  class Dir(loc :~ Posn, content :: List.of(Dir)):
+    method get() :: Dir: this
+  Dir(Posn(0, 0), [Dir(Posn(1, 2), [])]).content[0].get().loc.x
+  ~is 1
+
+check:
+  use_dynamic
+  class CPosn(mutable x, y):
+    private field c = "red"
+    property | color: c
+             | color := new_c: c := new_c
+    property | is_red: c == "red"
+    property me: this
+    property | me2: this
+             | me2 := other: "no"
+  def p = CPosn(1, 2)
+  [dynamic(p).x := 3,
+   p.x,
+   dynamic(p).color := "blue",
+   p.color,
+   p.is_red,
+   p.me.color, p.me2.color]
+  ~is [#void, 3, #void, "blue", #false, "blue", "blue"]
+
+check:
+  class CPosn(x, y):
+    private field c = "red"
+    property | color: c
+             | color := new_c: c := new_c
+    property me :: CPosn: this
+    property | me2 :: CPosn: this
+             | me2 := other: "no"
+  def p = CPosn(1, 2)
+  [p.color,
+   p.me.color, p.me2.color]
+  ~is ["red", "red", "red"]
+
+check:
+  ~eval
+  use_static
+  class CPosn(x, y):
+    property | me2 :: CPosn: this
+             | me2 := other: "no"
+  (CPosn(1, 2).me2 := 10).x
+  ~throws values("no such field or method", "static")
+
+check:
+  ~eval
+  class Posn(x, y):
+    annotation 'Posn':
+      1
+  ~throws "result must be a template expression"
+
+check:
+  ~eval
+  class Posn(x, y):
+    dot '$left . sevens':
+      '77'
+  ~throws "dot: unbound"
+
+block:
+  import rhombus/meta open
+  class Posn(x, y):
+    dot '$left . sevens':
+      '77'
+  check Posn(1, 2).sevens ~is 77
+  def [p :: Posn, ...] = [Posn(1, 2), Posn(3, 4)]
+  check [p.sevens, ...] ~is [77, 77]
+
+block:
+  import rhombus/meta open
+  class Posn(x, y):
+    dot '$left . sevens':
+      ~is_repet is_repet
+      if is_repet
+      | repet_meta.pack_list('(???, [77, 77, 77], 1, 0, ())')
+      | '77'
+  check Posn(1, 2).sevens ~is 77
+  def [p :: Posn, ...] = [Posn(1, 2), Posn(3, 4)]
+  check [p.sevens, ...] ~is [77, 77, 77]
+
+block:
+  import rhombus/meta open
+  class Posn(x, y):
+    nonfinal
+    dot '$left . a':
+      '3'
+    dot '$left . aa':
+      'block: $left; 3'
+    dot '$left . w':
+      ~tail: '$tail ...'
+      '4 $tail ...'
+  class Posn3D(z):
+    extends Posn
+  check:
+    Posn(1, 2).x + 10 ~is 11
+    Posn(1, 2).y + 10 ~is 12
+    Posn(1, 2).a + 10 ~is 13
+    Posn(1, 2).w + 10 ~is 24
+    Posn3D(1, 2, 3).a + 10 ~is 13
+    Posn3D(1, 2, 3).w + 10 ~is 24
+    Posn.a(Posn(1, 2)) + 10 ~is 13
+    Posn.w(Posn(1, 2)) + 10 ~is 24
+    Posn.a(8) + 100 ~is 103
+    Posn.aa(8) ~throws "not an instance"
+  check:
+    use_dynamic
+    Posn(1, 2).bananas + 10
+    ~throws "no such field or method"
+  check:
+    use_dynamic
+    dynamic(Posn(1, 2)).a + 10
+    ~throws "dynamic use of dot syntax"
+  check:
+    use_dynamic
+    dynamic(Posn3D(1, 2, 3)).w + 10
+    ~throws "dynamic use of dot syntax"
+
+block:
+  import rhombus/meta open
+  class Posn(x, y):
+    dot '$left . eat':
+      ~is_static: is_static
+      ~tail: '$tail ...'
+      values('[$is_static,
+               '$tail ...']',
+             '')
+  check:
+    Posn(1, 2).eat * "hi"
+    ~matches [#true, '* "hi"']
+  check:
+    use_dynamic
+    Posn(1, 2).eat * "hi"
+    ~matches [#false, '* "hi"']
+
+check:
+  ~eval
+  import rhombus/meta open
+  class Posn(x, y):
+    dot '$left . x':
+      '77'
+  ~throws "identifier used as both a field name and dot-syntax name"
+
+check:
+  ~eval
+  import rhombus/meta open
+  class Posn(x, y):
+    method sevens(): 777
+    dot '$left . sevens':
+      '77'
+  ~throws "identifier used as both a dot-syntax name and method name"
+
+check:
+  ~eval
+  import rhombus/meta open
+  class Posn(x, y):
+    nonfinal
+    dot '$left . sevens':
+      '77'
+  class Posn3D(z):
+    extends Posn
+    method sevens(): 777
+  ~throws "method name is supplied as dot syntax by superclass"
+
+check:
+  ~eval
+  import rhombus/meta open
+  class Posn(x, y):
+    nonfinal
+    dot '$left . sevens':
+      '77'
+  class Posn3D(sevens):
+    extends Posn
+  ~throws "field name already in superclass as dot syntax"
+
+block:
+  class Posn(mutable x :: ReadableString.to_string):
+    method assign(v): x := v
+  def p = Posn("apple".copy())
+  check p.x ~is "apple"
+  p.x := "ok".copy()
+  check p.x ~is "ok"
+  p.assign("still ok".copy())
+  check p.x ~is "still ok"
+
+// make sure `_let` in a `class` body doesn't obscure
+// `internal binding
+check:
+  class C(x, y):
+    let mini = 0
+    internal _C
+  C(1, 2) is_a _C
+  ~is #true
+
+check:
+  class A():
+    nonfinal
+    private field a :: Boolean = #false
+  class B(b :: Boolean):
+    extends A
+  B(#false).b
+  ~is #false
+
+check:
+  class A():
+    nonfinal
+    private field a :: Boolean = #false
+  class B(b :: Boolean):
+    nonfinal
+    extends A
+  class C():
+    extends B
+  [B(#true).b, C(#true).b]
+  ~is [#true, #true]
+
+block:
+  class Posn(x, y):
+    field size = 0
+  def p = Posn (1, 2)
+  p.size := 100
+  check p with (x = 10) ~is_now Posn(10, 2)
+  check p with (x = 10).size ~is 0
+
+block:
+  def mutable c = 0
+  class Posn(x, y, private z = c):
+    method get_z(): z
+    method is_same(p :: Posn):
+      p.x == x && p.y == y && p.z == z
+  def p = Posn (1, 2)
+  c := 1
+  check p with (x = 10).is_same(Posn(10, 2)) ~is #true
+  check p with (x = 10).get_z() ~is 1
+
+block:
+  class Pack(mutable vs :: List.of(Int))
+  check Pack([1, 2]).vs[0] ~is 1
+  check Pack.vs(Pack([1, 2]))[1] ~is 2
+  check Pack.vs(Pack([1, 2]), [0]) ~is #void
+
+check:
+  ~eval
+  use_static
+  class Pack(mutable vs :: List.of(Int))
+  Pack.vs(1, 2, 3)
+  ~throws "wrong number of arguments in function call (based on static information)"
+
+// make sure static info is propagated for earlier constructor arguments to later defaults
+check:
+  block:
+    class B(b :: String, c = b[0])
+    B("apple")
+  block:
+    class A(a):
+      nonfinal
+    class B(b :: String, c = b[0]):
+      extends A
+    B(1, "apple")
+  block:
+    class A(a):
+      nonfinal
+    class B(b :: String, c = b[0]):
+      extends A
+      nonfinal
+    B(1, "apple")
+  ~completes
+
+// make sure annotation conversion apply default-value expressions that should use the results
+check:
+  class B(b :: Listable.to_list, c = b)
+  B(PairList["apple"]).c
+  ~is ["apple"]
+
+// options in `dot`
+block:
+  import rhombus/meta open
+  class Something():
+    dot '$left . check_options':
+      ~op_stx self
+      ~head_stx call
+      ~is_static is_static
+      ~tail '$()'
+      'values(
+         Syntax.literal '$self',
+         Syntax.literal '$call',
+         #%literal $is_static,
+       )'
+  check:
+    Something().check_options
+    ~matches values(
+      '.',
+      '$_ . check_options',
+      #true,
+    )
+  check:
+    Something.check_options(Something())
+    ~matches values(
+      'check_options',
+      'check_options($_)',
+      #true,
+    )
+
+block:
+  class C():
+    private property p: 10
+    method m():
+      this.p
+  check C().m() ~is 10
+
+block:
+  def Ghost = "not defined later"
+  class Ghost(x):
+    internal _Ghost
+    constructor ~none
+  check _Ghost(1) ~is_a Ghost
+  check Ghost ~is "not defined later"
+
+block:
+  def Ghost = "not defined later"
+  class Ghost(x):
+    internal _Ghost
+    expression ~none
+  check _Ghost(1) ~is_a Ghost
+  check Ghost ~is "not defined later"
+
+block:
+  def Ghost = "not defined later"
+  class Ghost(private x):
+    internal _Ghost
+    expression ~none
+  check _Ghost(1) ~is_a Ghost
+  check Ghost ~is "not defined later"
+
+block:
+  def Ghost = "not defined later"
+  class Ghost():
+    internal _Ghost
+    constructor ~none
+  check _Ghost() ~is_a Ghost
+  check Ghost ~is "not defined later"
+
+block:
+  import rhombus/meta open
+  class Ghost(x):
+    binding ~none
+  bind.macro 'Ghost($x)': '$x'
+  def Ghost(x) = 0
+  check x ~is 0
+
+block:
+  import rhombus/meta open
+  class Ghost(x):
+    internal _Ghost
+    annotation ~none
+  annot.macro 'Ghost': 'Int'
+  check 0 is_a Ghost ~is #true
+  check Ghost(1) is_a Ghost ~is #false
+
+check:
+  ~eval
+  class Stubborn(x):
+    constructor ~error
+  Stubborn(0)
+  ~throws "cannot be used as an expression"
+
+check:
+  ~eval
+  class Stubborn(x):
+    expression ~error
+  Stubborn(0)
+  ~throws "cannot be used as an expression"
+
+check:
+  ~eval
+  class Stubborn(x):
+    binding ~error
+  def Stubborn = 10
+  #void
+  ~throws "cannot be used as a binding pattern"
+
+check:
+  ~eval
+  class Stubborn(x):
+    annotation ~error
+  10 :: Stubborn
+  ~throws "cannot be used as an annotation"
+
+check:
+  ~eval
+  class Stubborn(x):
+    constructor ~error
+    expression ~error
+  Stubborn(0)
+  ~throws "cannot be used as an expression"
+
+check:
+  ~eval
+  class Stubborn(x):
+    constructor ~none
+    expression ~none
+  Stubborn(0)
+  ~throws "Stubborn: undefined"
+
+check:
+  ~eval
+  class Stubborn(x):
+    constructor ~error
+    expression ~none
+  ~throws "constructor has a different disable mode than expression macro"
+
+check:
+  ~eval
+  class Stubborn(x):
+    constructor ~none
+    expression ~error
+  ~throws "constructor has a different disable mode than expression macro"
+
+check:
+  ~eval
+  class Stubborn(x):
+    constructor ~error
+    expression ~none
+  ~throws "constructor has a different disable mode than expression macro"
+
+check:
+  ~eval
+  class Stubborn(x):
+    constructor (x):
+      super(x)
+    expression ~error
+  ~throws "unnamed constructor inaccessible due to expression macro"
+
+check:
+  ~eval
+  class Stubborn(x):
+    internal _Stubborn
+    constructor ~error
+    expression 'Stubborn[$x]':
+      '_Stubborn($x)'
+  ~throws "expression macro is given, but unnamed constructor is disabled"
+
+block:
+  class Posn(x, mutable y):
+    ~name Loc
+    final method m(): 0
+    method n(): 0
+  check print(Posn) ~prints "#<function:Loc>"
+  check print(Posn.x) ~prints "#<function:Loc.x>"
+  check print(Posn.y) ~prints "#<function:Loc.y>"
+  check print(Posn.m) ~prints "#<function:Loc.m>"
+  check print(Posn.n) ~prints "#<function:Loc.n>"
+  check Posn.x(0) ~throws "Loc.x"
+
+block:
+  class A(~kw: kw = #false):
+    nonfinal
+  class B(~kw2: kw2):
+    extends A
+  check: to_string(B(~kw: 0, ~kw2: 1))
+         ~is "B(~kw: 0, ~kw2: 1)"
+
+block:
+  interface Dummy:
+    method world
+
+  class NNN():
+    implements:
+      Dummy
+      Printable
+      Listable
+    override method world():
+      "NNN"
+
+    override method to_list():
+      ["NNN"]
+
+    override method describe(mode, recur):
+      "NNN++++"
+
+    nonfinal
+
+
+  class LLL():
+    extends NNN
+    override method to_list():
+      ["LLL"]
+
+    override method world():
+      "LLL"
+
+    override method describe(mode, recur):
+      "LLL++++"
+
+    nonfinal
+
+  class MMM():
+    extends:
+      LLL
+    override method to_list():
+      ["MMM"]
+
+    override method describe(mode, recur):
+      "MMM+++++"
+
+    override method world():
+      "MMM"
+
+  check:
+    (fun (x):
+       use_dynamic
+       x.world())(MMM()) ~is "MMM"
+    (fun (x):
+       use_dynamic
+       x.to_list())(MMM()) ~is  ["MMM"]
+
+  check:
+    print(MMM()) ~prints "MMM+++++"
+    dynamic(print(MMM())) ~prints "MMM+++++"
+
+block:
+  interface IB:
+    method HAHAH()
+
+  class Apple():
+    implements:
+      IB
+    nonfinal
+
+  class Pear():
+    extends Apple
+
+    nonfinal
+
+  class Orange():
+    extends:
+      Pear
+
+    override method HAHAH():
+      "fs"
+
+  check Orange() ~is_a Pear
+  check Orange() ~is_a Apple
+  check Orange() ~is_a IB
+
+check:
+  ~eval
+  class Posn(x, y):
+    def origin = Posn(0, 0)
+    export:
+      origin
+  ~throws "cannot reference an identifier before its definition"
+
+check:
+  ~eval
+  class Posn(x, y):
+    fun make_origin() :: Posn: Posn(0, 0)
+    export:
+      make_origin
+  ~throws "use of an annotation before its definition is complete"
+
+block:
+  class Posn(x, y):
+    export:
+      origin
+    def origin = Posn(0, 0)
+  check Posn.origin ~is Posn(0, 0)
+
+block:
+  class Posn(x, y):
+    export:
+      make_origin
+    fun make_origin() :: Posn: Posn(0, 0)
+  check Posn.make_origin() ~is Posn(0, 0)
+
+// make sure later annotations can see earlier fields with static info
+block:
+  class TwoLists(x :: List, y :: satisfying(fun (y :: List): x.length() == y.length()))
+  check TwoLists([], []) ~is_a TwoLists
+  check TwoLists([], [1]) ~throws error.annot_msg()
+
+block:
+  class Foo(~x: x, ~y: y)
+  let foo = Foo(~x: 1, ~y: 2)
+  let Foo(~x: x0) = foo
+  let Foo(~y: y0) = foo
+  let Foo() = foo
+  check x0 ~is 1
+  check y0 ~is 2
+  check foo is_a Foo.of(~x: Int) ~is #true
+  check foo is_a Foo.of(~x: String) ~is #false
+  check foo is_a Foo.of(~y: Int) ~is #true
+  check foo is_a Foo.of(~y: String) ~is #false
+  check foo is_a Foo.of(~x: Int, ~y: Int) ~is #true
+  check foo is_a Foo.of(~x: String, ~y: Int) ~is #false
+  check foo is_a Foo.of(~x: Int, ~y: String) ~is #false
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    constructor ():
+      super()(1)
+  ~throws "wrong number of arguments in function call"
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y):
+    nonfinal
+    constructor ():
+      super(1, 1)
+  class Posn3D(z):
+    extends Posn
+    constructor():
+      super(1, 1)(1)
+  ~throws "wrong number of arguments in function call"
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y):
+    nonfinal
+    constructor:
+      fun ():
+        super(1, 1)
+  class Posn3D(z):
+    extends Posn
+    constructor():
+      super(1, 1)(1)
+  ~throws "wrong number of arguments in function call"
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    internal _Posn3D
+  _Posn3D(1)(3)
+  ~throws "wrong number of arguments in function call"
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    internal _Posn3D
+  _Posn3D(1, 2)()
+  ~throws "wrong number of arguments in function call"
+
+check:
+  ~eval
+  use_static
+  class Posn(~x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    internal _Posn3D
+  _Posn3D(1, 2)(3)
+  ~throws "wrong number of arguments in function call"
+
+check:
+  ~eval
+  use_static
+  class Posn(~x, y):
+    nonfinal
+  class Posn3D(~z):
+    extends Posn
+    internal _Posn3D
+  _Posn3D(~x: 1, 2)(3)
+  ~throws "wrong number of arguments in function call"
+
+check:
+  ~eval
+  use_static
+  class Posn(~x, y):
+    nonfinal
+    constructor ():
+      super(~x: 0, 1)
+  class Posn3D(z):
+    extends Posn
+    internal _Posn3D
+  _Posn3D(~x: 1, 2)(3)
+  ~throws "keyword argument not recognized by called function"
+
+check:
+  class Posn(~x, y):
+    nonfinal
+  class Posn3D(~z):
+    extends Posn
+    internal _Posn3D
+  _Posn3D(~x: 1, 2)(~z: 3)
+  ~completes
+
+check:
+  class Posn(~x, y = 1):
+    nonfinal
+  class Posn3D(~z):
+    extends Posn
+    internal _Posn3D
+  _Posn3D(~x: 1)(~z: 3)
+  ~completes
+
+check:
+  class Posn(~x, y):
+    nonfinal
+  class Posn3D(~z = 3):
+    extends Posn
+    internal _Posn3D
+  _Posn3D(~x: 1, 2)()
+  ~completes
+
+check:
+  class Posn(~x, y):
+    nonfinal
+    constructor (v):
+      super(~x: v, v)
+  class Posn3D(~z = 3):
+    extends Posn
+    internal _Posn3D
+  _Posn3D(1)()
+  ~completes
+
+block:
+  use_dynamic
+  class Hello():
+    nonfinal
+  class World(a):
+    extends Hello
+    internal _World
+    constructor(a):
+      super(a)
+
+  check World(42) ~throws "super to Hello"
+  check _World(1) ~throws "_World curried"
+  check _World()() ~throws "_World super"
+
+block:
+  class Posn(x, y):
+    internal _Posn
+    internal _Posn2
+
+  check:
+    Posn(1, 2) ~is_a _Posn2
+    _Posn2(1, 2) ~is_a Posn
+    (match Posn(1, 2) | _Posn2(x, y): [x, y]) ~is [1, 2]
+    _Posn2.x(Posn(1, 2)) ~is 1
+    (_Posn(1, 2)).y ~is 2
+
+// check prefix in post forms
+block:
+  class A():
+    export:
+      whoami
+      try_input
+      try_output
+    fun whoami():
+      ~who: who
+      who
+    fun try_input(_ :: Never):
+      error("should not get here")
+    fun try_output() :: Never:
+      "oops"
+  check:
+    A.whoami() ~is #'#{A.whoami}
+    A.try_input("oops") ~throws values(
+      "A.try_input: " ++ error.annot_msg("argument"),
+      error.annot("Never").msg,
+      error.val("oops", ~label: "argument").msg,
+    )
+    A.try_output() ~throws values(
+      "A.try_output: " ++ error.annot_msg("result"),
+      error.annot("Never").msg,
+      error.val("oops", ~label: "result").msg,
+    )
+
+// make sure static information is associated with the
+// right earlier argument
+check:
+  class Posn(x, y)
+  class C(x,
+          p :: Posn,
+          q = p.x)
+  C(1, Posn(2, 3)).q
+  ~is 2
+check:
+  ~eval
+  use_static
+  class Posn(x, y)
+  class C(x :: Posn,
+          p,
+          q = p.x)
+  ~throws values("no such field", "based on static")
+
+block:
+  import rhombus/meta open
+  syntax_parameter.bridge z: '"no"'
+  expr.macro 'use_z':
+    syntax_parameter_meta.lookup('z')
+  class Foo():
+    syntax_parameter.relet z: '"yes"'
+    export f
+    fun f ():
+      use_z
+  check Function.name(Foo.f) ~is #'#{Foo.f}
+  check Foo.f() ~is "yes"
+  check use_z ~is "no"
+
+// regression test: parsing of field clauses
+block:
+  class C():
+    field f1 = "f1"
+    immutable f2 = "f2"
+    immutable field f3 = "f3"
+    method get():
+      [f1, f2, f3]
+  check C().get() ~is ["f1", "f2", "f3"]
+
+block:
+  class C():
+    private field f1 = "f1"
+    private immutable f2 = "f2"
+    private immutable field f3 = "f3"
+    method get():
+      [f1, f2, f3]
+  check C().get() ~is ["f1", "f2", "f3"]
+
+block:
+  class C():
+    protected field f1 = "f1"
+    protected immutable f2 = "f2"
+    protected immutable field f3 = "f3"
+    method get():
+      [f1, f2, f3]
+  check C().get() ~is ["f1", "f2", "f3"]
+
+// regression test: parsing of method clauses
+block:
+  class C():
+    method m(): "m"
+    property p: "p"
+    method get():
+      [m(), p]
+  check C().get() ~is ["m", "p"]
+
+block:
+  class C():
+    nonfinal
+    abstract am()
+    abstract method am2()
+    abstract property ap
+    method get():
+      [am(), am2(), ap]
+  class C2():
+    extends C
+    override am(): "am"
+    override method am2(): "am2"
+    override property ap: "ap"
+  check C2().get() ~is ["am", "am2", "ap"]
+
+block:
+  class C():
+    final m(): "m"
+    final method m2(): "m2"
+    final property p: "p"
+    method get():
+      [m(), m2(), p]
+  check C().get() ~is ["m", "m2", "p"]
+
+block:
+  class C():
+    private m(): "m"
+    private method m2(): "m2"
+    private property p: "p"
+    method get():
+      [m(), m2(), p]
+  check C().get() ~is ["m", "m2", "p"]
+
+block:
+  class C():
+    protected m(): "m"
+    protected method m2(): "m2"
+    protected property p: "p"
+    method get():
+      [m(), m2(), p]
+  check C().get() ~is ["m", "m2", "p"]
+
+block:
+  class C():
+    nonfinal
+    abstract protected am()
+    abstract protected method am2()
+    abstract protected property ap
+    method get():
+      [am(), am2(), ap]
+  class C2():
+    extends C
+    override am(): "am"
+    override method am2(): "am2"
+    override property ap: "ap"
+  check C2().get() ~is ["am", "am2", "ap"]
+
+block:
+  interface I:
+    internal _I
+    method am()
+    method am2()
+    property ap
+    method get():
+      [am(), am2(), ap]
+  class C():
+    private implements I
+    private override am(): "am"
+    private override method am2(): "am2"
+    private override property ap: "ap"
+  check (C() :: _I).get() ~is ["am", "am2", "ap"]
+
+block:
+  interface I:
+    method am()
+    method am2()
+    property ap
+    method get():
+      [am(), am2(), ap]
+  class C():
+    protected implements I
+    override am(): "am"
+    override method am2(): "am2"
+    override property ap: "ap"
+  check (C() :: I).get() ~is ["am", "am2", "ap"]
+
+block:
+  class C():
+    nonfinal
+    abstract am()
+    abstract method am2()
+    abstract property ap
+    method get():
+      [am(), am2(), ap]
+  class C2():
+    nonfinal
+    extends C
+    abstract override am()
+    abstract override method am2()
+    abstract override property ap
+  class C3():
+    extends C2
+    final override am(): "am"
+    final override method am2(): "am2"
+    final override property ap: "ap"
+  check C3().get() ~is ["am", "am2", "ap"]
+
+// check annotation strings of generated bindings
+block:
+  class Interleave(x, ~y, z, ~w)
+  check:
+    def Interleave(x :: Int, z :: Int) = Interleave("oops", ~y: "no", "well", ~w: "nah")
+    "oops"
+    ~throws "matching(Interleave(_ :: Int, ~y: _, _ :: Int, ~w: _))"
+  check:
+    def Interleave(~y: y :: Int, x :: Int, z :: Int, ~w: w :: Int) = Interleave("oops", ~y: "no", "well", ~w: "nah")
+    "oops"
+    ~throws "matching(Interleave(_ :: Int, ~y: _ :: Int, _ :: Int, ~w: _ :: Int))"

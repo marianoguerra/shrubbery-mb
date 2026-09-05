@@ -1,0 +1,113 @@
+import:
+  rhombus/wrapper
+  "rkt.rhm"
+  "type.rhm":
+    expose:
+      Point
+      PointLike
+      RectLike
+      Rect
+  "font.rhm".Font
+  "transformation.rhm".Transformation
+  "text-combine.rhm".DC
+
+export:
+  Path
+
+class Path(private _handle):
+  internal _Path
+  property handle: _handle
+
+  constructor ():
+    super(rkt.make_object(rkt.#{dc-path%}))
+
+  method close():
+    rkt.send handle.close()
+  method is_open():
+    rkt.send handle.#{open?}()
+  method reset():
+    rkt.send handle.reset()
+
+  method bounding_box() :~ Rect:
+    let (l, t, w, h) =  rkt.send handle.#{get-bounding-box}()
+    Rect(l, t, w, h)
+
+  method append(p :: Path):
+    rkt.send handle.append(p.handle)
+
+  method
+  | scale(s :: Real):
+      rkt.send handle.#{scale}(s, s)
+  | scale(sx :: Real, sy :: Real):
+      rkt.send handle.#{scale}(sx, sy)
+  method rotate(radians :: Real):
+    rkt.send handle.#{rotate}(radians)
+  method translate(dx :: Real, dy :: Real):
+    rkt.send handle.#{translate}(dx, dy)
+  method transform(t :: Transformation):
+    rkt.send handle.#{transform}(Array(t.xx, t.yx, t.yx, t.yy, t.x0, t.y0))
+
+  method reverse():
+    rkt.send handle.#{reverse}()
+
+  method curve_to(pt1 :: PointLike,
+                  pt2 :: PointLike,
+                  pt3 :: PointLike):
+    rkt.send handle.#{curve-to}(pt1.x, pt1.y, pt2.x, pt2.y, pt3.x, pt3.y)
+
+  method line_to(pt :: PointLike):
+    rkt.send handle.#{line-to}(pt.x, pt.y)
+
+  method move_to(pt :: PointLike):
+    rkt.send handle.#{move-to}(pt.x, pt.y)
+
+  method rectangle(r :: RectLike):
+    rkt.send handle.#{rectangle}(r.x, r.y, r.width, r.height)
+
+  method rounded_rectangle(r :: RectLike,
+                           radius :: Real):
+    rkt.send handle.#{rounded-rectangle}(r.x, r.y, r.width, r.height, radius)
+
+  method ellipse(r :: RectLike):
+    rkt.send handle.#{ellipse}(r.x, r.y, r.width, r.height)
+
+  method arc(r :: RectLike,
+             start_radians :: Real, end_radians :: Real,
+             ~clockwise = #false):
+    rkt.send handle.#{arc}(r.x, r.y, r.width, r.height, start_radians, end_radians, !clockwise)
+
+  method lines([pt :: PointLike, ...],
+               ~dpt: dpt :: PointLike = Point.zero,
+               ~dx: dx :: Real = 0,
+               ~dy: dy :: Real = 0):
+    rkt.send handle.#{lines}(PairList[Pair(pt.x, pt.y), ...], dpt.x + dx, dpt.y + dy)
+
+  method polygon([pt :: PointLike, ...],
+                 ~dpt: dpt :: PointLike = Point.zero,
+                 ~dx: dx :: Real = 0,
+                 ~dy: dy :: Real = 0):
+    rkt.send handle.#{close}()
+    match [pt, ...]
+    | [pt0, pt, ...]:
+        rkt.send handle.#{move-to}(pt0.x, pt0.y)
+        rkt.send handle.#{lines}(PairList[Pair(pt.x, pt.y), ...], dpt.x + dx, dpt.y + dy)
+        rkt.send handle.#{close}()
+    | []:
+        #void
+
+  method text_outline(str :: String,
+                      ~dpt: dpt :: Point = Point.zero,
+                      ~dx: dx :: Real = 0,
+                      ~dy: dy :: Real = 0,
+                      ~font: font :: Font = Font(),
+                      ~combine: combine :: DC.TextCombine = #'kern):
+    rkt.send handle.#{text-outline}(font.handle, str, dpt.x + dx, dpt.y + dy, combine)
+
+  export:
+    from_handle
+
+  fun from_handle(handle) :~ Path:
+    ~who: who
+    unless handle rkt.is_a rkt.#{dc-path%}
+    | wrapper.error(~who: who, ~what: "path", handle)
+    _Path(handle)

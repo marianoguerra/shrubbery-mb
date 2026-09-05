@@ -1,0 +1,6 @@
+
+import:
+  shrubbery/render/spacer
+
+export:
+  all_from(.spacer)

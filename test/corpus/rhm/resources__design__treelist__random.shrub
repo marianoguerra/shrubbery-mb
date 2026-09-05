@@ -1,0 +1,54 @@
+
+import:
+  lib("racket/base.rkt") as rkt
+  "treelist.rhm".TreeList
+  rhombus/measure
+
+// Turn off all but one to get a useful (thoough rough) performance result:
+def do_pairlist = #true
+def do_TreeList = #false
+def do_list = #true
+
+// rkt.#{random-seed}(10)
+
+fun insert(plst, pos, v):
+  cond
+  | pos == 0: PairList.cons(v, plst)
+  | plst == PairList[]: [v]
+  | ~else PairList.cons(PairList.first(plst), insert(PairList.rest(plst), pos-1, v))
+
+fun rand_test(plst, tl, lst, n, history):
+  // println([n, history, lst])
+  fun check():
+    when do_list && do_TreeList
+    | unless lst == tl.to_list()
+      | error(#'rand_test, "fail " +& lst +& " vs. " +& tl +& " using " +& PairList.reverse(history))
+    when do_pairlist && do_list
+    | unless plst == (for PairList (e in lst): e)
+      | error(#'rand_test, "fail " +& plst +& " vs. " +& lst +& " using " +& PairList.reverse(history))
+    when do_list
+    | let lst2 = (for List (e in (for PairList (e in lst): e)): e)
+      unless (lst2 == lst) && (lst == lst2) && Equatable.hash(lst) == Equatable.hash(lst2)
+      | error(#'rand_test, "equal fails " +& lst)
+  cond
+  | n >= 1000:
+      check()
+  | ~else:
+      when (n mod 100) == 0
+      | check()  
+      let pos = rkt.random(n+2)
+      if pos == n+1
+      | rand_test(do_pairlist && (plst ++ plst),
+                  do_TreeList && (tl ++ tl),
+                  do_list && (lst ++ lst),
+                  2 * n,
+                  List.cons(#'append, history))
+      | rand_test(do_pairlist && insert(plst, pos, n),
+                  do_TreeList && TreeList.insert(tl, pos, n),
+                  do_list && List.insert(lst, pos, n),
+                  n + 1,
+                  List.cons(pos, history))
+
+measure.time:
+  for (i in 0..1000):
+    rand_test(PairList[], TreeList[], [], 0, [])

@@ -1,0 +1,86 @@
+import:
+  rhombus/syntax_map open
+
+check:
+  equal_name('apple', 'apple') ~is #true
+  equal_name('fruit.apple', 'apple') ~is #false
+  equal_name('fruit.apple', 'fruit.apple') ~is #true
+
+check:
+  equal_name('x', 'x') ~is #true
+  equal_name('x', 'y') ~is #false
+  equal_name('+', '+') ~is #true
+  equal_name('+', '*') ~is #false
+  equal_name('+', '#{+}') ~is #false
+  equal_name('a.b.x', 'a.b.x') ~is #true
+  equal_name('a.b.x', 'a.b.y') ~is #false
+  equal_name('a.b.x', 'a.c.x') ~is #false
+  equal_name('a.b.(+)', 'a.b.(+)') ~is #true
+  equal_name('a.b.(+)', 'a.b.(*)') ~is #false
+  equal_name('a.b.(+)', 'a.c.(+)') ~is #false
+  equal_name('a.b.(+)', 'a.b.#{+}') ~is #false
+
+check:
+  namespace fruit
+  let one_fruit_apple:
+    let fruit.apple = "one"
+    'fruit.apple'
+  let another_fruit_apple:
+    let fruit.apple = "another"
+    'fruit.apple'
+  equal_name(one_fruit_apple, another_fruit_apple)
+  ~is #true
+
+check:
+  Map.by(equal_name){ 'x': 1, 'X': 2 }['x'] ~is 1
+  Map.by(equal_name){ 'x': 1, 'X': 2 }['X'] ~is 2
+  Map.by(equal_name){ 'x': 1, 'X': 2 }['y'] ~throws "no value found for key"
+  Map.by(equal_name){ 'x': 1, '+': 2 }['+'] ~is 2
+  Map.by(equal_name){ 'a.x': 1, 'a.(+)': 2 }['a.x'] ~is 1
+  Map.by(equal_name){ 'a.x': 1, 'a.(+)': 2 }['a.(+)'] ~is 2
+
+check:
+  namespace fruit
+  let one_fruit_apple:
+    let fruit.apple = "one"
+    'fruit.apple'
+  let another_fruit_apple:
+    let fruit.apple = "another"
+    'fruit.apple'
+  let snacks = Map.by(equal_name){
+    one_fruit_apple: 1
+  } ++ {
+    another_fruit_apple: 2
+  }
+  snacks[one_fruit_apple] + snacks[another_fruit_apple]
+  ~is 4
+
+check:
+  let apple = 1
+  namespace fruit:
+    export:
+      apple
+  expr.macro 'do':
+    let snacks = Map.by(equal_binding){
+      'apple': 1
+    } ++ {
+      'fruit.apple': 2
+    }
+    '#%literal $(snacks['apple'] + snacks['fruit.apple'])'
+  do
+  ~is 4
+
+check:
+  let apple = 1
+  namespace fruit:
+    export:
+      apple
+  expr.macro 'do':
+    let snacks = Map.by(equal_name_and_scopes){
+      'apple': 1
+    } ++ {
+      'fruit.apple': 2
+    }
+    '#%literal $(snacks['apple'] + snacks['fruit.apple'])'
+  do
+  ~is 3

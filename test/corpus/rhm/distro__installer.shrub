@@ -1,0 +1,32 @@
+import:
+  net/url
+  lib("distro-build/repackage.rkt")
+
+export:
+  build_installer
+
+fun build_installer(racket_version, rhombus_version :~ String, config_file):
+  def log_dir = "compiled/repackage/build/log"
+  filesystem.make_directory(log_dir, ~parents: #true)
+
+  println("Building installers...")
+
+  Port.Output.using ~file log_dir +/ "server":
+    ~exists: #'truncate
+    Port.Output.current().buffer(#'line)
+    parameterize { Port.Output.current_error: Port.Output.current() }:
+      repackage.repackage(
+        ~version: racket_version,
+        ~#{file-name-version}: rhombus_version ++ "+" ++ racket_version,
+        ~#{version-note}: " with Rhombus version " ++ rhombus_version,
+        ~#{skip-notarize?}: #false,
+        ~catalogs: PairList[to_string(url.URL.from_path(Path("compiled/repackage/build/built/catalog/").to_absolute_path()))],
+        ~#{dist-catalogs}: PairList["https://download.rhombus-lang.org/releases/" ++ rhombus_version ++ "/catalog/"],
+        ~#{remove-catalogs}: PairList["https://download.rhombus-lang.org/releases/current/catalog/"],
+        ~config: config_file,
+        ~#{config-mode}: "release=" ++ rhombus_version
+      )
+
+module main:
+  import "cmdline.rhm"
+  cmdline.parse(build_installer)

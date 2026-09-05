@@ -1,0 +1,16 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    Keyword.from_string(str)
+    Keyword.from_symbol(str)
+
+check:
+  #'~a :: Keyword ~is #'~a
+  Keyword.from_string("a") ~is #'~a
+  Keyword.from_symbol(#'a) ~is #'~a
+
+check:
+  use_static
+  Keyword.from_string("a") < Keyword.from_symbol(#'a) 
+  ~completes

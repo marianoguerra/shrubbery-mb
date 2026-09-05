@@ -1,0 +1,68 @@
+
+// binding arrows in this file checked by "origin.rhm"
+
+// make sure that going through a custom space's expander
+// doesn't add extra scopes that interefere with the originalness
+// of an identifier
+
+space.enforest origin:
+  space_path rhombus/example/origin
+  macro_definer macro
+  meta_namespace origin_meta:
+    parse_syntax_class Parsed
+    parsed_packer pack
+    parsed_unpacker unpack
+
+origin.macro 'root ($expr)':
+  origin_meta.pack(expr)
+
+origin.macro 'step ($expr)':
+  'root ($expr)'
+
+expr.macro 'go ($expr) $()':
+  let '$(o ::  origin_meta.Parsed)' = 'step ($expr)'
+  origin_meta.unpack(o)
+
+block:
+  let local_x = 10
+  go (local_x)
+
+space.enforest paren_origin:
+  space_path rhombus/example/paren_origin
+  macro_definer macro
+  meta_namespace paren_origin_meta:
+    parse_syntax_class Parsed
+    parsed_packer pack
+    parsed_unpacker unpack
+
+paren_origin.macro 'root ($expr)':
+  paren_origin_meta.pack('($expr)')
+
+paren_origin.macro 'step ($expr)':
+  'root ($expr)'
+
+expr.macro 'paren_go ($expr) $()':
+  let '$(o ::  paren_origin_meta.Parsed)' = 'step ($expr)'
+  let '($inner)' = paren_origin_meta.unpack(o)
+  '($inner)'
+
+block:
+  let paren_local_x = 10
+  paren_go (paren_local_x)
+
+
+space.enforest demo:
+  space_path rhombus/example/demo
+  macro_definer macro
+  meta_namespace demo_meta:
+    parse_syntax_class Parsed
+
+demo.macro 'ddef $t ...':
+  '$t ...'
+
+defn.macro 'as_demo $t ...':
+  let '$(d :: demo_meta.Parsed)' = '$t ...'
+  let PairList[id :: Identifier] = d.ephemeral_property(#'origin)
+  d
+
+as_demo ddef def x = 1

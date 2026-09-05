@@ -1,0 +1,10 @@
+
+check:
+  ~eval
+  (: 2)
+  ~throws error.message(~who: #'#{:}, "misplaced")
+
+check:
+  ~eval
+  1: 2
+  ~throws error.message(~who: #'#{:}, "misplaced")

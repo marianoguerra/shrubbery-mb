@@ -1,0 +1,1817 @@
+import:
+  rhombus/version_meta
+
+block:
+  syntax_class Arithmetic
+  | '$x + $y'
+
+  check:
+    match '1+2'
+    | '$(exp :: Arithmetic)': exp.x
+    ~matches '1'
+
+  check:
+    match '1+2'
+    | '$(exp :: Arithmetic)': exp.y
+    ~matches '2'
+
+  check:
+    match '1+2'
+    | '$(_ :: Arithmetic: y)': y
+    ~matches '2'
+
+  check:
+    match '1+2'
+    | '$(_ :: Arithmetic: y as expy)': expy
+    ~matches '2'
+
+  check:
+    match '1+2'
+    | '$(_ :: Arithmetic: open)': y
+    ~matches '2'
+
+check:
+  syntax_class Arithmetic
+  | '$x + $y'
+  match '1+2'
+  | '$(exp :: Arithmetic)': exp
+  ~matches '1 + 2'
+
+block:
+  syntax_class Arithmetic
+  | '$x + $y'
+  | '$x - $y'
+
+  check:
+    match '1+2'
+    | '$(exp :: Arithmetic)': exp.x
+    ~matches '1'
+
+  check:
+    match '1-2'
+    | '$(exp :: Arithmetic)': exp.y
+    ~matches '2'
+
+check:
+  syntax_class Arithmetic:
+    fields:
+      x: kind ~term
+      y
+  | '$x $op $y'
+  match '1+2'
+  | '$(exp :: Arithmetic)': [exp.x, exp.y]
+  ~matches ['1', '2']
+
+check:
+  ~eval
+  syntax_class Arithmetic:
+    fields: x y
+  | '$x $op $y'
+  match '1+2'
+  | '$(exp :: Arithmetic)': exp.op
+  ~throws "no such field"
+
+check:
+  ~eval
+  syntax_class Arithmetic:
+    fields x y
+  | '$x $op $y'
+  match '1+2'
+  | '$(exp :: Arithmetic)': exp.op
+  ~throws "no such field"
+
+check:
+  ~eval
+  syntax_class Any:
+    fields
+  | '$x'
+  match '1'
+  | '$(any :: Any)': any.x
+  ~throws "no such field"
+
+check:
+  ~eval
+  syntax_class Arithmetic:
+    fields: [x, ...] y
+  | '$x $op $y'
+  match '1+2'
+  | '$(exp :: Arithmetic)': exp.op
+  ~throws "field implementation does not match declared depth"
+
+check:
+  ~eval
+  syntax_class Arithmetic:
+    fields: y x: kind ~group
+  | '$x $op $y'
+  match '1+2'
+  | '$(exp :: Arithmetic)': exp.op
+  ~throws "field implementation does not match declared kind"
+
+check:
+  syntax_class Arithmetic:
+    kind: ~group
+    fields: x y: kind ~group
+  | '$x $op $(y :: Group)'
+  ~completes
+
+block:
+  syntax_class Arithmetic
+  | '$x + $y':
+      field sum: Syntax.make(Syntax.unwrap(x) + Syntax.unwrap(y))
+      field [num, ...]: [x, y]
+
+  check:
+    match '1+2'
+    | '$(exp :: Arithmetic)': exp.sum
+    ~matches '3'
+
+  check:
+    match '1+2'
+    | '$(exp :: Arithmetic)': [exp.num, ...]
+    ~matches ['1', '2']
+
+block:
+  syntax_class Foo
+  | 'a ($x, ...) z'
+
+  check:
+    match 'a (1, 2, 3) z'
+    | '$(f :: Foo)': [f.x, ...]
+    ~matches ['1', '2', '3']
+
+  check:
+    match '[a (1, 2, 3) z, a () z, a ("x", "y") z]'
+    | '[$(f :: Foo), ...]': [[f.x, ...], ...]
+    ~matches [['1', '2', '3'], [], ['"x"', '"y"']]
+
+  check:
+    match 'a (1, 2, 3) z'
+    | '$(whole :: Foo: x as f)': [f, ...]
+    ~matches ['1', '2', '3']
+
+block:
+  syntax_class Foo
+  | 'a $x ...'
+
+  check:
+    match 'a (1, 2, 3) z'
+    | '$(f :: Foo)': [f.x, ...]
+    ~matches ['(1, 2, 3)', 'z']
+
+block:
+  syntax_class Foo
+  | '$a ... $b'
+
+  syntax_class Bar
+  | '($(f :: Foo))'
+
+  check:
+    match '(1 3)'
+    | '$(b :: Bar)': b.f
+    ~matches '1 3'
+
+  check:
+    match '(1 2 3)'
+    | '$(b :: Bar)': b.f.b
+    ~matches '3'
+
+  check:
+    match '(1 2 3)'
+    | '$(b :: Bar)': dynamic(b).f.b
+    ~matches '3'
+
+  check:
+    match '(1 2 3)'
+    | '$(b :: Bar)': dynamic(b.f).a
+    ~throws "field is a repetition"
+
+block:
+  syntax_class Foo:
+    root_swap: a group
+  | '$a $b'
+
+  syntax_class Bar
+  | '($(f :: Foo))'
+
+  check:
+    match '(1 3)'
+    | '$(b :: Bar)': b.f
+    ~matches '1'
+
+  check:
+    match '(1 3)'
+    | '$(b :: Bar)': b.f.b
+    ~matches '3'
+
+block:
+  syntax_class Foo:
+  | '$a $b; $c; ...'
+
+  syntax_class Bar
+  | '($(f :: Foo))'
+
+  check:
+    match '1 3'
+    | '$(f :: Foo)': (f).b
+    ~matches '3'
+
+  check:
+    match '1 3'
+    | '$(f :: Foo)': dynamic(f).b
+    ~matches '3'
+
+  check:
+    match '(1 3) (5 7)'
+    | '($(f :: Foo)) ...': [(f).b, ...]
+    ~matches ['3', '7']
+
+  check:
+    match '(1 3) (5 7)'
+    | '($(f :: Foo)) ...': [dynamic(f).b, ...]
+    ~matches ['3', '7']
+
+  check:
+    match '(1 3)'
+    | '$(r :: Bar)': ((r).f).b
+    ~matches '3'
+
+block:
+  syntax_class Foo:
+    kind: ~group
+  | '$a $b'
+
+  syntax_class Bar
+  | '($(f :: Foo))'
+
+  check:
+    match '(1 3)'
+    | '$(r :: Bar)': ((r).f).b
+    ~matches '3'
+
+// check that right-hand side of pattern
+// is in a more nested scope than pattern variables
+block:
+  syntax_class Foo
+  | 'a $x':
+      def x = "whatever"
+  check:
+    match 'a 1'
+    | '$(f :: Foo)': f.x
+    ~matches '1'
+
+// check that syntax class description appears in match error
+block:
+  check:
+    ~eval
+    import:
+      rhombus/meta open
+    meta:
+      syntax_class Arithmetic:
+        description: "an expression with addition or subtraction"
+      | '$x + $y'
+      | '$x - $y'
+    expr.macro 'right_operand $(e :: Arithmetic)':
+      values(e.y, '')
+    right_operand 1 +
+    ~throws "expression with addition or subtraction"
+
+block:
+  check:
+    ~eval
+    import:
+      rhombus/meta open
+    meta:
+      syntax_class Arithmetic:
+        description "an expression with addition or subtraction"
+      | '$x + $y'
+      | '$x - $y'
+    expr.macro 'right_operand $(e :: Arithmetic)':
+      values(e.y, '')
+    right_operand 1 +
+    ~throws "expression with addition or subtraction"
+
+block:
+  syntax_class Foo
+  | '$x + $y'
+  | '$x + $y + $z'
+  check:
+    match '1 + 2'
+    | '$(f :: Foo)': [f.x, f.y]
+    ~matches ['1', '2']
+  check:
+    match '10 + 20 + 30'
+    | '$(f :: Foo)': [f.x, f.y]
+    ~matches ['10', '20']
+
+check:
+  ~eval
+  import:
+    rhombus/meta open
+  syntax_class Foo
+  | '$x + $y'
+  | '$x + $y + $z'
+  match '10 + 20 + 30'
+  | '$(f :: Foo)': f.z
+  ~throws "no such field or method"
+
+block:
+  syntax_class Foo:
+    kind: ~sequence
+  | '$x + $y'
+  check:
+    match '0 + 1 + 2'
+    | '0 + $(f :: Foo)': [f.x, f.y]
+    ~matches ['1', '2']
+
+block:
+  syntax_class Foo:
+    kind: ~term
+  | '($x + $y)'
+  check:
+    match '0 + (1 + 2)'
+    | '0 + $(f :: Foo)': [f.x, f.y]
+    ~matches ['1', '2']
+
+check:
+  ~eval
+  syntax_class Foo:
+    kind: ~term
+  | '$x + $y'
+  ~throws "not a single-term pattern"
+
+block:
+  syntax_class Foo:
+    kind: ~group
+  | '$x + $y'
+  check:
+    match '(1 + 2)'
+    | '($(f :: Foo))': [f.x, f.y]
+    ~matches ['1', '2']
+
+block:
+  syntax_class Foo:
+    kind: ~group
+  | '$g'
+  check:
+    match '(1 + 2)'
+    | '($(f :: Foo))': f.g
+    ~matches '1 + 2'
+
+block:
+  check:
+    syntax_class Foo:
+      kind: ~group
+    | '$x + $y'
+    match '0 + 1 + 2'
+    | '0 + $(f :: Foo)': [f.x, f.y]
+    ~matches ['1', '2']
+
+block:
+  check:
+    syntax_class Foo:
+      kind: ~group
+    | '$x + $y'
+    match '0 + 1 + 2 + 3'
+    | '0 + $(f :: Foo) + 3': [f.x, f.y]
+    ~matches ['1', '2']
+
+block:
+  check:
+    ~eval
+    syntax_class Foo:
+      kind: ~group
+    | '$x + $y'
+    match '0 + 1 + 2 + 3'
+    | '0 + $(f :: Foo) + $z': [f.x, f.y]
+    ~throws "incompatible with this context"
+
+check:
+  ~eval
+  syntax_class AGroup:
+    kind: ~term
+  | '$a ... $()'
+  ~throws "incompatible with this context"
+
+check:
+  ~eval
+  syntax_class AGroup:
+    kind: ~sequence
+  | '$a ... $()'
+  ~throws "incompatible with this context"
+
+block:
+  // `~group` syntax class cannot match empty
+  syntax_class AGroup:
+    kind: ~group
+  | '$a ...'
+  fun m(stx):
+    match stx
+    | '1 $(a :: AGroup) $()': a
+    | ~else: "no"
+  check m('') ~is "no"
+  check m('1') ~is "no"
+  check m('1 2') ~matches '2'
+  check m('1 2 3') ~matches '2 3'
+  fun m2(stx):
+    match stx
+    | '1 $(a :: AGroup)': a
+    | ~else: "no"
+  check m2('') ~is "no"
+  check m2('1') ~is "no"
+  check m2('1 2') ~matches '2'
+  check m2('1 2 3') ~matches '2 3'
+
+block:
+  // `~group` syntax class cannot match empty
+  syntax_class AGroup:
+    kind: ~group
+  | '$a ...'
+  fun m(stx):
+    match stx
+    | '1 $(a :: AGroup) 10 $()': a
+    | ~else: "no"
+  check m('') ~is "no"
+  check m('1') ~is "no"
+  check m('1 10') ~is "no"
+  check m('1 2 10') ~matches '2'
+  check m('1 2 3 10') ~matches '2 3'
+  fun m2(stx):
+    match stx
+    | '1 $(a :: AGroup) 10': a
+    | ~else: "no"
+  check m2('') ~is "no"
+  check m2('1') ~is "no"
+  check m2('1 10') ~is "no"
+  check m2('1 2 10') ~matches '2'
+  check m2('1 2 3 10') ~matches '2 3'
+
+block:
+  syntax_class AGroup:
+  | '$a ... $()'
+  fun m(stx):
+    match stx
+    | '1 $(a :: AGroup) $()': a
+    | ~else: "no"
+  check m('') ~is "no"
+  check m('1') ~is "no"
+  check m('1 2') ~matches '2'
+  check m('1 2 3') ~matches '2 3'
+  fun m2(stx):
+    match stx
+    | '1 $(a :: AGroup)': a
+    | ~else: "no"
+  check m2('') ~is "no"
+  check m2('1') ~is "no"
+  check m2('1 2') ~matches '2'
+  check m('1 2 3') ~matches '2 3'
+
+block:
+  // `~group` syntax class cannot match empty
+  syntax_class AGroup
+  | '$a ... $()'
+  fun m(stx):
+    match stx
+    | '1 $(a :: AGroup) 10 $()': a
+    | ~else: "no"
+  check m('') ~is "no"
+  check m('1') ~is "no"
+  check m('1 10') ~is "no"
+  check m('1 2 10') ~matches '2'
+  check m('1 2 3 10') ~matches '2 3'
+  fun m2(stx):
+    match stx
+    | '1 $(a :: AGroup) 10': a
+    | ~else: "no"
+  check m2('') ~is "no"
+  check m2('1') ~is "no"
+  check m2('1 10') ~is "no"
+  check m2('1 2 10') ~matches '2'
+  check m2('1 2 3 10') ~matches '2 3'
+
+block:
+  syntax_class AGroup:
+  | '$()'
+  fun m(stx):
+    match stx
+    | '1 $(a :: AGroup) $()': a
+    | ~else: "no"
+  check m('') ~is "no"
+  check m('1') ~is "no"
+  check m('1 2') ~is "no"
+
+block:
+  syntax_class AGroup:
+    kind: ~group
+  | '$()'
+  fun m(stx):
+    match stx
+    | '1 $(a :: AGroup) $()': a
+    | ~else: "no"
+  check m('') ~is "no"
+  check m('1') ~is "no"
+  check m('1 2') ~is "no"
+
+block:
+  syntax_class Foo:
+    kind: ~multi
+  | '$x + $y
+     $z - $w'
+  check:
+    match ': 1 + 2
+             3 - 4'
+    | ': $(f :: Foo)': [f.x, f.y, f.z, f.w, f]
+    ~matches ['1', '2', '3', '4', '1 + 2; 3 - 4']
+  check:
+    match '(1 + 2,
+            3 - 4)'
+    | '($(f :: Foo))': [f.x, f.y, f.z, f.w, f]
+    ~matches ['1', '2', '3', '4', '1 + 2; 3 - 4']
+
+block:
+  syntax_class Foo:
+    kind: ~block
+  | ': $x + $y
+       $z - $w'
+  check:
+    match ': 1 + 2
+             3 - 4'
+    | ': $(f :: Foo)': [f.x, f.y, f.z, f.w, f]
+    ~matches ['1', '2', '3', '4', ': 1 + 2; 3 - 4']
+
+check:
+  ~eval
+  syntax_class Foo:
+    kind: ~block
+  | '($x + $y,
+      $z - $w)'
+  ~throws "not a block pattern"
+
+block:
+  syntax_class Foo:
+    kind: ~multi
+  | '($x, $y)'
+  check:
+    match '((1 + 2, 3 - 4))'
+    | '($(f :: Foo))': f
+    ~matches '(1 + 2, 3 - 4)'
+  check:
+    match '(1 + 2, 3 - 4)'
+    | '($(f :: Foo))': f
+    | ~else: "no"
+    ~is "no"
+  check:
+    match '(1 + 2, 3 - 4)'
+    | '$(f :: Foo)': f
+    | ~else: "no"
+    ~matches '(1 + 2, 3 - 4)'
+
+block:
+  syntax_class Foo:
+    kind: ~multi
+  | '$x'
+  check:
+    match '(1 + 2, 3 - 4)'
+    | '($(f :: Foo))': f
+    ~matches '1 + 2; 3 - 4'
+  check:
+    match ': 1 + 2; 3 - 4; 5 / 6'
+    | ': $(f :: Foo)': f
+    ~matches '1 + 2; 3 - 4; 5 / 6'
+
+block:
+  syntax_class Foo
+  | '$x $y':
+      match_when y.unwrap() == 1
+      field case: '1'
+  | '$x $y':
+      match_unless y.unwrap() == 5
+      field case: '2'
+  | '$x $y':
+      field case: '3'
+  check:
+    def '$(f :: Foo)': 'a 1'
+    [f.x, f.y, f.case]
+    ~matches ['a', '1', '1']
+  check:
+    def '$(f :: Foo)': 'b 100'
+    [f.x, f.y, f.case]
+    ~matches ['b', '100', '2']
+  check:
+    def '$(f :: Foo)': 'c 5'
+    [f.x, f.y, f.case]
+    ~matches ['c', '5', '3']
+
+block:
+  syntax_class Foo
+  | '$x $y':
+      match_def '(1 + 1)': y
+      field case: '1'
+      field z: '0'
+  | '$x $y':
+      match_def '(1 + $z)': y
+      field case: '2'
+  | '$x $y':
+      field case: '3'
+      field z: 'no'
+  check:
+    def '$(f :: Foo)': 'a 1'
+    [f.x, f.y, f.case, f.z]
+    ~matches ['a', '1', '3', 'no']
+  check:
+    def '$(f :: Foo)': 'b (1 * 1)'
+    [f.x, f.y, f.case, f.z]
+    ~matches ['b', '(1 * 1)', '3', 'no']
+  check:
+    def '$(f :: Foo)': 'b (1 + 4)'
+    [f.x, f.y, f.case, f.z]
+    ~matches ['b', '(1 + 4)', '2', '4']
+
+check:
+  syntax_class Option:
+    kind: ~term
+  | '~lang':
+      field form: '~lang'
+  match '(~lang, ~lang)'
+  | '($(o :: Option), ...)': [o.form, ...]
+  ~matches ['~lang', '~lang']
+
+check:
+  syntax_class Option
+  | '~lang':
+      field form: '~lang'
+  | '~lang ~and':
+      field form: '~and'
+  match '(~lang, ~lang ~and)'
+  | '($(o :: Option), ...)': [o.form, ...]
+  ~matches ['~lang', '~and']
+
+check:
+  ~eval
+  syntax_class Option:
+    kind: ~term
+  | '~lang':
+      field form: '~lang'
+  match '(~lang, ~lang)'
+  | '($(o :: Option), ...)': [o.form]
+  ~throws "cannot use repetition binding as an expression"
+
+check:
+  ~eval
+  syntax_class Option
+  | '~lang':
+      field form: '~lang'
+  match '(~lang, ~lang)'
+  | '($(o :: Option), ...)': [o.form]
+  ~throws "cannot use repetition binding as an expression"
+
+block:
+  syntax_class NTerms
+  | '~one $a':
+      field b = '0'
+      field c = '0'
+      def sum:
+        Syntax.unwrap(a) + Syntax.unwrap(b) + Syntax.unwrap(c)
+      field average:
+        '$(sum / 2)'
+  | '~two $a $b':
+      field c:
+        '0'
+      def sum:
+        Syntax.unwrap(a) + Syntax.unwrap(b) + Syntax.unwrap(c)
+      field average:
+        '$(sum / 2)'
+  | '~three $a $b $c':
+      def sum:
+        Syntax.unwrap(a) + Syntax.unwrap(b) + Syntax.unwrap(c)
+      field average:
+        '$(sum / 2)'
+
+  def '$(two_terms :: NTerms)' = '~two 24 42'
+  check:
+    two_terms.a
+    ~matches '24'
+  check:
+    two_terms.c
+    ~matches '0'
+  check:
+    two_terms.average
+    ~matches '33'
+
+// check that dotted syntax-class names work
+block:
+  namespace N:
+    export Arithmetic
+    syntax_class Arithmetic
+    | '$x + $y'
+
+  check:
+    match '1+2'
+    | '$(exp :: N.Arithmetic)': exp.x
+    ~matches '1'
+
+  check:
+    match '1+2'
+    | '$(exp :: N.Arithmetic)': exp.y
+    ~matches '2'
+
+block:
+  syntax_class Maybe
+  | '1'
+  | ''
+
+  check:
+    def '$(x :: Maybe) 2' = '2'
+    x
+    ~matches ''
+
+  check:
+    def '$(x :: Maybe) 2' = '1 2'
+    x
+    ~matches '1'
+
+block:
+  syntax_class Maybe:
+    kind: ~multi
+  | '1'
+  | ''
+
+  check:
+    match '1; 2'
+    | '1; $(f :: Maybe); 2': f
+    ~matches ''
+
+check:
+  ~eval
+  syntax_class Maybe:
+    kind: ~multi
+  | '1'
+  | ''
+  def '$(x :: Maybe) 2' = '2'
+  ~throws "syntax class incompatible with this context"
+
+block:
+  syntax_class House(material)
+  | '< < > >':
+      field stuff: Syntax.make(material +& "!")
+  check:
+    def '$(x :: House("straw"))' = '< < > >'
+    x.stuff
+    ~matches '"straw!"'
+
+check:
+  ~eval
+  syntax_class House(material) | '< < > >'
+  def '$(x :: House)' = #false
+  ~throws "syntax class expects arguments"
+
+check:
+  ~eval
+  syntax_class Horse | '!!!'
+  def '$(x :: Horse(1))' = #false
+  ~throws "syntax class does not expect arguments"
+
+// field value does not have to be syntax
+check:
+  syntax_class Foo
+  | '$x':
+      field [y, ...] = [1, #'~q, 3]
+  match 'x'
+  | '$(f :: Foo)': [f.y, ...]
+  ~is [1, #'~q, 3]
+
+// a field used both as a non-syntax and a syntax field
+block:
+  syntax_class Foo
+  | '$x':
+      field [y, ...] = [1, #'~q, 3]
+  | '$x $y ...'
+  check:
+    match 'x'
+    | '$(f :: Foo)': [f.y, ...]
+    ~is [1, #'~q, 3]
+  check:
+    match 'x 1 2 3'
+    | '$(f :: Foo)': [f.y, ...]
+    ~matches ['1', '2', '3']
+  check:
+    match 'x'
+    | '$(f :: Foo)': '($f.y, ...)'
+    ~matches '(1, ~q, 3)'
+
+// mixing tail and non-tail modes for a field is allowed,
+// even though it disables optimization for the tail case
+block:
+  syntax_class Foo:
+    kind: ~group
+  | '$x ($y + 1) ...'
+  | '$x $y ...'
+  check:
+    match 'x (1 + 1) (2 + 1) 3'
+    | '$(f :: Foo)': [f.y, ...]
+    ~matches ['(1 + 1)', '(2 + 1)', '3']
+  check:
+    match 'x (1 + 1) (2 + 1) (3 + 1)'
+    | '$(f :: Foo)': [f.y, ...]
+    ~matches ['1', '2', '3']
+
+// inline syntax class
+block:
+  fun m(stx):
+    def '$(f2 :: (syntax_class:
+                  | '9 $x $_'
+                  | '8 $x':
+                      match_when #true)); ...' = stx
+    [f2.x, ...]
+  check:
+    m('8 1')
+    ~matches ['1']
+  check:
+    m('8 1; 8 2')
+    ~matches ['1', '2']
+  check:
+    m('8 1; 9 2 3')
+    ~matches ['1', '2']
+  check:
+    m('9 1')
+    ~throws "value does not satisfy annotation"
+
+// opening an inline syntax class
+block:
+  fun m(stx):
+    def '$(f2 :: (syntax_class:
+                  | '9 $x $_'
+                  | '8 $x':
+                      match_when #true):
+             open); ...' = stx
+    [x, ...]
+  check:
+    m('8 1')
+    ~matches ['1']
+  check:
+    m('8 1; 9 2 3')
+    ~matches ['1', '2']
+
+// pattern shorthand unquote
+block:
+  fun m(stx):
+    def '$(pattern
+           | '9 $x $_'
+           | '8 $x':
+               match_when #true); ...' = stx
+    [x, ...]
+  check:
+    m('8 1')
+    ~matches ['1']
+  check:
+    m('8 1; 9 2 3')
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def '$(pattern:
+             kind ~sequence
+           | '9 $x $_'
+           | '8 $x':
+               match_when #true); ...' = stx
+    [x, ...]
+  check:
+    m('8 1')
+    ~matches ['1']
+  check:
+    m('8 1; 9 2 3')
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def '$(pattern match
+           | '9 $x $_'
+           | '8 $x':
+               match_when #true); ...' = stx
+    [match.x, ...]
+  check:
+    m('8 1')
+    ~matches ['1']
+  check:
+    m('8 1; 9 2 3')
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def '$(pattern match:
+             kind ~sequence
+           | '9 $x $_'
+           | '8 $x':
+               match_when #true); ...' = stx
+    [match.x, ...]
+  check:
+    m('8 1')
+    ~matches ['1']
+  check:
+    m('8 1; 9 2 3')
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def '$(pattern match ~open
+           | '9 $x $_'
+           | '8 $x':
+               match_when #true); ...' = stx
+    [x, ...]
+  check:
+    m('8 1')
+    ~matches ['1']
+  check:
+    m('8 1; 9 2 3')
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def '$(pattern match ~open:
+             kind ~sequence
+           | '9 $x $_'
+           | '8 $x':
+               match_when #true); ...' = stx
+    [x, ...]
+  check:
+    m('8 1')
+    ~matches ['1']
+  check:
+    m('8 1; 9 2 3')
+    ~matches ['1', '2']
+
+// pattern shorthand binding
+block:
+  fun m(stx):
+    def [pattern
+         | '9 $x $_'
+         | '8 $x':
+             match_when #true, ...] = stx
+    [x, ...]
+  check:
+    m(['8 1'])
+    ~matches ['1']
+  check:
+    m(['8 1', '9 2 3'])
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def [pattern:
+           kind ~sequence
+         | '9 $x $_'
+         | '8 $x':
+             match_when #true, ...] = stx
+    [x, ...]
+  check:
+    m(['8 1'])
+    ~matches ['1']
+  check:
+    m(['8 1', '9 2 3'])
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def [pattern match
+         | '9 $x $_'
+         | '8 $x':
+             match_when #true, ...] = stx
+    [match.x, ...]
+  check:
+    m(['8 1'])
+    ~matches ['1']
+  check:
+    m(['8 1', '9 2 3'])
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def [pattern match:
+           kind ~sequence
+         | '9 $x $_'
+         | '8 $x':
+             match_when #true, ...] = stx
+    [match.x, ...]
+  check:
+    m(['8 1'])
+    ~matches ['1']
+  check:
+    m(['8 1', '9 2 3'])
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def [pattern match ~open
+         | '9 $x $_'
+         | '8 $x':
+             match_when #true, ...] = stx
+    [x, ...]
+  check:
+    m(['8 1'])
+    ~matches ['1']
+  check:
+    m(['8 1', '9 2 3'])
+    ~matches ['1', '2']
+
+block:
+  fun m(stx):
+    def [pattern match ~open:
+           kind ~sequence
+         | '9 $x $_'
+         | '8 $x':
+             match_when #true, ...] = stx
+    [x, ...]
+  check:
+    m(['8 1'])
+    ~matches ['1']
+  check:
+    m(['8 1', '9 2 3'])
+    ~matches ['1', '2']
+
+block:
+  use_static
+
+  syntax_class Foo
+  | '$a $b'
+
+  check:
+    match '1 4'
+    | '$(x :: Foo)': [(x).a, (x).b]
+    ~matches ['1', '4']
+
+block:
+  use_static
+
+  syntax_class Foo
+  | '$a ... $b'
+
+  check:
+    match '1 2 3 4'
+    | '$(x :: Foo)': [(x).a, ...]
+    ~matches ['1', '2', '3']
+
+  check:
+    match '(1 2 3 4) (5 6)'
+    | '($(x :: Foo)) ...': [[(x).a, ...], ...]
+    ~matches [['1', '2', '3'], ['5']]
+
+  fun help(x :: Syntax.matched_of(Foo)):
+    [[x.a, ...], x.b]
+
+  check:
+    match '1 2 3 4'
+    | '$(x :: Foo)': help(x)
+    ~matches [['1', '2', '3'], '4']
+
+check:
+  let (pattern match
+       | '9 $x $_'
+       | '8 $x'):
+    '8 1'
+  (match).x
+  ~matches '1'
+
+check:
+  match ['(8 1)', '(9 2 3)']
+  | ['($(pattern match
+         | '9 $x $_'
+         | '8 $x'))', ...]:
+      [match.x, ...]
+  ~matches ['1', '2']
+
+check:
+  match '(8 1)'
+  | '($(pattern match
+        | '9 $x $_'
+        | '8 $x'))':
+      (match).x
+  ~matches '1'
+
+block:
+  import rhombus/meta open
+  use_static
+  expr.macro 'boo $(e :: expr_meta.Parsed) $()':
+    fun help(s :: Syntax.matched_of(expr_meta.Parsed)):
+      s.group
+    '('$(help(e))')'
+  check:
+    boo 1 + 2
+    ~matches '1 + 2'
+
+// check interaction of macro introduction and pattern variables
+block:
+  import rhombus/meta open
+  check:
+    expr.macro 'matcher $(ex :: Term)':
+      '«match '1 2'
+        | (pattern | '$('$')x $('$')$ex'): x»'
+    matcher x
+    ~matches '1'
+  check:
+    expr.macro 'matcher $(ex :: Term)':
+      '«match '1 2'
+        | (pattern | '$('$')x $('$')$ex'): $ex»'
+    matcher x
+    ~matches '2'
+  check:
+    expr.macro 'matcher $(ex :: Term)':
+      '«match '1 2'
+        | (pattern | '$('$')$ex $('$')x'): x»'
+    matcher x
+    ~matches '2'
+  check:
+    expr.macro 'matcher $(ex :: Term)':
+      '«match '1 2'
+        | (pattern | '$('$')$ex $('$')x'): $ex»'
+    matcher x
+    ~matches '1'
+
+// field names are recognized symbolically, so  make
+// sure they're not ambigious
+check:
+  ~eval
+  import rhombus/meta open
+  expr.macro 'matcher $(ex :: Term)':
+    '«match '1 2'
+      | (pattern who | '$('$')x $('$')$ex'): who.x»'
+  matcher x
+  ~throws "field name is ambiguous"
+
+check:
+  import rhombus/meta open
+  expr.macro 'matcher $(ex :: Term)':
+    '«match '1 2'
+      | (pattern who | '$('$')x $('$')$ex'): dynamic(who).x»'
+  matcher x
+  ~throws "field name is ambiguous"
+
+// check (not) `open`ing named `pattern`s
+check:
+  ~eval
+  match '1'
+  | '$(pattern any | '$x')': x
+  ~throws "cannot reference an identifier before its definition"
+
+check:
+  ~eval
+  match '1'
+  | (pattern any | '$x'): x
+  ~throws "cannot reference an identifier before its definition"
+
+// check generated attributes in inline `pattern`s
+block:
+  fun m(stx):
+    match stx
+    | (pattern
+       | '$_ $_': field one = 1; field two = 2
+       | '$_': field two = 1):
+        two
+  check:
+    m('foo')
+    ~is 1
+  check:
+    m('foo bar')
+    ~is 2
+
+block:
+  fun m(stx):
+    syntax_class Rhs:
+      kind ~sequence
+    | '= $_ ...'
+    match stx
+    | (pattern
+       | '$lhs ... $(rhs :: Rhs)'
+       | '$lhs ...: $(rhs :: Block)'):
+        '($lhs ..., $rhs)'
+  check:
+    m('foo bar = baz')
+    ~matches '(foo bar, = baz)'
+  check:
+    m('foo bar: baz')
+    ~matches '(foo bar, :« baz »)'
+
+check:
+  syntax_class MaybeA:
+    kind: ~sequence
+  | ''
+  | 'a'
+
+  syntax_class B:
+    kind: ~group
+  | 'b $(a :: MaybeA): "b"'
+
+  match 'b: "b"'
+  | '$(b :: B)': b.a
+  ~matches ''
+
+// check handling of nested `pattern`s
+block:
+  fun m(stx):
+    match stx
+    | (pattern
+       | '$(pattern
+            | '$who'
+            | '$_ $who')'):
+        who
+  check:
+    m('foo')
+    ~matches 'foo'
+  check:
+    m('foo bar')
+    ~matches 'bar'
+
+block:
+  fun m(stx):
+    match stx
+    | (pattern
+       | '$(pattern
+            | '$who')'
+       | '$_ $who'):
+        who
+  check:
+    m('foo')
+    ~matches 'foo'
+  check:
+    m('foo bar')
+    ~matches 'bar'
+
+// check handling of `open`ed syntax classes
+block:
+  fun m(op):
+    syntax_class Header:
+      kind ~sequence
+    | '$lbind $name $rbind'
+    | '$name $rbind': field lbind = #false
+    match op
+    | (pattern:
+         kind ~group
+       | '$(_ :: Header: open): $_'
+       | '($(_ :: Header: open)): $_'):
+        '$(lbind || '') $name $rbind'
+  check:
+    m('x + y: add(x, y)')
+    ~matches 'x + y'
+  check:
+    m('(+ y): add(x, y)')
+    ~matches '+ y'
+
+block:
+  fun m(op):
+    syntax_class Header:
+      kind ~sequence
+    | '$lbind $name $rbind'
+    match op
+    | (pattern:
+         kind ~group
+       | '$(_ :: Header: open): $_'
+       | '($name $rbind): $_': field lbind = #false):
+        '$(lbind || '') $name $rbind'
+  check:
+    m('x + y: add(x, y)')
+    ~matches 'x + y'
+  check:
+    m('(+ y): add(x, y)')
+    ~matches '+ y'
+
+// infer ~multi mode
+check:
+  syntax_class C
+  | '$a; $b'
+  def '$(c :: C)': '1; 2'
+  [c.a, c.b]
+  ~matches ['1', '2']
+
+// should infer ~term mode, but is there a way to tell?
+check:
+  syntax_class C
+  | 'a'
+  def '1 $(c :: C) 3': '1 a 3'
+  ~completes
+
+// root_swap
+check:
+  syntax_class C:
+    root_swap: second terms
+  | '$_ $second'
+  match '1 2'
+  | '$(c :: C)':
+      [c, c.terms]
+  ~matches ['2', '1 2']
+
+check:
+  ~eval
+  syntax_class C:
+    root_swap: unknown terms
+  | '$_ $second'
+  ~throws "field to swap as root not found"
+
+check:
+  ~eval
+  syntax_class C:
+    root_swap: second first
+  | '$first $second'
+  ~throws "field for root already exists"
+
+check:
+  ~eval
+  syntax_class C:
+    root_swap: first other
+  | '$first ... $second'
+  ~throws "field for root cannot be a repetition"
+
+check:
+  syntax_class.together:
+    syntax_class ModPath:
+      fields:
+        [elem, ...]
+    | '$head':
+        field [elem, ...]: [head]
+    | '$head / $(mp :: ModPath)':
+        field [elem, ...] = [head, mp.elem, ...]
+  match 'a / b / c'
+  | '$(mp :: ModPath)':
+      [mp.elem, ...]
+  ~matches ['a', 'b', 'c']
+
+block:
+  syntax_class.together:
+    syntax_class One
+    | '1'
+    | '1 $(_ :: Two)'
+    syntax_class Two
+    | '2'
+    | '2 $(_ :: One)'
+  check:
+    match '1 2 1 2 1 2'
+    | '$(_ :: One)': "one"
+    | '$(_ :: Two)': "two"
+    ~is "one"
+  check:
+    match '2 1 2 1 2 1'
+    | '$(_ :: One)': "one"
+    | '$(_ :: Two)': "two"
+    ~is "two"
+
+// field name in root-swapped syntax class should not be
+// confused with a pattern variable using the syntax
+check:
+  syntax_class C:
+    root_swap: a term
+  | '$(a :: Term)'
+  syntax_class D
+  | '$(c :: C) $a' // `c :: C` doesn;t bind `a`
+  ~completes
+
+block:
+  syntax_class Option
+  | '~opt_a: $n':
+      field o = {#'a: n}
+  | '~opt_b':
+      field o = {#'b: #true}
+
+  syntax_class.together:
+    syntax_class Options:
+      fields: o
+    | '$(opt :: Option)': field o = opt.o
+    | '$(opt :: Option)
+       $(tail :: Options)': // multi-group escape allowed here
+        field o = opt.o ++ tail.o
+
+  check:
+    match '~opt_a: 10; ~opt_b'
+    | '$(v :: Options)': v.o
+    ~matches { #'a: '10; ~opt_b' }
+
+
+namespace HasNS:
+  export NS
+
+  namespace NS
+
+  syntax_class NS.Arithmeticn
+  | '$x + $y'
+
+  check:
+    match '1+2'
+    | '$(exp :: NS.Arithmeticn)': exp.x
+    ~matches '1'
+
+block:
+  import .HasNS.NS
+  check:
+    match '1+2'
+    | '$(exp :: NS.Arithmeticn)': exp.x
+    ~matches '1'
+
+block:
+  import .HasNS.NS open
+  check:
+    match '1+2'
+    | '$(exp :: Arithmeticn)': exp.x
+    ~matches '1'
+
+block:
+  syntax_class Cutting
+  | '1 $match.cut 2'
+  check:
+    match '1 2'
+    | '$(c :: Cutting)': c
+    ~matches '1 2'
+  check:
+    match '1 3'
+    | '$(c :: Cutting)': c
+    | ~else: "other"
+    ~is "other"
+
+block:
+  syntax_class Bar
+  | '($y, ...)'
+  syntax_class Foo
+  | '($(x :: Bar), ...)'
+  let '$(foo :: Foo)' = '((1, 2), (3, 4), (5, 6))'
+  check [foo.x.y, ..., ...] ~matches ['1', '2', '3', '4', '5', '6']
+
+check:
+  syntax_class Foo:
+  | '$_':
+      let x = 'ex'
+      println(x)
+  match '1'
+  | '$(f :: Foo)': "ok"
+  ~prints "ex\n"
+
+check:
+  syntax_class Foo:
+  | '$_':
+      def x = 'ex'
+      println(x)
+      match_def 'ex' = x
+  match '1'
+  | '$(f :: Foo)': "ok"
+  ~prints "ex\n"
+
+check:
+  ~eval
+  syntax_class Foo:
+  | '$_':
+      let x = 'ex'
+      match_def 'ex' = 'ex'
+  ~throws "not allowed in this context"
+
+check:
+  syntax_class Foo:
+  | '$_':
+      import lib("racket/base.rkt")
+      field result = base.cons(1, 2)
+  match '1'
+  | '$(f :: Foo)': f.result
+  ~is Pair(1, 2)
+
+check:
+  ~eval
+  syntax_class Nonsense:
+    kind: ~term
+    fields
+  | '$(term_option_sequence | '~foo')'
+  ~throws "not a single-term pattern"
+
+
+block:
+  syntax_class HasRepet:
+    kind: ~term
+  | '($elem, ...)'
+
+  syntax_class WrapsHasRepet:
+    kind: ~term
+  | '$(wrapped :: HasRepet)'
+
+  let '$(matched :: WrapsHasRepet)' = '(1, 2, 3)'
+  check matched.wrapped ~matches '(1, 2, 3)'
+  check [matched.wrapped.elem, ...] ~matches ['1', '2', '3']
+  let matched_wrapped = matched.wrapped;
+  check [matched_wrapped.elem, ...] ~matches ['1', '2', '3']
+
+block:
+  // annotation on field
+  use_static
+  syntax_class C
+  | '~val $n':
+      field val :: Int = n.unwrap()
+  check:
+    match '~val 1'
+    | '$(v :: C)': v.val
+    ~is 1
+  check:
+    match '~val 1'
+    | '$(v :: C)': v.val < v.val // `<` specialized to `Int`
+    ~is #false
+  check:
+    match '~val #false'
+    | '$(v :: C)': v.val
+    ~throws values(error.annot_msg(),
+                   error.annot("Int").msg)
+
+block:
+  // different annotations on different fields
+  use_static
+  syntax_class C
+  | '~str $v':
+      field val :: String = v.unwrap()
+  | '~int $v':
+      field val :: Int = v.unwrap()
+  check:
+    match '~int 1'
+    | '$(v :: C)': v.val
+    ~is 1
+  check:
+    match '~str "1"'
+    | '$(v :: C)': v.val
+    ~is "1"
+  check:
+    match '~str 1'
+    | '$(v :: C)': v.val
+    ~throws values(error.annot_msg(),
+                   error.annot("String").msg)
+
+check:
+  // different annotations => no static info
+  ~eval
+  use_static
+  syntax_class C
+  | '~str $v':
+      field val :: String = v.unwrap()
+  | '~int $v':
+      field val :: Int = v.unwrap()
+  match '~str "1"'
+  | '$(v :: C)': v.val.length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+block:
+  // declared field => static info, but one case cannot succeed
+  use_static
+  syntax_class C:
+    fields:
+      val :: String
+  | '~str $v':
+      field val :: String = v.unwrap()
+  | '~int $v':
+      field val :: Int = v.unwrap()
+  check:
+    match '~str "1"'
+    | '$(v :: C)': v.val
+    ~is "1"
+  check:
+    match '~str "100"'
+    | '$(v :: C)': v.val.length()
+    ~is 3
+  check:
+    match '~int 1'
+    | '$(v :: C)': v.val
+    ~throws values(error.annot_msg(),
+                   error.annot("String").msg)
+
+check:
+  syntax_class Option:
+    // root swap implies `:: Syntax`
+    root_swap: o orig
+  | '~opt_a: $n':
+      field o = {#'a: n}
+  | '~opt_b':
+      field o = {#'b: #true}
+  def '$(o :: Option)' = '~opt_b'
+  o
+  ~throws values(error.annot_msg(),
+                 error.annot("Syntax").msg)
+
+block:
+  // converting annotations
+  use_static
+  syntax_class C:
+    fields:
+      val :: ReadableString.to_string
+  | '~str $v':
+      field val = String.copy(v.unwrap())
+  syntax_class C2
+  | '~str $v':
+      field val :: ReadableString.to_string = String.copy(v.unwrap())
+  check:
+    match '~str "1"'
+    | '$(v :: C)': v.val
+    ~is "1"
+  check:
+    match '~str "1"'
+    | '$(v :: C2)': v.val
+    ~is "1"
+
+check:
+  use_static
+  match '~str "abc"'
+  | '$(pattern
+       | '~str $v':
+           field val :: String = v.unwrap())':
+      val.length()
+  ~is 3
+
+check:
+  use_static
+  match '~str "abc"'
+  | '$(pattern:
+         fields:
+           val :: String
+       | '~str $v':
+           field val = v.unwrap())':
+      val.length()
+  ~is 3
+
+// check interaction of lifting to avoid duplicated code and
+// whether state for that code is instantiated every time
+block:
+  import rhombus/meta open
+  annot.macro 'WeirdCounter':
+    annot_meta.pack_predicate('block:
+                                 let mutable count = 0
+                                 fun (x):
+                                   count := count + 1
+                                   x == count',
+                              '()')
+  syntax_class C:
+    fields:
+      w :: WeirdCounter
+  | '$w_stx':
+      field w = w_stx.unwrap()
+  check:
+    match '1'
+    | '$(c :: C)':
+        c.w
+    ~is 1
+  check:
+    match '1'
+    | '$(pattern:
+           fields:
+             w :: WeirdCounter
+         | '$w_stx':
+             field w = w_stx.unwrap())':
+        w
+    ~is 1
+  check:
+    match '1'
+    | '$(c :: C)':
+        c.w
+    | ~else:
+        "no"
+    ~is 1
+
+check:
+  ~eval
+  import rhombus/meta open
+  meta:
+    syntax_class MyParsed:
+      kind: ~group
+    | '$(parsed :: expr_meta.Parsed)'
+    def '$(good :: expr_meta.Parsed)' = '42'
+    def '$(indirect :: MyParsed)' = '42'
+    check indirect.parsed ~matches good
+    check indirect.parsed ~prints_like good
+  ~completes
+
+check:
+  ~eval
+  import rhombus/meta open
+  meta:
+    syntax_class MyParsed:
+      kind: ~group
+      fields: parsed
+      root_swap: parsed group
+    | '$(parsed :: expr_meta.Parsed)'
+
+    def '$(good :: expr_meta.Parsed)' = '42'
+    def '$(indirect :: MyParsed)' = '42'
+    check indirect ~matches good
+    check indirect ~prints_like good
+  ~completes
+
+block:
+  use_static
+  syntax_class A:
+  | '$x'
+  syntax_class B:
+    fields: a :~ Syntax.matched_of(A)
+  | '$(a :: A)'
+  syntax_class C
+  | '$x $y'
+  fun f(b :~ Syntax.matched_of(B)):
+    (b.a :~ Syntax.matched_of(A)).x
+  fun g(ac :: Syntax.matched_of(A) || Syntax.matched_of(C)):
+    ac.x
+  fun h(ac :~ Syntax.matched_of(A) && Syntax.matched_of(C)):
+    // so value actually satisfies the contract, but `y` should
+    // be statically accessible, and we can pass in an unchecked `C`
+    ac.y
+  let '$(a :: A)' = '3'
+  let '$(b :: B)' = '1'
+  let '$(c :: C)' = '4 5'
+  check f(b) ~matches '1'
+  check g(a) ~matches '3'
+  check g(c) ~matches '4'
+  check h(c) ~matches '5'
+
+check:
+  ~eval
+  use_static
+  syntax_class A:
+  | '$x'
+  syntax_class C
+  | '$x $y'
+  fun g(ac :: Syntax.matched_of(A) || Syntax.matched_of(C)):
+    ac.y
+  ~throws values("y: no such field or method",
+                 "(based on static information)")
+
+// pattern shorthand should cooperate with `match` as `syntax-parse`
+check:
+  match 'something more'
+  | 'something 1':
+      "one"
+  | '$(_ :: (syntax_class
+             | 'something 2'
+             | 'something 3'))':
+      "two or three"
+  | '$(pattern
+       | 'something 4'
+       | 'something 5')':
+      "four or five"
+  | (pattern
+     | 'something 6'
+     | 'something 7'):
+      "six or seven"
+  ~throws "expected one of these literals: 1, 2, 3, 4, 5, 6, or 7"
+
+// check annotation string of pattern shorthand
+check:
+  def (pattern | '1' | '3') = '2'
+  #void
+  ~throws "matching(pattern |« '«1»' » |« '«3»' »)"
+
+check:
+  def (pattern | '1 2 3' | '3 4 5') = '2 3 4'
+  #void
+  ~throws "matching(pattern |« '«1 2 3»' » |« '«3 4 5»' »)"
+
+check:
+  def (pattern | '1 2 3; 4 5 6' | '3 4 5; 6 7 8') = '2 3 4; 5 6 7'
+  #void
+  ~throws "matching(pattern |« '«1 2 3; 4 5 6»' » |« '«3 4 5; 6 7 8»' »)"
+
+// FIXME
+#//
+check:
+  def (pattern | '$' | '...') = 'oops'
+  #void
+  ~throws "matching(pattern |« '«$»' » |« '«...»' »)"
+
+check:
+  syntax_class TwoTerms:
+    kind: ~group
+  | '$a $b'
+
+  syntax_class MultiTwoTerms
+  | '$(two :: TwoTerms); ...'
+
+  syntax_class Wrapper:
+    kind: ~multi
+  | '$(_ :: MultiTwoTerms: two)':
+      println([two, ...], [two.a, ...], [two.b, ...])
+
+  let '$(_ :: Wrapper)' = 'x y'
+  "done"
+  ~prints "['x y'] ['x'] ['y']\n"
+
+check:
+  syntax_class TwoTerms:
+    kind: ~group
+  | '$a $b'
+
+  syntax_class.together:
+    syntax_class MultiTwoTerms:
+      kind: ~multi
+      fields:
+        [two :~ Syntax.matched_of(TwoTerms), ...]
+    | '$(two :: TwoTerms); ...'
+
+  syntax_class Wrapper:
+    kind: ~multi
+  | '$(_ :: MultiTwoTerms: open)':
+      println([two, ...], [two.a, ...], [two.b, ...])
+
+  let '$(_ :: Wrapper)' = 'x y'
+  "done"
+  ~prints "['x y'] ['x'] ['y']\n"
+
+// check that `stx` has static info as a repetition
+block:
+  syntax_class Test:
+  | '$stx':
+      def [xs, ...] = [1, 2, 3]
+      [xs && stx.unwrap(), ...]
+  #void

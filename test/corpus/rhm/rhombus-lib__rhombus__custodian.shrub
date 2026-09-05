@@ -1,0 +1,45 @@
+import:
+  lib("racket/base.rkt") as rkt
+  "private/parameter.rhm"
+
+export:
+  Custodian
+
+class Custodian(private _handle):
+  opaque
+  internal _Custodian
+  constructor (~parent: parent :: Custodian = current()):
+    from_handle(rkt.#{make-custodian}(parent._handle))
+
+  property handle: _handle
+
+  method shutdown_all():
+    rkt.#{custodian-shutdown-all}(_handle)
+  method is_shutdown():
+    rkt.#{custodian-shut-down?}(_handle)
+
+  method limit_memory(amount :: Nat, ~shutdown: stop_cust :: Custodian = this):
+    rkt.#{custodian-limit-memory}(_handle, amount, stop_cust._handle)
+
+  method current_memory_use() :~ Int:
+    rkt.#{current-memory-use}(_handle)
+
+  class Box(private _handle):
+    opaque
+    constructor (v,
+                 ~custodian: c :: Custodian = current()):
+      super(rkt.#{make-custodian-box}(_Custodian._handle(c), v))
+    property value: rkt.#{custodian-box-value}(_handle)
+
+  export:
+    current
+    from_handle
+    Box
+
+parameter.def_from_racket current from_handle:
+  ~orig: rkt.#{current-custodian}
+  ~class: Custodian
+  ~_class: _Custodian
+  ~_handle: _handle
+  ~what: "a custodian"
+  ~predicate: rkt.#{custodian?}

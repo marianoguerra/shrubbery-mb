@@ -1,0 +1,9 @@
+import:
+  rhombus/meta open
+  lib("scribble/base.rkt").#{include-section}
+
+export:
+  include_section
+
+defn.macro 'include_section($(mod :: Term))':
+  '$(defn_meta.pack_s_exp(['#{include-section}', mod]))'

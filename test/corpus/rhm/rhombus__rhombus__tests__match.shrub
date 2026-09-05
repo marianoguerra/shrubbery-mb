@@ -1,0 +1,371 @@
+
+check:
+  match Pair.cons(7, 8)
+  | Pair.cons(a, b):
+      b
+  | x:
+      x
+  | ~else:
+      "other"
+  ~is 8
+
+check:
+  match '(z + y, {[10, 11, 12]})'
+  | '(x $a)': a
+  | '($a + y, {[$n, ...]})': List.cons(a, [n, ...])
+  ~matches ['z', '10', '11', '12']
+
+block:
+  let mutable cnt = 0
+  fun f(x):
+    // literals for initial patterns should be converted to
+    // `case/equal-always` internally
+    match (block:
+             // check whether expression is repeatedly evaluated
+             cnt := cnt + 1
+             x)
+    | 0: 1
+    | 1: 1
+    | 2: 3
+    | 3: 3
+    | 4: 5
+    | 5: 5
+    | 10: 1
+    | 11: 1
+    | 12: 3
+    | 13: 3
+    | 14: 5
+    | 15: 5
+    | #'apple: "other"
+    | [_, ...]: "list"
+  check [f(0), f(5), f(10), f(#'apple), f([])] ~is [1, 5, 1, "other", "list"]
+  check cnt ~is 5
+
+check (match 1 | 1 || 2: "yes") ~is "yes"
+check (match 2 | 1 || 2: "yes") ~is "yes"
+check (match 3 | 1 || 2: "yes") ~throws "no matching case"
+
+check (match 'ok (1)' | '«ok '$x'»': "ok") ~throws "expected quotes"
+
+block:
+  // check `==` semantics applies as opposed to `is_now`
+  // in other words, `case/equal-always` is really used
+  check:
+    match #"byte string".copy():
+    | #"byte string": "matched"
+    | ~else: "unmatched"
+    ~is "unmatched"
+  check:
+    match "string".copy():
+    | "string": "matched"
+    | ~else: "unmatched"
+    ~is "unmatched"
+
+check:
+  0 matches (i :: Int when i mod 3 == 0) ~is #true
+  1 matches (i :: Int unless i mod 3 == 0) ~is #true
+  [1, 2, 3] matches ([x, ...] when math.sum(x, ...) == 6) ~is #true
+  0 !matches (i :: Int when i mod 3 == 0) ~is #false
+  1 !matches (i :: Int unless i mod 3 == 0) ~is #false
+  [1, 2, 3] !matches ([x, ...] when math.sum(x, ...) == 6) ~is #false
+  0 matches !(i :: Int when i mod 3 == 0) ~is #false
+  1 matches !(i :: Int unless i mod 3 == 0) ~is #false
+  [1, 2, 3] matches !([x, ...] when math.sum(x, ...) == 6) ~is #false
+
+// make sure static info propagates
+block:
+  use_static
+  check:
+    match "s"
+    | s: s.length()
+    ~is 1
+  check:
+    match "s"
+    | _ :: Int: "can't happen"
+    | s: s.length()
+    ~is 1
+
+// empty block, no alts after
+check:
+  match 1:«»
+  ~throws "no matching case"
+
+check:
+  match error("here"):«»
+  ~throws "here"
+
+// `~else` only
+check:
+  match 1
+  | ~else: "else"
+  ~is "else"
+
+check:
+  match 1
+  | ~else "else"
+  ~is "else"
+
+
+check:
+  match error("here")
+  | ~else: "else"
+  ~throws "here"
+
+// multiple-value patterns
+check:
+  match values()
+  | (): "first"
+  | values(): "second"
+  ~is "first"
+
+block:
+  fun matcher(x):
+    match x
+    | 1: "1"
+    | (2): "2"
+    | values(3): "3"
+  check:
+    matcher(1) ~is "1"
+    matcher(2) ~is "2"
+    matcher(3) ~is "3"
+    matcher(4) ~throws "no matching case"
+
+block:
+  fun matcher(x, y):
+    match values(x, y)
+    | (1, 1): "1, 1"
+    | values(2, 2): "2, 2"
+    | ~else: "other"
+  check:
+    matcher(1, 1) ~is "1, 1"
+    matcher(2, 2) ~is "2, 2"
+    matcher(3, 3) ~is "other"
+
+block:
+  fun is_same_length(xs, ys):
+    match values(xs, ys)
+    | ([], []): #true
+    | ([_, _, ...], []): #false
+    | ([], [_, _, ...]): #false
+    | ([_, x, ...], [_, y, ...]):
+        is_same_length([x, ...], [y, ...])
+  check:
+    is_same_length([], []) ~is #true
+    is_same_length([1, 2], [3, 4]) ~is #true
+    is_same_length([1], [2, 3, 4]) ~is #false
+    is_same_length([1, 2, 3], [4]) ~is #false
+    is_same_length("oops", "not list") ~throws "no matching case"
+
+// explicit `~arity` declaration
+check:
+  match values():
+    ~arity: 0
+  | (): ""
+  ~is ""
+
+check:
+  match 1:
+    ~arity 1
+  | 1: "one"
+  ~is "one"
+
+check:
+  match values(1, 2):
+    ~arity: 2
+  | (1, 2): "one, two"
+  ~is "one, two"
+
+check:
+  match values(1, 2, 3):
+    ~arity 3
+  | (1, 2, 3): "one, two, three"
+  ~is "one, two, three"
+
+// correctness: patterns are matched left-to-right
+check:
+  match values(1, 2, 3)
+  | (_ :: converting(fun (x): println("first:", x); x),
+     _ :: converting(fun (x): println("second:", x); x),
+     _ :: converting(fun (x): println("third:", x); x)):
+       #void
+  ~prints "first: 1"
+    ++ "\n" ++ "second: 2"
+    ++ "\n" ++ "third: 3"
+    ++ "\n"
+
+// make sure static info propagates, in multiple-value patterns
+block:
+  use_static
+  check:
+    match values("hello", #"world", [1, 2], PairList[3, 4, 5])
+    | (s, bs, l, pl):
+        values(s.length(), bs.length(), l.length(), pl.length())
+    ~is values(5, 5, 2, 3)
+  check:
+    match values("hello", #"world", [1, 2], PairList[3, 4, 5])
+    | (_ :: Char, _ :: Byte, _ :: Int, _ :: Int):
+        "cannot happen"
+    | (s, bs, l, pl):
+        values(s.length(), bs.length(), l.length(), pl.length())
+    ~is values(5, 5, 2, 3)
+
+// make sure static info does *not* propagate, in multiple-value
+// patterns, when wrong number of values
+check:
+  ~eval
+  use_static
+  match "hello"
+  | (s, bs): s.length()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  match values("hello", #"world")
+  | s: s.length()
+  ~throws "no such field or method (based on static information)"
+
+// patterns with inconsistent arity shouldn't compile at all
+check:
+  ~eval
+  match 1
+  | (): "0 values"
+  | _: "1 value"
+  ~throws values(
+    "all clauses must match the same number of values",
+    "previous clauses match 0 values, but current clause matches 1 value",
+  )
+
+check:
+  ~eval
+  match 1
+  | 1: "value is 1"
+  | 2: "value is 2"
+  | _: "1 value"
+  | (_, _): "2 values"
+  ~throws values(
+    "all clauses must match the same number of values",
+    "previous clauses match 1 value, but current clause matches 2 values",
+  )
+
+check:
+  ~eval
+  match 1:
+    ~arity: 0
+  | _: "1 value"
+  ~throws values(
+    "current clause is inconsistent with declared arity",
+    "arity is declared to be 0, but current clause matches 1 value",
+  )
+
+check:
+  ~eval
+  match 1:
+    ~arity 1
+  | _: "1 value"
+  | (_, _): "2 values"
+  ~throws values(
+    "current clause is inconsistent with declared arity",
+    "arity is declared to be 1, but current clause matches 2 values",
+  )
+
+// when wrong number of values, produce arity error
+check:
+  match values(1, 2):
+  | _: "one value"
+  ~throws values(
+    "result arity mismatch",
+    "expected number of values not received",
+    "expected: 1",
+    "received: 2",
+  )
+
+check:
+  match values(1, 2)
+  | ~else: "one value"
+  ~throws values(
+    "result arity mismatch",
+    "expected number of values not received",
+    "expected: 1",
+    "received: 2",
+  )
+
+check:
+  match values(1, 2):«»
+  ~throws values(
+    "result arity mismatch",
+    "expected number of values not received",
+    "expected: 1",
+    "received: 2",
+  )
+
+check:
+  match 1
+  | (_, _): "two values"
+  ~throws values(
+    "result arity mismatch",
+    "expected number of values not received",
+    "expected: 2",
+    "received: 1",
+  )
+
+check:
+  match 1:
+    ~arity: 2
+  | ~else: "two values"
+  ~throws values(
+    "result arity mismatch",
+    "expected number of values not received",
+    "expected: 2",
+    "received: 1",
+  )
+
+check:
+  match 1:
+    ~arity: 2
+  ~throws values(
+    "result arity mismatch",
+    "expected number of values not received",
+    "expected: 2",
+    "received: 1",
+  )
+
+// check evaluation order in `matches`
+check:
+  error("left") matches (_ :: satisfying(error("right")))
+  ~throws "left"
+
+// `syntax-parse` case shouldn't coerce non-syntax
+check:
+  match 1
+  | '1': "shouldn't match"
+  ~throws "expected a syntax object"
+
+check:
+  match #true
+  | '#true': "shouldn't match"
+  ~throws "expected a syntax object"
+
+check:
+  match "hello world"
+  | '"hello world"': "shouldn't match"
+  ~throws "expected a syntax object"
+
+check:
+  ~eval
+  enum Foo | a | b | c
+  match 5
+  | Foo.d: "ok"
+  ~throws "binding a namespace extension is not allowed in this context"
+
+check:
+  ~eval
+  enum Foo | a | b | c
+  5 is_a matching(Foo.d)
+  ~throws "binding a namespace extension is not allowed in this context"
+
+check:
+  ~eval
+  enum Foo | a | b | c
+  5 matches Foo.d
+  ~throws "binding a namespace extension is not allowed in this context"

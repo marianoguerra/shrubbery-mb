@@ -1,0 +1,249 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check ~meta:
+    annot_meta.is_predicate(s)
+    annot_meta.pack_predicate(pred, [stat_info])
+    annot_meta.unpack_predicate(s)
+    annot_meta.is_converter(s)
+    annot_meta.pack_converter(s, body, [stat_info])
+    annot_meta.unpack_converter(s)
+    annot_meta.parse_to_packed_statinfo(s)
+
+class Posn(x, y)
+
+block:
+  annot.macro 'AlsoPosn': 'Posn'
+  check:
+    Posn(1, 2) :: AlsoPosn
+    ~is Posn(1, 2)
+  check:
+    "no" :: AlsoPosn
+    ~throws "value does not satisfy annotation"
+
+  bind.macro 'AlsoPosn ($x, $y)':
+    'Posn($x, $y)'
+  def AlsoPosn(also_x, also_y) = Posn(10, 20)
+  check:
+    also_x +& "," +& also_y
+    ~is "10,20"
+
+check:
+  annot.macro '-> $r':
+    'converting(fun (x): x)'
+  def h :: -> Boolean = 1
+  ~completes
+
+check:
+  annot.macro '$d -> $r':
+    'converting(fun (x): x)'
+  def h :: Int -> Boolean = 1
+  ~completes
+
+block:
+  annot.delayed_declare Forward
+  check:
+    10 :: Forward
+    ~throws "delayed annotation is not yet completed"
+  annot.delayed_complete Forward: Int
+  check:
+    10 :: Forward
+    ~is 10
+  check:
+    use_static
+    (dynamic(1) :: Forward) < dynamic(2)
+    ~is #true
+  check:
+    "oops" :: Forward
+    ~throws values(
+      error.annot("Forward").msg,
+      error.val("oops").msg,
+    )
+
+block:
+  namespace f:
+    export: Forward
+            f
+    annot.delayed_declare Forward
+    fun f(v): v :: Forward
+  check:
+    f.f(10)
+    ~throws "delayed annotation is not yet completed"
+  annot.delayed_complete f.Forward: Int
+  check:
+    f.f(10)
+    ~is 10
+
+check:
+  ~eval
+  use_static
+  import: rhombus/meta open
+  annot.delayed_declare Forward
+  fun (): (10 :: Forward).x
+  ~throws "static information needed before completed"
+
+check:
+  ~eval
+  use_static
+  import: rhombus/meta open
+  annot.delayed_declare Forward
+  class Posn(x, y)
+  annot.delayed_complete Forward: Posn
+  fun (): (10 :: Forward).x
+  ~completes
+
+check:
+  use_static
+  annot.macro 'BoxOf($(ann :: annot_meta.Parsed))':
+    def (pred, infos) = annot_meta.unpack_predicate(ann)
+    annot_meta.pack_predicate('block:
+                                 let content_pred = $pred
+                                 fun | (Array(v)): content_pred(v)
+                                     | (_): #false',
+                              '((#%box_ref_info, $infos),
+                                ($(statinfo_meta.dot_provider_key),
+                                 boxof_dot_provider))')
+  fun box_content(Array(v)): v
+
+  dot.macro 'boxof_dot_provider $left $dot $right':
+    let infos = statinfo_meta.lookup(left, '#%box_ref_info') || '()'
+    match right
+    | 'content': statinfo_meta.wrap('box_content($left)', infos)
+
+  def v :: BoxOf(List) = Array([1, 2, 3])
+  v.content[0]
+  ~is 1
+
+check:
+  ~eval
+  import: rhombus/meta open
+  annot.macro 'bad': '1; 2'
+  1 :: bad
+  ~throws "expected: single-group syntax object for annotation"
+
+check:
+  ~eval
+  import: rhombus/meta open
+  annot.macro 'bad': 666
+  1 :: bad
+  ~throws "expected: single-group syntax object for annotation"
+
+check:
+  ~eval
+  import: rhombus/meta open
+  annot.macro 'bad $(a :: annot_meta.Parsed(#'bad)) $()': 666
+  1 :: bad 1
+  ~throws values(error.annot_msg(),
+                 error.annot("annot_meta.Context").msg)
+
+block:
+  import:
+    rhombus.(::) as :==
+    rhombus.(:~) as :=~
+  expr.macro 'annop $(a :: annot_meta.BindOp)':
+    '[$a.is_checked]'
+  check annop :: ~is [#true]
+  check annop :~ ~is [#false]
+  check annop :== ~is [#true]
+  check annop :=~ ~is [#false]
+  check annop :~ ++ [0] ~is [#false, 0]
+  expr.macro
+  | 'maybe_annop $(a :: annot_meta.BindOp)':
+      '[$a.is_checked]'
+  | 'maybe_annop $(t :: Term)':
+      '"no"'
+  check maybe_annop :: ~is [#true]
+  check maybe_annop :=~ ~is [#false]
+  check maybe_annop ++ ~is "no"
+
+block:
+  annot.macro 'identity_at':
+    error("dummy")
+  expr.macro 'identity_at $term ...':
+    match '$term ...'
+    | '$(ann :: annot_meta.AfterPrefixParsed('identity_at'))':
+        values('(fun (x :: $ann): x)',
+               '$ann.tail ...')
+  check identity_at Int (1) ~is 1
+
+block:
+  annot.macro '$ignored identity_at':
+    error("dummy")
+  expr.macro '$ignored identity_at $term ...':
+    match '$term ...'
+    | '$(ann :: annot_meta.AfterInfixParsed('identity_at'))':
+        values('(fun (x :: $ann): x)',
+               '$ann.tail ...')
+  check 0 identity_at Int (1) ~is 1
+
+meta:
+  check:
+    annot_meta.pack_predicate('fun (_): #true',
+                              ~track: "oops")
+    ~throws values(
+      "annot_meta.pack_predicate: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && List.of(Term)").msg,
+      error.val("oops").msg,
+    )
+  check:
+    annot_meta.pack_predicate('fun (_): #true',
+                              ~track: ["oops"])
+    ~throws values(
+      "annot_meta.pack_predicate: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && List.of(Term)").msg,
+      error.val(["oops"]).msg,
+    )
+  check:
+    annot_meta.pack_predicate('fun (_): #true',
+                              ~track: ['a b'])
+    ~throws values(
+      "annot_meta.pack_predicate: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && List.of(Term)").msg,
+      error.val(['a b']).msg,
+    )
+  block:
+    let old_stx = 'old'
+    let new_stx = 'new'.property(#'origin, old_stx)
+    check:
+      annot_meta.pack_predicate('fun (_): #true',
+                                ~track: [new_stx])
+        .property(#'origin)
+      ~is old_stx
+
+meta:
+  check:
+    let '$(b :: bind_meta.Parsed)' = 'x'
+    annot_meta.pack_converter(b, 'x',
+                              ~track: "oops")
+    ~throws values(
+      "annot_meta.pack_converter: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && List.of(Term)").msg,
+      error.val("oops").msg,
+    )
+  check:
+    let '$(b :: bind_meta.Parsed)' = 'x'
+    annot_meta.pack_converter(b, 'x',
+                              ~track: ["oops"])
+    ~throws values(
+      "annot_meta.pack_converter: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && List.of(Term)").msg,
+      error.val(["oops"]).msg,
+    )
+  check:
+    let '$(b :: bind_meta.Parsed)' = 'x'
+    annot_meta.pack_converter(b, 'x',
+                              ~track: ['a b'])
+    ~throws values(
+      "annot_meta.pack_converter: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && List.of(Term)").msg,
+      error.val(['a b']).msg,
+    )
+  block:
+    let old_stx = 'old'
+    let new_stx = 'new'.property(#'origin, old_stx)
+    check:
+      let '$(b :: bind_meta.Parsed)' = 'x'
+      annot_meta.pack_converter(b, 'x',
+                                ~track: [new_stx])
+        .property(#'origin)
+      ~is old_stx

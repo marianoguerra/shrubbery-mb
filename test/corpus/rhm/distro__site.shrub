@@ -1,0 +1,17 @@
+import:
+  net/url
+  lib("distro-build/repackage.rkt")
+
+export:
+  build_site
+
+fun build_site(racket_version, rhombus_version, config_file):
+  repackage.#{assemble-site}(
+    ~config: config_file,
+    ~#{config-mode}: "release=" ++ rhombus_version ++ ";" ++ "racket_version=" ++ racket_version,
+    ~#{site-dest}: "compiled/repackage/site"
+  )
+
+module main:
+  import "cmdline.rhm"
+  cmdline.parse(build_site)

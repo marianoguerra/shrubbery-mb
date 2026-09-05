@@ -1,0 +1,128 @@
+import:
+  lib("scribble/manual.rkt"):
+    expose:
+      racketmodlink
+      defmodule
+      #{declare-exporting}
+  "rhombus.rhm" open
+  meta:
+    rhombus/rx open
+    rhombus/version
+  meta_label:
+    rhombus:
+      expose:
+        import
+        open
+
+export:
+  docmodule
+  rhombusmodname
+  rhombuslangname
+  racketmodname
+
+meta:
+  fun as_racket_mod_name(mod):
+    match mod
+    | '$(a :: Identifier)':
+        a
+    | '$(a :: Identifier) $('/ $(b :: Identifier)') ...':
+        String.append(to_string(a), "/" ++ to_string(b), ...)
+          |> Syntax.make_id(_)
+    | 'lib($str)':
+        let s :~ String = str.unwrap()
+        if rx'["a"-"z" "A"-"Z" "/-"]+ ".rkt"'.match(s)
+        | Syntax.make(Symbol.from_string(s.substring(0, s.length() - 4)))
+        | ['lib', str]
+
+  fun
+  | pack_tree(PairList[v, ...]): PairList[pack_tree(v), ...]
+  | pack_tree([v, ...]): PairList[pack_tree(v), ...]
+  | pack_tree(v): Syntax.make(v, #false)
+
+  syntax_class Option
+  | '~lang':
+      field [form, ...]: ['~lang']
+      field [decl_form, ...]: []
+      field kw: #'~lang
+  | '~hidden':
+      field [form, ...]: []
+      field [decl_form, ...]: []
+      field kw: #'~hidden
+  | '~no_declare':
+      field [form, ...]: ['~#{no-declare}']
+      field [decl_form, ...]: []
+      field kw: #'~no_declare
+  | '~use_sources: $mod ...; ...':
+      field [form, ...]: ['~#{use-sources}',
+                          pack_tree([ModulePath('$mod ...').s_exp(),
+                                     ...])]
+      field [decl_form, ...] = [form, ...]
+      field kw: #'~use_sources
+  | '~open':
+      field [form, ...]: []
+      field [decl_form, ...]: []
+      field kw: #'~open
+
+decl.macro 'docmodule ($(option :: Option), ..., $mod ..., ...)':
+  let kws = { option.kw, ... }
+  decl_meta.pack_s_exp(
+    cond
+    | #'~hidden in kws && #'~no_declare in kws:
+        // no effect
+        ''
+    | #'~lang in kws:
+        cond
+        | #'~hidden in kws:
+            ['#{declare-exporting}',
+             as_racket_mod_name('$mod ...'),
+             ...,
+             option.decl_form, ..., ...]
+        | ~else:
+            ['defmodule',
+             '~multi', [as_racket_mod_name('$mod ...'),
+                        ...],
+             option.form, ..., ...]
+    | ~else:
+        cond
+        | #'~hidden in kws:
+            ['#{declare-exporting}',
+             pack_tree([ModulePath('$mod ...').s_exp()]),
+             ...,
+             option.decl_form, ..., ...]
+        | ~else:
+            ['defmodule',
+             '~#{require-form}', if #'~open in kws
+                                 | expr_meta.pack_expr('fun (name): @rhombus(import: #,(name) #,(@rhombus(open, ~impo)))')
+                                 | expr_meta.pack_expr('fun (name): @rhombus(import: #,(name))'),
+             '~multi', pack_tree([expr_meta.pack_expr('@rhombusmodname($mod ...)'),
+                                  ...]),
+             '~#{module-paths}', pack_tree([ModulePath('$mod ...').s_exp(), ...]),
+             option.form, ..., ...]
+  )
+
+meta:
+  syntax_class ModArg
+  | '($(mod :: Group))':
+      field flags = []
+  | '($(mod :: Group), ~indirect)':
+      field flags: if (system.racket_version() :: version.Version) >= ("9.0.0.11" :: version.Version)
+                   | ['~indirect']
+                   | []
+
+expr.macro 'rhombusmodname $(mod_arg :: ModArg)':
+  expr_meta.pack_s_exp(['racketmodlink',
+                        pack_tree(ModulePath('$mod_arg.mod').s_exp()),
+                        & mod_arg.flags,
+                        expr_meta.pack_expr('@rhombus($mod_arg.mod, ~datum)')])
+
+expr.macro 'rhombuslangname $(mod_arg :: ModArg)':
+  expr_meta.pack_s_exp(['racketmodlink',
+                        as_racket_mod_name('$mod_arg.mod'),
+                        & mod_arg.flags,
+                        expr_meta.pack_expr('@rhombus($mod_arg.mod, ~datum)')])
+
+expr.macro 'racketmodname $(mod_arg :: ModArg)':
+  expr_meta.pack_s_exp(['racketmodlink',
+                        as_racket_mod_name('$mod_arg.mod'),
+                        & mod_arg.flags,
+                        expr_meta.pack_expr('@rhombus($mod_arg.mod, ~datum)')])

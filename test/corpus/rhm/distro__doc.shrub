@@ -1,0 +1,18 @@
+import:
+  net/url
+  lib("distro-build/repackage.rkt")
+
+export:
+  build_docs
+
+fun build_docs(racket_version, rhombus_version :~ String, config_file):
+  repackage.#{build-docs}(
+    ~version: racket_version,
+    ~catalogs: PairList[to_string(url.URL.from_path(Path("compiled/repackage/build/built/catalog/").to_absolute_path()))],
+    ~config: config_file,
+    ~#{config-mode}: "release=" ++ rhombus_version
+  )
+
+module main:
+  import "cmdline.rhm"
+  cmdline.parse(build_docs)

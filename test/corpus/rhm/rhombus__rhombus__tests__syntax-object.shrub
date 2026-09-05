@@ -1,0 +1,466 @@
+import:
+  rhombus/version_meta
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    Syntax.make(t, [ctx])
+    Syntax.make_group(t, [ctx])
+    Syntax.make_sequence(t, [ctx])
+    Syntax.make_op(name, [ctx])
+    Syntax.make_id(t, [ctx])
+    Syntax.make_temp_id([t])
+    Syntax.unwrap(stx) ~method
+    Syntax.unwrap_op(stx) ~method
+    Syntax.unwrap_group(stx) ~method
+    Syntax.unwrap_sequence(stx) ~method
+    Syntax.unwrap_all(stx) ~method
+    Syntax.name_to_symbol(stx) ~method
+    Syntax.srcloc(stx) ~method
+    Syntax.is_original(stx) ~method
+    Syntax.strip_scopes(stx) ~method
+    Syntax.replace_scopes(stx, like_stx) ~method
+    // relocate and related are tested in "relocate.rhm"
+    Syntax.relocate(stx, to) ~method
+    Syntax.relocate_group(stx, to) ~method
+    Syntax.relocate_span(stx, like_stxes) ~method
+    Syntax.relocate_group_span(stx, like_stxes) ~method
+    Syntax.property(stx, key, [val], [is_preserved]) ~method
+    Syntax.group_property(stx, key, [val], [is_preserved]) ~method
+    Syntax.ephemeral_property(stx, key, [val], [is_preserved]) ~method
+    Syntax.to_source_string(stx) ~method
+    Syntax.ephemeral_term(stx) ~method
+    Syntax.ephemeral_group(stx) ~method
+    Syntax.ephemeral_sequence(stx) ~method
+  static_arity.check ~meta:
+    syntax_meta.error([msg], in_stx, [at_stx])
+    syntax_meta.value(name, [in_space], [fail])
+    syntax_meta.equal_binding(stx1, stx2, [in_space], [phase1], [phase2])
+    syntax_meta.equal_name_and_scopes(stx1, stx2, [phase])
+    syntax_meta.flip_introduce(stx)
+    syntax_meta.space_introduce(stx, sp)
+    syntax_meta.track_origin(stx, [from_stxs])
+    syntax_meta.track_group_origin(stx, [from_stxs])
+    syntax_meta.track_ephemeral_origin(stx, [from_stxs])
+    syntax_meta.is_static(stx)
+    syntax_meta.expanding_phase()
+
+check:
+  'x'.unwrap() ~is #'x
+  '1'.unwrap() ~is 1
+  '+'.unwrap() ~prints_like ['op', '#{+}']
+  '+'.unwrap_op() ~is #'#{+}
+  'apple'.name_to_symbol() ~is #'apple
+  '+'.name_to_symbol() ~is #'#{+}
+  'fruit . apple'.name_to_symbol() ~is #'#{fruit.apple}
+  'fruit.(++)'.name_to_symbol() ~is #'#{|fruit.(++)|}
+
+block:
+  def op = Syntax.make_op(#'#{$})
+  check Syntax.literal'$' ~prints_like op
+  check Syntax.literal_term'$' ~prints_like op
+  check Syntax.literal'$ $' ~prints_like Syntax.make_group([op, op])
+  check Syntax.literal'$ $; $' ~prints_like Syntax.make_sequence([Syntax.make_group([op, op]),
+                                                                  Syntax.make_group([op])])
+  check Syntax.literal_group'$ $' ~prints_like Syntax.make_group([op, op])
+  check:
+    ~eval
+    Syntax.literal_term'1 2'
+    ~throws "unexpected term"
+  check:
+    ~eval
+    Syntax.literal_group''
+    ~throws "expected more terms"
+  check:
+    ~eval
+    Syntax.literal_group'1; 2'
+    ~throws "unexpected term"
+
+check:
+  Syntax.make(1) ~matches '1'
+  Syntax.make([1, 2]) ~throws "cannot coerce value to term syntax"
+  Syntax.make([#'parens, [#'group, 1, "a", #'z]]) ~matches '(1 "a" z)'
+  Syntax.make([#'parens,
+               [#'group, 1],
+               [#'group, "a"],
+               [#'group, [#'op, #'#{+}]]]) ~matches '(1, "a", +)'
+  Syntax.make([#'parens, '1', '"a"', '+']) ~matches '(1, "a", +)'
+  Syntax.make([#'parens, '1 2 3', '"a"', '4 + 5']) ~matches '(1 2 3, "a", 4 + 5)'
+  Syntax.make(['block', '1 2', '3']) ~matches ': 1 2; 3'
+  Syntax.make(['block']) ~matches ':«»'
+
+check:
+  Syntax.make_group([1, 2]) ~matches '1 2'
+  Syntax.make_group(['block', ['block', '1 2', '3']]) ~matches 'block: 1 2; 3'
+  Syntax.make_group([': a', ': b']) ~throws "cannot coerce value to non-tail term syntax"
+  Syntax.make_group(['any', ['block', '1 2', '3'], 'more']) ~throws "cannot coerce value to non-tail term syntax"
+  Syntax.make_group(['any', ['alts', ['block', '1 2', '3']], 'more']) ~throws "cannot coerce value to non-tail term syntax"
+  Syntax.make_group([': a', '| b']) ~matches ':« a » | b'
+  Syntax.make_group([['block', 'a'], ['alts', ['block', '1 2', '3']]]) ~matches ':« a » | 1 2 ; 3'
+
+check:
+  Syntax.make_group([]) ~throws "NonemptyList"
+
+check:
+  Syntax.make_temp_id("hello", ~keep_name: #true) ~matches 'hello'
+
+check:
+  Syntax.make([#'parens, Syntax.make_group([1])])
+  ~matches '(1)'
+
+check:
+  Syntax.make_sequence(['a', 'b c', 'd e f'])
+  ~matches 'a; b c; d e f'
+
+check:
+  Syntax.unwrap('x') ~is #'x
+  Syntax.unwrap('1 1') ~throws "multi-term syntax not allowed in term context"
+  Syntax.unwrap('(1 2 3)') ~matches ['parens', '1 2 3']
+  Syntax.unwrap('(1, 2, 3)') ~matches ['parens', '1', '2', '3']
+  Syntax.unwrap_group('1 2 3') ~matches ['1', '2', '3']
+  Syntax.unwrap_group('1 2; 3 4') ~throws "multi-group syntax not allowed in group context"
+  Syntax.unwrap_sequence('1 2; 3 4 5') ~matches ['1 2', '3 4 5']
+  Syntax.unwrap_sequence('1 2') ~matches ['1 2']
+  Syntax.unwrap_sequence('1') ~matches ['1']
+  Syntax.unwrap_all('(1 2, 3 4)') ~is [#'parens, [#'group, 1, 2], [#'group, 3, 4]]
+
+block:
+  import lib("racket/base.rkt")
+  def bad1 = base.#{datum->syntax}(#false, PairList[#'oops])
+  def bad2 = base.#{datum->syntax}(#false, { "a": "b" })
+  def bad3 = base.#{datum->syntax}(#false, PairList[#'group])
+  check:
+    bad1 is_a Term ~is #true
+    Syntax.unwrap(bad1) ~is bad1
+    Syntax.unwrap_group('1 $bad1 2') ~matches ['1', _ :: Any.of(bad1), '2']
+    Syntax.unwrap_sequence('1; $bad1; 2') ~matches ['1', _ :: satisfying(fun (stx :: Syntax): stx.unwrap() == bad1), '2']
+    bad2 is_a Term ~is #true
+    Syntax.unwrap(bad2) ~is bad2
+    bad3 is_a Term ~is #false
+    bad3 is_a Group ~is #false
+    Syntax.unwrap_group(bad3) ~throws "invalid syntax for group"
+    Syntax.unwrap_sequence(bad3) ~matches [bad3]
+    Syntax.unwrap_sequence(bad3) matches [''] ~is #false
+
+// unwrapping parsed term results in the parsed term
+block:
+  import meta -1:
+    rhombus/meta.expr_meta
+  def parsed = expr_meta.pack_expr('x + 1')
+  check parsed.unwrap() === parsed ~is #true
+
+block:
+  import:
+    lib("shrubbery/parse.rkt")
+  def orig_x = parse.#{parse-all}(Port.Input.open_string("x"))
+  check:
+    Syntax.is_original(orig_x) ~is #true
+    orig_x.is_original() ~is #true
+    Syntax.make_temp_id("x").is_original() ~is #false
+
+block:
+  def x = 'x'
+  def xy =  'x y'
+  def xyz =  'x y
+              z'
+  check x.srcloc().span ~is 1
+  check xy.srcloc().span ~is 3
+  check xy.srcloc().line ~is x.srcloc().line + 1
+  check xy.srcloc().column ~is x.srcloc().column + 2
+  check xyz.srcloc().line ~is x.srcloc().line + 2
+  check xyz.srcloc().column ~is x.srcloc().column + 3
+
+check:
+  'x'.ephemeral_term() ~matches 'x'
+  'x'.ephemeral_group() ~matches 'x'
+  'x'.ephemeral_term().ephemeral_group() ~matches 'x'
+  'x y'.ephemeral_group() ~matches 'x y'
+  'x y'.ephemeral_sequence() ~matches 'x y'
+  'x y'.ephemeral_group().ephemeral_sequence() ~matches 'x y'
+  'x y; z'.ephemeral_sequence() ~matches 'x y; z'
+  'x'.ephemeral_term().ephemeral_property(#'a, 1).ephemeral_term().ephemeral_property(#'a) ~is 1
+  'x'.ephemeral_group().ephemeral_property(#'a, 1).ephemeral_group().ephemeral_property(#'a) ~is 1
+  'x'.ephemeral_group().ephemeral_property(#'a, 1).ephemeral_term().ephemeral_property(#'a) ~is #false
+  'x y'.ephemeral_sequence().ephemeral_property(#'a, 1).ephemeral_sequence().ephemeral_property(#'a) ~is 1
+  'x y'.ephemeral_sequence().ephemeral_property(#'a, 1).ephemeral_group().ephemeral_property(#'a) ~is #false
+
+check:
+  match 'a: *'
+  | 'a: $b': b is_a Operator
+  ~is #true
+
+check:
+  match 'a: b'
+  | 'a: $b': b is_a Identifier
+  ~is #true
+
+check:
+  ~eval
+  module m ~lang rhombus/and_meta:
+    meta:
+      import: rhombus.check
+      check:
+        syntax_meta.equal_binding('check', 'check') ~is #true
+        syntax_meta.equal_binding('check', 'def') ~is #false
+        syntax_meta.equal_binding('check', 'check', expr_meta.space, 0, 2) ~is #false
+        syntax_meta.equal_name_and_scopes('check', 'check') ~is #true
+        syntax_meta.equal_name_and_scopes('check', 'check', 0) ~is #true
+        syntax_meta.expanding_phase() ~is 0
+  ~completes
+
+check:
+  ~eval
+  module m ~lang rhombus/and_meta:
+    meta:
+      import: rhombus.check
+      namespace ns1:
+        import rhombus.Pair.cons
+        export x
+        def x = 'cons'
+      namespace ns2:
+        import rhombus.List.cons
+        export x
+        def x = 'cons'
+      namespace ns3:
+        import rhombus.List.cons
+        export x
+        def x = 'cons'
+      check:
+        syntax_meta.equal_binding(ns1.x, ns2.x, expr_meta.space, 1) ~is #false
+        syntax_meta.equal_binding(ns3.x, ns2.x, expr_meta.space, 1) ~is #true
+        syntax_meta.equal_name_and_scopes(ns1.x, ns2.x, 1) ~is #false
+        syntax_meta.equal_name_and_scopes(ns3.x, ns2.x, 1) ~is #false
+      check:
+        syntax_meta.equal_binding('+', '+') ~is #true
+        syntax_meta.equal_binding('*', '+') ~is #false
+        syntax_meta.equal_binding('List.cons', 'List.cons') ~is #true
+        syntax_meta.equal_binding('List.cons', 'Pair.cons') ~is #false
+        syntax_meta.equal_binding('List.cons', 'List.first') ~is #false
+        syntax_meta.equal_binding('List.(+)', 'List.(+)') ~is #true
+        syntax_meta.equal_binding('List.(+)', 'Pair.(+)') ~is #false
+        syntax_meta.equal_binding('List.(+)', '+') ~is #false
+  ~completes
+
+check:
+  ~eval
+  module m ~lang rhombus/and_meta:
+    import: rhombus.check
+    expr.macro 'with_y: $expr':
+      ~op_stx h
+      def y: 'y'.replace_scopes('$h')
+      'block:
+         def $y: 2
+         $expr'
+    check: (with_y: y) ~is 2
+  ~completes
+
+// check some static information
+check:
+  use_static
+  Syntax.unwrap_group('x y z')[1].unwrap()
+  'x y z'.unwrap_group()[1].unwrap()
+  (Syntax.srcloc('x') :~ Srcloc).line
+  ('x'.srcloc() :~ Srcloc).line
+  ~completes
+
+block:
+  use_static
+  check 'x'.srcloc()?.line ~is_a Int
+
+block:
+  import:
+    meta -1: rhombus/meta open
+    lib("racket/base.rkt")
+  parameterize { base.#{error-print-source-location}: #true }:
+    check:
+      syntax_meta.error('here')
+      ~throws values("bad syntax", "in: here")
+    check:
+      syntax_meta.error("oops", 'here')
+      ~throws values("oops", "in: here")
+    check:
+      syntax_meta.error("oops", 'here: there', 'there')
+      ~throws values("oops", "in: here: there", "at: there")
+    check:
+      syntax_meta.error("oops", 'here: there', ['there', 'here'])
+      ~throws values("oops", "in: here: there", "at: there")
+    check:
+      syntax_meta.error("wrong form")
+      ~throws "wrong form"
+    version_meta.when_racket_at_least "8.15.0.2":
+      check:
+        syntax_meta.error('garbage + 2')
+        ~throws values("garbage: ",  "bad syntax", "garbage + 2")
+      check:
+        syntax_meta.error("all wrong", 'garbage + 2')
+        ~throws values("garbage: ", "all wrong", "garbage + 2")
+      check:
+        syntax_meta.error("all wrong", 'garbage + 2', 'extra1')
+        ~throws values("garbage: ", "all wrong", "garbage + 2", "extra1")
+    check:
+      syntax_meta.error(~who: "my_form", 'garbage + 2')
+      ~throws values("my_form: ", "bad syntax", "garbage + 2")
+    check:
+      syntax_meta.error(~who: "my_form", "all wrong", 'garbage + 2')
+      ~throws values("my_form: ", "all wrong", "garbage + 2")
+    check:
+      syntax_meta.error(~who: "my_form", "all wrong", 'garbage + 2', 'extra1')
+      ~throws values("my_form: ", "all wrong", "garbage + 2", "extra1")
+    check:
+      syntax_meta.error(~who: "my_form", "all wrong", 'garbage + 2', ['extra1', 'extra2'])
+      ~throws values("my_form: ", "all wrong", "garbage + 2", "extra1")
+    check:
+      syntax_meta.error(~who: #'my_form, 'garbage + 2')
+      ~throws values("my_form: ", "bad syntax", "garbage + 2")
+    check:
+      syntax_meta.error(~who: 'my_form', 'garbage + 2')
+      ~throws values("my_form: ", "bad syntax", "garbage + 2")
+    check:
+      syntax_meta.error(~who: '+++', 'garbage + 2')
+      ~throws values("+++: ", "bad syntax", "garbage + 2")
+    check:
+      syntax_meta.error(~who: 'my_ns.my_form', 'garbage + 2')
+      ~throws values("my_ns.my_form: ", "bad syntax", "garbage + 2")
+    check:
+      syntax_meta.error(~who: 'my_ns.(++)', 'garbage + 2')
+      ~throws values("my_ns.(++): ", "bad syntax", "garbage + 2")
+
+check:
+  try:
+    eval(
+      'block:
+         namespace ns:
+           export: ?? !!
+           operator (a ?? b): 0
+           operator (a !! b): 0
+
+         1 ns.(??) 2 ns.(!!) 3'
+    )
+    ~catch exn :: Exn.Fail.Syntax:
+      let PairList[op2_3, op1, op2] = exn.exprs
+      [op2_3.to_source_string(),
+       op1.to_source_string(),
+       op2.to_source_string(),
+       op2_3.srcloc().span,
+       op1.srcloc().span,
+       op2.srcloc().span]
+  ~is ["ns.(!!) 3",
+       "ns.(??)",
+       "ns.(!!)",
+       9,
+       7,
+       7]
+
+meta:
+  check:
+    syntax_meta.space_introduce('a', annot_meta.space) ~matches 'a'
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce('a', annot_meta.space), 'a') ~is #false
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce('a', annot_meta.space, ~mode: #'add), 'a') ~is #false
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce('a', annot_meta.space, ~mode: #'flip), 'a') ~is #false
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce('a', annot_meta.space, ~mode: #'remove), 'a') ~is #true
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce(
+                                        syntax_meta.space_introduce('a', annot_meta.space, ~mode: #'flip),
+                                        annot_meta.space,
+                                        ~mode: #'flip),
+                                      'a') ~is #true
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce(
+                                        syntax_meta.space_introduce('a', annot_meta.space, ~mode: #'flip),
+                                        bind_meta.space,
+                                        ~mode: #'flip),
+                                      'a') ~is #false
+  check:
+    syntax_meta.space_introduce('a', expr_meta.space) ~matches 'a'
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce('a', expr_meta.space), 'a') ~is #true
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce('a', expr_meta.space, ~mode: #'add), 'a') ~is #true
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce('a', expr_meta.space, ~mode: #'flip), 'a') ~is #true
+    syntax_meta.equal_name_and_scopes(syntax_meta.space_introduce('a', expr_meta.space, ~mode: #'remove), 'a') ~is #true
+
+meta:
+  check:
+    syntax_meta.track_origin('a', 'b') ~matches 'a'
+    syntax_meta.track_origin('a', 'b'.property(#'origin, 'c')).property(#'origin) ~matches 'c'
+    syntax_meta.track_origin('a', ['b', 'c']) ~matches 'a'
+    syntax_meta.track_origin('a', PairList['b', 'c']) ~matches 'a'
+    syntax_meta.track_group_origin('a',
+                                   'b'.ephemeral_group().ephemeral_property(#'origin, 'c'))
+      .ephemeral_group()
+      .ephemeral_property(#'origin) ~matches 'c'
+    syntax_meta.track_group_origin('a',
+                                   ['b'.ephemeral_group().ephemeral_property(#'origin, 'c'),
+                                    'b2'.ephemeral_group().ephemeral_property(#'origin, 'c')])
+      .ephemeral_group() ~matches 'a'
+    syntax_meta.track_group_origin('a a',
+                                   'b b'.ephemeral_group().ephemeral_property(#'origin, 'c'))
+      .ephemeral_group()
+      .ephemeral_property(#'origin) ~matches 'c'
+    syntax_meta.track_ephemeral_origin('a a'.ephemeral_sequence(),
+                                       'b b'.ephemeral_sequence().ephemeral_property(#'origin, 'c'))
+      .ephemeral_sequence()
+      .ephemeral_property(#'origin) ~matches 'c'
+    syntax_meta.track_ephemeral_origin('a a; a'.ephemeral_sequence(),
+                                       'b b; b'.ephemeral_sequence().ephemeral_property(#'origin, 'c'))
+      .ephemeral_sequence()
+      .ephemeral_property(#'origin) ~matches 'c'
+    syntax_meta.track_ephemeral_origin('a a; a'.ephemeral_sequence(),
+                                       ['b b; b'.ephemeral_sequence().ephemeral_property(#'origin, 'c'),
+                                        'b2 b2; b2'.ephemeral_sequence().ephemeral_property(#'origin, 'c2')])
+      .ephemeral_sequence() ~matches 'a a; a'
+    syntax_meta.track_origin('foo', ~add: 'bar.baz') ~matches 'foo'
+
+meta:
+  check:
+    syntax_meta.track_origin('a', "oops")
+    ~throws values(
+      "syntax_meta.track_origin: " ++ error.annot_msg(),
+      error.annot("Term || (Listable.to_list && List.of(Term))").msg,
+      error.val("oops").msg,
+    )
+  check:
+    syntax_meta.track_origin('a', ["oops"])
+    ~throws values(
+      "syntax_meta.track_origin: " ++ error.annot_msg(),
+      error.annot("Term || (Listable.to_list && List.of(Term))").msg,
+      error.val(["oops"]).msg,
+    )
+  check:
+    syntax_meta.track_origin('a', ['a b'])
+    ~throws values(
+      "syntax_meta.track_origin: " ++ error.annot_msg(),
+      error.annot("Term || (Listable.to_list && List.of(Term))").msg,
+      error.val(['a b']).msg,
+    )
+  check:
+    syntax_meta.track_group_origin('a', "oops")
+    ~throws values(
+      "syntax_meta.track_group_origin: " ++ error.annot_msg(),
+      error.annot("Group || (Listable.to_list && List.of(Group))").msg,
+      error.val("oops").msg,
+    )
+  check:
+    syntax_meta.track_group_origin('a', ["oops"])
+    ~throws values(
+      "syntax_meta.track_group_origin: " ++ error.annot_msg(),
+      error.annot("Group || (Listable.to_list && List.of(Group))").msg,
+      error.val(["oops"]).msg,
+    )
+  check:
+    syntax_meta.track_group_origin('a', ['a; b'])
+    ~throws values(
+      "syntax_meta.track_group_origin: " ++ error.annot_msg(),
+      error.annot("Group || (Listable.to_list && List.of(Group))").msg,
+      error.val(['a; b']).msg,
+    )
+  check:
+    syntax_meta.track_ephemeral_origin('a', "oops")
+    ~throws values(
+      "syntax_meta.track_ephemeral_origin: " ++ error.annot_msg(),
+      error.annot("Syntax || (Listable.to_list && List.of(Syntax))").msg,
+      error.val("oops").msg,
+    )
+  check:
+    syntax_meta.track_ephemeral_origin('a', ["oops"])
+    ~throws values(
+      "syntax_meta.track_ephemeral_origin: " ++ error.annot_msg(),
+      error.annot("Syntax || (Listable.to_list && List.of(Syntax))").msg,
+      error.val(["oops"]).msg,
+    )

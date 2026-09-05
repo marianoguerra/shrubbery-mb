@@ -1,0 +1,459 @@
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm") as ex_a
+  [ex_a.alpha, ex_a.beta]
+  ~is ["alpha", "beta"]
+
+check:
+  ~eval
+  import: (lib("rhombus/tests/example-a.rhm")) as ex_a
+  [ex_a.alpha, ex_a.beta]
+  ~is ["alpha", "beta"]
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm") as ex_a:
+            expose: beta
+  [ex_a.alpha, beta, ex_a.beta]
+  ~is ["alpha", "beta", "beta"]
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm") as ex_a:
+            expose: beta
+  alpha
+  ~throws "alpha: undefined"
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm").ExList
+  [ExList(1, 2), ExList.length([1, 2, 3]),
+   for ExList:
+     each i in 10..12
+     i]
+  ~is [[1, 2], 3, [10, 11]]
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm").ExList open
+  length([1, 2, 3])
+  ~is 3
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm").ExList open
+  for ExList: "oops, no ExList"
+  ~throws "not bound as a reducer"
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm") open
+  [alpha, beta]
+  ~is ["alpha", "beta"]
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm") open
+  ex_a.alpha
+  ~throws "ex_a: undefined"
+
+check:
+  ~eval
+  import:
+    lib("rhombus/tests/example-a.rhm") as ex_a
+    .ex_a: expose beta
+  [ex_a.alpha, beta]
+  ~is ["alpha", "beta"]
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-b.rhm") as ex_b
+  ex_b.ex_a.alpha
+  ~is "alpha"
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-b.rhm") open
+  ex_a.alpha
+  ~is "alpha"
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-b.rhm").ex_a
+  ex_a.alpha
+  ~is "alpha"
+
+check:
+  ~eval
+  import: .List:
+            rename: cons as kons
+  List.kons(1, [2])
+  ~is List.cons(1, [2])
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm") open
+  import: .ExList:
+            rename: cons as kons
+  [ExList.kons(1, [2]),
+   List.cons(1, [2])]
+  ~is [List.cons(1, [2]), List.cons(1, [2])]
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm") open
+  block:
+    import: .ExList:
+              rename: cons as kons
+    [ExList.kons(1, [2]),
+     List.cons(1, [2])]
+  ~is [List.cons(1, [2]), List.cons(1, [2])]
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm").alpha
+  alpha
+  ~is "alpha"
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm").alpha as a
+  a
+  ~is "alpha"
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm").alpha open
+  alpha
+  ~throws"cannot open binding"
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm").alpha:
+           except: other
+  "does not get here"
+  ~throws "identifier to exclude is not nested within the imported name"
+
+check:
+  ~eval
+  import: lib("rhombus/tests/example-a.rhm").alpha
+  beta
+  ~throws "beta: undefined"
+
+check:
+  import:
+    rhombus/meta.expr
+    rhombus.Pair as p:
+      only_space expr
+      rename:
+        cons as make_pair
+      only:
+        make_pair
+  p.make_pair
+  ~is Pair.cons
+
+check:
+  import:
+    rhombus/meta.expr
+    rhombus.Pair as p:
+      only_space expr
+      only:
+        cons as make_pair
+  p.make_pair
+  ~is Pair.cons
+
+check:
+  fun f(x, y):
+    1 + block:
+      import rhombus.(*) as +
+      x + y - 1
+  f(3, 4)
+  ~is 12
+
+check:
+  import:
+    lib("rhombus/tests/example-f.rhm") as ex_f
+  [ex_f.prefix.original, ex_f.prefix.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    lib("rhombus/tests/example-f.rhm").prefix
+  [prefix.original, prefix.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    lib("rhombus/tests/example-f.rhm"):
+      expose prefix
+      rename prefix as pfx
+  [pfx.original, pfx.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    lib("rhombus/tests/example-f.rhm"):
+      expose prefix as pfx
+  [pfx.original, pfx.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    (lib("rhombus/tests/example-f.rhm"):
+       expose prefix as pfx)
+  [pfx.original, pfx.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    (lib("rhombus/tests/example-f.rhm")):
+       expose prefix as pfx
+  [pfx.original, pfx.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    expose prefix as pfx:
+      lib("rhombus/tests/example-f.rhm")
+  [pfx.original, pfx.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    lib("rhombus/tests/example-f.rhm").prefix as pfx
+  [pfx.original, pfx.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    lib("rhombus/tests/example-f.rhm"):
+      only prefix
+      open
+  [prefix.original, prefix.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    lib("rhombus/tests/example-f.rhm") as ex:
+      only prefix
+  [ex.prefix.original, ex.prefix.added]
+  ~is ["orig", "add"]
+
+check:
+  import:
+    rhombus/meta open
+    rhombus.String as S:
+      only_space annot
+  "apple" :: S
+  ~completes
+
+check:
+  ~eval
+  import:
+    rhombus/meta open
+    rhombus.String as S:
+      only_space annot
+  def '$(s :: S)' = '"5"'
+  ~throws "not bound as a syntax class"
+
+check:
+  ~eval
+  import:
+    rhombus/meta open
+    rhombus.String as S:
+      only_space annot
+  S.substring
+  ~throws "S: undefined"
+
+// check that an explicit `.` name works in `import` forms
+check:
+  import:
+    "example-g.rkt" open
+  [#{a.x}, #{a.y}]
+  ~is ["x", "y"]
+check:
+  import:
+    "example-g.rkt":
+      expose #{a.x}
+  #{a.x}
+  ~is "x"
+check:
+  import:
+    "example-g.rkt".#{a.x}
+  #{a.x}
+  ~is "x"
+check:
+  import:
+    "example-g.rkt":
+      expose #{a.x} as _x_
+  _x_
+  ~is "x"
+check:
+  import:
+    "example-g.rkt" open:
+      except #{a.x}
+  #{a.y}
+  ~is "y"
+check:
+  import:
+    "example-g.rkt" open:
+      expose #{a.x}
+      rename #{a.x} as _x_
+  _x_
+  ~is "x"
+
+check:
+  import:
+    namespace ns:
+      export def x = 1
+      export def y = 2
+  [ns.x, ns.y]
+  ~is [1, 2]
+
+check:
+  import:
+    (namespace ns:
+       export def x = 1
+       export def y = 2) as imm:
+      expose:
+        x
+        y
+  [x, y, imm.x, imm.y]
+  ~is [1, 2, 1, 2]
+
+check:
+  import:
+    (namespace ns:
+       export def x = 1
+       export def y = 2) as ~none:
+      expose:
+        x
+        y
+  [x, y]
+  ~is [1, 2]
+
+check:
+  import:
+    (namespace ns:
+       export def x3 = 3
+       export def y = 2).x3
+  x3
+  ~is 3
+
+check:
+  import:
+    namespace ns:
+      export fun f(x :: Int): x
+  ns.f("bad")
+  ~throws values(error.annot_msg("argument"),
+                 "ns.f")
+
+check:
+  ~eval
+  import lib("rhombus/tests/example-h.rhm") as ex_h
+  check ex_h.counter ~is 1
+  ex_h.inc()
+  check ex_h.counter ~is 2
+  import lib("rhombus/tests/example-i.rhm") as ~none
+  check ex_h.counter ~is 3
+  ~completes
+
+check:
+  import lib("rhombus/tests/example-c.rhm") open
+  exint
+  ~is 10
+
+check:
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c.rhm") open:
+    except_space annot
+  exint
+  ~is 10
+
+check:
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c.rhm") open:
+    except_space annot bind
+  exint
+  ~is 10
+
+check:
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c2.rhm") open:
+    except_space defn annot bind
+  exint
+  ~is 10
+
+check:
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c.rhm") open:
+    except_space expr bind
+  11 :: exint
+  ~is 11
+
+check:
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c2.rhm") open:
+    except_space expr bind
+  11 :: a_exint
+  ~is 11
+
+check:
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c.rhm") open:
+    except_space bind annot
+    rename exint as exii
+  exii
+  ~is 10
+
+check:
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c2.rhm") open:
+    except_space bind annot
+    rename exint as exii
+  exii
+  ~is 10
+
+check:
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c2.rhm") open:
+    except_space expr bind
+    rename a_exint as exii
+  11 :: exii
+  ~is 11
+
+check:
+  ~eval
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c.rhm") open:
+    except_space expr
+  exint
+  ~throws "exint: undefined"
+
+check:
+  ~eval
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c2.rhm") open:
+    except_space expr
+  exint
+  ~throws "exint: undefined"
+
+check:
+  ~eval
+  import:
+    rhombus/meta open
+  import lib("rhombus/tests/example-c2.rhm") open:
+    except_space expr bind annot
+  exint
+  ~throws "exint: undefined"

@@ -1,0 +1,52 @@
+import:
+  lib("racket/gui/base.rkt").#{label-string?}
+
+export:
+  View
+
+namespace View
+
+annot.macro 'View.SizeInt':
+  'Int.in(0 ..= 1000000)'
+
+annot.macro 'View.PosSizeInt':
+  'Int.in(1 ..= 1000000)'
+
+annot.macro 'View.Size':
+  '[maybe(View.SizeInt), maybe(View.SizeInt)]'
+
+annot.macro 'View.PositionInt':
+  'Int.in(-1000000 ..= 1000000)'
+
+enum View.Position
+| center
+| ~is_a [View.PositionInt, View.PositionInt]
+
+annot.macro 'View.SpacingInt':
+  'Int.in(0 ..= 1000)'
+
+annot.macro 'View.Margin':
+  '[View.SpacingInt, View.SpacingInt]'
+
+enum View.HorizAlignment
+| left
+| center
+| right
+
+enum View.VertAlignment
+| top
+| center
+| bottom
+
+annot.macro 'View.Alignment':
+  '[View.HorizAlignment, View.VertAlignment]'
+
+annot.macro 'View.Stretch':
+  '[Boolean, Boolean]'
+
+annot.macro 'View.LabelString':
+  'String && LabelStringSized'
+
+annot.macro 'LabelStringSized':
+  annot_meta.pack_predicate('#{label-string?}',
+                            '()')

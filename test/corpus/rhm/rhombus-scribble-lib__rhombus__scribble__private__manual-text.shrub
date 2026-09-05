@@ -1,0 +1,95 @@
+
+import:
+  "util.rhm" open
+  lib("scribble/manual.rkt")
+  "index.rhm"!for_extras open
+  "maybe_drop_extras.rhm" open
+
+export:
+  litchar
+  deftech
+  tech
+  onscreen
+  defterm
+  math
+  filepath
+  pkg
+  exec
+  exec_flag
+  hash_lang
+  filebox
+
+fun litchar :~ Element:
+  ~doc
+| litchar(str :: String): manual.litchar(str)
+| litchar(strs :: List.of(String)): manual.litchar(& strs)
+
+fun deftech(pre_content :: PreContent,
+            ~key: key :: maybe(String) = #false,
+            ~normalize: normalize = #true,
+            ~use_style: use_style = #true,
+            ~index_extras: index_extras :: ExtrasMap = {})
+  :~ Element:
+    ~doc
+    maybe_drop_extras:
+      manual.deftech(pre_content,
+                     ~key: key,
+                     ~#{normalize?}: normalize,
+                     ~#{style?}: use_style,
+                     ~#{index-extras}: convert_extras(index_extras))
+
+fun tech(pre_content :: PreContent,
+         ~key: key :: maybe(String) = #false,
+         ~normalize: normalize = #true,
+         ~doc: doc :: maybe(ModulePath) = #false,
+         ~tag_prefixes: prefixes :: maybe(List.of(String)) = #false,
+         ~indirect: indirect = #false,
+         ~quiet: quiet = #true)
+  :~ Element:
+    ~doc
+    let tech = if quiet | manual.tech | manual.techlink
+    tech(pre_content,
+         ~key: key,
+         ~#{normalize?}: normalize,
+         ~doc: doc && (doc :~ ModulePath).s_exp(),
+         ~#{tag-prefixes}: convert_list(prefixes),
+         ~#{indirect?}: indirect)
+
+fun onscreen(pre_content :: PreContent) :~ Element:
+  ~doc
+  manual.onscreen(pre_content)
+
+fun defterm(pre_content :: PreContent) :~ Element:
+  ~doc
+  manual.defterm(pre_content)
+
+fun math(pre_content :: PreContent) :~ Element:
+  ~doc
+  manual.math(pre_content)
+
+fun filepath(pre_content :: PreContent) :~ Element:
+  ~doc
+  manual.filepath(pre_content)
+
+fun pkg(pre_content :: PreContent) :~ Element:
+  ~doc
+  manual.tt(pre_content)
+
+fun exec(content :: Content) :~ Element:
+  ~doc
+  manual.exec(content)
+
+fun exec_flag(content :: Content) :~ Element:
+  ~doc
+  manual.elem(~style: #'#{no-break}, manual.exec(content))
+
+fun hash_lang() :~ Element:
+  ~doc
+  manual.#{hash-lang}()
+
+
+fun filebox(name :: String || Content,
+            pre_flow :: PreFlow) :: FlowBlock:
+  ~doc
+  manual.filebox(name,
+                 pre_flow)

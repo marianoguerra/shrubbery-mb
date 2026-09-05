@@ -1,0 +1,10 @@
+
+export: all_defined
+
+def one = "one"
+annot.macro 'Streeng': 'String'
+class DPosn(x, y)
+
+defn.macro 'hidden':
+  'def two = "two"'
+hidden

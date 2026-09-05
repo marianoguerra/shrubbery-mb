@@ -1,0 +1,82 @@
+
+check:
+  let mutable x = 1
+  let v:
+    try ~escape_as esc:
+      1 + esc("done") + 2
+      x := 2
+  values(v, x)
+  ~is values("done", 1)
+
+check:
+  try ~escape_as esc:
+    esc(1, 2, 3)
+    "done"
+  ~is values(1, 2, 3)
+
+block:
+  use_static
+  import lib("racket/base.rkt")
+  fun rkt_unwrap(stx): base.#{syntax->list}(stx)
+  def v:
+    try:
+      parameterize { Evaluator.current: Evaluator.make_rhombus(),
+                     base.#{error-print-source-location}: #false }:
+        eval('fun')
+      ~catch x:
+        x
+  check:
+    rkt_unwrap((v :: Exn.Fail.Syntax).exprs[0])
+    ~matches PairList['fun']
+  check:
+    def e :: Exn.Fail.Syntax = v
+    rkt_unwrap(e.exprs[0])
+    ~matches PairList['fun']
+  check:
+    rkt_unwrap(Exn.Fail.Syntax.exprs(v)[0])
+    ~matches PairList['fun']
+  check:
+    use_dynamic
+    rkt_unwrap(v.exprs[0])
+    ~matches PairList['fun']
+
+  check:
+    def v = Exn.Fail.Read("hi", Continuation.Marks.current(), PairList[Srcloc(1, 2, 3, 4, 5)])
+    match v
+    | Exn.Fail.Read(a, b, srcs): srcs[0].line
+    ~is 2
+  check:
+    String.substring((v :: Exn).message, 0, 63) ~is "fun: expected dotted identifier sequence or expected more terms"
+    String.substring(Exn.message(v), 0, 63) ~is "fun: expected dotted identifier sequence or expected more terms"
+  block:
+    use_dynamic
+    check:
+      String.substring(v.message, 0, 63) ~is "fun: expected dotted identifier sequence or expected more terms"
+
+block:
+  use_static
+  class ExExn(index):
+    extends Exn.Fail.Syntax
+  def v = ExExn("oops", Continuation.Marks.current(), PairList['bad'], 75)
+  check:
+    v.message ~is "oops"
+    v.index ~is 75
+    v is_a Exn ~is #true
+
+block:
+  def v = Exn.Fail.Annot("annot", Continuation.Marks.current(), PairList[Srcloc(1, 2, 3, 4, 5)])
+  check:
+    match v
+    | Exn.Fail.Annot(a, b, srcs): srcs[0].line
+    ~is 2
+  check:
+    use_static
+    v.srclocs[0].line
+    ~is 2
+  check:
+    dynamic(v).srclocs[0].line
+    ~is 2
+
+check:
+  repr(Exn.Fail.Annot("annot", Continuation.Marks.current(), PairList[Srcloc(1, 2, 3, 4, 5)]))
+  ~is "Exn.Fail.Annot(\"annot\", #<continuation-marks>, PairList[Srcloc(1, 2, 3, 4, 5)])"

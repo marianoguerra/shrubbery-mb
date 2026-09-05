@@ -76,6 +76,17 @@ differential suite run with neither Racket nor `reference/` present — CI needs
 only this repository. Regenerating them is a deliberate act, and the resulting
 diff is the point: it shows exactly what changed.
 
+Goldens come in two forms, and the reason is size. `spec` and `tabs` carry the
+reference's full answer, because those are what a person reads when something
+breaks; the 610-file `rhm` bucket carries a digest only, because the full dumps
+are 26 MB of intermediate artifact and a digest detects a divergence just as
+well. `just golden-for FILE` recreates the full answer for one file.
+
+`test/oracle-policy.json` is a **ratchet**, and it is data rather than code
+because the expectations flip as the port grows. Each bucket has a floor:
+dropping below it fails, and rising above it also fails, so that an improvement
+is recorded deliberately in a commit whose diff says what got better.
+
 ## Conventions
 
 - Config is the **new DSL**, not JSON: `moon.work`, `moon.mod`, `moon.pkg`. Deps

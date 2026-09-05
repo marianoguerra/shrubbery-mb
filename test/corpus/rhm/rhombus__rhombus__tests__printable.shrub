@@ -1,0 +1,235 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    print(v, ...)
+    println(v, ...)
+    show(v, ...)
+    showln(v, ...)
+    Printable.describe(v)
+    Printable.render(pd, [out])
+    Printable.current_pretty([on])
+    Printable.current_optimal([on])
+    Printable.current_page_width([width])
+    Printable.current_graph([on])
+    PrintDesc.concat(pd, ...)
+    PrintDesc.newline()
+    PrintDesc.nest(n, pd)
+    PrintDesc.align(pd)
+    PrintDesc.or(pd1, pd2)
+    PrintDesc.flat(pd)
+    PrintDesc.list(pre, elems, post)
+    PrintDesc.block(head, body)
+    PrintDesc.special(v, alt_pd)
+
+check to_string("apple") ~is "apple"
+check to_string("apple", ~mode: #'expr) ~is "\"apple\""
+check repr("apple") ~is "\"apple\""
+
+check:
+  print(1)
+  ~prints "1"
+
+check:
+  print(1, 2, "apple")
+  ~prints "1 2 apple"
+
+check:
+  print(1, 2, "apple", ~pretty: #true)
+  ~prints "1\n2\napple"
+
+check:
+  print([1, String.make(80, Char"a"), 2], ~pretty: #true)
+  ~prints @str{[
+                 1,
+                 "@(String.make(80, Char"a"))",
+                 2
+               ]}
+
+check:
+  print(1, ~out: stdout)
+  ~prints "1"
+
+check:
+  println(1)
+  ~prints "1\n"
+
+check:
+  println(1, ~out: stdout)
+  ~prints "1\n"
+
+check:
+  show(#'a)
+  ~prints "#'a"
+
+check:
+  show(1, 2, "apple")
+  ~prints "1 2 \"apple\""
+
+check:
+  show(#'a, ~out: stdout)
+  ~prints "#'a"
+
+check:
+  showln(#'a)
+  ~prints "#'a\n"
+
+check:
+  showln(#'a, ~out: stdout)
+  ~prints "#'a\n"
+
+check:
+  class Posn(x, y):
+    implements Printable
+    override describe(mode, recur):
+      "_" +& x +& "," +& y +& "_"
+  "" +& Posn(1, 2)
+  ~is "_1,2_"
+
+block:
+  class Posn(x, y):
+    implements Printable
+    override describe(mode, recur):
+      import: .PrintDesc open
+      concat("(", align(concat(recur(x, ~mode: mode), ",", newline(),
+                               recur(y), ")")))
+  check "" +& Posn(1, 2) ~is "(1,\n 2)"
+  check "" +& Posn("a", "b") ~is "(a,\n \"b\")"
+  check to_string(Posn("a", "b"), ~mode: #'expr) ~is "(\"a\",\n \"b\")"
+  check "" +& Posn(Posn(1, 2), Posn(3, 4)) ~is "((1,\n  2),\n (3,\n  4))"
+
+block:
+  class Posn(x, y):
+    implements Printable
+    override describe(mode, recur):
+      PrintDesc.list("(", [recur(x, ~mode: mode), recur(y)], ")")
+  check "" +& Posn(1, 2) ~is "(1, 2)"
+
+block:
+  class Posn(x, y):
+    implements Printable
+    override describe(mode, recur):
+      import .PrintDesc open
+      // using newline() forces multi-line rendering of `Posn`
+      list("(", [concat(recur(x, ~mode: mode), newline(), "!"), recur(y)], ")")
+  parameterize { Printable.current_pretty: #true }:
+    check "" +& Posn(1, 2) ~is "(\n  1\n  !,\n  2\n)"
+
+check:
+  class Posn(x, y):
+    private implements Printable
+    private override describe(mode, recur):
+      "_" +& x +& "," +& y +& "_"
+  "" +& Posn(1, 2)
+  ~is "_1,2_"
+
+block:
+  class Posn(x, y):
+    private implements Printable
+    private override describe(mode, recur):
+      if mode == #'text
+      | "_" +& x +& "," +& y +& "_"
+      | recur(this, ~as: #'super)
+  check "" +& Posn(1, 2) ~is "_1,2_"
+  check repr(Posn(1, 2)) ~is "Posn(1, 2)"
+
+check:
+  class Posn(x, y):
+    private implements Printable
+    private override describe(mode, recur):
+      recur("something else", ~as: #'super)
+  "" +& Posn(1, 2)
+  ~throws "value for super mode is not the original object"
+
+block:
+  class Box(tag, mutable val):
+    implements Printable
+    override describe(mode, recur):
+      PrintDesc.list("Box(", [recur(tag), recur(val)], ")")
+  check to_string(Box(1, #false)) ~is "Box(1, #false)"
+  block:
+    def b = Box(3, #false)
+    check to_string([b, b]) ~is "[Box(3, #false), Box(3, #false)]"
+    check to_string({1: b, 2: b}) ~is "{1: Box(3, #false), 2: Box(3, #false)}"
+    parameterize { Printable.current_graph: #true }:
+      check to_string([b, b]) ~is "[#0=Box(3, #false), #0#]"
+      check to_string({1: b, 2: b}) ~is "{1: #0=Box(3, #false), 2: #0#}"
+  block:
+    def b = Box(2, #false)
+    b.val := b
+    check to_string(b) ~is "#0=Box(2, #0#)"
+
+check:
+  parameterize { Printable.current_graph: #true }:
+    def a = #"apple".copy()
+    print([a, a, a])
+  ~prints "[#0=#\"apple\".copy(), #0#, #0#]"
+
+check:
+  def b = Box(5)
+  println([b, b, b])
+  b.value := b
+  println([b, b, b])
+  ~prints "[Box(5), Box(5), Box(5)]\n[#0=Box(#0#), #0#, #0#]\n"
+
+block:
+  class Broken():
+    implements Printable
+    override describe(mode, recur):
+      "oops"
+  check:
+    to_string(Broken())
+    ~is "oops"
+  check:
+    Broken().describe(#'expr, Printable.describe)
+    ~is "oops"
+
+block:
+  class Broken():
+    implements Printable
+    override describe(mode, recur):
+      Box("really not a print description")
+  check:
+    to_string(Broken())
+    ~throws values(
+      "result does not satisfy annotation",
+      "PrintDesc",
+      "Box(\"really not a print description\")",
+    )
+  check:
+    Broken().describe(#'expr, Printable.describe)
+    ~throws values(
+      "result does not satisfy annotation",
+      "PrintDesc",
+      "Box(\"really not a print description\")",
+    )
+
+check:
+  parameterize { Printable.current_page_width: 0 }:
+    Printable.current_page_width() < dynamic(1)
+  ~is #true
+
+check:
+  Printable.current_pretty.name() ~is #'#{Printable.current_pretty}
+  Printable.current_pretty.realm() ~is #'rhombus
+  Printable.current_optimal.name() ~is #'#{Printable.current_optimal}
+  Printable.current_optimal.realm() ~is #'rhombus
+  Printable.current_page_width.name() ~is #'#{Printable.current_page_width}
+  Printable.current_page_width.realm() ~is #'rhombus
+  Printable.current_graph.name() ~is #'#{Printable.current_graph}
+  Printable.current_graph.realm() ~is #'rhombus
+
+check:
+  Printable.current_page_width("oops")
+  ~throws values(
+    "Printable.current_page_width: " ++ error.annot_msg(),
+    error.annot("Nat").msg,
+    error.val("oops").msg,
+  )
+
+// regression test: 0-arity in {print,show}(ln)
+check:
+  print() ~prints ""
+  println() ~prints "\n"
+  show() ~prints ""
+  showln() ~prints "\n"

@@ -1,0 +1,11 @@
+import:
+  rhombus/scribble/manual.rhombus
+  meta_label:
+    html
+
+export:
+  all_defined
+
+def syntax = @rhombus(html.syntax)
+def Element = @rhombus(html.Element, ~annot)
+def Content = @rhombus(html.Content, ~annot)

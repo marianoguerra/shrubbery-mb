@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/basic"
+
+import {
+  "marianoguerra/shrubbery/column",
+}
+
+// Values
+pub let start : Pos
+
+// Errors
+
+// Types and methods
+pub(all) struct Pos {
+  line : Int
+  pos : Int
+  idx : Int
+  col : @column.Column
+} derive(Eq)
+pub fn Pos::to_display(Self) -> String
+
+pub(all) struct Span {
+  start : Pos
+  end : Pos
+} derive(Eq)
+pub fn Span::at(Pos) -> Self
+pub fn Span::merge(Self, Self) -> Self
+pub fn Span::units(Self) -> Int
+
+// Type aliases
+
+// Traits

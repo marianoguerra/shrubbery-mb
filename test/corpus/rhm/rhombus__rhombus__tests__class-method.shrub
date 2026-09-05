@@ -1,0 +1,826 @@
+
+use_static
+
+check:
+  ~eval
+  class Posn(x, y):
+    method x(): 0
+    method x(): 1
+  ~throws "duplicate method name"
+
+check:
+  ~eval
+  class Posn(x, y):
+    method x(): 0
+    abstract x
+  ~throws "duplicate method name"
+
+check:
+  ~eval
+  class Posn(x, y):
+    method x(): 0
+  ~throws "identifier used as both a field name and method name"
+
+check:
+  ~eval
+  class Posn(x, y):
+    private method x(): 0
+  ~throws "identifier used as both a field name and method name"
+
+check:
+  ~eval
+  class Posn(x, y):
+    field q: 1
+    method q(): 0
+  ~throws "identifier used as both a field name and method name"
+
+check:
+  ~eval
+  class Posn(x, y):
+    private field q: 1
+    method q(): 0
+  ~throws "identifier used as both a field name and method name"
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    method x(): 0
+  ~throws "identifier used as both a field name and method name"    
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    private method x(): 0
+  ~throws "identifier used as both a field name and method name"    
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+    field q: 1
+  class Posn3D(z):
+    extends Posn
+    method q(): 0
+  ~throws "identifier used as both a field name and method name"    
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+    method z(): 0
+  class Posn3D(z):
+    extends Posn
+  ~throws "identifier used as both a field name and method name"    
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+    method q(): 0
+  class Posn3D(z):
+    extends Posn
+    field q: 1
+  ~throws "identifier used as both a field name and method name"    
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+    method q(): 0
+  class Posn3D(z):
+    extends Posn
+    private field q: 1
+  ~throws "identifier used as both a field name and method name"    
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+    method m(): 0
+  class Posn3D(z):
+    extends Posn
+    method m(): 0
+  ~throws "method is already in superclass"
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+  class Posn3D(z):
+    extends Posn
+    override m(): 0
+  ~throws "method is not in superclass"
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+    final method m(): 0
+  class Posn3D(z):
+    extends Posn
+    override m(): 0
+  ~throws "cannot override superclass's final method"
+
+check:
+  ~eval
+  class Posn(x, y):
+    abstract m
+  ~throws "final class cannot have abstract methods"
+
+check:
+  class Posn(x, y):
+    nonfinal
+    abstract m
+  Posn is_a List
+  ~is #false
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+    abstract m
+  Posn(1, 2)
+  ~throws "cannot instantiate class with abstract"
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+    abstract m
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+  Posn3D(1, 2, 3)
+  ~throws "cannot instantiate class with abstract"
+
+check:
+  class Posn(x, y):
+    method m0(): [y, x]
+    method m1(z): [y, x, z]
+    method m2(z): m1(-z)
+  def p = Posn(1, 2)
+  [p.m0(),
+   p.m1(3),
+   p.m2(3)]
+  ~is [[2, 1],
+       [2, 1, 3],
+       [2, 1, -3]]
+
+check:
+  class Posn(x, y):
+    nonfinal
+    method m0(): [y, x]
+    method m1(z): [y, x, z]
+    method m2(z): m1(-z)
+  class Posn3D(z):
+    extends Posn
+    override m1(w): [y, x, z, w]
+    method m3(a, b, c): [a, m0(), m1(5), m2(6)]
+    method m4(x): x
+  def p = Posn(1, 2)
+  def p3 = Posn3D(1, 2, 3)
+  [p.m0(), p.m1(3), p.m2(3),
+   p3.m0(),
+   p3.m1(4),
+   p3.m2(4),
+   p3.m3(10, 11, 12),
+   p3.m4("x")]
+  ~is [[2, 1], [2, 1, 3], [2, 1, -3],
+       [2, 1],
+       [2, 1, 3, 4],
+       [2, 1, 3, -4],
+       [10, [2, 1], [2, 1, 3, 5], [2, 1, 3, -6]],
+       "x"]
+
+check:
+  ~eval
+  use_static
+  block:
+    class Posn(x, y):
+      method m0(): [y, x]
+    def p = Posn(1, 2)
+    p.m0
+  ~throws values("method must be called", "static")
+
+check:
+  ~eval
+  use_static
+  block:
+    class Posn(x, y):
+      method m0(): m0
+    "ok"
+  ~throws "method must be called"
+
+check:
+  use_dynamic
+  class Posn(x, y):
+    method m0(): [y, x]
+  def p = Posn(1, 2)
+  [dynamic(p).x,
+   dynamic(p).m0 +& "",
+   dynamic(p).m0()]
+  ~is [1,
+       "#<function:Posn.m0>",
+       [2, 1]]
+
+check:
+  class Posn(x, y):
+    private field q = 1
+    method m0(): [q, this.q]
+  def p = Posn(1, 2)
+  [p.m0()]
+  ~is [[1, 1]]
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y):
+    private field q = 1
+  (Posn(1, 2)).q
+  ~throws values("no such field or method", "static")
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y):
+    private field q: 1
+  Posn.q
+  ~throws "identifier not provided"
+
+check:
+  use_dynamic
+  class Posn(x, y):
+    private field q: 1
+  (Posn(1, 2)).q
+  ~throws "no such field"
+
+check:
+  use_static
+  class Posn(x, y):
+    nonfinal
+    method m() :: Posn: Posn(1, 2)
+  Posn.m(Posn(1, 2)).x
+  ~is 1
+
+check:
+  use_static
+  class Posn(x, y):
+    nonfinal
+    method m() :: Posn : Posn(0, 0)
+  class Posn3D(z):
+    extends Posn
+    method n(): super.m().x
+  Posn3D(1, 2, 3).n()
+  ~is 0
+
+check:
+  class Posn(x, y):
+    nonfinal
+    private field q: 1
+    method lookup(p :~ Posn): p.q
+  class Posn3D(z):
+    extends Posn
+    private field q: "other"
+    method get(): q
+  def p = Posn3D(0, 2, 3)
+  [p.lookup(p), p.get()]
+  ~is [1, "other"]
+
+check:
+  ~eval
+  use_static
+  block:
+    class Posn(x, y):
+      nonfinal
+      private field q: 1
+      method lookup(p :: Posn3D):
+        p.q
+    class Posn3D(z):
+      extends Posn
+    "ok"
+  ~throws values("no such field or method", "static")
+
+check:
+  class Posn(x, y):
+    private field q: 1
+    method get():
+      class Helper():
+        private field q: 1000
+        method get(p :: Posn): [p.q, q]
+      Helper().get(this)
+  Posn(0, 10).get()
+  ~is [1, 1000]
+
+check:
+  class Posn(x, y):
+    nonfinal
+    abstract m
+  class Posn3D(z):
+    extends Posn
+    override m(): "ok"
+  Posn3D(1, 2, 3).m()
+  ~is "ok"
+
+check:
+  class Posn(x, y):
+    nonfinal
+    method a(): 1
+    method b(): 2
+    method c(): 3
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+    override a(): [super.a()]
+    override c(): [super.b()]
+  def p = Posn3D(1, 2, 3)
+  [p.a(), p.b(), p.c(),
+   Posn.a(p), Posn.b(p), Posn.c(p)]
+  ~is [[1], 2, [2],
+       [1], 2, [2]]
+
+check:
+  ~eval
+  class Posn(x, y):
+    nonfinal
+    abstract m
+  class Posn3D(z):
+    extends Posn
+    override m(): super.m()
+  ~throws "method is abstract in superclass"
+
+check:
+  class Posn(x, y):
+    nonfinal
+    method a(): 1
+    method b(): 2
+    method c(): 3
+  class Posn3D(z):
+    extends Posn
+    override a(): [super.a()]
+    override c(): [super.b()]
+  def p = Posn3D(1, 2, 3)
+  [Posn.a(p), Posn.b(p), Posn.c(p),
+   Posn3D.a(p), Posn3D.b(p), Posn3D.c(p)]
+  ~is [[1], 2, [2],
+       [1], 2, [2]]
+
+check:
+  class Posn(x, y):
+    method a(): 1
+  Posn.a is_a Int
+  ~is #false
+
+check:
+  class Posn(x, y):
+    method a(): 1
+  Posn.a(0)
+  ~throws "not an instance"
+
+check:
+  class A():
+    nonfinal
+    method m():
+      5
+  class B():
+    extends A
+    nonfinal
+    abstract override m()
+  class C():
+    extends B
+    override m():
+      6
+  C().m()
+  ~is 6
+
+check:
+  ~eval
+  class A():
+    nonfinal
+    method m():
+      5
+  class B():
+    extends A
+    nonfinal
+    abstract override m()
+  class C():
+    extends B
+  ~throws "final class cannot have abstract methods"
+
+check:
+  ~eval
+  class A():
+    nonfinal
+    method m():
+      5
+  class B():
+    extends A
+    abstract override m()
+  ~throws "final class cannot have abstract methods"
+
+block:
+  interface C:
+    final direct():
+      "direct"
+    method call() :: String:
+      next("intf")
+    method next(s) :: String
+  interface D:
+    extends C
+    override method call():
+      "INTF"
+  class A(a):
+    nonfinal
+    internal _A
+    private implements C
+    method indirect():
+      call()
+    private override method next(s :: String):
+      s ++ ".a"
+  class B():
+    extends A
+    implements: C D
+    override method call():
+      super.call() ++ "B"
+    override method next(s :: String):
+      s ++ ".b"  
+  class revB():
+    extends A
+    implements: D C
+    override method call():
+      super.call() ++ "B"
+    override method next(s :: String):
+      s ++ ".b"  
+  check:
+    A(1).indirect() ~is "intf.a"
+    A.indirect(A(1)) ~is "intf.a"
+    (A(1) :: _A).call() ~is "intf.a"
+    (A(1) :: _A).next("x") ~is "x.a"    
+    (A(1) :: _A).direct() ~is "direct"
+    B(1).direct() ~is "direct"
+    D.direct(B(1)) ~is "direct"
+    B(1).call() ~is "INTFB"
+    revB(1).call() ~is "INTFB"
+    B(1).next("x") ~is "x.b"
+
+// check on inherited method when called via subclass that
+// the passed instance is a subclass instance; also check
+// that static information is propagated as it should be
+block:
+  class O(v)
+  class A():
+    nonfinal
+    method m() :: O: O("m")
+    final method f() :: O: O("f")
+    method k(~arg: arg) :: O: O("k")
+    final method kw(~arg: arg) :: O: O("kw")
+  class B():
+    extends A
+  check:
+    A().m().v ~is "m"
+    A().f().v ~is "f"
+    A().k(~arg: "ok").v ~is "k"
+    A().kw(~arg: "ok").v ~is "kw"
+    B().m().v ~is "m"
+    B().f().v ~is "f"
+    B().k(~arg: 0).v ~is "k"
+    B().kw(~arg: 0).v ~is "kw"
+    A.m(A()).v ~is "m"
+    A.f(A()).v ~is "f"
+    A.k(A(), ~arg: 0).v ~is "k"
+    A.k(~arg: 0, A()) ~is O("k")
+    A.kw(A(), ~arg: 0).v ~is "kw"
+    A.kw(~arg: 0, A()) ~is O("kw")
+    A.m(B()).v ~is "m"
+    A.f(B()).v ~is "f"
+    A.k(B(), ~arg: 0).v ~is "k"
+    A.k(~arg: 0, B()) ~is O("k")
+    A.kw(B(), ~arg: 0).v ~is "kw"
+    A.kw(~arg: 0, B()) ~is O("kw")
+    B.m(A()) ~throws "not an instance for method call"
+    B.f(A()) ~throws "not an instance for method call"
+    B.k(A(), ~arg: 0) ~throws "not an instance for method call"
+    B.k(~arg: 0, A()) ~throws "not an instance for method call"
+    B.kw(A(), ~arg: 0) ~throws "not an instance for method call"
+    B.kw(~arg: 0, A()) ~throws "not an instance for method call"
+    B.m(B()).v ~is "m"
+    B.f(B()).v ~is "f"
+    B.k(B(), ~arg: 0).v ~is "k"
+    B.k(~arg: 0, B()) ~is O("k")
+    B.kw(B(), ~arg: 0).v ~is "kw"
+    B.kw(~arg: 0, B()) ~is O("kw")
+    ("oops" :~ A).m() ~throws "not an instance for method call"
+    ("oops" :~ A).f() ~throws "not an instance for method call"
+    ("oops" :~ B).m() ~throws "not an instance for method call"
+    ("oops" :~ B).f() ~throws "not an instance for method call"
+    ("oops" :~ B).k(~arg: 0) ~throws "not an instance for method call"
+    ("oops" :~ B).kw(~arg: 0) ~throws "not an instance for method call"
+    dynamic(B.m)(A()) ~throws "not an instance for method call"
+    dynamic(B.f)(A()) ~throws "not an instance for method call"
+    dynamic(B.k)(A(), ~arg: 0) ~throws "not an instance for method call"
+    dynamic(B.kw)(A(), ~arg: 0) ~throws "not an instance for method call"
+    dynamic(B.m)(B()) ~is O("m")
+    dynamic(B.f)(B()) ~is O("f")
+    dynamic(B.k)(B(), ~arg: 0) ~is O("k")
+    dynamic(B.kw)(B(), ~arg: 0) ~is O("kw")
+
+// similar, but for interfaces, where there's the extra
+// twist of private implementation
+block:
+  class O(v)
+  interface I:
+    method m() :: O: O("m")
+    final method f() :: O: O("f")
+    method k(~arg: arg) :: O: O("k")
+    final method kw(~arg: arg) :: O: O("kw")
+  interface J:
+    extends I
+  class B():
+    implements I
+  class C():
+    internal _C
+    private implements I
+  class D():
+    implements J
+  check:
+    B().m().v ~is "m"
+    B().f().v ~is "f"
+    B().k(~arg: 0).v ~is "k"
+    B().kw(~arg: 0).v ~is "kw"
+    D().m().v ~is "m"
+    D().f().v ~is "f"
+    D().k(~arg: 0).v ~is "k"
+    D().kw(~arg: 0).v ~is "kw"
+    I.m(B()).v ~is "m"
+    I.f(B()).v ~is "f"
+    I.k(B(), ~arg: 0).v ~is "k"
+    I.k(~arg: 0, B()) ~is O("k")
+    I.kw(B(), ~arg: 0).v ~is "kw"
+    I.kw(~arg: 0, B()) ~is O("kw")
+    B.m(B()).v ~is "m"
+    B.f(B()).v ~is "f"
+    B.k(B(), ~arg: 0).v ~is "k"
+    B.k(~arg: 0, B()) ~is O("k")
+    B.kw(B(), ~arg: 0).v ~is "kw"
+    B.kw(~arg: 0, B()) ~is O("kw")
+    I.m(C()) ~throws "not an instance for method call"
+    I.f(C()) ~throws "not an instance for method call"
+    I.k(C(), ~arg: 0) ~throws "not an instance for method call"
+    I.k(~arg: 0, C()) ~throws "not an instance for method call"
+    I.kw(C(), ~arg: 0) ~throws "not an instance for method call"
+    I.kw(~arg: 0, C()) ~throws "not an instance for method call"
+    I.m(D()).v ~is "m"
+    I.f(D()).v ~is "f"
+    I.k(D(), ~arg: 0).v ~is "k"
+    I.k(~arg: 0, D()) ~is O("k")
+    I.kw(D(), ~arg: 0).v ~is "kw"
+    I.kw(~arg: 0, D()) ~is O("kw")
+    J.m(D()).v ~is "m"
+    J.f(D()).v ~is "f"
+    J.m(B()) ~throws "not an instance for method call"
+    J.f(B()) ~throws "not an instance for method call"
+    J.k(D(), ~arg: 0).v ~is "k"
+    J.k(~arg: 0, D()) ~is O("k")
+    J.kw(D(), ~arg: 0).v ~is "kw"
+    J.kw(~arg: 0, D()) ~is O("kw")
+    (C() :: _C).m().v ~is "m"
+    (C() :: _C).f().v ~is "f"
+    (C() :: _C).k(~arg: 0).v ~is "k"
+    (C() :: _C).kw(~arg: 0).v ~is "kw"
+    ("oops" :~ I).m() ~throws "not an instance for method call"
+    ("oops" :~ I).f() ~throws "not an instance for method call"
+    ("oops" :~ I).k(~arg: 0) ~throws "not an instance for method call"
+    ("oops" :~ I).kw(~arg: 0) ~throws "not an instance for method call"
+    ("oops" :~ B).m() ~throws "not an instance for method call"
+    ("oops" :~ B).f() ~throws "not an instance for method call"
+    ("oops" :~ B).k(~arg: 0) ~throws "not an instance for method call"
+    ("oops" :~ B).kw(~arg: 0) ~throws "not an instance for method call"
+    ("oops" :~ _C).m() ~throws "not an instance for method call"
+    ("oops" :~ _C).f() ~throws "not an instance for method call"
+    ("oops" :~ _C).k(~arg: 0) ~throws "not an instance for method call"
+    ("oops" :~ _C).kw(~arg: 0) ~throws "not an instance for method call"
+    ("oops" :~ J).m() ~throws "not an instance for method call"
+    ("oops" :~ J).f() ~throws "not an instance for method call"
+    ("oops" :~ J).k(~arg: 0) ~throws "not an instance for method call"
+    ("oops" :~ J).kw(~arg: 0) ~throws "not an instance for method call"
+    (C() :~ I).m() ~throws "not an instance for method call"
+    (C() :~ I).f() ~throws "not an instance for method call"
+    (C() :~ I).k(~arg: 0) ~throws "not an instance for method call"
+    (C() :~ I).kw(~arg: 0) ~throws "not an instance for method call"
+    (C() :~ J).m() ~throws "not an instance for method call"
+    (C() :~ J).f() ~throws "not an instance for method call"
+    (C() :~ J).k(~arg: 0) ~throws "not an instance for method call"
+    (C() :~ J).kw(~arg: 0) ~throws "not an instance for method call"
+
+check:
+  ~eval
+  interface A:
+    method m
+  interface B:
+    method m
+  class C():
+    implements: A B
+    override method m():
+      super.m()
+  ~throws "inherited method is ambiguous"
+
+check:
+  // regression test to make sure `super` finds superclass method
+  interface Dummy
+  class Base():
+    method hello():
+      42
+    nonfinal
+  class Ext():
+    extends Base
+    implements Dummy
+    override hello():
+      super.hello()    
+  ~completes
+
+check:
+  // make sure static info works calling a final-ish method
+  class O(v)
+  interface I:
+    method m
+  class A():
+    implements I
+    override method m() :: O:
+      O(5)
+  A.m(A()).v
+  ~is 5
+
+block:
+  class Fruit(price):
+    method
+    | hello(a when a == price):
+        #true
+  check Fruit(10).hello(10) ~is #true
+  check Fruit(10).hello(9) ~throws "no matching case for arguments"
+
+block:
+  interface DDDD:
+    method ppp(arg): arg
+  class F():
+    implements DDDD
+  fun get_intf_fun(a :: DDDD):
+    a.ppp(_)
+  fun get_class_fun(a :: F):
+    a.ppp(_)
+  check get_intf_fun(F())(10) ~is 10
+  check get_class_fun(F())(10) ~is 10
+
+block:
+  class TestClass():
+    method square(x):
+      x * x
+
+    method square_all([x, ...]):
+      [square(x), ...]
+
+    private field counter = 0
+    property count:
+      counter := counter + 1
+      counter
+
+    method test_this([x, ...]):
+      [this || x, ...]
+
+    method test_count([x, ...]):
+      [count || x, ...]
+
+    method test_count_via_this([x, ...]):
+      [this.count || x, ...]
+
+    method test_counter([x, ...]):
+      [counter || x, ...]
+
+    method square_all_with_workaround([x, ...]):
+      // Workaround using let binding still works
+      let self = this
+      [self.square(x), ...]
+
+  def test = TestClass()
+  check test.square_all([1, 2, 3]) ~is [1, 4, 9]
+  check test.test_this([1, 2, 3]) ~is [test, test, test]
+  check test.test_count([0, 0, 0]) ~is [1, 2, 3]
+  check test.test_counter([0, 0, 0]) ~is [3, 3, 3]
+  check test.test_count_via_this([0, 0, 0]) ~is [4, 5, 6]
+  check test.square_all_with_workaround([1, 2, 3]) ~is [1, 4, 9]
+
+// make sure `this` can have the static info of a superclass
+check:
+  use_static
+  class Top():
+    nonfinal
+    method top():
+      "ok"
+  class Bottom():
+    extends Top
+    method bottom(v):
+      (if v | this | Top()).top()
+  ~completes
+
+// check generated wrapper functions for methods
+block:
+  use_dynamic
+  class A():
+    method posn(x, y):
+      @str{posn: @x, @y}
+    method kw(~x, ~y):
+      @str{kw: @x, @y}
+    method posn_opt(x = "x", y = "y"):
+      @str{posn_opt: @x, @y}
+    method kw_opt(~x = "x", ~y = "y"):
+      @str{kw_opt: @x, @y}
+    method
+    | case1(): @str{case1}
+    | case1(x): @str{case1: @x}
+    | case1(x, y): @str{case1: @x, @y}
+    method
+    | case2(): @str{case2}
+    | case2(x, y): @str{case2: @x, @y}
+    method
+    | case3(): @str{case3}
+    | case3(x, y, & rst): @str{case3: @x, @y, @rst}
+    method
+    | kw_case1(~x): @str{kw_case1: @x}
+    | kw_case1(~y): @str{kw_case1: @y}
+    method
+    | kw_case2(~x): @str{kw_case2: @x}
+    | kw_case2(x, ~y): @str{kw_case2: @x, @y}
+    method
+    | kw_case3(~x): @str{kw_case3: @x}
+    | kw_case3(x, y): @str{kw_case3: @x, @y}
+    method
+    | kw_case4(~x): @str{kw_case4: @x}
+    | kw_case4(~y): @str{kw_case4: @y}
+    | kw_case4(~& kwrst): @str{kw_case4: @kwrst}
+    method
+    | kw_case5(~x): @str{kw_case5: @x}
+    | kw_case5(~x, ~& kwrst): @str{kw_case5: @x, @kwrst}
+  block:
+    import rhombus/meta open
+    expr.macro 'check_name_realm:
+                  $(name :: Name) ...
+                  ...':
+      let [[sym, ...], ...] = [[name.name_to_symbol(), ...], ...]
+      'block:
+         block:
+           check:
+             $(name).name() ~is #' $sym
+             $(name).realm() ~is #'rhombus
+           ...
+         ...'
+    check_name_realm:
+      A.posn A.kw
+      A.posn_opt A.kw_opt
+      A.case1 A.case2 A.case3
+      A.kw_case1 A.kw_case2 A.kw_case3 A.kw_case4 A.kw_case5
+  block:
+    let a = A()
+    check A.posn(a) ~throws "wrong number of arguments"
+    check A.posn(a, "x", "y") ~is "posn: x, y"
+    check A.kw(a) ~throws "required keyword argument not supplied"
+    check A.kw(a, ~x: "x", ~y: "y") ~is "kw: x, y"
+    check A.posn_opt(a) ~is "posn_opt: x, y"
+    check A.posn_opt(a, "a") ~is "posn_opt: a, y"
+    check A.posn_opt(a, "a", "b") ~is "posn_opt: a, b"
+    check A.kw_opt(a) ~is "kw_opt: x, y"
+    check A.kw_opt(a, ~x: "a") ~is "kw_opt: a, y"
+    check A.kw_opt(a, ~x: "a", ~y: "b") ~is "kw_opt: a, b"
+    check A.case1(a) ~is "case1"
+    check A.case1(a, "a") ~is "case1: a"
+    check A.case1(a, "a", "b") ~is "case1: a, b"
+    check A.case2(a) ~is "case2"
+    check A.case2(a, "a") ~throws "wrong number of arguments"
+    check A.case2(a, "a", "b") ~is "case2: a, b"
+    check A.case3(a) ~is "case3"
+    check A.case3(a, "a") ~throws "wrong number of arguments"
+    check A.case3(a, "a", "b") ~is @str{case3: a, b, @([])}
+    check A.case3(a, "a", "b", "c") ~is @str{case3: a, b, @(["c"])}
+    check A.kw_case1(a) ~throws "no matching case for arguments"
+    check A.kw_case1(a, ~x: "a") ~is "kw_case1: a"
+    check A.kw_case1(a, ~y: "b") ~is "kw_case1: b"
+    check A.kw_case1(a, ~x: "a", ~y: "b") ~throws "no matching case for arguments"
+    check A.kw_case2(a) ~throws "no matching case for arguments"
+    check A.kw_case2(a, ~x: "a") ~is "kw_case2: a"
+    check A.kw_case2(a, ~y: "b") ~throws "no matching case for arguments"
+    check A.kw_case2(a, "a", ~y: "b") ~is "kw_case2: a, b"
+    check A.kw_case3(a) ~throws "no matching case for arguments"
+    check A.kw_case3(a, ~x: "a") ~is "kw_case3: a"
+    check A.kw_case3(a, ~y: "b") ~throws "function does not expect an argument with given keyword"
+    check A.kw_case3(a, "a", "b") ~is "kw_case3: a, b"
+    check A.kw_case4(a) ~is @str{kw_case4: @({})}
+    check A.kw_case4(a, ~x: "a") ~is "kw_case4: a"
+    check A.kw_case4(a, ~y: "b") ~is "kw_case4: b"
+    check A.kw_case4(a, ~x: "a", ~y: "b") ~is @str{kw_case4: @({#'~x: "a", #'~y: "b"})}
+    check A.kw_case5(a) ~throws "required keyword argument not supplied"
+    check A.kw_case5(a, ~x: "a") ~is "kw_case5: a"
+    check A.kw_case5(a, ~y: "b") ~throws "required keyword argument not supplied"
+    check A.kw_case5(a, ~x: "a", ~y: "b") ~is @str{kw_case5: a, @({#'~y: "b"})}

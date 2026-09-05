@@ -1,0 +1,167 @@
+import:
+  rhombus/wrapper
+  "rkt.rhm"
+  "type.rhm":
+    expose:
+      Size
+      SizeLike
+      RectLike
+      Rect
+      Point
+  "dc.rhm".DC
+  "dc.rhm"!internal.SomeDC
+  "bitmap-interface.rhm" as intf
+  lib("file/convertible.rkt") as fileconv
+
+export:
+  Bitmap
+  BitmapDC
+
+interface BitmapDC:
+  extends DC
+
+class ABitmapDC():
+  extends SomeDC
+  implements BitmapDC
+
+  constructor (hand):
+    super(hand)()
+
+  private implements Printable
+  private override describe(mode, recur):
+    PrintDesc.list("BitmapDC(", [], ")")
+
+class Bitmap():
+  internal _Bitmap
+  extends intf.Bitmap
+
+  primitive_property fileconv.#{prop:convertible}:
+    fun (self :~ Bitmap, req, defval):
+      fileconv.convert(self.handle, req, defval)
+
+  private implements Printable
+  private override describe(mode, recur):
+    PrintDesc.special(copy().handle, ~mode: #'print,
+                      @str{draw.Bitmap([@width, @height])})
+
+  constructor (size :: SizeLike,
+               ~kind: kind :: Bitmap.Kind = #'alpha,
+               ~backing_scale: backing_scale :: Real.above(0.0) = 1,
+               ~has_alpha = #true):
+    ~who: who
+    when !(backing_scale .= 1) && (kind == #'mono)
+    | error(~who: who, "monochromoe bitmap must have a backing scale of 1",
+            error.val(~label: "given scale", backing_scale))
+    _Bitmap(rkt.make_object(rkt.#{bitmap%},
+                            size.width,
+                            size.height,
+                            kind == #'mono,
+                            kind == #'alpha,
+                            backing_scale))()
+
+  export:
+    make_platform
+    read
+    from_handle
+    Kind
+
+  override property width:
+    rkt.send handle.#{get-width}()
+
+  override property height:
+    rkt.send handle.#{get-height}()
+
+  override property size:
+    Size(width, height)
+
+  property backing_scale:
+    rkt.send handle.#{get-backing-scale}()
+
+  property depth:
+    rkt.send handle.#{get-depth}()
+
+  property kind:
+    if rkt.send handle.#{is-color?}()
+    | if rkt.send handle.#{has-alpha-channel?}()
+      | #'alpha
+      | #'color
+    | #'mono
+
+  property is_ok:
+    rkt.send handle.#{ok?}()
+
+  method make_dc() :: BitmapDC:
+    let dc = ABitmapDC(rkt.send handle.#{make-dc}())
+    dc.smoothing := #'smoothed
+    dc
+
+  method argb_pixels(~x: x :: Nat = 0,
+                     ~y: y :: Nat = 0,
+                     ~width: width :: Nat = width,
+                     ~height: height :: Nat = height,
+                     ~dest: dest :: Bytes = Bytes.make(width * height * 4),
+                     ~just_alpha = #false,
+                     ~premultiplied = #false,
+                     ~unscaled = #false) :: Bytes:
+    rkt.send handle.#{get-argb-pixels}(x, y, width, height, dest,
+                                       just_alpha,
+                                       premultiplied,
+                                       ~#{unscaled?}: unscaled)
+    dest
+
+  method set_argb_pixels(bstr :: Bytes,
+                         ~x: x :: Nat = 0,
+                         ~y: y :: Nat = 0,
+                         ~width: width :: Nat = width,
+                         ~height: height :: Nat = height,
+                         ~just_alpha = #false,
+                         ~premultiplied = #false,
+                         ~unscaled = #false) :~ Void:
+    rkt.send handle.#{set-argb-pixels}(x, y, width, height, bstr,
+                                       just_alpha,
+                                       premultiplied,
+                                       ~#{unscaled?}: unscaled)
+
+  method write(dest :: PathString || Port.Output,
+               ~kind: kind :: Any.of(#'png, #'jpeg, #'xbm, #'xpm, #'bmp),
+               ~quality: quality :: Int.in(0 ..= 100) = 75,
+               ~as_unscaled: as_unscaled :: Any.to_boolean = #false):
+    unless rkt.send handle.#{save-file}(~#{unscaled?}: as_unscaled,
+                                        dest, kind, quality)
+    | error(~who: "Bitmap.write",
+            "error writing bitmap",
+            error.text(~label: "destination", dest))
+
+  method copy(~source: source :: RectLike = Rect(Point.zero, size)) :: Bitmap:
+    let bm2:
+      Bitmap([math.exact(math.ceiling(source.size.width)),
+              math.exact(math.ceiling(source.size.height))],
+             ~backing_scale: backing_scale,
+             ~kind: kind)
+    bm2.make_dc().bitmap(this, ~source: source)
+    bm2
+
+  fun from_handle(handle) :~ Bitmap:
+    ~who: who
+    unless handle rkt.is_a rkt.#{bitmap%}
+    | wrapper.error(~who: who, ~what: "bitmap", handle)
+    _Bitmap(handle)()
+
+annot.delayed_complete intf.BitmapForward: Bitmap
+
+fun read(name :: PathString || Port.Input) :: Bitmap:
+  _Bitmap(rkt.#{read-bitmap}(name))()
+
+fun make_platform(size :: SizeLike,
+                  ~backing_scale: backing_scale :: Real.above(0.0) = 1) :~ Bitmap:
+  ~name: Bitmap.make_platform
+  _Bitmap(rkt.#{make-platform-bitmap}(size.width,
+                                      size.height,
+                                      ~#{backing-scale}: backing_scale))
+
+enum Kind
+| alpha
+| color
+| mono
+
+intf.set_bitmap_from_handle(Bitmap.from_handle)

@@ -1,0 +1,73 @@
+import:
+  lib("racket/gui/easy.rkt")
+  rhombus/draw/private/symbol_map.symbol_map_annot
+  "view.rhm":
+    expose:
+      View
+      WindowChildView
+      WindowView
+  "view.rhm"!private:
+    expose:
+      BaseWindowView
+      WindowViewI
+      to_view
+  "obs.rhm":
+    expose:
+      Obs
+      ObsOrValue
+  "view-help.rkt"
+  "window-help.rkt".add_window_callbacks
+  "window-child-help.rkt".add_window_child_callbacks
+  "window-callback.rhm".WindowCallbacks
+  "menu.rhm".MenuBar
+
+export:
+  Window
+
+class Window():
+  extends BaseWindowView
+  implements WindowViewI
+
+  constructor (~title: title :: ObsOrValue.of(String) = "Untitled",
+               ~size: size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~align: alignment :: ObsOrValue.of(View.Alignment) = [#'center, #'top],
+               ~position: position :: ObsOrValue.of(View.Position) = #'center,
+               ~min_size: min_size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~stretch: stretch :: ObsOrValue.of(View.Stretch) = [#true, #true],
+               ~enable: enable :: ObsOrValue.of(Boolean) = #true,
+               ~style: style :: ObsOrValue.of(List.of(Window.Style)) = [],
+               ~menu_bar: menu_bar :: maybe(ObsOrValue.of(MenuBar)) = #false,
+               ~window_callbacks: wcb :: maybe(WindowCallbacks) = #false,
+               child :: ObsOrValue.of(WindowChildView && !WindowView),
+               ...):
+    #{view-help}.#{mix-wrap}(
+      fun (mixin):
+        super(easy.window(~title: obs.unwrap(title),
+                          ~size: obs.unwrap_list(size, values),
+                          ~alignment: obs.unwrap_list(alignment, values),
+                          ~position: obs.unwrap(position),
+                          ~#{min-size}: obs.unwrap_list(min_size, values),
+                          ~stretch: obs.unwrap_list(stretch, values),
+                          ~style: obs.unwrap_list(style, convert_style),
+                          ~mixin: fun (cls):
+                                    mixin(add_window_child_callbacks(
+                                            add_window_callbacks(cls, obs.unwrap(enable)),
+                                            wcb
+                                          )),
+                          & (if menu_bar | [to_view(menu_bar).handle] | []),
+                          to_view(child).handle,
+                          ...))
+          <| ()
+    )
+
+  export:
+    Style
+
+  symbol_map_annot Style convert_style
+  | no_resize_border = #{no-resize-border}
+  | no_title = #{no-caption}
+  | no_system_menu = #{no-system-menu}
+  | hide_menu_bar = #{hide-menu-bar}
+  | float
+  | fullscreen_button = #{fullscreen-button}
+  | fullscreen_aux = #{fullscreen-aux}

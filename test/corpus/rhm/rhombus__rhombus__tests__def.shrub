@@ -1,0 +1,185 @@
+
+block:
+  def π = 3.14
+  check:
+    π
+    ~is 3.14
+  check:
+    def (((ππ))) = π * π
+    ππ
+    ~is math.expt(3.14, 2)
+
+check:
+  def (ma, mb, mc):
+    values("1", "2", "3")
+  [ma, mb, mc]
+  ~is ["1", "2", "3"]
+
+check:
+  def values(ma, mb, mc):
+    values("1", "2", "3")
+  [ma, mb, mc]
+  ~is ["1", "2", "3"]
+
+check:
+  def values(x, [y, ...]): values(0, [1, 2, 3])
+  [y, ..., x]
+  ~is [1, 2, 3, 0]
+
+check:
+  ~eval
+  def x where x = 1 = 2
+  ~throws "multiple immediate equals not allowed in this group"
+
+check:
+  ~eval
+  def x = 1 = 2
+  ~throws "multiple immediate equals not allowed in this group"
+
+check:
+  ~eval
+  def (x) = 1 = 2
+  ~throws "multiple immediate equals not allowed in this group"
+
+check:
+  ~eval
+  def values(x) = 1 = 2
+  ~throws "multiple immediate equals not allowed in this group"
+
+check:
+  ~eval
+  def | x = 2
+  ~throws "alternatives are not supported here"
+
+check:
+  def (1, 2) = values(1, 1)
+  #void
+  ~throws values(
+    "value does not satisfy annotation",
+    "1",
+    "2nd",
+    "matching(2)",
+  )
+
+check:
+  def (1, 2) = values(2, 2)
+  #void
+  ~throws values(
+    "value does not satisfy annotation",
+    "2",
+    "1st",
+    "matching(1)",
+  )
+
+check:
+  use_static
+  def str = (fun () :: String: "a string")()
+  str.length()
+  ~is 8
+
+check:
+  use_static
+  def str = (fun () :: (String): "a string")()
+  str.length()
+  ~is 8
+
+check:
+  use_static
+  def (str) = (fun () :: String: "a string")()
+  str.length()
+  ~is 8
+
+check:
+  use_static
+  def (str) = (fun () :: (String): "a string")()
+  str.length()
+  ~is 8
+
+check:
+  ~eval
+  use_static
+  def str = (fun () :~ (String, String): "a string")()
+  str.length()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  def (str) = (fun () :~ (String, String): "a string")()
+  str.length()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  def (str, _) = (fun () :~ String: values("a string", "another"))()
+  str.length()
+  ~throws "no such field or method (based on static information)"
+
+// check that expansion of `def` does not end with an expression
+check:
+  ~eval
+  block:
+    def [1, 2] = [1, 2]
+  ~throws "block does not end with an expression"
+
+// correctness: patterns are matched left-to-right
+check:
+  def (_ :: converting(fun (x): println("first:", x); x),
+       _ :: converting(fun (x): println("second:", x); x),
+       _ :: converting(fun (x): println("third:", x); x)):
+    values(1, 2, 3)
+  #void
+  ~prints "first: 1"
+    ++ "\n" ++ "second: 2"
+    ++ "\n" ++ "third: 3"
+    ++ "\n"
+
+// when wrong number of values, produce arity error
+check:
+  def (_, _) = 1
+  #void
+  ~throws values(
+    "result arity mismatch",
+    "expected number of values not received",
+    "expected: 2",
+    "received: 1",
+  )
+
+check:
+  def _ = values(1, 2)
+  #void
+  ~throws values(
+    "result arity mismatch",
+    "expected number of values not received",
+    "expected: 1",
+    "received: 2",
+  )
+
+check:
+  def _ as _ = 10
+  _
+  ~is 10
+
+check:
+  def as = ["a", "a", "a"]
+  as
+  ~is ["a", "a", "a"]
+
+check:
+  use_static
+  def _ as x = 10
+  x < x
+  ~is #false
+
+check:
+  use_static
+  def _ as x :: Int = dynamic(10)
+  x < x
+  ~is #false
+
+check:
+  use_static
+  def _ :: Int as x = dynamic(10)
+  x < x
+  ~is #false

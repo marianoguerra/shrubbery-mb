@@ -1,0 +1,5 @@
+literal	1	0	"1"	1
+whitespace	1	1	" "	-
+comment	1	2	"// comment"	-
+whitespace	1	12	"\u{d}\u{a}"	-
+literal	2	0	"2"	2

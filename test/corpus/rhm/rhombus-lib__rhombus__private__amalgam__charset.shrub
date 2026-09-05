@@ -1,0 +1,268 @@
+import:
+  "when_unless.rhm" open
+  "recur.rhm" open
+  "error.rhm" open
+  lib("racket/base.rkt")
+
+export:
+  Charset
+
+class Charset(private _ranges):
+  internal _Charset
+  constructor
+  | ():
+      super([])
+  | (c :: Char):
+      super([[c.to_int(), c.to_int()]])
+  | (start_c :: Char, end_c :: Char):
+      let start = start_c.to_int()
+      let end = end_c.to_int()
+      unless start <= end
+      | error(~who: #'Charset,
+              "range end is before start",
+              error.val(~label: "start to_int", start),
+              error.val(~label: "end to_int", end))
+      cond
+      | start < 0xD800 && end >= 0x10000:
+          super([[start, 0xD7FF], [0x10000, end]])
+      | ~else:
+          super([[start, end]])
+  | (pred :: Function, ~only_ascii: only_ascii):
+      if only_ascii
+      | for values(cs :~ Charset = Charset()) (i in 0..128):
+          if pred(Char.from_int(i))
+          | cs.union(Charset(Char.from_int(i)))
+          | cs
+      | build_unicode(pred)
+  | (pred :: Function):
+      build_unicode(pred)
+
+  fun build_unicode(pred):
+    let u_ranges :~ PairList = base.#{make-known-char-range-list}()
+    let ranges:
+      for values(ranges :~ List = []) (ur in u_ranges):
+        fun add(ranges :~ List, [s, e]):
+          match ranges
+          | [r, ..., [ls, le]] when le+1 == s:
+              [r, ..., [ls, e]]
+          | ~else:
+              ranges.add([s, e])
+        match ur
+        | PairList[s, e, all_same]:
+            if all_same
+            | if pred(Char.from_int(s))
+              | add(ranges, [s, e])
+              | ranges
+            | for values(ranges :~ List = ranges) (i in s..e):
+                if pred(Char.from_int(i))
+                | add(ranges, [i, i])
+                | ranges
+    _Charset(ranges)
+
+  method length():
+    match _ranges
+    | [[s, e], ...]:
+        math.sum(e-s+1, ...)
+
+  method int_ranges() :~ List.of(List.of(Int)):
+    _ranges
+
+  method raw_int_ranges():
+    let [[s, e], ...] = _ranges
+    PairList[PairList[s, e], ...]
+
+  export from_raw_int_ranges
+  fun from_raw_int_ranges(PairList[PairList[s, e], ...]):
+    _Charset([[s, e], ...])
+
+  method has_edge(ch :: Char):
+    recur loop (r = _ranges):
+      match r
+      | []: #false
+      | [[s, e], r, ...]:
+          cond
+          | s > ch.to_int(): #false
+          | e < ch.to_int(): loop([r, ...])
+          | ~else: ch.to_int() == s || ch.to_int() == e
+
+  method union(other :: Charset) :~ Charset:
+    _Charset(
+      recur loop(a = _ranges,
+                 b = other._ranges):
+        match values(a, b)
+        | ([], b): b
+        | (a, []): a
+        | ([[as, ae], ar, ...],
+           [[bs, be], br, ...]):
+            cond
+            | bs .< as:
+                loop(b, a)
+            // as <= bs
+            | ae .< bs:
+                match loop([ar, ...], b)
+                | [[rs, re], rr, ...] when rs .= ae + 1:
+                    [[as, re], rr, ...]
+                | rst:
+                    [[as, ae], & rst]
+            | ae .<= be:
+                loop([ar, ...], [[as, be], br, ...])
+            | ~else:
+                loop([[as, ae], ar, ...], [br, ...])
+    )
+
+  method intersect(other :: Charset) :~ Charset:
+    _Charset(
+      recur loop(a = _ranges,
+                 b = other._ranges):
+        match values(a, b)
+        | ([], b): []
+        | (a, []): []
+        | ([[as, ae], ar, ...],
+           [[bs, be], br, ...]):
+            cond
+            | bs .< as:
+                loop(b, a)
+            // as <= bs
+            | ae .< bs:
+                loop([ar, ...], b)
+            | ae .< be:
+                [[bs, ae], & loop([ar, ...], [[ae, be], br, ...])]
+            | ~else:
+                [[bs, be], & loop([[be, ae], ar, ...], [br, ...])]
+    )
+
+  method subtract(other :: Charset) :~ Charset:
+    intersect(other.invert())
+
+  method invert() :~ Charset:
+    if _ranges == []
+    | Charset(Char.from_int(0), Char.from_int(0x10FFFF))
+    | let rest:
+        recur loop (ranges = _ranges):
+          match ranges
+          | [[s, e]]:
+              if e < 0x10FFFF
+              | [[e+1, 0x10FFFF]]
+              | []
+          | [[s0, e0], [s1, e1], r, ...]:
+              [[e0+1, s1-1], & loop([[s1, e1], r, ...])]
+      match _ranges
+      | [[s, _], _, ...]:
+          let ranges:
+            if s == 0
+            | rest
+            | [[0, s-1], & rest]
+          // At this point, we may have surragte pairs in range,
+          // so drop those back out
+          _Charset(
+            recur loop (ranges = ranges):
+              match ranges
+              | []: ranges
+              | [[s, e], r, ...]:
+                  cond
+                  | s >= 0x10000:
+                      ranges
+                  | e <= 0xD7FF:
+                      [[s, e], & loop([r, ...])]
+                  | s >= 0xD800:
+                      if e <= 0x10000
+                      | loop([r, ...])
+                      | [[0x10000, e], r, ...]
+                  | ~else:
+                      if e <= 0x10000
+                      | [[s, 0xD7FF], & loop([r, ...])]
+                      | [[s, 0xD7FF], [0x10000, e], r, ...]
+          )
+
+module test:
+  import "check.rhm" open
+  check Charset().int_ranges() ~is []
+  check Charset(Char"a").int_ranges() ~is [[97, 97]]
+  check Charset(Char"a", Char"f").int_ranges() ~is [[97, 102]]
+  check Charset(Char"a", Char.from_int(0x10FFFF)).int_ranges() ~is [[97, 0xD7FF], [0x10000, 0x10FFFF]]
+
+  check Charset().length() ~is 0
+  check Charset().invert().length() ~is 0x110000 - (0x10000 - 0xD800)
+  check Charset(Char"a").length() ~is 1
+  check Charset(Char"a", Char"f").length() ~is 6
+  check Charset(Char"a", Char"f").union(Charset(Char"y", Char"z")).length() ~is 8
+
+  check Charset(Char"a", Char"f")
+    .union(Charset(Char"h", Char"i"))
+    .int_ranges() ~is [[97, 102], [104, 105]]
+  check Charset(Char"a", Char"f")
+    .union(Charset(Char"g", Char"i"))
+    .int_ranges() ~is [[97, 105]]
+  check Charset(Char"a", Char"z")
+    .union(Charset(Char"g", Char"i"))
+    .int_ranges() ~is [[97, 122]]
+  check Charset(Char"a", Char"f")
+    .union(Charset(Char"g", Char"g"))
+    .int_ranges() ~is [[97, 103]]
+  check Charset(Char"g", Char"g")
+    .union(Charset(Char"a", Char"f"))
+    .int_ranges() ~is [[97, 103]]
+  check Charset(Char"a", Char"c").union(Charset(Char"g", Char"i"))
+    .union(Charset(Char"a", Char"d"))
+    .int_ranges() ~is [[97, 100], [103, 105]]
+  check Charset(Char"a", Char"c").union(Charset(Char"g", Char"i"))
+    .union(Charset(Char"a", Char"d").union(Charset(Char"z", Char"z")))
+    .int_ranges() ~is [[97, 100], [103, 105], [122, 122]]
+  check Charset(Char"a", Char"d").union(Charset(Char"z", Char"z"))
+    .union(Charset(Char"a", Char"c").union(Charset(Char"g", Char"i")))
+    .int_ranges() ~is [[97, 100], [103, 105], [122, 122]]
+
+  check Charset(Char"a", Char"f")
+    .intersect(Charset(Char"h", Char"i"))
+    .int_ranges() ~is []
+  check Charset(Char"a", Char"z")
+    .intersect(Charset(Char"h", Char"i"))
+    .int_ranges() ~is [[104, 105]]
+  check Charset(Char"a", Char"z")
+    .intersect(Charset(Char"a", Char"c").union(Charset(Char"h", Char"i")))
+    .int_ranges() ~is [[97, 99], [104, 105]]
+  check Charset(Char"a", Char"c").union(Charset(Char"h", Char"i"))
+    .intersect(Charset(Char"a", Char"z"))
+    .int_ranges() ~is [[97, 99], [104, 105]]
+  check Charset(Char"b", Char"z")
+    .intersect(Charset(Char"a", Char"c").union(Charset(Char"h", Char"i")))
+    .int_ranges() ~is [[98, 99], [104, 105]]
+  check Charset(Char"a", Char"c").union(Charset(Char"h", Char"i"))
+    .intersect(Charset(Char"b", Char"z"))
+    .int_ranges() ~is [[98, 99], [104, 105]]
+  check Charset(Char"a", Char"z")
+    .intersect(Charset(Char"b", Char"c").union(Charset(Char"h", Char"i")))
+    .int_ranges() ~is [[98, 99], [104, 105]]
+  check Charset(Char"b", Char"c").union(Charset(Char"h", Char"i"))
+    .intersect(Charset(Char"a", Char"z"))
+    .int_ranges() ~is [[98, 99], [104, 105]]
+
+  check Charset()
+    .invert()
+    .int_ranges() ~is [[0, 0xD7FF], [0x10000, 0x10FFFF]]
+  check Charset()
+    .invert()
+    .invert()
+    .int_ranges() ~is []
+  check Charset(Char"a", Char"f")
+    .invert()
+    .int_ranges() ~is [[0, 96], [103, 0xD7FF], [0x10000, 0x10FFFF]]
+  check Charset(Char.from_int(0), Char"f")
+    .invert()
+    .int_ranges() ~is [[103, 0xD7FF], [0x10000, 0x10FFFF]]
+  check Charset(Char.from_int(0), Char"f")
+    .union(Charset(Char"z", Char.from_int(0x10FFFF)))
+    .invert()
+    .int_ranges() ~is [[103, 121]]
+  check Charset(Char.from_int(0), Char"f")
+    .union(Charset(Char"z", Char.from_int(0x10FFFF)))
+    .invert()
+    .invert()
+    .int_ranges() ~is  [[0, 102], [122, 0xD7FF], [0x10000, 0x10FFFF]]
+
+  check Charset(Char"a", Char"f")
+    .subtract(Charset())
+    .int_ranges() ~is [[97, 102]]
+  check Charset(Char"a", Char"f")
+    .subtract(Charset(Char"c", Char"z"))
+    .int_ranges() ~is [[97, 98]]

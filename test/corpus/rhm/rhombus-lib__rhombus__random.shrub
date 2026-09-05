@@ -1,0 +1,69 @@
+import:
+  lib("racket/base.rkt") as rkt
+  "private/parameter.rhm"
+
+use_static
+
+export:
+  Random:
+    only_space namespace annot expr
+  RandomState
+  shuffle
+
+annot.macro 'RandomState':
+  annot_meta.pack_predicate('rkt.#{pseudo-random-generator-vector?}', '()')
+
+class Random(private _handle):
+  opaque
+  internal _Random
+  constructor
+  | ():
+      from_handle(rkt.#{make-pseudo-random-generator}())
+  | (state :: RandomState):
+      from_handle(rkt.#{vector->pseudo-random-generator}(state))
+
+  export:
+    current
+    from_handle
+
+  method
+  | random() :~ Number:
+      rkt.random(_handle)
+  | random(n :: PosInt) :~ Number:
+      if n < (1 bits.(<<) 31)
+      | rkt.random(n, _handle)
+      | parameterize { rkt.#{current-pseudo-random-generator}: _handle }:
+          math.random(n)
+  | random(start :: Int, end :: Int) :~ Number:
+      unless start < end
+      | error(~who: #'random,
+              ~exn: Exn.Fail.Annot,
+              "start index is not less than end index",
+              error.val(~label: "start index", start),
+              error.val(~label: "end index", end))
+      random(end - start) + start
+
+  property
+  | state :: RandomState:
+      rkt.#{pseudo-random-generator->vector}(_handle)
+  | state := (s :: RandomState):
+      rkt.#{vector->pseudo-random-generator!}(_handle, s)
+
+parameter.def_from_racket current from_handle:
+  ~orig: rkt.#{current-pseudo-random-generator}
+  ~class: Random
+  ~_class: _Random
+  ~_handle: _handle
+  ~what: "a pseudo-random generator"
+  ~predicate: rkt.#{pseudo-random-generator?}
+
+fun shuffle(l :: List, rnd :: Random = current()) :~ List:
+  // Fisher-Yates shuffle
+  let a = Array.make(l.length())
+  for (x in l,
+       i in 0..):
+    let j = rnd.random(i+1)
+    unless j == i
+    | a[i] := a[j]
+    a[j] := x
+  a.to_list()

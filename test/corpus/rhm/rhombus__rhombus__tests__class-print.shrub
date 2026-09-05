@@ -1,0 +1,174 @@
+
+use_static
+
+check:
+  class Posn(x, ~y):
+    nonfinal
+    field quiet = 11
+  
+  class Posn3D(~z: z, w):
+    nonfinal
+    extends Posn
+
+  class Posn4D(u):
+    extends Posn3D
+
+  ["" +& Posn(1, ~y: 2),
+   "" +& Posn3D(1, ~y: 2, ~z: 3, 4),
+   "" +& Posn4D(1, ~y: 2, ~z: 3, 4, 5)]
+  ~is ["Posn(1, ~y: 2)",
+       "Posn3D(1, ~y: 2, ~z: 3, 4)",
+       "Posn4D(1, ~y: 2, ~z: 3, 4, 5)"]
+
+check:
+  class Posn(x, ~y):
+    nonfinal
+    private field internal = 11
+  
+  class Posn3D(~z: z, w):
+    nonfinal
+    extends Posn
+
+  class Posn4D(u):
+    extends Posn3D
+
+  ["" +& Posn(1, ~y: 2),
+   "" +& Posn3D(1, ~y: 2, ~z: 3, 4),
+   "" +& Posn4D(1, ~y: 2, ~z: 3, 4, 5)]
+  ~is ["Posn(....)",
+       "Posn3D(...., ~z: 3, 4)",
+       "Posn4D(...., ~z: 3, 4, 5)"]
+
+check:
+  class Posn(x, ~y):
+    nonfinal
+    protected field internal = 11
+  
+  class Posn3D(~z: z, w):
+    nonfinal
+    extends Posn
+
+  class Posn4D(u):
+    extends Posn3D
+
+  ["" +& Posn(1, ~y: 2),
+   "" +& Posn3D(1, ~y: 2, ~z: 3, 4),
+   "" +& Posn4D(1, ~y: 2, ~z: 3, 4, 5)]
+  ~is ["Posn(....)",
+       "Posn3D(...., ~z: 3, 4)",
+       "Posn4D(...., ~z: 3, 4, 5)"]
+
+check:
+  class Posn(x, ~y):
+    nonfinal
+    opaque
+
+  class Posn3D(~z: z, w):
+    extends Posn
+    nonfinal
+
+  class Posn4D(u):
+    extends Posn3D
+
+  ["" +& Posn(1, ~y: 2),
+   "" +& Posn3D(1, ~y: 2, ~z: 3, 4),
+   "" +& Posn4D(1, ~y: 2, ~z: 3, 4, 5)]
+  ~is ["Posn(....)",
+       "Posn3D(...., ~z: 3, 4)",
+       "Posn4D(...., ~z: 3, 4, 5)"]
+
+check:
+  class Posn(x, ~y):
+    nonfinal
+
+  class Posn3D(~z: z, w):
+    extends Posn
+    opaque
+    nonfinal
+
+  class Posn4D(u):
+    extends Posn3D
+
+  ["" +& Posn(1, ~y: 2),
+   "" +& Posn3D(1, ~y: 2, ~z: 3, 4),
+   "" +& Posn4D(1, ~y: 2, ~z: 3, 4, 5)]
+  ~is ["Posn(1, ~y: 2)",
+       "Posn3D(1, ~y: 2, ....)",
+       "Posn4D(1, ~y: 2, ...., 5)"]
+
+check:
+  class Posn(x, ~y):
+    nonfinal
+
+  class Posn3D(~z: z, w):
+    extends Posn
+    opaque
+    nonfinal
+
+  class Posn4D(u):
+    extends Posn3D
+    opaque
+    nonfinal
+
+  class Posn5D(v):
+    extends Posn4D
+
+  ["" +& Posn(1, ~y: 2),
+   "" +& Posn3D(1, ~y: 2, ~z: 3, 4),
+   "" +& Posn4D(1, ~y: 2, ~z: 3, 4, 5),
+   "" +& Posn5D(1, ~y: 2, ~z: 3, 4, 5, 6)]
+  ~is ["Posn(1, ~y: 2)",
+       "Posn3D(1, ~y: 2, ....)",
+       "Posn4D(1, ~y: 2, ....)",
+       "Posn5D(1, ~y: 2, ...., 6)"]
+
+check:
+  class Posn(x, ~y):
+    nonfinal
+    opaque
+
+  class Posn3D(~z: z, w):
+    extends Posn
+    field quiet = 0
+    nonfinal
+
+  class Posn4D(u):
+    extends Posn3D
+
+  ["" +& Posn(1, ~y: 2),
+   "" +& Posn3D(1, ~y: 2, ~z: 3, 4),
+   "" +& Posn4D(1, ~y: 2, ~z: 3, 4, 5)]
+  ~is ["Posn(....)",
+       "Posn3D(...., ~z: 3, 4)",
+       "Posn4D(...., ~z: 3, 4, 5)"]
+
+check:
+  class Posn(x, ~y):
+    nonfinal
+
+  class Posn3D(~z: z, w):
+    extends Posn
+    opaque
+    nonfinal
+    field quiet = 0
+
+  class Posn4D(u):
+    extends Posn3D
+
+  ["" +& Posn(1, ~y: 2),
+   "" +& Posn3D(1, ~y: 2, ~z: 3, 4),
+   "" +& Posn4D(1, ~y: 2, ~z: 3, 4, 5)]
+  ~is ["Posn(1, ~y: 2)",
+       "Posn3D(1, ~y: 2, ....)",
+       "Posn4D(1, ~y: 2, ...., 5)"]
+
+check:
+  import "class-print-racket.rkt" as rkt
+  ["" +& rkt.a_o(1, 2),
+   "" +& rkt.b_t(1, 2, 3),
+   "" +& rkt.c_o(1, 2, 3, 4),
+   "" +& rkt.a_t(1, 2),
+   "" +& rkt.b_o(1, 2, 3),
+   "" +& rkt.c_t(1, 2, 3, 4)]   
+  ~is ["#<a_o>", "b_t(...., 3)", "c_o(...., 3, ....)",
+       "a_t(1, 2)", "b_o(1, 2, ....)", "c_t(1, 2, ...., 4)"]

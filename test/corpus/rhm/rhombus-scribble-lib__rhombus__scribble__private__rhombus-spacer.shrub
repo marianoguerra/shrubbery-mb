@@ -1,0 +1,11 @@
+import:
+  shrubbery/render/private/#{rhombus-spacer}
+
+export:
+  all_from(.#{rhombus-spacer})
+
+module for_doc:
+  import:
+    shrubbery/render/private/#{rhombus-spacer}!for_doc
+  export:
+    all_from(.for_doc)

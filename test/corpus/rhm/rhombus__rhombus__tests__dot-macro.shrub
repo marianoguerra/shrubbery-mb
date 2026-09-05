@@ -1,0 +1,210 @@
+
+class Posn(x, y)
+
+annot.macro 'Vector':
+  annot_meta.pack_predicate('fun (x): x is_a Posn',
+                            '(($(statinfo_meta.dot_provider_key), vector_dot_provider))')
+
+
+dot.macro 'vector_dot_provider $left $dot $right':
+  match right
+  | 'angle': 'vector_angle($left)'
+  | 'magnitude': 'vector_magnitude($left)'
+
+fun vector_angle(Posn(x, y)): math.atan(y, x)
+fun vector_magnitude(Posn(x, y)): math.sqrt(x*x + y*y)
+
+let vec :: Vector: Posn(3, 4)
+check:
+  vec.angle
+  ~is math.atan(4, 3)
+check:
+  vec.magnitude
+  ~is 5
+check:
+  let [vec :: Vector, ...] = [Posn(3, 4), Posn(5, 6)]
+  [vec.angle, ...]
+  ~is [math.atan(4, 3), math.atan(6, 5)]
+
+expr.macro 'or_zero ($p)':
+  statinfo_meta.wrap('($p) || Posn(0,0)',
+                     '(($(statinfo_meta.dot_provider_key),
+                        vector_dot_provider))')
+
+check:
+  or_zero(Posn(3, 4)).magnitude
+  ~is 5
+
+check:
+  or_zero(#false).magnitude
+  ~is 0
+
+def zero_vec = dynamic(fun (): Posn(0, 0))
+statinfo.macro 'zero_vec': '(($(statinfo_meta.call_result_key),
+                              $(statinfo_meta.pack('(($(statinfo_meta.dot_provider_key),
+                                                      vector_dot_provider))'))))'
+check:
+  zero_vec().magnitude
+  ~is 0
+
+check:
+  let p1 :: Posn.of(Int, Posn): Posn(1, Posn(3, 4))
+  // RHS influences info for LHS:
+  let Posn(px, py): p1
+  py.y
+  ~is 4
+
+// checking some static-info propagation cases
+
+dot.macro 'myint_dot_provider $left $dot $right $tail ...':
+  match right
+  | 'is_zero': '$left .= 0'
+  | 'add': 'fun (v :~ MyInt) :~ MyInt: $left + v'
+
+annot.macro 'MyInt':
+  annot_meta.pack_predicate('fun (x): x is_a Int',
+                            '(($(statinfo_meta.dot_provider_key), myint_dot_provider))')
+
+def (one :~ MyInt) = 1
+
+check:
+  one.add(4).is_zero
+  ~is #false
+check:
+  one.add(-1).is_zero
+  ~is #true
+
+check:
+  ((one.add(4)) :~ MyInt).is_zero
+  ~is #false
+
+def two = 2 :: MyInt
+check:
+  two.is_zero
+  ~is #false
+
+expr.macro 'I($n)': '$n :~ MyInt'
+def three = (I(3))
+check:
+  three.is_zero
+  ~is #false
+
+operator ((x :~ MyInt) my_plus (y :~ MyInt)) :~ MyInt:
+  x.add(y)
+
+check:
+  (-2 my_plus 2).is_zero
+  ~is #true
+
+check:
+  let [x :: MyInt, ...] = [1, 2, 3]
+  [x.add(10), ...]
+  ~is [11, 12, 13]
+
+// check is_static option
+
+block:
+  annot.macro 'MyStr':
+    annot_meta.pack_predicate('fun (x): x is_a String',
+                              '(($(statinfo_meta.dot_provider_key), mystr_dot_provider))')
+  dot.macro 'mystr_dot_provider $left $dot $right':
+    ~is_static: is_static
+    match right
+    | 'is_static': '$is_static'
+  check:
+    ("x" :: MyStr).is_static ~is #true
+  check:
+    use_dynamic
+    ("x" :: MyStr).is_static
+    ~is #false
+
+check:
+  expr.macro 'check_options':
+    statinfo_meta.wrap('#false',
+                       '(($(statinfo_meta.dot_provider_key), check_options_dot_provider))')
+  dot.macro 'check_options_dot_provider $left $dot $right':
+    ~op_stx self
+    ~is_static is_static
+    ~tail '$()'
+    match right
+    | 'op': '«Syntax.literal '$self'»'
+    | 'static': '#%literal $is_static'
+  values(check_options.op, check_options.static)
+  ~matches values('.', #true)
+
+// checking repetition handling
+
+dot.macro 'myint2_dot_provider $left $dot $right':
+  ~is_repet: is_repet
+  ~all_stx: self_stx
+  ~tail: '$tail ...'
+  if is_repet
+  | // assumes a depth-1 `left`
+    let '($_, $expr, $depth, $use_depth, $_)' = repet_meta.unpack_list(left)
+    fun make(list_expr):
+      repet_meta.pack_list('($self_stx,
+                             $list_expr,
+                             $depth,
+                             $use_depth,
+                             ())')
+    match '$right $tail ...'
+    | 'is_zero $tail ...': values(make('for List (v in ($expr :~ List)): v .= 0'),
+                                  '$tail ...')
+    | 'add($(right :: repet_meta.Parsed)) $tail ...':
+        // assumes a depth-1 `right`, too
+        let '($_, $r_expr, $r_depth, $r_use_depth, $_)' = repet_meta.unpack_list(right)
+        values(make('for List (v in ($expr :~ List),
+                               r_v in ($r_expr :~ List)):
+                       v + r_v'),
+               '$tail ...')
+  | values(match right
+           | 'is_zero': '$left .= 0'
+           | 'add': 'fun (v :~ MyInt) :~ MyInt: $left + v',
+           '$tail ...')
+
+annot.macro 'MyInt2':
+  annot_meta.pack_predicate('fun (x): x is_a Int',
+                            '(($(statinfo_meta.dot_provider_key), myint2_dot_provider))')
+
+def (four :~ MyInt2) = 4
+def [more :~ MyInt2, ...] = [5, 6, 7]
+
+check:
+  four.add(5)
+  ~is 9
+
+check:
+  [more.add(more), ...]
+  ~is [10, 12, 14]
+
+dot.macro 'array_or_string_dot_provider $left $dot $right':
+  ~is_repet: is_repet
+  ~tail: '$tail ...'
+  fun try(annot, can_fail):
+    let '$(ann :: annot_meta.Parsed)' = 'Array'
+    let (_, _, statinfos) = annot_meta.unpack_converter(ann)
+    if is_repet
+    | let '($s, $l, $d, $u, $sis)' = repet_meta.unpack_list(left)
+      repet_meta.parse_dot(repet_meta.pack_list('($d, $l, $d, $d, $statinfos)'),
+                           '$dot $right $tail ...',
+                           ~disable_generic: can_fail)
+    | expr_meta.parse_dot(statinfo_meta.replace(left, statinfos),
+                          '$dot $right $tail ...',
+                          ~disable_generic: can_fail)
+  let (e, e_tail) = try('Array', #true)
+  if e
+  | values(e, e_tail)
+  | try('String', #false)
+
+annot.macro 'ArrayOrString':
+  annot_meta.pack_predicate('fun (x): (x is_a Array) || (x is_a String)',
+                            '(($(statinfo_meta.dot_provider_key), array_or_string_dot_provider))')
+
+check (Array(1, 2, 3) :: ArrayOrString).length() ~is 3
+check ("apple" :: ArrayOrString).upcase() ~is "APPLE"
+check ("apple" :: ArrayOrString).nonesuch() ~throws "no such field or method"
+
+block:
+  use_static
+  let [a, ...] :: List.of(ArrayOrString) = [Array(1), Array(2, 3, 4), Array(5, 6)]
+  check [a.length(), ...] ~is [1, 3, 2]

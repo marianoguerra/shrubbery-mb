@@ -1,0 +1,273 @@
+
+defn.macro 'static $check: $form; ...; $throws $msg':
+  '$check:
+     ~eval
+     use_static
+     $form; ...
+     $throws values($msg, "static")
+   $check:
+     ~eval
+     $form; ...
+     $(Syntax.make(#'~completes, throws))'
+
+static check:
+  fun f(x): x
+  fun (): f()
+  ~throws "wrong number of arguments"
+
+check:
+  use_dynamic
+  fun f(x): x
+  f()
+  ~throws values("wrong number of arguments", "expected: 1")
+
+static check:
+  fun f(x): x
+  fun (): f(1, 2)
+  ~throws "wrong number of arguments"
+
+static check:
+  fun f(x): x
+  fun (l): f(1, 2, & l)
+  ~throws "wrong number of arguments"
+
+check:
+  fun f(x): x
+  fun (l): f(1, & l)
+  ~completes
+
+static check:
+  fun f(x): x
+  fun (): f(1, ~flavor: "vanilla")
+  ~throws "keyword argument not recognized"
+
+static check:
+  fun f(x, ~flavor): x
+  fun (): f(1)
+  ~throws "missing keyword argument in function call"
+
+static check:
+  fun f(x, ~flavor): x
+  fun (): f(~oops: 10)
+  ~throws "keyword argument not recognized by called function"
+
+static check:
+  fun f(x, ~flavor): x
+  fun (m): f(~oops: 10, & m)
+  ~throws "keyword argument not recognized by called function"
+
+static check:
+  fun f(x, & y): x
+  fun (): f()
+  ~throws "wrong number of arguments"
+
+static check:
+  fun f(x, ~flavor, ~& kws): x
+  fun (): f(1, ~color: "red")
+  ~throws "missing keyword argument in function call"
+
+static check:
+  class Posn(x, y):
+    method m(): x
+  fun (): Posn.m()
+  ~throws "wrong number of arguments"
+
+check:
+  use_dynamic
+  class Posn(x, y):
+    method m(): x
+  Posn(1, 2).m(1)
+  ~throws values("wrong number of arguments",
+                 "expected: 0")
+
+check:
+  use_dynamic
+  class Posn(x, y):
+    method m(): x
+  Posn.m(1, 2)
+  ~throws values("wrong number of arguments",
+                 "expected: 1")
+
+static check:
+  class Posn(x, y):
+    nonfinal
+    method m(): x
+  fun (): Posn.m()
+  ~throws "wrong number of arguments"
+
+static check:
+  class Posn(x, y):
+    nonfinal
+    method m(): x
+  fun (): Posn.m(1, 2)
+  ~throws "wrong number of arguments"
+
+check:
+  use_dynamic
+  class Posn(x, y):
+    nonfinal
+    method m(): x
+  Posn(1, 2).m(1)
+  ~throws values("wrong number of arguments",
+                 "expected: 0")
+
+check:
+  use_dynamic
+  class Posn(x, y):
+    nonfinal
+    method m(): x
+  Posn.m(Posn(1, 2), 2)
+  ~throws values("wrong number of arguments",
+                 "expected: 1")
+static check:
+  class Posn(x, y):
+    method m(): x
+  fun (): Posn(1, 2).m(0)
+  ~throws "wrong number of arguments"
+
+static check:
+  class Posn(x, y):
+    method m(): x
+    method n(): m(1)
+  ~throws "wrong number of arguments"
+
+static check:
+  class Posn(x, y):
+    nonfinal
+    method m(): x
+  fun (): Posn(1, 2).m(0)
+  ~throws "wrong number of arguments"
+
+static check:
+  class Posn(x, y):
+    nonfinal
+    method m(): x
+  class Posn3D(z):
+    extends Posn
+  fun (): Posn3D(1, 2, 3).m(0)
+  ~throws "wrong number of arguments"
+
+static check:
+  interface Pointy:
+    method m(): 0
+    method n(): m(1)
+  ~throws "wrong number of arguments"
+
+static check:
+  interface Pointy:
+    method m(): 0
+  class Posn(x, y):
+    implements Pointy
+  fun (): Posn(1, 2).m(0)
+  ~throws "wrong number of arguments"
+
+static check:
+  class Posn(x, y):
+    property | p: 10
+  fun (): Posn(1, 2).p := 11
+  ~throws "property does not support assignment"
+
+static check:
+  class Posn(x, y):
+    property | p: 10
+  fun (): Posn.p(Posn(1, 2), 11)
+  ~throws "wrong number of arguments in function call"
+
+check:
+  ~eval
+  class Posn(x, y):
+    property | p: 10
+    method m(): p := 11
+  ~throws "property does not support assignment"
+
+static check:
+  class Posn(x, y):
+    nonfinal
+    property | p: 10
+  fun (): Posn(1, 2).p := 11
+  ~throws "property does not support assignment"
+
+static check:
+  class Posn(x, y):
+    nonfinal
+    property | p: 10
+  fun (): Posn.p(Posn(1, 2), 11)
+  ~throws "wrong number of arguments in function call"
+
+static check:
+  class Posn(x, y):
+    nonfinal
+    method m(): 0
+  class Posn3D(z):
+    extends Posn
+    method n(): super.m(1)
+  ~throws "wrong number of arguments in method call"
+
+static check:
+  class Posn(x, y):
+    nonfinal
+    property | p: 0
+  class Posn3D(z):
+    extends Posn
+    method n(): super.p := 1
+  ~throws "property does not support assignment"
+
+static check:
+  class Posn(x, y):
+    nonfinal
+    abstract property | p
+  class Posn3D(z):
+    extends Posn
+    nonfinal
+    method n(): this.p := 1
+  ~throws "property does not support assignment"
+
+static check:
+  class Posn(x, y):
+    constructor (z):
+      super(z+1, z-1)
+  fun (): Posn(1, 2)
+  ~throws "wrong number of arguments in function call"
+
+static check:
+  class Posn(x, y):
+    method m(~kw: k): x
+  fun (): Posn.m(Posn(1, 2))
+  ~throws "missing keyword argument"
+
+static check:
+  class Posn(x, y):
+    method m(~kw: k): x
+  fun (): Posn.m(Posn(1, 2), ~kw: 10, ~other: "no")
+  ~throws "keyword argument not recognized"
+
+block:
+  use_dynamic
+  class Posn(x, y):
+    method m(~kw: k): x
+  check: Posn.m(~kw: 0)
+         ~throws "no case matching 0 non-keyword arguments"
+  check: Posn(1, 2).m(~kw: 0, 1)
+         ~throws "no case matching 1 non-keyword argument"
+
+block:
+  use_dynamic
+  class Posn(x, y):
+    method m(~kw: k = #false): x
+  check: Posn.m()
+         ~throws values("wrong number of arguments",
+                        "expected: 1 plus")
+  check: Posn(1, 2).m(1)
+         ~throws values("wrong number of arguments",
+                        "expected: 0 plus")
+
+block:
+  use_dynamic
+  class Posn(x, y):
+    method m(~& kws): x
+  check: Posn.m()
+         ~throws values("wrong number of arguments",
+                        "expected: 1 plus")
+  check: Posn(1, 2).m(1)
+         ~throws values("wrong number of arguments",
+                        "expected: 0 plus")

@@ -1,0 +1,93 @@
+import:
+  rhombus/cmdline
+  rhombus/meta open
+  rhombus/runtime_path
+  rhombus/shrubbery
+  lib("scribble/render.rkt").render
+  lib("xml/main.rkt") as xml
+  "doc.scrbl"
+
+// Renders "doc.scrbl" to HTML, extracts a filtered version
+// of the HTML that keeps only relevant things involving layout
+// and styles, and checks whether that matches an expected content.
+// The expected content may need to be reset if Scribble changes.
+
+def flags:
+  cmdline.parse:
+    cmdline.flag "--show":
+      ~help "show filetered output"
+    cmdline.flag "--save":
+      ~help "save output for regression test"
+
+runtime_path.def doc_expect: "doc_expect.shrub"
+
+def html:
+  Closeable.let dir = filesystem.make_temporary(
+    ~as: #'directory,
+    ~make_name: fun (s): Path("render_doc" +& s),
+  )
+  render(PairList[doc.doc],
+         PairList["doc"],
+         ~#{dest-dir}: dir.path)
+  let in = Port.Input.open_file(dir.path.add("doc.html"))
+  xml.#{xml->xexpr}(xml.#{document-element}(xml.#{read-xml}(in)))
+
+def keep_with_attrs = { #'div, #'span, #'a }
+def keeps = { #'html, #'body, #'section, #'table, #'tr, #'td, #'p, #'blockquote, #'h2 }
+def skip_attr = { "tocset", "versionbox" }
+
+fun filter(html):
+  fun filter_body([body, ...]):
+    Syntax.make_sequence(
+      for List (body in [body, ...]):
+        let new = filter(body)
+        skip_when: !new
+        new
+    )
+  fun filter_attrs(PairList[PairList[key, val], ...]):
+    let [[key, val], ...]:
+      for List (key in [key, ...],
+                val in [val, ...]):
+        keep_when: key in { #'class, #'style, #'href }
+        [key, val]
+    if [key, ...] == []
+    | []
+    | '{ $key: $val, ... }'
+  fun has_skip_attr(PairList[PairList[key, val], ...]):
+    any(key == #'class && to_string(val) in skip_attr, ...)
+  match html
+  | PairList[key, attrs, body, ...]:
+      cond
+      | key in keep_with_attrs:
+          if has_skip_attr(attrs)
+          | '$key $(filter_attrs(attrs))'
+          | '$key $(filter_attrs(attrs)):
+               $(filter_body([body, ...]))'
+      | key in keeps:
+          '$key:
+             $(filter_body([body, ...]))'
+      | ~else:
+          '$key:«»'
+  | ~else:
+      '$html'
+
+fun read(expect):
+  let o = Port.Input.open_file(expect)
+  shrubbery.read(~in: o)
+
+when #'show in flags
+| println(filter(html), ~pretty: #true)
+
+unless #'save in flags
+| check:
+    filter(html)
+    ~prints_like read(doc_expect)
+
+fun rewrite():
+  let o = Port.Output.open_file(doc_expect,
+                                ~exists: #'truncate)
+  println(~out: o, filter(html), ~pretty: #true)
+  o.flush()
+
+when #'save in flags
+| rewrite()

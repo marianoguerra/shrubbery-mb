@@ -1,0 +1,493 @@
+identifier	1	0	"a"	-
+block-operator	1	1	":"	-
+whitespace	1	2	"\u{a}"	-
+whitespace	2	0	"  "	-
+identifier	2	2	"option"	-
+whitespace	2	8	"\u{a}"	-
+bar-operator	3	0.5	"\|"	-
+whitespace	3	1	" "	-
+identifier	3	2	"case"	-
+whitespace	3	6	" "	-
+literal	3	7	"1"	1
+whitespace	3	8	"\u{a}"	-
+bar-operator	4	0.5	"\|"	-
+whitespace	4	1	" "	-
+identifier	4	2	"case"	-
+whitespace	4	6	" "	-
+literal	4	7	"2"	2
+whitespace	4	8	"\u{a}"	-
+whitespace	5	0	"\u{a}"	-
+identifier	6	0	"b"	-
+block-operator	6	1	":"	-
+whitespace	6	2	" "	-
+identifier	6	3	"option"	-
+whitespace	6	9	"\u{a}"	-
+bar-operator	7	0.5	"\|"	-
+whitespace	7	1	" "	-
+identifier	7	2	"case"	-
+whitespace	7	6	" "	-
+literal	7	7	"1"	1
+whitespace	7	8	"\u{a}"	-
+whitespace	8	0	"\u{a}"	-
+identifier	9	0	"c"	-
+block-operator	9	1	":"	-
+whitespace	9	2	"\u{a}"	-
+bar-operator	10	0.5	"\|"	-
+whitespace	10	1	" "	-
+identifier	10	2	"case"	-
+whitespace	10	6	" "	-
+literal	10	7	"1"	1
+whitespace	10	8	"\u{a}"	-
+bar-operator	11	0.5	"\|"	-
+whitespace	11	1	" "	-
+identifier	11	2	"case"	-
+whitespace	11	6	" "	-
+literal	11	7	"2"	2
+whitespace	11	8	"\u{a}"	-
+whitespace	12	0	"\u{a}"	-
+identifier	13	0	"d"	-
+block-operator	13	1	":"	-
+whitespace	13	2	"\u{a}"	-
+bar-operator	14	0.5	"\|"	-
+whitespace	14	1	" "	-
+identifier	14	2	"case"	-
+whitespace	14	6	" "	-
+literal	14	7	"1"	1
+whitespace	14	8	"\u{a}"	-
+whitespace	15	0	"\u{a}"	-
+identifier	16	0	"nested"	-
+whitespace	16	6	"\u{a}"	-
+bar-operator	17	0.5	"\|"	-
+whitespace	17	1	" "	-
+identifier	17	2	"a"	-
+block-operator	17	3	":"	-
+whitespace	17	4	"\u{a}"	-
+whitespace	18	0	"    "	-
+identifier	18	4	"option"	-
+whitespace	18	10	"\u{a}"	-
+whitespace	19	0	"  "	-
+bar-operator	19	2.5	"\|"	-
+whitespace	19	3	" "	-
+identifier	19	4	"case"	-
+whitespace	19	8	" "	-
+literal	19	9	"1"	1
+whitespace	19	10	"\u{a}"	-
+whitespace	20	0	"  "	-
+bar-operator	20	2.5	"\|"	-
+whitespace	20	3	" "	-
+identifier	20	4	"case"	-
+whitespace	20	8	" "	-
+literal	20	9	"2"	2
+whitespace	20	10	"\u{a}"	-
+whitespace	21	0	"\u{a}"	-
+identifier	22	0	"nested"	-
+block-operator	22	6	":"	-
+whitespace	22	7	"\u{a}"	-
+bar-operator	23	0.5	"\|"	-
+whitespace	23	1	" "	-
+identifier	23	2	"a"	-
+block-operator	23	3	":"	-
+whitespace	23	4	"\u{a}"	-
+whitespace	24	0	"    "	-
+identifier	24	4	"option"	-
+whitespace	24	10	"\u{a}"	-
+whitespace	25	0	"  "	-
+bar-operator	25	2.5	"\|"	-
+whitespace	25	3	" "	-
+identifier	25	4	"case"	-
+whitespace	25	8	" "	-
+literal	25	9	"1"	1
+whitespace	25	10	"\u{a}"	-
+whitespace	26	0	"  "	-
+bar-operator	26	2.5	"\|"	-
+whitespace	26	3	" "	-
+identifier	26	4	"case"	-
+whitespace	26	8	" "	-
+literal	26	9	"2"	2
+whitespace	26	10	"\u{a}"	-
+whitespace	27	0	"\u{a}"	-
+identifier	28	0	"one"	-
+whitespace	28	3	" "	-
+identifier	28	4	"line"	-
+block-operator	28	8	":"	-
+opener	28	9	"\u{ab}"	-
+identifier	28	10	"option"	-
+semicolon-operator	28	16	";"	-
+whitespace	28	17	" "	-
+identifier	28	18	"also"	-
+closer	28	22	"\u{bb}"	-
+whitespace	28	23	" "	-
+bar-operator	28	24.5	"\|"	-
+whitespace	28	25	" "	-
+identifier	28	26	"case"	-
+whitespace	28	30	" "	-
+literal	28	31	"1"	1
+whitespace	28	32	" "	-
+bar-operator	28	33.5	"\|"	-
+whitespace	28	34	" "	-
+identifier	28	35	"case"	-
+whitespace	28	39	" "	-
+literal	28	40	"2"	2
+whitespace	28	41	"\u{a}"	-
+whitespace	29	0	"\u{a}"	-
+identifier	30	0	"many"	-
+whitespace	30	4	" "	-
+identifier	30	5	"lines"	-
+block-operator	30	10	":"	-
+opener	30	11	"\u{ab}"	-
+identifier	30	12	"option"	-
+semicolon-operator	30	18	";"	-
+whitespace	30	19	" "	-
+identifier	30	20	"also"	-
+closer	30	24	"\u{bb}"	-
+whitespace	30	25	"\u{a}"	-
+bar-operator	31	0.5	"\|"	-
+whitespace	31	1	" "	-
+identifier	31	2	"case"	-
+whitespace	31	6	" "	-
+literal	31	7	"1"	1
+whitespace	31	8	"\u{a}"	-
+bar-operator	32	0.5	"\|"	-
+whitespace	32	1	" "	-
+identifier	32	2	"case"	-
+whitespace	32	6	" "	-
+literal	32	7	"2"	2
+whitespace	32	8	"\u{a}"	-
+whitespace	33	0	"\u{a}"	-
+identifier	34	0	"a"	-
+whitespace	34	1	" "	-
+bar-operator	34	2.5	"\|"	-
+whitespace	34	3	" "	-
+identifier	34	4	"b"	-
+block-operator	34	5	":"	-
+whitespace	34	6	" "	-
+opener	34	7	"\u{ab}"	-
+identifier	34	8	"c"	-
+closer	34	9	"\u{bb}"	-
+whitespace	34	10	" "	-
+bar-operator	34	11.5	"\|"	-
+whitespace	34	12	" "	-
+identifier	34	13	"d"	-
+whitespace	34	14	"\u{a}"	-
+whitespace	35	0	"\u{a}"	-
+identifier	36	0	"a"	-
+whitespace	36	1	" "	-
+bar-operator	36	2.5	"\|"	-
+opener	36	3	"\u{ab}"	-
+identifier	36	4	"b"	-
+block-operator	36	5	":"	-
+whitespace	36	6	" "	-
+opener	36	7	"\u{ab}"	-
+identifier	36	8	"c"	-
+closer	36	9	"\u{bb}"	-
+closer	36	10	"\u{bb}"	-
+bar-operator	36	11.5	"\|"	-
+whitespace	36	12	" "	-
+identifier	36	13	"d"	-
+whitespace	36	14	"\u{a}"	-
+whitespace	37	0	"\u{a}"	-
+identifier	38	0	"a"	-
+block-operator	38	1	":"	-
+opener	38	2	"\u{ab}"	-
+identifier	38	3	"b"	-
+whitespace	38	4	" "	-
+bar-operator	38	5.5	"\|"	-
+whitespace	38	6	" "	-
+identifier	38	7	"c"	-
+block-operator	38	8	":"	-
+whitespace	38	9	" "	-
+identifier	38	10	"d"	-
+whitespace	38	11	"  "	-
+bar-operator	38	13.5	"\|"	-
+whitespace	38	14	" "	-
+identifier	38	15	"e"	-
+whitespace	38	16	" "	-
+closer	38	17	"\u{bb}"	-
+whitespace	38	18	"\u{a}"	-
+whitespace	39	0	"\u{a}"	-
+identifier	40	0	"a"	-
+block-operator	40	1	":"	-
+opener	40	2	"\u{ab}"	-
+identifier	40	3	"b"	-
+whitespace	40	4	" "	-
+bar-operator	40	5.5	"\|"	-
+whitespace	40	6	" "	-
+identifier	40	7	"c"	-
+block-operator	40	8	":"	-
+opener	40	9	"\u{ab}"	-
+identifier	40	10	"d"	-
+closer	40	11	"\u{bb}"	-
+whitespace	40	12	" "	-
+bar-operator	40	13.5	"\|"	-
+whitespace	40	14	" "	-
+identifier	40	15	"e"	-
+whitespace	40	16	" "	-
+closer	40	17	"\u{bb}"	-
+whitespace	40	18	"\u{a}"	-
+whitespace	41	0	"\u{a}"	-
+identifier	42	0	"a"	-
+block-operator	42	1	":"	-
+opener	42	2	"\u{ab}"	-
+identifier	42	3	"b"	-
+whitespace	42	4	" "	-
+bar-operator	42	5.5	"\|"	-
+opener	42	6	"\u{ab}"	-
+identifier	42	7	"c"	-
+block-operator	42	8	":"	-
+opener	42	9	"\u{ab}"	-
+identifier	42	10	"d"	-
+closer	42	11	"\u{bb}"	-
+closer	42	12	"\u{bb}"	-
+bar-operator	42	13.5	"\|"	-
+opener	42	14	"\u{ab}"	-
+identifier	42	15	"e"	-
+closer	42	16	"\u{bb}"	-
+closer	42	17	"\u{bb}"	-
+whitespace	42	18	"\u{a}"	-
+whitespace	43	0	"\u{a}"	-
+identifier	44	0	"a"	-
+block-operator	44	1	":"	-
+opener	44	2	"\u{ab}"	-
+closer	44	3	"\u{bb}"	-
+whitespace	44	4	"\u{a}"	-
+bar-operator	45	0.5	"\|"	-
+whitespace	45	1	" "	-
+identifier	45	2	"b"	-
+whitespace	45	3	"\u{a}"	-
+whitespace	46	0	"\u{a}"	-
+identifier	47	0	"a"	-
+block-operator	47	1	":"	-
+opener	47	2	"\u{ab}"	-
+closer	47	3	"\u{bb}"	-
+whitespace	47	4	" "	-
+bar-operator	47	5.5	"\|"	-
+whitespace	47	6	" "	-
+identifier	47	7	"b"	-
+whitespace	47	8	"\u{a}"	-
+whitespace	48	0	"\u{a}"	-
+identifier	49	0	"a"	-
+block-operator	49	1	":"	-
+whitespace	49	2	"\u{a}"	-
+whitespace	50	0	"  "	-
+identifier	50	2	"b"	-
+semicolon-operator	50	3	";"	-
+whitespace	50	4	" "	-
+identifier	50	5	"c"	-
+whitespace	50	6	"\u{a}"	-
+bar-operator	51	0.5	"\|"	-
+whitespace	51	1	" "	-
+identifier	51	2	"d"	-
+whitespace	51	3	"\u{a}"	-
+whitespace	52	0	"\u{a}"	-
+identifier	53	0	"a"	-
+block-operator	53	1	":"	-
+whitespace	53	2	"\u{a}"	-
+whitespace	54	0	"  "	-
+identifier	54	2	"b"	-
+semicolon-operator	54	3	";"	-
+opener	54	4	"\u{ab}"	-
+whitespace	54	5	" "	-
+identifier	54	6	"c"	-
+whitespace	54	7	" "	-
+closer	54	8	"\u{bb}"	-
+whitespace	54	9	"\u{a}"	-
+bar-operator	55	0.5	"\|"	-
+whitespace	55	1	" "	-
+identifier	55	2	"d"	-
+whitespace	55	3	"\u{a}"	-
+whitespace	56	0	"\u{a}"	-
+identifier	57	0	"a"	-
+block-operator	57	1	":"	-
+whitespace	57	2	"\u{a}"	-
+whitespace	58	0	"  "	-
+identifier	58	2	"b"	-
+semicolon-operator	58	3	";"	-
+whitespace	58	4	" "	-
+opener	58	5	"("	-
+identifier	58	6	"c"	-
+closer	58	7	")"	-
+whitespace	58	8	"\u{a}"	-
+bar-operator	59	0.5	"\|"	-
+whitespace	59	1	" "	-
+identifier	59	2	"d"	-
+whitespace	59	3	"\u{a}"	-
+whitespace	60	0	"\u{a}"	-
+identifier	61	0	"a"	-
+block-operator	61	1	":"	-
+whitespace	61	2	" "	-
+identifier	61	3	"b"	-
+semicolon-operator	61	4	";"	-
+whitespace	61	5	" "	-
+identifier	61	6	"cc"	-
+whitespace	61	8	"\u{a}"	-
+bar-operator	62	0.5	"\|"	-
+whitespace	62	1	" "	-
+identifier	62	2	"d"	-
+whitespace	62	3	"\u{a}"	-
+whitespace	63	0	"\u{a}"	-
+identifier	64	0	"a"	-
+block-operator	64	1	":"	-
+whitespace	64	2	" "	-
+identifier	64	3	"b"	-
+semicolon-operator	64	4	";"	-
+opener	64	5	"\u{ab}"	-
+whitespace	64	6	" "	-
+identifier	64	7	"cc"	-
+whitespace	64	9	" "	-
+closer	64	10	"\u{bb}"	-
+whitespace	64	11	"\u{a}"	-
+bar-operator	65	0.5	"\|"	-
+whitespace	65	1	" "	-
+identifier	65	2	"d"	-
+whitespace	65	3	"\u{a}"	-
+whitespace	66	0	"\u{a}"	-
+identifier	67	0	"a"	-
+block-operator	67	1	":"	-
+whitespace	67	2	" "	-
+identifier	67	3	"b"	-
+semicolon-operator	67	4	";"	-
+whitespace	67	5	" "	-
+opener	67	6	"("	-
+identifier	67	7	"cc"	-
+closer	67	9	")"	-
+whitespace	67	10	"\u{a}"	-
+bar-operator	68	0.5	"\|"	-
+whitespace	68	1	" "	-
+identifier	68	2	"d"	-
+whitespace	68	3	"\u{a}"	-
+whitespace	69	0	"\u{a}"	-
+identifier	70	0	"a"	-
+block-operator	70	1	":"	-
+whitespace	70	2	"\u{a}"	-
+whitespace	71	0	"  "	-
+identifier	71	2	"b"	-
+whitespace	71	3	"\u{a}"	-
+group-comment	72	0	"#//"	-
+whitespace	72	3	"\u{a}"	-
+bar-operator	73	0.5	"\|"	-
+whitespace	73	1	" "	-
+identifier	73	2	"c"	-
+whitespace	73	3	"\u{a}"	-
+whitespace	74	0	"\u{a}"	-
+identifier	75	0	"a"	-
+block-operator	75	1	":"	-
+whitespace	75	2	"\u{a}"	-
+whitespace	76	0	"  "	-
+identifier	76	2	"b"	-
+whitespace	76	3	"\u{a}"	-
+group-comment	77	0	"#//"	-
+whitespace	77	3	"\u{a}"	-
+bar-operator	78	0.5	"\|"	-
+whitespace	78	1	" "	-
+identifier	78	2	"c"	-
+whitespace	78	3	"\u{a}"	-
+bar-operator	79	0.5	"\|"	-
+whitespace	79	1	" "	-
+identifier	79	2	"d"	-
+whitespace	79	3	"\u{a}"	-
+whitespace	80	0	"\u{a}"	-
+identifier	81	0	"a"	-
+block-operator	81	1	":"	-
+opener	81	2	"\u{ab}"	-
+closer	81	3	"\u{bb}"	-
+whitespace	81	4	"\u{a}"	-
+group-comment	82	0	"#//"	-
+whitespace	82	3	"\u{a}"	-
+bar-operator	83	0.5	"\|"	-
+whitespace	83	1	" "	-
+identifier	83	2	"c"	-
+whitespace	83	3	"\u{a}"	-
+whitespace	84	0	"\u{a}"	-
+identifier	85	0	"a"	-
+block-operator	85	1	":"	-
+opener	85	2	"\u{ab}"	-
+closer	85	3	"\u{bb}"	-
+whitespace	85	4	"\u{a}"	-
+group-comment	86	0	"#//"	-
+whitespace	86	3	"\u{a}"	-
+bar-operator	87	0.5	"\|"	-
+whitespace	87	1	" "	-
+identifier	87	2	"c"	-
+whitespace	87	3	"\u{a}"	-
+bar-operator	88	0.5	"\|"	-
+whitespace	88	1	" "	-
+identifier	88	2	"d"	-
+whitespace	88	3	"\u{a}"	-
+whitespace	89	0	"\u{a}"	-
+identifier	90	0	"a"	-
+block-operator	90	1	":"	-
+whitespace	90	2	"\u{a}"	-
+whitespace	91	0	"  "	-
+identifier	91	2	"b"	-
+whitespace	91	3	"\u{a}"	-
+whitespace	92	0	"  "	-
+group-comment	92	2	"#//"	-
+whitespace	92	5	"\u{a}"	-
+whitespace	93	0	"  "	-
+bar-operator	93	2.5	"\|"	-
+whitespace	93	3	" "	-
+identifier	93	4	"c"	-
+whitespace	93	5	"\u{a}"	-
+whitespace	94	0	"\u{a}"	-
+identifier	95	0	"a"	-
+block-operator	95	1	":"	-
+whitespace	95	2	"\u{a}"	-
+whitespace	96	0	"  "	-
+identifier	96	2	"b"	-
+whitespace	96	3	"\u{a}"	-
+whitespace	97	0	"  "	-
+group-comment	97	2	"#//"	-
+whitespace	97	5	"\u{a}"	-
+whitespace	98	0	"  "	-
+bar-operator	98	2.5	"\|"	-
+whitespace	98	3	" "	-
+identifier	98	4	"c"	-
+whitespace	98	5	"\u{a}"	-
+bar-operator	99	0.5	"\|"	-
+whitespace	99	1	" "	-
+identifier	99	2	"d"	-
+whitespace	99	3	"\u{a}"	-
+whitespace	100	0	"\u{a}"	-
+identifier	101	0	"a"	-
+block-operator	101	1	":"	-
+whitespace	101	2	"\u{a}"	-
+whitespace	102	0	"  "	-
+group-comment	102	2	"#//"	-
+whitespace	102	5	"\u{a}"	-
+whitespace	103	0	"  "	-
+identifier	103	2	"b"	-
+whitespace	103	3	"\u{a}"	-
+bar-operator	104	0.5	"\|"	-
+whitespace	104	1	" "	-
+identifier	104	2	"c"	-
+whitespace	104	3	"\u{a}"	-
+bar-operator	105	0.5	"\|"	-
+whitespace	105	1	" "	-
+identifier	105	2	"d"	-
+whitespace	105	3	"\u{a}"	-
+whitespace	106	0	"\u{a}"	-
+group-comment	107	0	"#//"	-
+whitespace	107	3	"\u{a}"	-
+identifier	108	0	"a"	-
+block-operator	108	1	":"	-
+whitespace	108	2	"\u{a}"	-
+whitespace	109	0	"  "	-
+identifier	109	2	"b"	-
+whitespace	109	3	"\u{a}"	-
+bar-operator	110	0.5	"\|"	-
+whitespace	110	1	" "	-
+identifier	110	2	"c"	-
+whitespace	110	3	"\u{a}"	-
+bar-operator	111	0.5	"\|"	-
+whitespace	111	1	" "	-
+identifier	111	2	"d"	-
+whitespace	111	3	"\u{a}"	-
+whitespace	112	0	"\u{a}"	-
+identifier	113	0	"a"	-
+semicolon-operator	113	1	";"	-
+whitespace	113	2	" "	-
+group-comment	113	3	"#//"	-
+identifier	113	6	"b"	-
+whitespace	113	7	"\u{a}"	-
+identifier	114	0	"c"	-
+whitespace	114	1	"\u{a}"	-

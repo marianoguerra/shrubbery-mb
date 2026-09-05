@@ -8,6 +8,7 @@ version = "0.1.0"
 import {
   "marianoguerra/shrubbery@0.1.0",
   "marianoguerra/error-report@0.1.0",
+  "moonbitlang/x@0.5.1",
 }
 
 readme = "README.md"

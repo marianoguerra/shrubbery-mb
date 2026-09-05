@@ -1,0 +1,191 @@
+import:
+  lib("racket/gui/easy.rkt")
+  rhombus/draw:
+    expose:
+      Color
+      Font
+  rhombus/draw/private/symbol_map.symbol_map_annot
+  "obs.rhm":
+    expose:
+      Obs
+      ObsOrValue
+  "view.rhm".View
+  "view.rhm"!private.BaseWindowView
+  "view-help.rkt"
+  "window-child-help.rkt".mix_window_child_callbacks
+  "window-callback.rhm".WindowCallbacks
+  "label-style.rhm".check_label_styles
+
+export:
+  Table
+  ListChoice
+
+class Table(private _at_selection :: Obs):
+  extends BaseWindowView
+
+  constructor (columns :: List.of(View.LabelString),
+               entries :: ObsOrValue.of(Array),
+               ~action: callback :: (Table.Event, Array, Table.Selection) -> ~any = values,
+               ~choice_to_row: entry_to_row :: Any -> Array.now_of(View.LabelString) = values,
+               ~selection: selection :: ObsOrValue.of(maybe(Table.Selection)) = #false,
+               ~label: label :: ObsOrValue.of(View.LabelString) = "",
+               ~enable: enable :: ObsOrValue.of(Boolean) = #true,
+               ~style: style :: List.of(Table.StyleSymbol)
+                          = [#'single, #'column_headers, #'clickable_headers, #'reorderable_headers],
+               ~font : font :: Font = View.normal_control_font,
+               ~margin: margin :: ObsOrValue.of(View.Margin) = [2, 2],
+               ~min_size: min_size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~stretch: stretch :: ObsOrValue.of(View.Stretch) = [#true, #true],
+               ~column_widths: column_widths :: ObsOrValue.of(List.of(Table.CellWidth))
+                                 = [],
+               ~window_callbacks: wcb :: maybe(WindowCallbacks) = #false):
+    let at_selection = obs.reflect_obs(selection, "at_selection")
+    #{view-help}.#{mix-wrap}(
+      fun (mixin):
+        let mixin = mix_window_child_callbacks(mixin, wcb)
+        super(easy.table(obs.unwrap_list(columns, values),
+                         obs.unwrap(entries),
+                         fun (a, row, sel):
+                           let sel = unconvert_selection(sel)
+                           at_selection.value := sel
+                           callback(a, row, sel)
+                           #void,
+                         ~#{entry->row}: entry_to_row,
+                         ~selection: obs.unwrap_convert(at_selection, convert_selection),
+                         ~label: obs.unwrap(label),
+                         ~#{enabled?}: obs.unwrap(enable),
+                         ~style: obs.unwrap_list(style, convert_style, make_check_table_styles(#'Table)),
+                         ~font: obs.unwrap_convert(font, fun (f): f && (f :~ Font).handle),
+                         ~margin: obs.unwrap_list(margin, values),
+                         ~#{min-size}: obs.unwrap_list(min_size, values),
+                         ~stretch: obs.unwrap_list(stretch, values),
+                         ~#{column-widths}: obs.unwrap_list(column_widths, fun (v): obs.unwrap_list(v, values)),
+                         ~mixin: mixin))
+          <| (at_selection)
+    )
+
+  property at_selection :: Obs:
+    _at_selection.map(values)
+
+  export:
+    Selection
+    CellWidth
+    StyleSymbol
+    Event
+
+  annot.macro 'Selection':
+    'maybe(Int || List.of(Int))'
+
+  fun convert_selection(v):
+    match v
+    | PairList[i, ...]: [i, ...]
+    | ~else: v
+
+  fun unconvert_selection(v):
+    match v
+    | [i, ...]: PairList[i, ...]
+    | ~else: v
+
+  annot.macro 'CellWidth':
+    '[Int, View.SizeInt] || [Int, View.SizeInt, View.SizeInt, View.SizeInt]'
+
+  symbol_map_annot StyleSymbol convert_style
+  | single
+  | multiple
+  | extended
+  | variable_columns = #{variable-columns}
+  | column_headers = #{column-headers}
+  | clickable_headers = #{clickable-headers}
+  | reorderable_headers = #{reorderable-headers}
+  | horizontal_label = #{horizontal-label}
+  | vertical_label = #{vertical-label}
+
+  symbol_map_annot Event convert_action unconvert_action
+  | select
+  | double_click = dclick
+  | column
+
+class ListChoice(private _at_selection :: Obs):
+  extends BaseWindowView
+
+  constructor (choices :: ObsOrValue.of(List),
+               ~action: callback :: Any -> ~any = values,
+               ~choice_to_label: choice_to_label :: Any -> Any = values,
+               ~choice_equal: choice_equal :: Function.of_arity(2) = fun (a, b): a == b,
+               ~selection: selection :: ObsOrValue.of(Any) = #false,
+               ~label: label :: ObsOrValue.of(View.LabelString) = "",
+               ~enable: enable :: ObsOrValue.of(Boolean) = #true,
+               ~style: style :: List.of(ListChoice.StyleSymbol) = [],
+               ~font : font :: Font = View.normal_control_font,
+               ~margin: margin :: ObsOrValue.of(View.Margin) = [2, 2],
+               ~min_size: min_size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~stretch: stretch :: ObsOrValue.of(View.Stretch) = [#true, #false],
+               ~window_callbacks: wcb :: maybe(WindowCallbacks) = #false):
+    let at_selection = obs.reflect_obs(selection, "at_selection")
+    #{view-help}.#{mix-wrap}(
+      fun (mixin):
+        let mixin = mix_window_child_callbacks(mixin, wcb)
+        super(easy.table(PairList["value"],
+                         obs.unwrap_convert(choices, fun ([v, ...]): Array(v, ...)),
+                         fun (a, choices, sel):
+                           let sel = unconvert_selection(choices, sel)
+                           at_selection.value := sel
+                           callback(sel)
+                           #void,
+                         ~#{entry->row}: fun (v): Array(choice_to_label(v)),
+                         ~selection: obs.unwrap_convert(at_selection, fun (sel): convert_selection(choices, choice_equal, sel)),
+                         ~label: obs.unwrap(label),
+                         ~#{enabled?}: obs.unwrap(enable),
+                         ~style: obs.unwrap_convert(style, fun (l):
+                                                             Pair.cons(#'single,
+                                                                       obs.unwrap_list(l, convert_style,
+                                                                                       make_check_list_styles(#'ListChoice)))),
+                         ~font: font.handle,
+                         ~margin: obs.unwrap_list(margin, values),
+                         ~#{min-size}: obs.unwrap_list(min_size, values),
+                         ~stretch: obs.unwrap_list(stretch, values),
+                         ~mixin: mixin))
+          <| (at_selection)
+    )
+
+  property at_selection :: Obs:
+    _at_selection.map(values)
+
+  export:
+    StyleSymbol
+
+  fun unconvert_selection(choices, i):
+    fun ref(choices, i :: Int):
+      match choices
+      | choices :: Array: (i < choices.length()) && choices[i]
+      | choices :: Obs: ref(choices.value, i)
+    i && ref(choices,  i)
+
+  fun convert_selection(choices, choice_equal, v):
+    match choices
+    | choices :: List: choices.index(v, choice_equal)
+    | choices :: Obs: convert_selection(choices.value, choice_equal, v)
+
+  symbol_map_annot StyleSymbol convert_style
+  | horizontal_label = #{horizontal-label}
+  | vertical_label = #{vertical-label}
+
+fun make_check_table_styles(who):
+  fun (styles :~ List):
+    when 1 != ((if #'single in styles | 1 | 0)
+                 + (if #'multiple in styles | 1 | 0)
+                 + (if #'extended in styles | 1 | 0))
+    | unless (#'single in styles
+                || #'multiple in styles
+                || #'extended in styles)
+      | error(~who: who,
+              "style list must include `#'single`, `#'multiple`, or `#'extended`",
+              error.val(~label: "style list", styles))
+      error(~who: who,
+            "style list must include only 1 of `#'single`, `#'multiple`, or `#'extended`",
+            error.val(~label: "style list", styles))
+    check_label_styles(who, styles)
+
+fun make_check_list_styles(who):
+  fun (styles :~ List):
+    check_label_styles(who, styles)

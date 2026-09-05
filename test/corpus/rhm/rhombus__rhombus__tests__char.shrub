@@ -1,0 +1,201 @@
+import:
+  rhombus/version_meta
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    Char.to_int(ch) ~method
+    Char.from_int(int)
+    Char.utf8_length(ch) ~method
+    Char.is_alphabetic(ch) ~method
+    Char.is_lowercase(ch) ~method
+    Char.is_uppercase(ch) ~method
+    Char.is_titlecase(ch) ~method
+    Char.is_numeric(ch) ~method
+    Char.is_symbolic(ch) ~method
+    Char.is_punctuation(ch) ~method
+    Char.is_graphic(ch) ~method
+    Char.is_whitespace(ch) ~method
+    Char.is_blank(ch) ~method
+    Char.is_extended_pictographic(ch) ~method
+    Char.general_category(ch) ~method
+    Char.grapheme_break_property(ch) ~method
+    Char.upcase(ch) ~method
+    Char.downcase(ch) ~method
+    Char.foldcase(ch) ~method
+    Char.titlecase(ch) ~method
+    Char.grapheme_step(ch, state) ~method
+
+check:
+  Char"h" :: Char ~is Char"h"
+  Char.from_int(104) ~is Char"h"
+
+block:
+  use_static
+  check:
+    Char"h".to_int() ~is 104
+    Char"λ".utf8_length() ~is 2
+    Char"λ".is_alphabetic() ~is #true
+    Char"a".is_lowercase() ~is #true
+    Char"a".is_uppercase() ~is #false
+    Char"a".is_titlecase() ~is #false
+    Char"a".is_numeric() ~is #false
+    Char"+".is_symbolic() ~is #true
+    Char"!".is_punctuation() ~is #true
+    Char"!".is_graphic() ~is #true
+    Char"!".is_blank() ~is #false
+    Char"!".is_whitespace() ~is #false
+    Char"!".is_extended_pictographic() ~is #false
+    Char"a".general_category() ~is #'ll
+    Char"a".grapheme_break_property() ~is #'Other
+    Char"a".upcase() ~is Char"A"
+    Char"A".downcase() ~is Char"a"
+    Char"A".foldcase() ~is Char"a"
+    Char"a".titlecase() ~is Char"A"
+    Char"a".grapheme_step(0) ~is values(#false, 1)
+
+check:
+  dynamic(Char"h").to_int() ~is 104
+  dynamic(Char"λ").utf8_length() ~is 2
+  dynamic(Char"λ").is_alphabetic() ~is #true
+  dynamic(Char"a").is_lowercase() ~is #true
+  dynamic(Char"a").is_uppercase() ~is #false
+  dynamic(Char"a").is_titlecase() ~is #false
+  dynamic(Char"a").is_numeric() ~is #false
+  dynamic(Char"+").is_symbolic() ~is #true
+  dynamic(Char"!").is_punctuation() ~is #true
+  dynamic(Char"!").is_graphic() ~is #true
+  dynamic(Char"!").is_blank() ~is #false
+  dynamic(Char"!").is_whitespace() ~is #false
+  dynamic(Char"!").is_extended_pictographic() ~is #false
+  dynamic(Char"a").general_category() ~is #'ll
+  dynamic(Char"a").grapheme_break_property() ~is #'Other
+  dynamic(Char"a").upcase() ~is Char"A"
+  dynamic(Char"A").downcase() ~is Char"a"
+  dynamic(Char"A").foldcase() ~is Char"a"
+  dynamic(Char"a").titlecase() ~is Char"A"
+  dynamic(Char"a").grapheme_step(0) ~is values(#false, 1)
+
+block:
+  use_static
+  check Char.from_int(10).to_int() ~is 10
+  check (Char.from_int(10) :: CharCI).to_int() ~is 10
+
+check:
+  ~eval
+  Char"a" :: CharCI
+  ~throws "not allowed in a dynamic context"
+
+check:
+  ~eval
+  def c :: CharCI = Char"a"
+  ~throws "not allowed in a dynamic context"
+
+block:
+  use_static
+  let a :: CharCI = Char"a"
+  let A :: CharCI = Char"A"
+  let b :: CharCI = Char"b"
+  let B :: CharCI = Char"B"
+  check:
+    a < B ~is #true
+    b < A ~is #false
+    a <= B ~is #true
+    a <= A ~is #true
+    b <= A ~is #false
+    a >= B ~is #false
+    a >= A ~is #true
+    b >= A ~is #true
+    a > B ~is #false
+    a > A ~is #false
+    b > A ~is #true
+    a compares_equal a ~is #true
+    a compares_equal A ~is #true
+    a compares_equal B ~is #false
+    a compares_unequal a ~is #false
+    a compares_unequal A ~is #false
+    a compares_unequal B ~is #true
+
+block:
+  fun matcher(char):
+    match char
+    | Char"a" || Char"b" || Char"c": #true
+    | ~else: #false
+  check matcher(Char"a") ~is #true
+  check matcher(Char"b") ~is #true
+  check matcher(Char"c") ~is #true
+  check matcher(Char"z") ~is #false
+  check matcher(Byte#"a") ~is #false
+  check matcher(97) ~is #false
+
+check:
+  to_string(Char"a") ~is "a"
+  to_string(Char"λ") ~is "λ"
+  to_string(Char"\n") ~is "\n"
+
+check:
+  repr(Char"a") ~is "Char\"a\""
+  repr(Char"λ") ~is "Char\"λ\""
+  repr(Char"\n") ~is "Char\"\\n\""
+
+block:
+  import:
+    rhombus/meta open
+  expr.macro 'source $expr':
+    '#%literal $(expr.to_source_string())'
+  check source Char"a" ~is "Char\"a\""
+  check source Char"λ" ~is "Char\"λ\""
+  check source Char"\n" ~is "Char\"\\n\""
+
+check:
+  ~eval
+  Char"too long"
+  ~throws values(
+    "expected a literal single-character string",
+    "Char\"too long\"",
+  )
+
+check:
+  ~eval
+  Char"a" matches Char"too long"
+  ~throws values(
+    "expected a literal single-character string",
+    "Char\"too long\"",
+  )
+
+version_meta.when_racket_at_least "8.14.0.7":
+  block:
+    let annot = @str{Int.in(@repr(0x0) ..= @repr(0x10FFFF)) && !Int.in(@repr(0xD800) ..= @repr(0xDFFF))}
+    check:
+      Char.from_int(0x0) ~is Char"\0"
+      Char.from_int(0x10FFFF) ~is Char"\U10FFFF"
+      Char.from_int("oops") ~throws values(
+        "Char.from_int: " ++ error.annot_msg(),
+        error.annot(annot).msg,
+        error.val("oops").msg,
+      )
+      Char.from_int(0.0) ~throws values(
+        "Char.from_int: " ++ error.annot_msg(),
+        error.annot(annot).msg,
+        error.val(0.0).msg,
+      )
+      Char.from_int(-0x1) ~throws values(
+        "Char.from_int: " ++ error.annot_msg(),
+        error.annot(annot).msg,
+        error.val(-0x1).msg,
+      )
+      Char.from_int(0x110000) ~throws values(
+        "Char.from_int: " ++ error.annot_msg(),
+        error.annot(annot).msg,
+        error.val(0x110000).msg,
+      )
+      Char.from_int(0xD800) ~throws values(
+        "Char.from_int: " ++ error.annot_msg(),
+        error.annot(annot).msg,
+        error.val(0xD800).msg,
+      )
+      Char.from_int(0xDFFF) ~throws values(
+        "Char.from_int: " ++ error.annot_msg(),
+        error.annot(annot).msg,
+        error.val(0xDFFF).msg,
+      )

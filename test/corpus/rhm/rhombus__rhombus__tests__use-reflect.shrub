@@ -1,0 +1,12 @@
+~reflect_id content
+
+check:
+  match content
+  | '$_
+     ...
+     check:
+       match content
+       | $_
+       $_':
+      "yes"
+  ~is "yes"

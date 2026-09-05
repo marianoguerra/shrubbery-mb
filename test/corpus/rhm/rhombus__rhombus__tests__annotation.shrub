@@ -1,0 +1,413 @@
+
+check:
+  1 is_a Int ~is #true
+  1 !is_a Int ~is #false
+  1 !is_a Flonum ~is #true
+  1 is_a !Int ~is #false
+  1 is_a !Flonum ~is #true
+
+// check for sensible precedence of `is_a` mixed with expression
+check:
+  "a" is_a String && #true ~is #true
+  "a" is_a String +& "ok" ~is "#trueok"
+
+// check for different precedence of `::`, especially intended
+// for bindings
+check:
+  ~eval
+  "a" :: String && #true
+  ~throws  "literal not allowed as an annotation"
+check:
+  ("a" :: String) && #true ~is #true
+  (block:
+     def x :: String || Int = "ok"
+     x) ~is "ok"
+  (block:
+     def x :: String || Int = 5
+     x) ~is 5
+
+check:
+  ~eval
+  "a" is_a PosInt . count()
+  ~throws "operators with inconsistently declared precedence"
+
+check:
+  0 :: converting(fun (i :: Int when i mod 3 == 0): i)
+  1 :: converting(fun (i :: Int unless i mod 3 == 0): i)
+  [1, 2, 3] :: converting(fun ([x, ...] when math.sum(x, ...) == 6): #true)
+  ~completes
+
+check:
+  0 is_a converting(fun (i :: Int when i mod 3 == 0): i)
+  1 is_a converting(fun (i :: Int unless i mod 3 == 0): i)
+  [1, 2, 3] is_a converting(fun ([x, ...] when math.sum(x, ...) == 6): #true)
+  ~completes
+
+block:
+  fun is_multiple_of(n):
+    fun (v):
+      v is_a Int && v mod n == 0
+  check:
+    0 ~is_a satisfying(is_multiple_of(1))
+    1 ~is_a satisfying(is_multiple_of(1))
+    15 ~is_a satisfying(is_multiple_of(3)) && satisfying(is_multiple_of(5))
+
+check:
+  #false is_a satisfying("not a function")
+  ~throws values(error.annot_msg(), error.annot("Function.of_arity(1)").msg)
+
+check:
+  #false is_a satisfying(fun (): #false)
+  ~throws values(error.annot_msg(), error.annot("Function.of_arity(1)").msg)
+
+block:
+  check:
+    def [_] :: List = [1]
+    ~completes
+  check:
+    def [_, _, _] :: List = [1]
+    "oops"
+    ~throws values(
+      "value does not satisfy annotation",
+      "[1]",
+      "List && matching(List[_, _, _])",
+    )
+
+check:
+  def [_, _, _] :: satisfying(fun (_): error("oops")) = [1]
+  "oops"
+  ~throws "oops"
+
+block:
+  import:
+    rhombus/meta open
+  annot.macro 'one_to_two':
+    ~all_stx: self
+    '(converting(fun ([x]): [x, x]))'.relocate_span([self])
+  check:
+    def [_, _] :: one_to_two = [1]
+    ~completes
+  check:
+    def [_, _] :: one_to_two = [1, 2]
+    "oops"
+    ~throws values(
+      "value does not satisfy annotation",
+      "[1, 2]",
+      "one_to_two && matching(List[_, _])",
+    )
+  check:
+    def [_, _, _] :: one_to_two = [1]
+    "oops"
+    ~throws values(
+      "value does not satisfy annotation",
+      "[1]",
+      "one_to_two && matching(List[_, _, _])",
+    )
+
+check:
+  def [_, _, _] :: converting(fun (_): error("oops")) = [1]
+  "oops"
+  ~throws "oops"
+
+check:
+  "x" :: (False || ((converting(fun (v): [v]) && True) || False))
+  ~is ["x"]
+
+check:
+  "x" :: !converting(fun (_ :: !String): error("oops"))
+  ~is "x"
+
+check:
+  #false :: False ~is #false
+  "x" :: True ~is "x"
+  "x" :: False ~throws "does not satisfy"
+  #false :: True ~throws "does not satisfy"
+
+check:
+  #true :: Any ~is #true
+  #true :: Any.of(#true, #false) ~is #true
+  #true :: Any.to_boolean ~is #true
+  #true :: Never ~throws "does not satisfy"
+  #false :: Any ~is #false
+  #false :: Any.of(#true, #false) ~is #false
+  #false :: Any.to_boolean ~is #false
+  #false :: Never ~throws "does not satisfy"
+  "x" :: Any ~is "x"
+  "x" :: Any.of(#true, #false) ~throws "does not satisfy"
+  "x" :: Any.to_boolean ~is #true
+  "x" :: Never ~throws "does not satisfy"
+
+block:
+  namespace ns:
+    export:
+      Int
+      Array
+      Posn
+    class Posn(x, y)
+  check "a" :: ns.Int ~throws "ns.Int"
+  check "a" :: ns.Array ~throws "ns.Array"
+  check "a" :: ns.Array.of_length(10) ~throws "ns.Array.of_length(10)"
+  check "a" :: ns.Posn ~throws "ns.Posn"
+
+block:
+  use_static
+  let [x, ...] = [[], [2, 3], [4, 5, 6]]
+  check [x is_a List, ...] ~is [#true, #true, #true]
+  check [x is_a NonemptyList, ...] ~is [#false, #true, #true]
+  check [x is_a Int, ...] ~is [#false, #false, #false]
+  check [x !is_a List, ...] ~is [#false, #false, #false]
+  check [x !is_a NonemptyList, ...] ~is [#true, #false, #false]
+  check [x :: List, ...] ~is [[], [2, 3], [4, 5, 6]]
+  check [(x :: List).length(), ...] ~is [0, 2, 3]
+  check [x :~ List, ...] ~is [[], [2, 3], [4, 5, 6]]
+  check [(x :~ List).length(), ...] ~is [0, 2, 3]
+
+check:
+  fun f(x :: Any.of(block: println("now"); 1),
+        ...):
+    #'ok
+  f(1, 1)
+  f()
+  f(1, 1, 1, 1, 1)
+  ~prints "now\nnow\nnow\n"
+
+block:
+  fun f(x :: Real.in(0, block:
+                          println("now")
+                          10),
+        ...):
+    "ok"
+  check f() ~prints "now\n"
+  check f(0) ~prints "now\n"
+  check f(0, 1) ~prints "now\n"
+
+block:
+  fun f(x :: satisfying(block:
+                          println("now")
+                          fun (x): #true),
+        ...):
+    "ok"
+  check f() ~prints "now\n"
+  check f(0) ~prints "now\n"
+  check f(0, 1) ~prints "now\n"
+
+
+check:
+  use_static
+  class Posn(x, y)
+  fun access_x(p :: converting(fun(x :: Posn) :: Posn: x) && satisfying(fun(y :: Posn): #true)):
+    p.x
+  ~completes
+
+check:
+  use_static
+  class Posn(x, y)
+  fun access_x(p :: Posn && converting(fun(x :: Posn) :: Posn: x) && satisfying(fun(y :: Posn): #true)):
+    p.x
+  ~completes
+
+// `::`/`:~` should `&&` static infos for predicate annotations
+block:
+  use_static
+  check:
+    ("a" :~ Int).length() ~is 1
+    ("a" :: Int).length() ~throws values(
+      "::: " ++ error.annot_msg(),
+      error.annot("Int").msg,
+      error.val("a").msg,
+    )
+  check:
+    ("a" :~ Int) < dynamic(2) ~throws values(
+      ".<: " ++ error.annot_msg(),
+      error.annot("Real").msg,
+      error.val("a").msg,
+    )
+    ("a" :: Int) < dynamic(2) ~throws values(
+      "::: " ++ error.annot_msg(),
+      error.annot("Int").msg,
+      error.val("a").msg,
+    )
+
+block:
+  use_static
+  class NoLength()
+  check:
+    ("a" :~ NoLength).length() ~is 1
+    ("a" :: NoLength).length() ~throws values(
+      "::: " ++ error.annot_msg(),
+      error.annot("NoLength").msg,
+      error.val("a").msg,
+    )
+  class HasLength():
+    method length():
+      "oops"
+  check:
+    ("a" :~ HasLength).length() ~throws values(
+      "HasLength.length: not an instance for method call",
+      error.val("a").msg,
+    )
+    ("a" :: HasLength).length() ~throws values(
+      "::: " ++ error.annot_msg(),
+      error.annot("HasLength").msg,
+      error.val("a").msg,
+    )
+
+block:
+  use_static
+  let [str, ...] = ["a", "ab", "abc"]
+  check:
+    [(str :~ Int).length(), ...] ~is [1, 2, 3]
+    [(str :: Int).length(), ...] ~throws values(
+      "::: " ++ error.annot_msg(),
+      error.annot("Int").msg,
+      error.val("a").msg,
+    )
+  check:
+    [(str :~ Int) < dynamic(2), ...] ~throws values(
+      ".<: " ++ error.annot_msg(),
+      error.annot("Real").msg,
+      error.val("a").msg,
+    )
+    [(str :: Int) < dynamic(2), ...] ~throws values(
+      "::: " ++ error.annot_msg(),
+      error.annot("Int").msg,
+      error.val("a").msg,
+    )
+
+block:
+  use_static
+  let [str, ...] = ["a", "ab", "abc"]
+  class NoLength()
+  check:
+    [(str :~ NoLength).length(), ...] ~is [1, 2, 3]
+    [(str :: NoLength).length(), ...] ~throws values(
+      "::: " ++ error.annot_msg(),
+      error.annot("NoLength").msg,
+      error.val("a").msg,
+    )
+  class HasLength():
+    method length():
+      "oops"
+  check:
+    [(str :~ HasLength).length(), ...] ~throws values(
+      "HasLength.length: not an instance for method call",
+      error.val("a").msg,
+    )
+    [(str :: HasLength).length(), ...] ~throws values(
+      "::: " ++ error.annot_msg(),
+      error.annot("HasLength").msg,
+      error.val("a").msg,
+    )
+
+check:
+  ~eval
+  use_static
+  class HasWeirdLength():
+    property length:
+      "oops"
+  (HasWeirdLength() :~ String).length
+  ~throws "method must be called (based on static information)"
+
+check:
+  ~eval
+  use_static
+  class HasWeirdLength():
+    property length:
+      "oops"
+  block:
+    let [x, ...] = [HasWeirdLength(), HasWeirdLength(), HasWeirdLength()]
+    [(x :~ String).length, ...]
+  ~throws "method must be called (based on static information)"
+
+// `::`/`:~` should *not* `&&` static infos for converter annotations
+check:
+  ~eval
+  use_static
+  ("a" :: converting(fun (x) :~ Int: x)).length()
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  block:
+    let [str, ...] = ["a", "ab", "abc"]
+    [(str :: converting(fun (x) :~ Int: x)).length(), ...]
+  ~throws "no such field or method (based on static information)"
+
+// but static infos should be propagated to inner binding
+block:
+  use_static
+  check:
+    "a" :: converting(fun (x): x.length()) ~is 1
+
+block:
+  use_static
+  let [str, ...] = ["a", "ab", "abc"]
+  check:
+    [str :: converting(fun (x): x.length()), ...] ~is [1, 2, 3]
+
+// check evaluation order in `::`/`is_a`
+check:
+  error("left") :: satisfying(error("right"))
+  ~throws "left"
+
+check:
+  error("left") is_a satisfying(error("right"))
+  ~throws "left"
+
+check:
+  error("left") :: converting(fun (x :: satisfying(error("right"))): x)
+  ~throws "left"
+
+check:
+  error("left") is_a converting(fun (x :: satisfying(error("right"))): x)
+  ~throws "left"
+
+block:
+  use_static
+  check ([] || (0 :: Never)).length() ~is 0
+  check ((0 :: Never) || []).length() ~throws error.annot_msg()
+  check ((dynamic([]) :: maybe(List))!! || error("oops")).length() ~is 0
+  check ((dynamic([]) :: maybe(List))!! || throw #'bye).length() ~is 0
+  check (fun (x :: (List || Never)): x.length()) ~completes
+  check (fun (x :: (List && Never)): x.length()) ~completes // analogous to `List && String`
+  check 10 is_a (Int && Never) ~is #false
+
+check:
+  ~eval
+  use_static
+  fun (x :: Never): x.length()
+  ~throws "no such field or method"
+
+// check precedence of boolean operators
+check:
+  1 is_a (PosInt || !NegInt && String) ~is #true
+  "1" is_a (PosInt || !NegInt && String) ~is #true
+
+// check input static info for `Any.to_boolean`
+block:
+  use_static
+  check:
+    [1, 2, 3] :: matching(_ :: Any.to_boolean) ~is [1, 2, 3]
+    PairList[1, 2, 3] :: matching(_ :: Any.to_boolean) ~is PairList[1, 2, 3]
+  check:
+    ([1, 2, 3] :: matching(_ :: Any.to_boolean)).length() ~is 3
+    (PairList[1, 2, 3] :: matching(_ :: Any.to_boolean)).length() ~is 3
+
+expr.macro 'is_always_satisfied $(ann :: annot_meta.Parsed) $()':
+  '$(annot_meta.is_always_satisfied(ann))'
+
+check:
+  is_always_satisfied Any ~is #true
+  is_always_satisfied matching(_) ~is #true
+  is_always_satisfied matching(x) ~is #true
+  is_always_satisfied matching(_ :~ Int) ~is #true
+  is_always_satisfied assuming(Int) ~is #true
+  is_always_satisfied assuming(List.of(Int)) ~is #true
+
+check:
+  #'oops :: Any.of(#'a, #'b, #'c)
+  ~throws values(
+    error.annot("Any.of(#'a, #'b, #'c)").msg,
+    error.val(#'oops).msg,
+  )

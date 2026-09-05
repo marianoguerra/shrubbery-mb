@@ -1,0 +1,2356 @@
+identifier	1	0	"let"	-
+whitespace	1	3	" "	-
+opener	1	4	"("	-
+identifier	1	5	"x"	-
+whitespace	1	6	" "	-
+operator	1	7	"="	-
+whitespace	1	8	" "	-
+literal	1	9	"1"	1
+comma-operator	1	10	","	-
+whitespace	1	11	"\u{a}"	-
+whitespace	2	0	"     "	-
+identifier	2	5	"y"	-
+whitespace	2	6	" "	-
+operator	2	7	"="	-
+whitespace	2	8	" "	-
+literal	2	9	"2"	2
+closer	2	10	")"	-
+block-operator	2	11	":"	-
+whitespace	2	12	"\u{a}"	-
+whitespace	3	0	"  "	-
+identifier	3	2	"x"	-
+operator	3	3	"+"	-
+identifier	3	4	"y"	-
+whitespace	3	5	"\u{a}"	-
+whitespace	4	0	"\u{a}"	-
+identifier	5	0	"let"	-
+whitespace	5	3	" "	-
+opener	5	4	"("	-
+identifier	5	5	"x"	-
+whitespace	5	6	" "	-
+operator	5	7	"="	-
+whitespace	5	8	" "	-
+literal	5	9	"1"	1
+comma-operator	5	10	","	-
+whitespace	5	11	" "	-
+identifier	5	12	"y"	-
+whitespace	5	13	" "	-
+operator	5	14	"="	-
+whitespace	5	15	" "	-
+literal	5	16	"2"	2
+closer	5	17	")"	-
+block-operator	5	18	":"	-
+whitespace	5	19	" "	-
+identifier	5	20	"x"	-
+operator	5	21	"+"	-
+identifier	5	22	"y"	-
+whitespace	5	23	"\u{a}"	-
+whitespace	6	0	"\u{a}"	-
+identifier	7	0	"define"	-
+whitespace	7	6	" "	-
+identifier	7	7	"pi"	-
+block-operator	7	9	":"	-
+whitespace	7	10	" "	-
+literal	7	11	"3.14"	#f64:40091eb851eb851f
+whitespace	7	15	"\u{a}"	-
+whitespace	8	0	"\u{a}"	-
+literal	9	0	"1/2"	1/2
+whitespace	9	3	"\u{a}"	-
+literal	10	0	"1"	1
+operator	10	1	"/"	-
+literal	10	2	"2.0"	#f64:4000000000000000
+whitespace	10	5	"\u{a}"	-
+literal	11	0	"1"	1
+operator	11	1	"/"	-
+literal	11	2	"0000"	0
+whitespace	11	6	"\u{a}"	-
+opener	12	0	"'"	-
+literal	12	1	"1"	1
+whitespace	12	2	" "	-
+operator	12	3	"+"	-
+whitespace	12	4	" "	-
+literal	12	5	"-2"	-2
+closer	12	7	"'"	-
+whitespace	12	8	"\u{a}"	-
+whitespace	13	0	"\u{a}"	-
+identifier	14	0	"define"	-
+whitespace	14	6	" "	-
+identifier	14	7	"fib"	-
+opener	14	10	"("	-
+identifier	14	11	"n"	-
+closer	14	12	")"	-
+block-operator	14	13	":"	-
+whitespace	14	14	"\u{a}"	-
+whitespace	15	0	"  "	-
+identifier	15	2	"log_error"	-
+opener	15	11	"("	-
+literal	15	12	"\"fib called\""	"fib called"
+closer	15	24	")"	-
+whitespace	15	25	"\u{a}"	-
+whitespace	16	0	"  "	-
+identifier	16	2	"cond"	-
+whitespace	16	6	" "	-
+bar-operator	16	7.5	"\|"	-
+whitespace	16	8	" "	-
+identifier	16	9	"n"	-
+whitespace	16	10	" "	-
+operator	16	11	"=="	-
+whitespace	16	13	" "	-
+literal	16	14	"0"	0
+block-operator	16	15	":"	-
+whitespace	16	16	" "	-
+literal	16	17	"0"	0
+whitespace	16	18	"\u{a}"	-
+whitespace	17	0	"       "	-
+bar-operator	17	7.5	"\|"	-
+whitespace	17	8	" "	-
+identifier	17	9	"n"	-
+whitespace	17	10	" "	-
+operator	17	11	"=="	-
+whitespace	17	13	" "	-
+literal	17	14	"1"	1
+block-operator	17	15	":"	-
+whitespace	17	16	" "	-
+literal	17	17	"1"	1
+whitespace	17	18	"\u{a}"	-
+whitespace	18	0	"       "	-
+bar-operator	18	7.5	"\|"	-
+whitespace	18	8	" "	-
+identifier	18	9	"else"	-
+block-operator	18	13	":"	-
+whitespace	18	14	" "	-
+identifier	18	15	"fib"	-
+opener	18	18	"("	-
+identifier	18	19	"n"	-
+operator	18	20	"-"	-
+literal	18	21	"1"	1
+closer	18	22	")"	-
+whitespace	18	23	" "	-
+operator	18	24	"+"	-
+whitespace	18	25	" "	-
+identifier	18	26	"fib"	-
+opener	18	29	"("	-
+identifier	18	30	"n"	-
+operator	18	31	"-"	-
+literal	18	32	"2"	2
+closer	18	33	")"	-
+whitespace	18	34	"\u{a}"	-
+whitespace	19	0	"\u{a}"	-
+identifier	20	0	"define"	-
+whitespace	20	6	"\u{a}"	-
+bar-operator	21	0.5	"\|"	-
+whitespace	21	1	" "	-
+identifier	21	2	"fib"	-
+opener	21	5	"("	-
+literal	21	6	"0"	0
+closer	21	7	")"	-
+block-operator	21	8	":"	-
+whitespace	21	9	" "	-
+literal	21	10	"0"	0
+whitespace	21	11	"\u{a}"	-
+bar-operator	22	0.5	"\|"	-
+whitespace	22	1	" "	-
+identifier	22	2	"fib"	-
+opener	22	5	"("	-
+literal	22	6	"1"	1
+closer	22	7	")"	-
+block-operator	22	8	":"	-
+whitespace	22	9	" "	-
+literal	22	10	"1"	1
+whitespace	22	11	"\u{a}"	-
+bar-operator	23	0.5	"\|"	-
+whitespace	23	1	" "	-
+identifier	23	2	"fib"	-
+opener	23	5	"("	-
+identifier	23	6	"n"	-
+closer	23	7	")"	-
+block-operator	23	8	":"	-
+whitespace	23	9	" "	-
+identifier	23	10	"fib"	-
+opener	23	13	"("	-
+identifier	23	14	"n"	-
+operator	23	15	"-"	-
+literal	23	16	"1"	1
+closer	23	17	")"	-
+whitespace	23	18	" "	-
+operator	23	19	"+"	-
+whitespace	23	20	" "	-
+identifier	23	21	"fib"	-
+opener	23	24	"("	-
+identifier	23	25	"n"	-
+operator	23	26	"-"	-
+literal	23	27	"2"	2
+closer	23	28	")"	-
+whitespace	23	29	"\u{a}"	-
+whitespace	24	0	"\u{a}"	-
+identifier	25	0	"define"	-
+whitespace	25	6	"\u{a}"	-
+bar-operator	26	0.5	"\|"	-
+whitespace	26	1	" "	-
+identifier	26	2	"fib"	-
+opener	26	5	"("	-
+literal	26	6	"0"	0
+closer	26	7	")"	-
+block-operator	26	8	":"	-
+whitespace	26	9	" "	-
+literal	26	10	"0"	0
+whitespace	26	11	"\u{a}"	-
+bar-operator	27	0.5	"\|"	-
+whitespace	27	1	" "	-
+identifier	27	2	"fib"	-
+opener	27	5	"("	-
+literal	27	6	"1"	1
+closer	27	7	")"	-
+block-operator	27	8	":"	-
+whitespace	27	9	" "	-
+literal	27	10	"1"	1
+whitespace	27	11	"\u{a}"	-
+bar-operator	28	0.5	"\|"	-
+whitespace	28	1	" "	-
+identifier	28	2	"fib"	-
+opener	28	5	"("	-
+identifier	28	6	"n"	-
+closer	28	7	")"	-
+block-operator	28	8	":"	-
+whitespace	28	9	" "	-
+identifier	28	10	"fib"	-
+opener	28	13	"("	-
+identifier	28	14	"n"	-
+operator	28	15	"-"	-
+literal	28	16	"1"	1
+closer	28	17	")"	-
+whitespace	28	18	"\u{a}"	-
+whitespace	29	0	"            "	-
+operator	29	12	"+"	-
+whitespace	29	13	" "	-
+identifier	29	14	"fib"	-
+opener	29	17	"("	-
+identifier	29	18	"n"	-
+operator	29	19	"-"	-
+literal	29	20	"2"	2
+closer	29	21	")"	-
+whitespace	29	22	"\u{a}"	-
+whitespace	30	0	"\u{a}"	-
+identifier	31	0	"define"	-
+whitespace	31	6	" "	-
+identifier	31	7	"fib"	-
+block-operator	31	10	":"	-
+whitespace	31	11	"\u{a}"	-
+whitespace	32	0	"  "	-
+identifier	32	2	"lambda"	-
+whitespace	32	8	" "	-
+opener	32	9	"("	-
+identifier	32	10	"n"	-
+closer	32	11	")"	-
+block-operator	32	12	":"	-
+whitespace	32	13	"\u{a}"	-
+whitespace	33	0	"    "	-
+identifier	33	4	"cond"	-
+whitespace	33	8	"\u{a}"	-
+whitespace	34	0	"    "	-
+bar-operator	34	4.5	"\|"	-
+whitespace	34	5	" "	-
+identifier	34	6	"n"	-
+whitespace	34	7	" "	-
+operator	34	8	"=="	-
+whitespace	34	10	" "	-
+literal	34	11	"0"	0
+block-operator	34	12	":"	-
+whitespace	34	13	" "	-
+literal	34	14	"0"	0
+whitespace	34	15	"\u{a}"	-
+whitespace	35	0	"    "	-
+bar-operator	35	4.5	"\|"	-
+whitespace	35	5	" "	-
+identifier	35	6	"n"	-
+whitespace	35	7	" "	-
+operator	35	8	"=="	-
+whitespace	35	10	" "	-
+literal	35	11	"1"	1
+block-operator	35	12	":"	-
+whitespace	35	13	" "	-
+literal	35	14	"1"	1
+whitespace	35	15	"\u{a}"	-
+whitespace	36	0	"    "	-
+bar-operator	36	4.5	"\|"	-
+whitespace	36	5	" "	-
+identifier	36	6	"else"	-
+block-operator	36	10	":"	-
+whitespace	36	11	" "	-
+identifier	36	12	"fib"	-
+opener	36	15	"("	-
+identifier	36	16	"n"	-
+operator	36	17	"-"	-
+literal	36	18	"1"	1
+closer	36	19	")"	-
+whitespace	36	20	" "	-
+operator	36	21	"+"	-
+whitespace	36	22	" "	-
+identifier	36	23	"fib"	-
+opener	36	26	"("	-
+identifier	36	27	"n"	-
+operator	36	28	"-"	-
+literal	36	29	"2"	2
+closer	36	30	")"	-
+whitespace	36	31	"\u{a}"	-
+whitespace	37	0	"\u{a}"	-
+comment	38	0	"// Ok to add `:` before `\|`. This parses the"	-
+whitespace	38	44	"\u{a}"	-
+comment	39	0	"// same as the previous example, but this is not the standard"	-
+whitespace	39	61	"\u{a}"	-
+comment	40	0	"// style (which is to omit unnecessary colons)."	-
+whitespace	40	47	"\u{a}"	-
+identifier	41	0	"define"	-
+whitespace	41	6	" "	-
+identifier	41	7	"fib"	-
+block-operator	41	10	":"	-
+whitespace	41	11	"\u{a}"	-
+whitespace	42	0	"  "	-
+identifier	42	2	"lambda"	-
+whitespace	42	8	" "	-
+opener	42	9	"("	-
+identifier	42	10	"n"	-
+closer	42	11	")"	-
+block-operator	42	12	":"	-
+whitespace	42	13	"\u{a}"	-
+whitespace	43	0	"    "	-
+identifier	43	4	"cond"	-
+whitespace	43	8	"\u{a}"	-
+whitespace	44	0	"    "	-
+bar-operator	44	4.5	"\|"	-
+whitespace	44	5	" "	-
+identifier	44	6	"n"	-
+whitespace	44	7	" "	-
+operator	44	8	"=="	-
+whitespace	44	10	" "	-
+literal	44	11	"0"	0
+block-operator	44	12	":"	-
+whitespace	44	13	" "	-
+literal	44	14	"0"	0
+whitespace	44	15	"\u{a}"	-
+whitespace	45	0	"    "	-
+bar-operator	45	4.5	"\|"	-
+whitespace	45	5	" "	-
+identifier	45	6	"n"	-
+whitespace	45	7	" "	-
+operator	45	8	"=="	-
+whitespace	45	10	" "	-
+literal	45	11	"1"	1
+block-operator	45	12	":"	-
+whitespace	45	13	" "	-
+literal	45	14	"1"	1
+whitespace	45	15	"\u{a}"	-
+whitespace	46	0	"    "	-
+bar-operator	46	4.5	"\|"	-
+whitespace	46	5	" "	-
+identifier	46	6	"else"	-
+block-operator	46	10	":"	-
+whitespace	46	11	" "	-
+identifier	46	12	"fib"	-
+opener	46	15	"("	-
+identifier	46	16	"n"	-
+operator	46	17	"-"	-
+literal	46	18	"1"	1
+closer	46	19	")"	-
+whitespace	46	20	" "	-
+operator	46	21	"+"	-
+whitespace	46	22	" "	-
+identifier	46	23	"fib"	-
+opener	46	26	"("	-
+identifier	46	27	"n"	-
+operator	46	28	"-"	-
+literal	46	29	"2"	2
+closer	46	30	")"	-
+whitespace	46	31	"\u{a}"	-
+whitespace	47	0	"\u{a}"	-
+comment	48	0	"// Adding parentheses is ok, at least with the obvious handling"	-
+whitespace	48	63	"\u{a}"	-
+comment	49	0	"// of parentheses by the use of sapling notation, but the"	-
+whitespace	49	57	"\u{a}"	-
+comment	50	0	"// parentheses are apparent in the sampling parse."	-
+whitespace	50	50	"\u{a}"	-
+opener	51	0	"("	-
+identifier	51	1	"define"	-
+whitespace	51	7	" "	-
+identifier	51	8	"fib"	-
+block-operator	51	11	":"	-
+whitespace	51	12	"\u{a}"	-
+whitespace	52	0	"  "	-
+opener	52	2	"("	-
+identifier	52	3	"lambda"	-
+whitespace	52	9	" "	-
+opener	52	10	"("	-
+identifier	52	11	"n"	-
+closer	52	12	")"	-
+block-operator	52	13	":"	-
+whitespace	52	14	"\u{a}"	-
+whitespace	53	0	"    "	-
+opener	53	4	"("	-
+identifier	53	5	"cond"	-
+whitespace	53	9	"\u{a}"	-
+whitespace	54	0	"     "	-
+bar-operator	54	5.5	"\|"	-
+whitespace	54	6	" "	-
+opener	54	7	"("	-
+identifier	54	8	"n"	-
+whitespace	54	9	" "	-
+operator	54	10	"=="	-
+whitespace	54	12	" "	-
+literal	54	13	"0"	0
+closer	54	14	")"	-
+block-operator	54	15	":"	-
+whitespace	54	16	" "	-
+literal	54	17	"0"	0
+whitespace	54	18	"\u{a}"	-
+whitespace	55	0	"     "	-
+bar-operator	55	5.5	"\|"	-
+whitespace	55	6	" "	-
+opener	55	7	"("	-
+identifier	55	8	"n"	-
+whitespace	55	9	" "	-
+operator	55	10	"=="	-
+whitespace	55	12	" "	-
+literal	55	13	"1"	1
+closer	55	14	")"	-
+block-operator	55	15	":"	-
+whitespace	55	16	" "	-
+literal	55	17	"1"	1
+whitespace	55	18	"\u{a}"	-
+whitespace	56	0	"     "	-
+bar-operator	56	5.5	"\|"	-
+whitespace	56	6	" "	-
+identifier	56	7	"else"	-
+block-operator	56	11	":"	-
+whitespace	56	12	" "	-
+opener	56	13	"("	-
+identifier	56	14	"fib"	-
+opener	56	17	"("	-
+identifier	56	18	"n"	-
+operator	56	19	"-"	-
+literal	56	20	"1"	1
+closer	56	21	")"	-
+whitespace	56	22	" "	-
+operator	56	23	"+"	-
+whitespace	56	24	" "	-
+identifier	56	25	"fib"	-
+opener	56	28	"("	-
+identifier	56	29	"n"	-
+operator	56	30	"-"	-
+literal	56	31	"2"	2
+closer	56	32	")"	-
+closer	56	33	")"	-
+closer	56	34	")"	-
+closer	56	35	")"	-
+closer	56	36	")"	-
+whitespace	56	37	"\u{a}"	-
+whitespace	57	0	"\u{a}"	-
+comment	58	0	"// For maximal noise, you could add parentheses and trailing colons."	-
+whitespace	58	68	"\u{a}"	-
+comment	59	0	"// But we won't."	-
+whitespace	59	16	"\u{a}"	-
+comment	60	0	"// START: all of the next `fib` definitions are exactly the same"	-
+whitespace	60	64	"\u{a}"	-
+whitespace	61	0	"\u{a}"	-
+identifier	62	0	"define"	-
+whitespace	62	6	" "	-
+identifier	62	7	"fib"	-
+opener	62	10	"("	-
+identifier	62	11	"n"	-
+closer	62	12	")"	-
+block-operator	62	13	":"	-
+whitespace	62	14	"\u{a}"	-
+whitespace	63	0	"  "	-
+identifier	63	2	"match"	-
+whitespace	63	7	" "	-
+identifier	63	8	"n"	-
+whitespace	63	9	"\u{a}"	-
+whitespace	64	0	"  "	-
+bar-operator	64	2.5	"\|"	-
+whitespace	64	3	" "	-
+literal	64	4	"0"	0
+block-operator	64	5	":"	-
+whitespace	64	6	" "	-
+literal	64	7	"0"	0
+whitespace	64	8	"\u{a}"	-
+whitespace	65	0	"  "	-
+bar-operator	65	2.5	"\|"	-
+whitespace	65	3	" "	-
+literal	65	4	"1"	1
+block-operator	65	5	":"	-
+whitespace	65	6	" "	-
+literal	65	7	"1"	1
+whitespace	65	8	"\u{a}"	-
+whitespace	66	0	"  "	-
+bar-operator	66	2.5	"\|"	-
+whitespace	66	3	" "	-
+identifier	66	4	"n"	-
+block-operator	66	5	":"	-
+whitespace	66	6	" "	-
+identifier	66	7	"fib"	-
+opener	66	10	"("	-
+identifier	66	11	"n"	-
+operator	66	12	"-"	-
+literal	66	13	"1"	1
+closer	66	14	")"	-
+whitespace	66	15	" "	-
+operator	66	16	"+"	-
+whitespace	66	17	" "	-
+identifier	66	18	"fib"	-
+opener	66	21	"("	-
+identifier	66	22	"n"	-
+operator	66	23	"-"	-
+literal	66	24	"2"	2
+closer	66	25	")"	-
+whitespace	66	26	"\u{a}"	-
+whitespace	67	0	"\u{a}"	-
+identifier	68	0	"define"	-
+whitespace	68	6	" "	-
+identifier	68	7	"fib"	-
+opener	68	10	"("	-
+identifier	68	11	"n"	-
+closer	68	12	")"	-
+block-operator	68	13	":"	-
+whitespace	68	14	"\u{a}"	-
+whitespace	69	0	"  "	-
+identifier	69	2	"match"	-
+whitespace	69	7	" "	-
+identifier	69	8	"n"	-
+whitespace	69	9	"\u{a}"	-
+whitespace	70	0	"  "	-
+bar-operator	70	2.5	"\|"	-
+whitespace	70	3	" "	-
+literal	70	4	"0"	0
+block-operator	70	5	":"	-
+whitespace	70	6	" "	-
+literal	70	7	"0"	0
+whitespace	70	8	"\u{a}"	-
+whitespace	71	0	"  "	-
+bar-operator	71	2.5	"\|"	-
+whitespace	71	3	" "	-
+literal	71	4	"1"	1
+block-operator	71	5	":"	-
+whitespace	71	6	" "	-
+literal	71	7	"1"	1
+whitespace	71	8	"\u{a}"	-
+whitespace	72	0	"  "	-
+bar-operator	72	2.5	"\|"	-
+whitespace	72	3	" "	-
+identifier	72	4	"n"	-
+block-operator	72	5	":"	-
+whitespace	72	6	" "	-
+identifier	72	7	"fib"	-
+opener	72	10	"("	-
+identifier	72	11	"n"	-
+operator	72	12	"-"	-
+literal	72	13	"1"	1
+closer	72	14	")"	-
+whitespace	72	15	" "	-
+operator	72	16	"+"	-
+whitespace	72	17	" "	-
+identifier	72	18	"fib"	-
+opener	72	21	"("	-
+identifier	72	22	"n"	-
+operator	72	23	"-"	-
+literal	72	24	"2"	2
+closer	72	25	")"	-
+whitespace	72	26	"\u{a}"	-
+whitespace	73	0	"\u{a}"	-
+identifier	74	0	"define"	-
+whitespace	74	6	" "	-
+identifier	74	7	"fib"	-
+opener	74	10	"("	-
+identifier	74	11	"n"	-
+closer	74	12	")"	-
+block-operator	74	13	":"	-
+whitespace	74	14	"\u{a}"	-
+whitespace	75	0	"  "	-
+identifier	75	2	"match"	-
+whitespace	75	7	" "	-
+identifier	75	8	"n"	-
+whitespace	75	9	" "	-
+bar-operator	75	10.5	"\|"	-
+whitespace	75	11	" "	-
+literal	75	12	"0"	0
+block-operator	75	13	":"	-
+whitespace	75	14	" "	-
+literal	75	15	"0"	0
+whitespace	75	16	"\u{a}"	-
+whitespace	76	0	"          "	-
+bar-operator	76	10.5	"\|"	-
+whitespace	76	11	" "	-
+literal	76	12	"1"	1
+block-operator	76	13	":"	-
+whitespace	76	14	" "	-
+literal	76	15	"1"	1
+whitespace	76	16	"\u{a}"	-
+whitespace	77	0	"          "	-
+bar-operator	77	10.5	"\|"	-
+whitespace	77	11	" "	-
+identifier	77	12	"n"	-
+block-operator	77	13	":"	-
+whitespace	77	14	" "	-
+identifier	77	15	"fib"	-
+opener	77	18	"("	-
+identifier	77	19	"n"	-
+operator	77	20	"-"	-
+literal	77	21	"1"	1
+closer	77	22	")"	-
+whitespace	77	23	" "	-
+operator	77	24	"+"	-
+whitespace	77	25	" "	-
+identifier	77	26	"fib"	-
+opener	77	29	"("	-
+identifier	77	30	"n"	-
+operator	77	31	"-"	-
+literal	77	32	"2"	2
+closer	77	33	")"	-
+whitespace	77	34	"\u{a}"	-
+whitespace	78	0	"\u{a}"	-
+identifier	79	0	"define"	-
+whitespace	79	6	" "	-
+identifier	79	7	"fib"	-
+opener	79	10	"("	-
+identifier	79	11	"n"	-
+closer	79	12	")"	-
+block-operator	79	13	":"	-
+whitespace	79	14	"\u{a}"	-
+whitespace	80	0	"  "	-
+identifier	80	2	"match"	-
+whitespace	80	7	" "	-
+identifier	80	8	"n"	-
+whitespace	80	9	"\u{a}"	-
+whitespace	81	0	"  "	-
+bar-operator	81	2.5	"\|"	-
+whitespace	81	3	" "	-
+literal	81	4	"0"	0
+block-operator	81	5	":"	-
+whitespace	81	6	"\u{a}"	-
+whitespace	82	0	"      "	-
+literal	82	6	"0"	0
+whitespace	82	7	"\u{a}"	-
+whitespace	83	0	"  "	-
+bar-operator	83	2.5	"\|"	-
+whitespace	83	3	" "	-
+literal	83	4	"1"	1
+block-operator	83	5	":"	-
+whitespace	83	6	"\u{a}"	-
+whitespace	84	0	"      "	-
+literal	84	6	"1"	1
+whitespace	84	7	"\u{a}"	-
+whitespace	85	0	"  "	-
+bar-operator	85	2.5	"\|"	-
+whitespace	85	3	" "	-
+identifier	85	4	"n"	-
+block-operator	85	5	":"	-
+whitespace	85	6	"\u{a}"	-
+whitespace	86	0	"      "	-
+identifier	86	6	"fib"	-
+opener	86	9	"("	-
+identifier	86	10	"n"	-
+operator	86	11	"-"	-
+literal	86	12	"1"	1
+closer	86	13	")"	-
+whitespace	86	14	" "	-
+operator	86	15	"+"	-
+whitespace	86	16	" "	-
+identifier	86	17	"fib"	-
+opener	86	20	"("	-
+identifier	86	21	"n"	-
+operator	86	22	"-"	-
+literal	86	23	"2"	2
+closer	86	24	")"	-
+whitespace	86	25	"\u{a}"	-
+whitespace	87	0	"\u{a}"	-
+comment	88	0	"// END equivalent `fib` definitions"	-
+whitespace	88	35	"\u{a}"	-
+whitespace	89	0	"\u{a}"	-
+identifier	90	0	"define"	-
+whitespace	90	6	" "	-
+identifier	90	7	"make_adder"	-
+opener	90	17	"("	-
+identifier	90	18	"n"	-
+closer	90	19	")"	-
+block-operator	90	20	":"	-
+whitespace	90	21	"\u{a}"	-
+whitespace	91	0	"  "	-
+identifier	91	2	"lambda"	-
+whitespace	91	8	" "	-
+opener	91	9	"("	-
+identifier	91	10	"m"	-
+closer	91	11	")"	-
+block-operator	91	12	":"	-
+whitespace	91	13	"\u{a}"	-
+whitespace	92	0	"    "	-
+identifier	92	4	"printf"	-
+opener	92	10	"("	-
+literal	92	11	"\"adding to ~a\\n\""	"adding to ~a\u{a}"
+comma-operator	92	27	","	-
+whitespace	92	28	" "	-
+identifier	92	29	"m"	-
+closer	92	30	")"	-
+whitespace	92	31	"\u{a}"	-
+whitespace	93	0	"    "	-
+identifier	93	4	"m"	-
+operator	93	5	"+"	-
+identifier	93	6	"n"	-
+whitespace	93	7	"\u{a}"	-
+whitespace	94	0	"\u{a}"	-
+identifier	95	0	"define"	-
+whitespace	95	6	" "	-
+identifier	95	7	"analyze"	-
+opener	95	14	"("	-
+identifier	95	15	"n"	-
+closer	95	16	")"	-
+block-operator	95	17	":"	-
+whitespace	95	18	"\u{a}"	-
+whitespace	96	0	"  "	-
+identifier	96	2	"if"	-
+whitespace	96	4	" "	-
+identifier	96	5	"n"	-
+whitespace	96	6	" "	-
+operator	96	7	"=="	-
+whitespace	96	9	" "	-
+literal	96	10	"0"	0
+whitespace	96	11	"\u{a}"	-
+whitespace	97	0	"  "	-
+bar-operator	97	2.5	"\|"	-
+whitespace	97	3	" "	-
+identifier	97	4	"printf"	-
+opener	97	10	"("	-
+literal	97	11	"\"zero\\n\""	"zero\u{a}"
+closer	97	19	")"	-
+whitespace	97	20	"\u{a}"	-
+whitespace	98	0	"  "	-
+bar-operator	98	2.5	"\|"	-
+whitespace	98	3	" "	-
+identifier	98	4	"printf"	-
+opener	98	10	"("	-
+literal	98	11	"\"other\\n\""	"other\u{a}"
+closer	98	20	")"	-
+whitespace	98	21	"\u{a}"	-
+whitespace	99	0	"  "	-
+identifier	99	2	"printf"	-
+opener	99	8	"("	-
+literal	99	9	"\"done\\n\""	"done\u{a}"
+closer	99	17	")"	-
+whitespace	99	18	"\u{a}"	-
+whitespace	100	0	"\u{a}"	-
+identifier	101	0	"define"	-
+whitespace	101	6	" "	-
+identifier	101	7	"analyze"	-
+opener	101	14	"("	-
+identifier	101	15	"n"	-
+closer	101	16	")"	-
+block-operator	101	17	":"	-
+whitespace	101	18	"\u{a}"	-
+whitespace	102	0	"  "	-
+identifier	102	2	"if"	-
+whitespace	102	4	" "	-
+identifier	102	5	"n"	-
+whitespace	102	6	" "	-
+operator	102	7	"=="	-
+whitespace	102	9	" "	-
+literal	102	10	"0"	0
+whitespace	102	11	"\u{a}"	-
+whitespace	103	0	"  "	-
+bar-operator	103	2.5	"\|"	-
+whitespace	103	3	" "	-
+identifier	103	4	"printf"	-
+opener	103	10	"("	-
+literal	103	11	"\"zero\\n\""	"zero\u{a}"
+closer	103	19	")"	-
+whitespace	103	20	"\u{a}"	-
+whitespace	104	0	"    "	-
+identifier	104	4	"printf"	-
+opener	104	10	"("	-
+literal	104	11	"\"done saying zero\\n\""	"done saying zero\u{a}"
+closer	104	31	")"	-
+whitespace	104	32	"\u{a}"	-
+whitespace	105	0	"  "	-
+bar-operator	105	2.5	"\|"	-
+whitespace	105	3	" "	-
+identifier	105	4	"printf"	-
+opener	105	10	"("	-
+literal	105	11	"\"other\\n\""	"other\u{a}"
+closer	105	20	")"	-
+whitespace	105	21	"\u{a}"	-
+whitespace	106	0	"    "	-
+identifier	106	4	"printf"	-
+opener	106	10	"("	-
+literal	106	11	"\"done saying other\\n\""	"done saying other\u{a}"
+closer	106	32	")"	-
+whitespace	106	33	"\u{a}"	-
+whitespace	107	0	"\u{a}"	-
+identifier	108	0	"struct"	-
+whitespace	108	6	" "	-
+identifier	108	7	"posn"	-
+opener	108	11	"("	-
+identifier	108	12	"x"	-
+comma-operator	108	13	","	-
+whitespace	108	14	" "	-
+identifier	108	15	"y"	-
+closer	108	16	")"	-
+whitespace	108	17	"\u{a}"	-
+whitespace	109	0	"\u{a}"	-
+identifier	110	0	"struct"	-
+whitespace	110	6	" "	-
+identifier	110	7	"color_posn"	-
+opener	110	17	"("	-
+identifier	110	18	"col"	-
+closer	110	21	")"	-
+block-operator	110	22	":"	-
+whitespace	110	23	"\u{a}"	-
+whitespace	111	0	"  "	-
+identifier	111	2	"extends"	-
+whitespace	111	9	" "	-
+identifier	111	10	"posn"	-
+whitespace	111	14	"\u{a}"	-
+whitespace	112	0	"  "	-
+identifier	112	2	"mutable"	-
+whitespace	112	9	"\u{a}"	-
+whitespace	113	0	"\u{a}"	-
+identifier	114	0	"struct"	-
+whitespace	114	6	" "	-
+identifier	114	7	"posn"	-
+opener	114	11	"("	-
+identifier	114	12	"x"	-
+whitespace	114	13	" "	-
+identifier	114	14	"mutable"	-
+comma-operator	114	21	","	-
+whitespace	114	22	"\u{a}"	-
+whitespace	115	0	"            "	-
+identifier	115	12	"y"	-
+whitespace	115	13	" "	-
+operator	115	14	"="	-
+whitespace	115	15	" "	-
+literal	115	16	"7"	7
+closer	115	17	")"	-
+block-operator	115	18	":"	-
+whitespace	115	19	"\u{a}"	-
+whitespace	116	0	"  "	-
+identifier	116	2	"methods"	-
+whitespace	116	9	" "	-
+identifier	116	10	"equality"	-
+block-operator	116	18	":"	-
+whitespace	116	19	"\u{a}"	-
+whitespace	117	0	"    "	-
+identifier	117	4	"define"	-
+whitespace	117	10	" "	-
+identifier	117	11	"equal"	-
+opener	117	16	"("	-
+identifier	117	17	"a"	-
+comma-operator	117	18	","	-
+whitespace	117	19	" "	-
+identifier	117	20	"b"	-
+closer	117	21	")"	-
+block-operator	117	22	":"	-
+whitespace	117	23	"\u{a}"	-
+whitespace	118	0	"      "	-
+identifier	118	6	"is_posn"	-
+opener	118	13	"("	-
+identifier	118	14	"b"	-
+closer	118	15	")"	-
+whitespace	118	16	" "	-
+operator	118	17	"=>"	-
+whitespace	118	19	" "	-
+opener	118	20	"("	-
+identifier	118	21	"a"	-
+operator	118	22	"."	-
+identifier	118	23	"x"	-
+whitespace	118	24	" "	-
+operator	118	25	"=="	-
+whitespace	118	27	" "	-
+identifier	118	28	"b"	-
+operator	118	29	"."	-
+identifier	118	30	"x"	-
+whitespace	118	31	" "	-
+operator	118	32	"&&"	-
+whitespace	118	34	" "	-
+identifier	118	35	"a"	-
+operator	118	36	"."	-
+identifier	118	37	"y"	-
+whitespace	118	38	" "	-
+operator	118	39	"=="	-
+whitespace	118	41	" "	-
+identifier	118	42	"b"	-
+operator	118	43	"."	-
+identifier	118	44	"y"	-
+closer	118	45	")"	-
+whitespace	118	46	"\u{a}"	-
+whitespace	119	0	"    "	-
+identifier	119	4	"define"	-
+whitespace	119	10	" "	-
+identifier	119	11	"hash"	-
+opener	119	15	"("	-
+identifier	119	16	"a"	-
+closer	119	17	")"	-
+block-operator	119	18	":"	-
+whitespace	119	19	"\u{a}"	-
+whitespace	120	0	"      "	-
+literal	120	6	"17"	17
+whitespace	120	8	"\u{a}"	-
+whitespace	121	0	"    "	-
+identifier	121	4	"define"	-
+whitespace	121	10	" "	-
+identifier	121	11	"secondary_hash"	-
+opener	121	25	"("	-
+identifier	121	26	"a"	-
+closer	121	27	")"	-
+block-operator	121	28	":"	-
+whitespace	121	29	"\u{a}"	-
+whitespace	122	0	"      "	-
+literal	122	6	"19"	19
+whitespace	122	8	"\u{a}"	-
+whitespace	123	0	"\u{a}"	-
+identifier	124	0	"struct"	-
+whitespace	124	6	" "	-
+identifier	124	7	"posn"	-
+opener	124	11	"("	-
+identifier	124	12	"x"	-
+comma-operator	124	13	","	-
+whitespace	124	14	" "	-
+identifier	124	15	"y"	-
+closer	124	16	")"	-
+block-operator	124	17	":"	-
+whitespace	124	18	"\u{a}"	-
+whitespace	125	0	"  "	-
+identifier	125	2	"property"	-
+whitespace	125	10	" "	-
+identifier	125	11	"prop_equal_and_hash"	-
+block-operator	125	30	":"	-
+whitespace	125	31	"\u{a}"	-
+whitespace	126	0	"    "	-
+identifier	126	4	"let"	-
+whitespace	126	7	" "	-
+opener	126	8	"("	-
+identifier	126	9	"hc"	-
+whitespace	126	11	" "	-
+operator	126	12	"="	-
+whitespace	126	13	" "	-
+identifier	126	14	"lambda"	-
+whitespace	126	20	" "	-
+opener	126	21	"("	-
+identifier	126	22	"a"	-
+block-operator	126	23	":"	-
+whitespace	126	24	" "	-
+identifier	126	25	"posn"	-
+comma-operator	126	29	","	-
+whitespace	126	30	" "	-
+identifier	126	31	"hc"	-
+closer	126	33	")"	-
+block-operator	126	34	":"	-
+whitespace	126	35	"\u{a}"	-
+whitespace	127	0	"                 "	-
+identifier	127	17	"hc"	-
+opener	127	19	"("	-
+identifier	127	20	"a"	-
+operator	127	21	"."	-
+identifier	127	22	"x"	-
+closer	127	23	")"	-
+whitespace	127	24	" "	-
+operator	127	25	"+"	-
+whitespace	127	26	" "	-
+identifier	127	27	"hc"	-
+opener	127	29	"("	-
+identifier	127	30	"a"	-
+operator	127	31	"."	-
+identifier	127	32	"y"	-
+closer	127	33	")"	-
+comma-operator	127	34	","	-
+whitespace	127	35	"\u{a}"	-
+whitespace	128	0	"         "	-
+identifier	128	9	"eql"	-
+whitespace	128	12	" "	-
+operator	128	13	"="	-
+whitespace	128	14	" "	-
+identifier	128	15	"lambda"	-
+whitespace	128	21	" "	-
+opener	128	22	"("	-
+identifier	128	23	"a"	-
+block-operator	128	24	":"	-
+whitespace	128	25	" "	-
+identifier	128	26	"posn"	-
+comma-operator	128	30	","	-
+whitespace	128	31	" "	-
+identifier	128	32	"b"	-
+block-operator	128	33	":"	-
+whitespace	128	34	" "	-
+identifier	128	35	"posn"	-
+comma-operator	128	39	","	-
+whitespace	128	40	" "	-
+identifier	128	41	"eql"	-
+closer	128	44	")"	-
+block-operator	128	45	":"	-
+whitespace	128	46	"\u{a}"	-
+whitespace	129	0	"                 "	-
+identifier	129	17	"eql"	-
+opener	129	20	"("	-
+identifier	129	21	"a"	-
+operator	129	22	"."	-
+identifier	129	23	"x"	-
+comma-operator	129	24	","	-
+whitespace	129	25	" "	-
+identifier	129	26	"b"	-
+operator	129	27	"."	-
+identifier	129	28	"x"	-
+closer	129	29	")"	-
+whitespace	129	30	" "	-
+operator	129	31	"&&"	-
+whitespace	129	33	" "	-
+identifier	129	34	"eql"	-
+opener	129	37	"("	-
+identifier	129	38	"a"	-
+operator	129	39	"."	-
+identifier	129	40	"y"	-
+comma-operator	129	41	","	-
+whitespace	129	42	" "	-
+identifier	129	43	"b"	-
+operator	129	44	"."	-
+identifier	129	45	"y"	-
+closer	129	46	")"	-
+closer	129	47	")"	-
+block-operator	129	48	":"	-
+whitespace	129	49	"\u{a}"	-
+whitespace	130	0	"      "	-
+identifier	130	6	"values"	-
+opener	130	12	"("	-
+identifier	130	13	"eql"	-
+comma-operator	130	16	","	-
+whitespace	130	17	" "	-
+identifier	130	18	"hc"	-
+comma-operator	130	20	","	-
+whitespace	130	21	" "	-
+identifier	130	22	"hc"	-
+closer	130	24	")"	-
+whitespace	130	25	"\u{a}"	-
+whitespace	131	0	"\u{a}"	-
+identifier	132	0	"struct"	-
+whitespace	132	6	" "	-
+identifier	132	7	"posn"	-
+opener	132	11	"("	-
+identifier	132	12	"x"	-
+comma-operator	132	13	","	-
+whitespace	132	14	" "	-
+identifier	132	15	"y"	-
+closer	132	16	")"	-
+block-operator	132	17	":"	-
+whitespace	132	18	"\u{a}"	-
+whitespace	133	0	"  "	-
+identifier	133	2	"property"	-
+whitespace	133	10	" "	-
+identifier	133	11	"prop_equal_and_hash"	-
+block-operator	133	30	":"	-
+whitespace	133	31	"\u{a}"	-
+whitespace	134	0	"    "	-
+identifier	134	4	"let"	-
+whitespace	134	7	" "	-
+opener	134	8	"("	-
+identifier	134	9	"hc"	-
+whitespace	134	11	" "	-
+operator	134	12	"="	-
+whitespace	134	13	" "	-
+identifier	134	14	"lambda"	-
+whitespace	134	20	" "	-
+opener	134	21	"("	-
+identifier	134	22	"a"	-
+block-operator	134	23	":"	-
+whitespace	134	24	" "	-
+identifier	134	25	"posn"	-
+comma-operator	134	29	","	-
+whitespace	134	30	" "	-
+identifier	134	31	"hc"	-
+closer	134	33	")"	-
+block-operator	134	34	":"	-
+whitespace	134	35	"\u{a}"	-
+whitespace	135	0	"                "	-
+identifier	135	16	"hc"	-
+opener	135	18	"("	-
+identifier	135	19	"a"	-
+operator	135	20	"."	-
+identifier	135	21	"x"	-
+closer	135	22	")"	-
+whitespace	135	23	" "	-
+operator	135	24	"+"	-
+whitespace	135	25	" "	-
+identifier	135	26	"hc"	-
+opener	135	28	"("	-
+identifier	135	29	"a"	-
+operator	135	30	"."	-
+identifier	135	31	"y"	-
+closer	135	32	")"	-
+closer	135	33	")"	-
+block-operator	135	34	":"	-
+whitespace	135	35	"\u{a}"	-
+whitespace	136	0	"      "	-
+opener	136	6	"("	-
+identifier	136	7	"lambda"	-
+whitespace	136	13	" "	-
+opener	136	14	"("	-
+identifier	136	15	"a"	-
+block-operator	136	16	":"	-
+whitespace	136	17	" "	-
+identifier	136	18	"posn"	-
+comma-operator	136	22	","	-
+whitespace	136	23	" "	-
+identifier	136	24	"b"	-
+block-operator	136	25	":"	-
+whitespace	136	26	" "	-
+identifier	136	27	"posn"	-
+comma-operator	136	31	","	-
+whitespace	136	32	" "	-
+identifier	136	33	"eql"	-
+closer	136	36	")"	-
+block-operator	136	37	":"	-
+whitespace	136	38	"\u{a}"	-
+whitespace	137	0	"         "	-
+identifier	137	9	"eql"	-
+opener	137	12	"("	-
+identifier	137	13	"a"	-
+operator	137	14	"."	-
+identifier	137	15	"x"	-
+comma-operator	137	16	","	-
+whitespace	137	17	" "	-
+identifier	137	18	"b"	-
+operator	137	19	"."	-
+identifier	137	20	"x"	-
+closer	137	21	")"	-
+whitespace	137	22	" "	-
+operator	137	23	"&&"	-
+whitespace	137	25	" "	-
+identifier	137	26	"eql"	-
+opener	137	29	"("	-
+identifier	137	30	"a"	-
+operator	137	31	"."	-
+identifier	137	32	"y"	-
+comma-operator	137	33	","	-
+whitespace	137	34	" "	-
+identifier	137	35	"b"	-
+operator	137	36	"."	-
+identifier	137	37	"y"	-
+closer	137	38	")"	-
+comma-operator	137	39	","	-
+whitespace	137	40	"\u{a}"	-
+whitespace	138	0	"       "	-
+identifier	138	7	"hc"	-
+comma-operator	138	9	","	-
+whitespace	138	10	"\u{a}"	-
+whitespace	139	0	"       "	-
+identifier	139	7	"hc"	-
+closer	139	9	")"	-
+whitespace	139	10	"\u{a}"	-
+whitespace	140	0	"\u{a}"	-
+comment	141	0	"// operator-continued line should not"	-
+whitespace	141	37	"\u{a}"	-
+comment	142	0	"// change indentation of a continuing \|"	-
+whitespace	142	39	"\u{a}"	-
+identifier	143	0	"a"	-
+whitespace	143	1	"\u{a}"	-
+whitespace	144	0	"  "	-
+operator	144	2	"+"	-
+whitespace	144	3	" "	-
+identifier	144	4	"b"	-
+whitespace	144	5	"\u{a}"	-
+bar-operator	145	0.5	"\|"	-
+whitespace	145	1	" "	-
+identifier	145	2	"e"	-
+whitespace	145	3	"\u{a}"	-
+identifier	146	0	"a"	-
+whitespace	146	1	"\u{a}"	-
+whitespace	147	0	"  "	-
+operator	147	2	"+"	-
+whitespace	147	3	" "	-
+identifier	147	4	"b"	-
+block-operator	147	5	":"	-
+whitespace	147	6	"\u{a}"	-
+whitespace	148	0	"    "	-
+identifier	148	4	"d"	-
+whitespace	148	5	"\u{a}"	-
+bar-operator	149	0.5	"\|"	-
+whitespace	149	1	" "	-
+identifier	149	2	"e"	-
+whitespace	149	3	"\u{a}"	-
+whitespace	150	0	"\u{a}"	-
+opener	151	0	"("	-
+identifier	151	1	"x"	-
+comma-operator	151	2	","	-
+whitespace	151	3	" "	-
+identifier	151	4	"y"	-
+whitespace	151	5	"\u{a}"	-
+whitespace	152	0	"    "	-
+bar-operator	152	4.5	"\|"	-
+whitespace	152	5	" "	-
+identifier	152	6	"z"	-
+closer	152	7	")"	-
+whitespace	152	8	"\u{a}"	-
+opener	153	0	"("	-
+identifier	153	1	"x"	-
+comma-operator	153	2	","	-
+whitespace	153	3	"\u{a}"	-
+whitespace	154	0	" "	-
+identifier	154	1	"y"	-
+whitespace	154	2	"\u{a}"	-
+whitespace	155	0	" "	-
+bar-operator	155	1.5	"\|"	-
+whitespace	155	2	" "	-
+identifier	155	3	"z"	-
+closer	155	4	")"	-
+whitespace	155	5	"\u{a}"	-
+comment	156	0	"// Another possible approach to syntax for `struct`:"	-
+whitespace	156	52	"\u{a}"	-
+identifier	157	0	"struct"	-
+whitespace	157	6	" "	-
+identifier	157	7	"posn"	-
+block-operator	157	11	":"	-
+whitespace	157	12	"\u{a}"	-
+whitespace	158	0	"  "	-
+identifier	158	2	"fields"	-
+block-operator	158	8	":"	-
+whitespace	158	9	"\u{a}"	-
+whitespace	159	0	"    "	-
+identifier	159	4	"x"	-
+whitespace	159	5	" "	-
+identifier	159	6	"mutable"	-
+whitespace	159	13	"\u{a}"	-
+whitespace	160	0	"    "	-
+identifier	160	4	"y"	-
+whitespace	160	5	" "	-
+operator	160	6	"="	-
+whitespace	160	7	" "	-
+literal	160	8	"7"	7
+whitespace	160	9	"\u{a}"	-
+whitespace	161	0	"  "	-
+identifier	161	2	"methods"	-
+whitespace	161	9	" "	-
+identifier	161	10	"equality"	-
+block-operator	161	18	":"	-
+whitespace	161	19	"\u{a}"	-
+whitespace	162	0	"    "	-
+identifier	162	4	"define"	-
+whitespace	162	10	" "	-
+identifier	162	11	"equal"	-
+opener	162	16	"("	-
+identifier	162	17	"a"	-
+comma-operator	162	18	","	-
+whitespace	162	19	" "	-
+identifier	162	20	"b"	-
+closer	162	21	")"	-
+block-operator	162	22	":"	-
+whitespace	162	23	"\u{a}"	-
+whitespace	163	0	"      "	-
+identifier	163	6	"is_posn"	-
+opener	163	13	"("	-
+identifier	163	14	"b"	-
+closer	163	15	")"	-
+whitespace	163	16	" "	-
+operator	163	17	"=>"	-
+whitespace	163	19	" "	-
+opener	163	20	"("	-
+identifier	163	21	"a"	-
+operator	163	22	"."	-
+identifier	163	23	"x"	-
+whitespace	163	24	" "	-
+operator	163	25	"=="	-
+whitespace	163	27	" "	-
+identifier	163	28	"b"	-
+operator	163	29	"."	-
+identifier	163	30	"x"	-
+whitespace	163	31	" "	-
+operator	163	32	"&&"	-
+whitespace	163	34	" "	-
+identifier	163	35	"a"	-
+operator	163	36	"."	-
+identifier	163	37	"y"	-
+whitespace	163	38	" "	-
+operator	163	39	"=="	-
+whitespace	163	41	" "	-
+identifier	163	42	"b"	-
+operator	163	43	"."	-
+identifier	163	44	"y"	-
+closer	163	45	")"	-
+whitespace	163	46	"\u{a}"	-
+whitespace	164	0	"    "	-
+identifier	164	4	"define"	-
+whitespace	164	10	" "	-
+identifier	164	11	"hash"	-
+opener	164	15	"("	-
+identifier	164	16	"a"	-
+closer	164	17	")"	-
+block-operator	164	18	":"	-
+whitespace	164	19	"\u{a}"	-
+whitespace	165	0	"      "	-
+literal	165	6	"17"	17
+whitespace	165	8	"\u{a}"	-
+whitespace	166	0	"    "	-
+identifier	166	4	"define"	-
+whitespace	166	10	" "	-
+identifier	166	11	"secondary_hash"	-
+opener	166	25	"("	-
+identifier	166	26	"a"	-
+closer	166	27	")"	-
+block-operator	166	28	":"	-
+whitespace	166	29	"\u{a}"	-
+whitespace	167	0	"      "	-
+literal	167	6	"19"	19
+whitespace	167	8	"\u{a}"	-
+whitespace	168	0	"  "	-
+identifier	168	2	"property"	-
+whitespace	168	10	" "	-
+identifier	168	11	"prop_quality"	-
+block-operator	168	23	":"	-
+whitespace	168	24	" "	-
+literal	168	25	"\"high\""	"high"
+whitespace	168	31	"\u{a}"	-
+whitespace	169	0	"\u{a}"	-
+identifier	170	0	"define"	-
+whitespace	170	6	" "	-
+identifier	170	7	"fourth"	-
+opener	170	13	"("	-
+identifier	170	14	"n"	-
+whitespace	170	15	" "	-
+operator	170	16	"::"	-
+whitespace	170	18	" "	-
+identifier	170	19	"Int"	-
+closer	170	22	")"	-
+block-operator	170	23	":"	-
+whitespace	170	24	"\u{a}"	-
+whitespace	171	0	"  "	-
+identifier	171	2	"define"	-
+whitespace	171	8	" "	-
+identifier	171	9	"m"	-
+block-operator	171	10	":"	-
+whitespace	171	11	" "	-
+identifier	171	12	"n"	-
+operator	171	13	"*"	-
+identifier	171	14	"n"	-
+whitespace	171	15	"\u{a}"	-
+whitespace	172	0	"  "	-
+identifier	172	2	"define"	-
+whitespace	172	8	" "	-
+identifier	172	9	"v"	-
+block-operator	172	10	":"	-
+whitespace	172	11	" "	-
+identifier	172	12	"m"	-
+operator	172	13	"*"	-
+identifier	172	14	"m"	-
+whitespace	172	15	"\u{a}"	-
+whitespace	173	0	"  "	-
+identifier	173	2	"printf"	-
+opener	173	8	"("	-
+literal	173	9	"\"~a^4 = ~a\\n\""	"~a^4 = ~a\u{a}"
+comma-operator	173	22	","	-
+whitespace	173	23	" "	-
+identifier	173	24	"n"	-
+comma-operator	173	25	","	-
+whitespace	173	26	" "	-
+identifier	173	27	"v"	-
+closer	173	28	")"	-
+whitespace	173	29	"\u{a}"	-
+whitespace	174	0	"  "	-
+identifier	174	2	"v"	-
+whitespace	174	3	"\u{a}"	-
+whitespace	175	0	"\u{a}"	-
+identifier	176	0	"define"	-
+whitespace	176	6	" "	-
+identifier	176	7	"exp"	-
+opener	176	10	"("	-
+identifier	176	11	"n"	-
+whitespace	176	12	" "	-
+operator	176	13	"::"	-
+whitespace	176	15	" "	-
+identifier	176	16	"Int"	-
+comma-operator	176	19	","	-
+whitespace	176	20	" "	-
+keyword	176	21	"~base"	-
+block-operator	176	26	":"	-
+whitespace	176	27	" "	-
+identifier	176	28	"base"	-
+whitespace	176	32	" "	-
+operator	176	33	"="	-
+whitespace	176	34	" "	-
+literal	176	35	"2.718281828459045"	#f64:4005bf0a8b145769
+closer	176	52	")"	-
+block-operator	176	53	":"	-
+whitespace	176	54	"\u{a}"	-
+whitespace	177	0	"  "	-
+identifier	177	2	"if"	-
+whitespace	177	4	" "	-
+opener	177	5	"("	-
+identifier	177	6	"n"	-
+whitespace	177	7	" "	-
+operator	177	8	"=="	-
+whitespace	177	10	" "	-
+literal	177	11	"1"	1
+closer	177	12	")"	-
+whitespace	177	13	"\u{a}"	-
+whitespace	178	0	"  "	-
+bar-operator	178	2.5	"\|"	-
+whitespace	178	3	" "	-
+identifier	178	4	"base"	-
+whitespace	178	8	"\u{a}"	-
+whitespace	179	0	"  "	-
+bar-operator	179	2.5	"\|"	-
+whitespace	179	3	" "	-
+identifier	179	4	"base"	-
+whitespace	179	8	" "	-
+operator	179	9	"*"	-
+whitespace	179	10	" "	-
+identifier	179	11	"exp"	-
+opener	179	14	"("	-
+identifier	179	15	"n"	-
+operator	179	16	"-"	-
+literal	179	17	"1"	1
+comma-operator	179	18	","	-
+whitespace	179	19	" "	-
+keyword	179	20	"~base"	-
+block-operator	179	25	":"	-
+whitespace	179	26	" "	-
+identifier	179	27	"base"	-
+closer	179	31	")"	-
+whitespace	179	32	"\u{a}"	-
+whitespace	180	0	"\u{a}"	-
+identifier	181	0	"define"	-
+whitespace	181	6	" "	-
+identifier	181	7	"positive_p"	-
+opener	181	17	"("	-
+identifier	181	18	"n"	-
+closer	181	19	")"	-
+block-operator	181	20	":"	-
+whitespace	181	21	" "	-
+identifier	181	22	"if"	-
+whitespace	181	24	" "	-
+identifier	181	25	"n"	-
+whitespace	181	26	" "	-
+operator	181	27	">"	-
+whitespace	181	28	" "	-
+literal	181	29	"0"	0
+whitespace	181	30	" "	-
+bar-operator	181	31.5	"\|"	-
+whitespace	181	32	" "	-
+identifier	181	33	"true"	-
+whitespace	181	37	" "	-
+bar-operator	181	38.5	"\|"	-
+whitespace	181	39	" "	-
+identifier	181	40	"false"	-
+whitespace	181	45	"\u{a}"	-
+whitespace	182	0	"\u{a}"	-
+identifier	183	0	"define"	-
+whitespace	183	6	" "	-
+identifier	183	7	"go"	-
+opener	183	9	"("	-
+closer	183	10	")"	-
+block-operator	183	11	":"	-
+whitespace	183	12	"\u{a}"	-
+whitespace	184	0	"  "	-
+identifier	184	2	"define"	-
+whitespace	184	8	" "	-
+identifier	184	9	"helper"	-
+opener	184	15	"("	-
+identifier	184	16	"n"	-
+closer	184	17	")"	-
+block-operator	184	18	":"	-
+whitespace	184	19	"\u{a}"	-
+whitespace	185	0	"    "	-
+identifier	185	4	"list"	-
+opener	185	8	"("	-
+identifier	185	9	"n"	-
+comma-operator	185	10	","	-
+whitespace	185	11	" "	-
+identifier	185	12	"n"	-
+closer	185	13	")"	-
+whitespace	185	14	"\u{a}"	-
+whitespace	186	0	"  "	-
+identifier	186	2	"define"	-
+whitespace	186	8	" "	-
+identifier	186	9	"more"	-
+opener	186	13	"("	-
+identifier	186	14	"m"	-
+closer	186	15	")"	-
+block-operator	186	16	":"	-
+whitespace	186	17	"\u{a}"	-
+whitespace	187	0	"    "	-
+identifier	187	4	"if"	-
+whitespace	187	6	" "	-
+identifier	187	7	"m"	-
+whitespace	187	8	" "	-
+operator	187	9	"=="	-
+whitespace	187	11	" "	-
+literal	187	12	"0"	0
+whitespace	187	13	" "	-
+bar-operator	187	14.5	"\|"	-
+whitespace	187	15	" "	-
+literal	187	16	"\"done\""	"done"
+whitespace	187	22	"\u{a}"	-
+whitespace	188	0	"              "	-
+bar-operator	188	14.5	"\|"	-
+whitespace	188	15	" "	-
+identifier	188	16	"more"	-
+opener	188	20	"("	-
+identifier	188	21	"m"	-
+whitespace	188	22	" "	-
+operator	188	23	"-"	-
+whitespace	188	24	" "	-
+literal	188	25	"1"	1
+closer	188	26	")"	-
+whitespace	188	27	"\u{a}"	-
+whitespace	189	0	"  "	-
+identifier	189	2	"helper"	-
+opener	189	8	"("	-
+identifier	189	9	"more"	-
+opener	189	13	"("	-
+literal	189	14	"9"	9
+closer	189	15	")"	-
+closer	189	16	")"	-
+whitespace	189	17	"\u{a}"	-
+whitespace	190	0	"\u{a}"	-
+identifier	191	0	"define"	-
+whitespace	191	6	" "	-
+identifier	191	7	"approx"	-
+opener	191	13	"("	-
+identifier	191	14	"x"	-
+closer	191	15	")"	-
+block-operator	191	16	":"	-
+whitespace	191	17	"\u{a}"	-
+whitespace	192	0	"  "	-
+identifier	192	2	"match"	-
+whitespace	192	7	" "	-
+identifier	192	8	"x"	-
+whitespace	192	9	"\u{a}"	-
+whitespace	193	0	"  "	-
+bar-operator	193	2.5	"\|"	-
+whitespace	193	3	" "	-
+identifier	193	4	"something"	-
+opener	193	13	"("	-
+identifier	193	14	"v"	-
+closer	193	15	")"	-
+block-operator	193	16	":"	-
+whitespace	193	17	"\u{a}"	-
+whitespace	194	0	"      "	-
+identifier	194	6	"printf"	-
+opener	194	12	"("	-
+literal	194	13	"\"got it\\n\""	"got it\u{a}"
+closer	194	23	")"	-
+whitespace	194	24	"\u{a}"	-
+whitespace	195	0	"      "	-
+identifier	195	6	"v"	-
+whitespace	195	7	"\u{a}"	-
+whitespace	196	0	"  "	-
+bar-operator	196	2.5	"\|"	-
+whitespace	196	3	" "	-
+identifier	196	4	"nothing"	-
+block-operator	196	11	":"	-
+whitespace	196	12	" "	-
+literal	196	13	"0"	0
+whitespace	196	14	"\u{a}"	-
+whitespace	197	0	"\u{a}"	-
+comment	198	0	"// With two `:`s on one line, there's no way to"	-
+whitespace	198	47	"\u{a}"	-
+comment	199	0	"// add to the first `:`"	-
+whitespace	199	23	"\u{a}"	-
+identifier	200	0	"define"	-
+whitespace	200	6	" "	-
+identifier	200	7	"approx_thunk"	-
+opener	200	19	"("	-
+identifier	200	20	"x"	-
+closer	200	21	")"	-
+block-operator	200	22	":"	-
+whitespace	200	23	"\u{a}"	-
+whitespace	201	0	"  "	-
+identifier	201	2	"match"	-
+whitespace	201	7	" "	-
+identifier	201	8	"x"	-
+whitespace	201	9	"\u{a}"	-
+whitespace	202	0	"  "	-
+bar-operator	202	2.5	"\|"	-
+whitespace	202	3	" "	-
+identifier	202	4	"something"	-
+opener	202	13	"("	-
+identifier	202	14	"v"	-
+closer	202	15	")"	-
+block-operator	202	16	":"	-
+whitespace	202	17	" "	-
+identifier	202	18	"lambda"	-
+whitespace	202	24	" "	-
+opener	202	25	"("	-
+closer	202	26	")"	-
+block-operator	202	27	":"	-
+whitespace	202	28	" "	-
+identifier	202	29	"v"	-
+whitespace	202	30	"\u{a}"	-
+whitespace	203	0	"  "	-
+bar-operator	203	2.5	"\|"	-
+whitespace	203	3	" "	-
+identifier	203	4	"nothing"	-
+block-operator	203	11	":"	-
+whitespace	203	12	" "	-
+identifier	203	13	"lambda"	-
+whitespace	203	19	" "	-
+opener	203	20	"("	-
+closer	203	21	")"	-
+block-operator	203	22	":"	-
+whitespace	203	23	" "	-
+literal	203	24	"0"	0
+whitespace	203	25	"\u{a}"	-
+whitespace	204	0	"\u{a}"	-
+comment	205	0	"// Enough indentation for `v` means that it continues the"	-
+whitespace	205	57	"\u{a}"	-
+comment	206	0	"// implicit second `:`, so the `lambda` body has `v`:"	-
+whitespace	206	53	"\u{a}"	-
+identifier	207	0	"define"	-
+whitespace	207	6	" "	-
+identifier	207	7	"approx_thunk"	-
+opener	207	19	"("	-
+identifier	207	20	"x"	-
+closer	207	21	")"	-
+block-operator	207	22	":"	-
+whitespace	207	23	"\u{a}"	-
+whitespace	208	0	"  "	-
+identifier	208	2	"match"	-
+whitespace	208	7	" "	-
+identifier	208	8	"x"	-
+whitespace	208	9	"\u{a}"	-
+whitespace	209	0	"  "	-
+bar-operator	209	2.5	"\|"	-
+whitespace	209	3	" "	-
+identifier	209	4	"something"	-
+opener	209	13	"("	-
+identifier	209	14	"v"	-
+closer	209	15	")"	-
+block-operator	209	16	":"	-
+whitespace	209	17	" "	-
+identifier	209	18	"lambda"	-
+whitespace	209	24	" "	-
+opener	209	25	"("	-
+closer	209	26	")"	-
+block-operator	209	27	":"	-
+whitespace	209	28	"\u{a}"	-
+whitespace	210	0	"                     "	-
+identifier	210	21	"v"	-
+whitespace	210	22	"\u{a}"	-
+whitespace	211	0	"  "	-
+bar-operator	211	2.5	"\|"	-
+whitespace	211	3	" "	-
+identifier	211	4	"nothing"	-
+block-operator	211	11	":"	-
+whitespace	211	12	" "	-
+identifier	211	13	"lambda"	-
+whitespace	211	19	" "	-
+opener	211	20	"("	-
+closer	211	21	")"	-
+block-operator	211	22	":"	-
+whitespace	211	23	" "	-
+literal	211	24	"0"	0
+whitespace	211	25	"\u{a}"	-
+whitespace	212	0	"\u{a}"	-
+identifier	213	0	"define"	-
+whitespace	213	6	" "	-
+identifier	213	7	"approx_thunk"	-
+opener	213	19	"("	-
+identifier	213	20	"x"	-
+closer	213	21	")"	-
+block-operator	213	22	":"	-
+whitespace	213	23	"\u{a}"	-
+whitespace	214	0	"  "	-
+identifier	214	2	"match"	-
+whitespace	214	7	" "	-
+identifier	214	8	"x"	-
+whitespace	214	9	"\u{a}"	-
+whitespace	215	0	"  "	-
+bar-operator	215	2.5	"\|"	-
+whitespace	215	3	" "	-
+identifier	215	4	"something"	-
+opener	215	13	"("	-
+identifier	215	14	"v"	-
+closer	215	15	")"	-
+block-operator	215	16	":"	-
+whitespace	215	17	" "	-
+identifier	215	18	"lambda"	-
+whitespace	215	24	"\u{a}"	-
+whitespace	216	0	"                  "	-
+bar-operator	216	18.5	"\|"	-
+whitespace	216	19	" "	-
+opener	216	20	"("	-
+closer	216	21	")"	-
+block-operator	216	22	":"	-
+whitespace	216	23	" "	-
+identifier	216	24	"v"	-
+whitespace	216	25	"\u{a}"	-
+whitespace	217	0	"                  "	-
+bar-operator	217	18.5	"\|"	-
+whitespace	217	19	" "	-
+opener	217	20	"("	-
+identifier	217	21	"n"	-
+closer	217	22	")"	-
+block-operator	217	23	":"	-
+whitespace	217	24	" "	-
+identifier	217	25	"v"	-
+operator	217	26	"+"	-
+identifier	217	27	"n"	-
+whitespace	217	28	"\u{a}"	-
+whitespace	218	0	"  "	-
+bar-operator	218	2.5	"\|"	-
+whitespace	218	3	" "	-
+identifier	218	4	"nothing"	-
+block-operator	218	11	":"	-
+whitespace	218	12	" "	-
+identifier	218	13	"lambda"	-
+whitespace	218	19	"\u{a}"	-
+whitespace	219	0	"             "	-
+bar-operator	219	13.5	"\|"	-
+whitespace	219	14	" "	-
+opener	219	15	"("	-
+closer	219	16	")"	-
+block-operator	219	17	":"	-
+whitespace	219	18	" "	-
+literal	219	19	"0"	0
+whitespace	219	20	"\u{a}"	-
+whitespace	220	0	"             "	-
+bar-operator	220	13.5	"\|"	-
+whitespace	220	14	" "	-
+opener	220	15	"("	-
+identifier	220	16	"n"	-
+closer	220	17	")"	-
+block-operator	220	18	":"	-
+whitespace	220	19	" "	-
+identifier	220	20	"n"	-
+whitespace	220	21	"\u{a}"	-
+whitespace	221	0	"\u{a}"	-
+operator	222	0	"#'"	-
+whitespace	222	2	" "	-
+operator	222	3	"#,"	-
+whitespace	222	5	" "	-
+operator	222	6	"#;"	-
+whitespace	222	8	" "	-
+operator	222	9	"#:"	-
+whitespace	222	11	" "	-
+operator	222	12	"#\|"	-
+whitespace	222	14	"\u{a}"	-
+whitespace	223	0	"\u{a}"	-
+identifier	224	0	"define"	-
+whitespace	224	6	" "	-
+identifier	224	7	"curried"	-
+block-operator	224	14	":"	-
+whitespace	224	15	"\u{a}"	-
+whitespace	225	0	"  "	-
+identifier	225	2	"lambda"	-
+whitespace	225	8	" "	-
+opener	225	9	"("	-
+identifier	225	10	"x"	-
+closer	225	11	")"	-
+block-operator	225	12	":"	-
+whitespace	225	13	"\u{a}"	-
+whitespace	226	0	"    "	-
+identifier	226	4	"lambda"	-
+whitespace	226	10	" "	-
+opener	226	11	"("	-
+identifier	226	12	"y"	-
+closer	226	13	")"	-
+block-operator	226	14	":"	-
+whitespace	226	15	"\u{a}"	-
+whitespace	227	0	"      "	-
+identifier	227	6	"lambda"	-
+whitespace	227	12	" "	-
+opener	227	13	"("	-
+identifier	227	14	"z"	-
+closer	227	15	")"	-
+block-operator	227	16	":"	-
+whitespace	227	17	"\u{a}"	-
+whitespace	228	0	"        "	-
+identifier	228	8	"list"	-
+opener	228	12	"("	-
+identifier	228	13	"x"	-
+comma-operator	228	14	","	-
+whitespace	228	15	" "	-
+identifier	228	16	"y"	-
+comma-operator	228	17	","	-
+whitespace	228	18	" "	-
+identifier	228	19	"z"	-
+closer	228	20	")"	-
+whitespace	228	21	"\u{a}"	-
+whitespace	229	0	"\u{a}"	-
+identifier	230	0	"define"	-
+whitespace	230	6	" "	-
+identifier	230	7	"curried"	-
+block-operator	230	14	":"	-
+whitespace	230	15	" "	-
+identifier	230	16	"lambda"	-
+whitespace	230	22	" "	-
+opener	230	23	"("	-
+identifier	230	24	"x"	-
+closer	230	25	")"	-
+block-operator	230	26	":"	-
+whitespace	230	27	"\u{a}"	-
+whitespace	231	0	"                  "	-
+identifier	231	18	"lambda"	-
+whitespace	231	24	" "	-
+opener	231	25	"("	-
+identifier	231	26	"y"	-
+closer	231	27	")"	-
+block-operator	231	28	":"	-
+whitespace	231	29	"\u{a}"	-
+whitespace	232	0	"                    "	-
+identifier	232	20	"lambda"	-
+whitespace	232	26	" "	-
+opener	232	27	"("	-
+identifier	232	28	"z"	-
+closer	232	29	")"	-
+block-operator	232	30	":"	-
+whitespace	232	31	"\u{a}"	-
+whitespace	233	0	"                      "	-
+identifier	233	22	"list"	-
+opener	233	26	"("	-
+identifier	233	27	"x"	-
+comma-operator	233	28	","	-
+whitespace	233	29	" "	-
+identifier	233	30	"y"	-
+comma-operator	233	31	","	-
+whitespace	233	32	" "	-
+identifier	233	33	"z"	-
+closer	233	34	")"	-
+whitespace	233	35	"\u{a}"	-
+whitespace	234	0	"\u{a}"	-
+identifier	235	0	"define"	-
+whitespace	235	6	" "	-
+identifier	235	7	"dictionary"	-
+block-operator	235	17	":"	-
+whitespace	235	18	" "	-
+identifier	235	19	"dict"	-
+block-operator	235	23	":"	-
+whitespace	235	24	"\u{a}"	-
+whitespace	236	0	"                      "	-
+identifier	236	22	"foo"	-
+block-operator	236	25	":"	-
+whitespace	236	26	" "	-
+literal	236	27	"17"	17
+whitespace	236	29	"\u{a}"	-
+whitespace	237	0	"                      "	-
+identifier	237	22	"bar"	-
+block-operator	237	25	":"	-
+whitespace	237	26	" "	-
+identifier	237	27	"string"	-
+whitespace	237	33	"\u{a}"	-
+whitespace	238	0	"                      "	-
+identifier	238	22	"baz"	-
+block-operator	238	25	":"	-
+whitespace	238	26	" "	-
+identifier	238	27	"true"	-
+whitespace	238	31	"\u{a}"	-
+whitespace	239	0	"\u{a}"	-
+identifier	240	0	"define"	-
+whitespace	240	6	" "	-
+identifier	240	7	"colors"	-
+block-operator	240	13	":"	-
+whitespace	240	14	"\u{a}"	-
+whitespace	241	0	"  "	-
+identifier	241	2	"list"	-
+opener	241	6	"("	-
+whitespace	241	7	"\u{a}"	-
+whitespace	242	0	"    "	-
+identifier	242	4	"red"	-
+comma-operator	242	7	","	-
+whitespace	242	8	"\u{a}"	-
+whitespace	243	0	"    "	-
+identifier	243	4	"green"	-
+comma-operator	243	9	","	-
+whitespace	243	10	"\u{a}"	-
+whitespace	244	0	"    "	-
+identifier	244	4	"blue"	-
+comma-operator	244	8	","	-
+whitespace	244	9	"\u{a}"	-
+whitespace	245	0	"    "	-
+identifier	245	4	"orange"	-
+comma-operator	245	10	","	-
+whitespace	245	11	"\u{a}"	-
+whitespace	246	0	"  "	-
+closer	246	2	")"	-
+whitespace	246	3	"\u{a}"	-
+whitespace	247	0	"\u{a}"	-
+identifier	248	0	"define"	-
+whitespace	248	6	" "	-
+identifier	248	7	"f"	-
+opener	248	8	"("	-
+identifier	248	9	"x_something"	-
+comma-operator	248	20	","	-
+whitespace	248	21	"\u{a}"	-
+whitespace	249	0	"         "	-
+identifier	249	9	"y_something_else"	-
+comma-operator	249	25	","	-
+whitespace	249	26	"\u{a}"	-
+whitespace	250	0	"         "	-
+identifier	250	9	"z_also_long_name"	-
+closer	250	25	")"	-
+block-operator	250	26	":"	-
+whitespace	250	27	"\u{a}"	-
+whitespace	251	0	"  "	-
+literal	251	2	"5"	5
+whitespace	251	3	"\u{a}"	-
+whitespace	252	0	"\u{a}"	-
+identifier	253	0	"define"	-
+whitespace	253	6	" "	-
+identifier	253	7	"sum"	-
+opener	253	10	"("	-
+identifier	253	11	"l"	-
+closer	253	12	")"	-
+block-operator	253	13	":"	-
+whitespace	253	14	"\u{a}"	-
+whitespace	254	0	"  "	-
+identifier	254	2	"let"	-
+whitespace	254	5	" "	-
+identifier	254	6	"loop"	-
+opener	254	10	"("	-
+identifier	254	11	"l"	-
+whitespace	254	12	" "	-
+operator	254	13	"="	-
+whitespace	254	14	" "	-
+identifier	254	15	"l"	-
+closer	254	16	")"	-
+block-operator	254	17	":"	-
+whitespace	254	18	"\u{a}"	-
+whitespace	255	0	"    "	-
+identifier	255	4	"if"	-
+whitespace	255	6	" "	-
+identifier	255	7	"is_null"	-
+opener	255	14	"("	-
+identifier	255	15	"l"	-
+closer	255	16	")"	-
+whitespace	255	17	"\u{a}"	-
+whitespace	256	0	"    "	-
+bar-operator	256	4.5	"\|"	-
+whitespace	256	5	" "	-
+literal	256	6	"0"	0
+whitespace	256	7	"\u{a}"	-
+whitespace	257	0	"    "	-
+bar-operator	257	4.5	"\|"	-
+whitespace	257	5	" "	-
+identifier	257	6	"first"	-
+opener	257	11	"("	-
+identifier	257	12	"l"	-
+closer	257	13	")"	-
+whitespace	257	14	" "	-
+operator	257	15	"+"	-
+whitespace	257	16	" "	-
+identifier	257	17	"loop"	-
+opener	257	21	"("	-
+identifier	257	22	"rest"	-
+opener	257	26	"("	-
+identifier	257	27	"l"	-
+closer	257	28	")"	-
+closer	257	29	")"	-
+whitespace	257	30	"\u{a}"	-
+whitespace	258	0	"\u{a}"	-
+identifier	259	0	"define"	-
+whitespace	259	6	" "	-
+identifier	259	7	"show_all"	-
+opener	259	15	"("	-
+identifier	259	16	"l"	-
+closer	259	17	")"	-
+block-operator	259	18	":"	-
+whitespace	259	19	"\u{a}"	-
+whitespace	260	0	"  "	-
+identifier	260	2	"for"	-
+whitespace	260	5	" "	-
+opener	260	6	"("	-
+identifier	260	7	"x"	-
+whitespace	260	8	" "	-
+operator	260	9	"="	-
+whitespace	260	10	" "	-
+identifier	260	11	"in_list"	-
+opener	260	18	"("	-
+identifier	260	19	"l"	-
+closer	260	20	")"	-
+closer	260	21	")"	-
+block-operator	260	22	":"	-
+whitespace	260	23	"\u{a}"	-
+whitespace	261	0	"    "	-
+identifier	261	4	"print"	-
+opener	261	9	"("	-
+identifier	261	10	"x"	-
+closer	261	11	")"	-
+whitespace	261	12	"\u{a}"	-
+whitespace	262	0	"    "	-
+identifier	262	4	"newline"	-
+opener	262	11	"("	-
+closer	262	12	")"	-
+whitespace	262	13	"\u{a}"	-
+whitespace	263	0	"\u{a}"	-
+identifier	264	0	"define"	-
+whitespace	264	6	" "	-
+identifier	264	7	"show_zip"	-
+opener	264	15	"("	-
+identifier	264	16	"l"	-
+comma-operator	264	17	","	-
+whitespace	264	18	" "	-
+identifier	264	19	"l2"	-
+closer	264	21	")"	-
+block-operator	264	22	":"	-
+whitespace	264	23	"\u{a}"	-
+whitespace	265	0	"  "	-
+identifier	265	2	"for"	-
+whitespace	265	5	" "	-
+opener	265	6	"("	-
+identifier	265	7	"x"	-
+whitespace	265	8	" "	-
+operator	265	9	"="	-
+whitespace	265	10	" "	-
+identifier	265	11	"in_list"	-
+opener	265	18	"("	-
+identifier	265	19	"l"	-
+closer	265	20	")"	-
+comma-operator	265	21	","	-
+whitespace	265	22	"\u{a}"	-
+whitespace	266	0	"       "	-
+identifier	266	7	"x2"	-
+whitespace	266	9	" "	-
+operator	266	10	"="	-
+whitespace	266	11	" "	-
+identifier	266	12	"in_list"	-
+opener	266	19	"("	-
+identifier	266	20	"l2"	-
+closer	266	22	")"	-
+closer	266	23	")"	-
+block-operator	266	24	":"	-
+whitespace	266	25	"\u{a}"	-
+whitespace	267	0	"    "	-
+identifier	267	4	"print"	-
+opener	267	9	"("	-
+identifier	267	10	"x"	-
+closer	267	11	")"	-
+whitespace	267	12	"\u{a}"	-
+whitespace	268	0	"    "	-
+identifier	268	4	"print_string"	-
+opener	268	16	"("	-
+literal	268	17	"\" \""	" "
+closer	268	20	")"	-
+whitespace	268	21	"\u{a}"	-
+whitespace	269	0	"    "	-
+identifier	269	4	"print"	-
+opener	269	9	"("	-
+identifier	269	10	"x2"	-
+closer	269	12	")"	-
+whitespace	269	13	"\u{a}"	-
+whitespace	270	0	"    "	-
+identifier	270	4	"newline"	-
+opener	270	11	"("	-
+closer	270	12	")"	-
+whitespace	270	13	"\u{a}"	-
+whitespace	271	0	"\u{a}"	-
+identifier	272	0	"define"	-
+whitespace	272	6	" "	-
+identifier	272	7	"show_combos_not_same"	-
+opener	272	27	"("	-
+identifier	272	28	"l"	-
+comma-operator	272	29	","	-
+whitespace	272	30	" "	-
+identifier	272	31	"l2"	-
+closer	272	33	")"	-
+block-operator	272	34	":"	-
+whitespace	272	35	"\u{a}"	-
+whitespace	273	0	"  "	-
+identifier	273	2	"for"	-
+whitespace	273	5	" "	-
+opener	273	6	"("	-
+identifier	273	7	"x"	-
+whitespace	273	8	" "	-
+operator	273	9	"="	-
+whitespace	273	10	" "	-
+identifier	273	11	"in_list"	-
+opener	273	18	"("	-
+identifier	273	19	"l"	-
+closer	273	20	")"	-
+closer	273	21	")"	-
+block-operator	273	22	":"	-
+whitespace	273	23	"\u{a}"	-
+whitespace	274	0	"   "	-
+identifier	274	3	"then"	-
+whitespace	274	7	" "	-
+opener	274	8	"("	-
+identifier	274	9	"x2"	-
+whitespace	274	11	" "	-
+operator	274	12	"="	-
+whitespace	274	13	" "	-
+identifier	274	14	"in_list"	-
+opener	274	21	"("	-
+identifier	274	22	"l2"	-
+closer	274	24	")"	-
+closer	274	25	")"	-
+block-operator	274	26	":"	-
+whitespace	274	27	"\u{a}"	-
+whitespace	275	0	"     "	-
+identifier	275	5	"when"	-
+whitespace	275	9	" "	-
+operator	275	10	"!"	-
+identifier	275	11	"is_equal"	-
+opener	275	19	"("	-
+identifier	275	20	"x"	-
+comma-operator	275	21	","	-
+whitespace	275	22	" "	-
+identifier	275	23	"x2"	-
+closer	275	25	")"	-
+block-operator	275	26	":"	-
+whitespace	275	27	"\u{a}"	-
+whitespace	276	0	"       "	-
+identifier	276	7	"print"	-
+opener	276	12	"("	-
+identifier	276	13	"x"	-
+closer	276	14	")"	-
+whitespace	276	15	"\u{a}"	-
+whitespace	277	0	"       "	-
+identifier	277	7	"print_string"	-
+opener	277	19	"("	-
+literal	277	20	"\" \""	" "
+closer	277	23	")"	-
+whitespace	277	24	"\u{a}"	-
+whitespace	278	0	"       "	-
+identifier	278	7	"print"	-
+opener	278	12	"("	-
+identifier	278	13	"x2"	-
+closer	278	15	")"	-
+whitespace	278	16	"\u{a}"	-
+whitespace	279	0	"       "	-
+identifier	279	7	"newline"	-
+opener	279	14	"("	-
+closer	279	15	")"	-
+whitespace	279	16	"\u{a}"	-
+whitespace	280	0	"\u{a}"	-
+identifier	281	0	"define"	-
+whitespace	281	6	" "	-
+identifier	281	7	"map"	-
+opener	281	10	"("	-
+identifier	281	11	"f"	-
+comma-operator	281	12	","	-
+whitespace	281	13	" "	-
+identifier	281	14	"l"	-
+closer	281	15	")"	-
+block-operator	281	16	":"	-
+whitespace	281	17	"\u{a}"	-
+whitespace	282	0	"  "	-
+identifier	282	2	"for"	-
+whitespace	282	5	" "	-
+identifier	282	6	"list"	-
+whitespace	282	10	" "	-
+opener	282	11	"("	-
+identifier	282	12	"x"	-
+whitespace	282	13	" "	-
+operator	282	14	"="	-
+whitespace	282	15	" "	-
+identifier	282	16	"in_list"	-
+opener	282	23	"("	-
+identifier	282	24	"l"	-
+closer	282	25	")"	-
+closer	282	26	")"	-
+block-operator	282	27	":"	-
+whitespace	282	28	"\u{a}"	-
+whitespace	283	0	"    "	-
+identifier	283	4	"f"	-
+opener	283	5	"("	-
+identifier	283	6	"x"	-
+closer	283	7	")"	-
+whitespace	283	8	"\u{a}"	-
+whitespace	284	0	"\u{a}"	-
+identifier	285	0	"define"	-
+whitespace	285	6	" "	-
+identifier	285	7	"partition"	-
+opener	285	16	"("	-
+identifier	285	17	"l"	-
+comma-operator	285	18	","	-
+whitespace	285	19	" "	-
+identifier	285	20	"pred"	-
+closer	285	24	")"	-
+block-operator	285	25	":"	-
+whitespace	285	26	"\u{a}"	-
+whitespace	286	0	"  "	-
+identifier	286	2	"for"	-
+whitespace	286	5	" "	-
+identifier	286	6	"fold"	-
+whitespace	286	10	" "	-
+opener	286	11	"("	-
+identifier	286	12	"yes"	-
+whitespace	286	15	" "	-
+operator	286	16	"="	-
+whitespace	286	17	" "	-
+identifier	286	18	"empty"	-
+comma-operator	286	23	","	-
+whitespace	286	24	"\u{a}"	-
+whitespace	287	0	"            "	-
+identifier	287	12	"no"	-
+whitespace	287	14	" "	-
+operator	287	15	"="	-
+whitespace	287	16	" "	-
+identifier	287	17	"empty"	-
+comma-operator	287	22	","	-
+whitespace	287	23	"\u{a}"	-
+whitespace	288	0	"            "	-
+identifier	288	12	"result"	-
+whitespace	288	18	" "	-
+opener	288	19	"("	-
+identifier	288	20	"reverse"	-
+opener	288	27	"("	-
+identifier	288	28	"yes"	-
+closer	288	31	")"	-
+comma-operator	288	32	","	-
+whitespace	288	33	" "	-
+identifier	288	34	"reverse"	-
+opener	288	41	"("	-
+identifier	288	42	"no"	-
+closer	288	44	")"	-
+closer	288	45	")"	-
+closer	288	46	")"	-
+block-operator	288	47	":"	-
+whitespace	288	48	"\u{a}"	-
+whitespace	289	0	"   "	-
+identifier	289	3	"with"	-
+whitespace	289	7	" "	-
+opener	289	8	"("	-
+identifier	289	9	"x"	-
+whitespace	289	10	" "	-
+operator	289	11	"="	-
+whitespace	289	12	" "	-
+identifier	289	13	"in_list"	-
+opener	289	20	"("	-
+identifier	289	21	"l"	-
+closer	289	22	")"	-
+closer	289	23	")"	-
+block-operator	289	24	":"	-
+whitespace	289	25	"\u{a}"	-
+whitespace	290	0	"     "	-
+identifier	290	5	"if"	-
+whitespace	290	7	" "	-
+identifier	290	8	"pred"	-
+opener	290	12	"("	-
+identifier	290	13	"x"	-
+closer	290	14	")"	-
+whitespace	290	15	"\u{a}"	-
+whitespace	291	0	"     "	-
+bar-operator	291	5.5	"\|"	-
+whitespace	291	6	" "	-
+opener	291	7	"("	-
+identifier	291	8	"cons"	-
+opener	291	12	"("	-
+identifier	291	13	"x"	-
+comma-operator	291	14	","	-
+whitespace	291	15	" "	-
+identifier	291	16	"yes"	-
+closer	291	19	")"	-
+comma-operator	291	20	","	-
+whitespace	291	21	" "	-
+identifier	291	22	"no"	-
+closer	291	24	")"	-
+whitespace	291	25	"\u{a}"	-
+whitespace	292	0	"     "	-
+bar-operator	292	5.5	"\|"	-
+whitespace	292	6	" "	-
+opener	292	7	"("	-
+identifier	292	8	"yes"	-
+comma-operator	292	11	","	-
+whitespace	292	12	" "	-
+identifier	292	13	"cons"	-
+opener	292	17	"("	-
+identifier	292	18	"x"	-
+comma-operator	292	19	","	-
+whitespace	292	20	" "	-
+identifier	292	21	"no"	-
+closer	292	23	")"	-
+closer	292	24	")"	-
+whitespace	292	25	"\u{a}"	-
+whitespace	293	0	"\u{a}"	-
+identifier	294	0	"local"	-
+block-operator	294	5	":"	-
+whitespace	294	6	"\u{a}"	-
+whitespace	295	0	"  "	-
+identifier	295	2	"with"	-
+block-operator	295	6	":"	-
+whitespace	295	7	"\u{a}"	-
+whitespace	296	0	"    "	-
+identifier	296	4	"define"	-
+whitespace	296	10	" "	-
+identifier	296	11	"x"	-
+block-operator	296	12	":"	-
+whitespace	296	13	" "	-
+literal	296	14	"1"	1
+whitespace	296	15	"\u{a}"	-
+whitespace	297	0	"    "	-
+identifier	297	4	"define"	-
+whitespace	297	10	" "	-
+identifier	297	11	"y"	-
+block-operator	297	12	":"	-
+whitespace	297	13	" "	-
+literal	297	14	"2"	2
+whitespace	297	15	"\u{a}"	-
+whitespace	298	0	"  "	-
+identifier	298	2	"in"	-
+block-operator	298	4	":"	-
+whitespace	298	5	"\u{a}"	-
+whitespace	299	0	"   "	-
+identifier	299	3	"x"	-
+operator	299	4	"+"	-
+identifier	299	5	"y"	-
+whitespace	299	6	"\u{a}"	-
+whitespace	300	0	"\u{a}"	-
+block-operator	301	0	":"	-
+whitespace	301	1	"\u{a}"	-
+opener	302	0	"("	-
+block-operator	302	1	":"	-
+closer	302	2	")"	-
+whitespace	302	3	"\u{a}"	-
+opener	303	0	"("	-
+block-operator	303	1	":"	-
+comma-operator	303	2	","	-
+whitespace	303	3	" "	-
+literal	303	4	"2"	2
+closer	303	5	")"	-
+whitespace	303	6	"\u{a}"	-
+opener	304	0	"("	-
+literal	304	1	"1"	1
+comma-operator	304	2	","	-
+whitespace	304	3	" "	-
+block-operator	304	4	":"	-
+closer	304	5	")"	-
+whitespace	304	6	"\u{a}"	-
+whitespace	305	0	"\u{a}"	-
+opener	306	0	"("	-
+bar-operator	306	1.5	"\|"	-
+whitespace	306	2	" "	-
+literal	306	3	"1"	1
+whitespace	306	4	" "	-
+bar-operator	306	5.5	"\|"	-
+whitespace	306	6	" "	-
+literal	306	7	"2"	2
+closer	306	8	")"	-
+whitespace	306	9	"\u{a}"	-
+whitespace	307	0	"\u{a}"	-
+identifier	308	0	"#%call"	-
+whitespace	308	6	" "	-
+identifier	308	7	"#%juxtapose"	-
+whitespace	308	18	" "	-
+identifier	308	19	"#%end"	-
+whitespace	308	24	"\u{a}"	-
+at	309	0	"@"	-
+opener	309	1	"("	-
+whitespace	309	2	" "	-
+identifier	309	3	"#%inside"	-
+whitespace	309	11	" "	-
+closer	309	12	")"	-
+whitespace	309	13	"\u{a}"	-
+whitespace	310	0	"\u{a}"	-
+operator	311	0	"-"	-
+block-operator	311	1	":"	-
+whitespace	311	2	" "	-
+operator	311	3	"::"	-
+whitespace	311	5	" "	-
+operator	311	6	":::"	-
+whitespace	311	9	" "	-
+operator	311	10	":~"	-
+whitespace	311	12	"\u{a}"	-
+whitespace	312	0	"\u{a}"	-
+identifier	313	0	"next"	-
+block-operator	313	4	":"	-
+whitespace	313	5	" "	-
+identifier	313	6	"to"	-
+block-operator	313	8	":"	-
+whitespace	313	9	" "	-
+identifier	313	10	"last"	-
+whitespace	313	14	"\u{a}"	-
+identifier	314	0	"done"	-
+block-operator	314	4	":"	-
+whitespace	314	5	" "	-
+identifier	314	6	"end"	-
+whitespace	314	9	"\u{a}"	-

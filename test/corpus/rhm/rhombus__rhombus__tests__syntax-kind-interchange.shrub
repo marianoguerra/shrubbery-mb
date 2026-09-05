@@ -1,0 +1,95 @@
+
+check:
+  match '1 2 3 0'
+  | '$a ...': '$a ...'
+  ~matches '1 2 3 0'
+
+check:
+  match '1 2 3 0'
+  | '$a ...': [a, ...]
+  ~matches ['1', '2', '3', '0']
+
+check:
+  match '1 2; 3 0'
+  | '$a; ...': '$a; ...'
+  ~matches '1 2; 3 0'
+
+check:
+  match '1 2; 3 0'
+  | '$a; ...': [a, ...]
+  ~matches ['1 2', '3 0']
+
+check:
+  match '1 2 3 0'
+  | '$a ... 0': '$a ...'
+  ~matches '1 2 3'
+
+check:
+  match '1 2 3 0'
+  | '$a ...': '($a, ...)'
+  ~matches '(1, 2, 3, 0)'
+
+check:
+  match '1 2 3'
+  | '$a ...': '$a; ...'
+  ~matches '1; 2; 3'
+
+check:
+  match '1; 2 4; 3'
+  | '$a; ...': '$a ...'
+  ~matches '1 2 4 3'
+
+check:
+  match '1; 2 4; 3'
+  | '$a': '1 + $a'
+  ~throws "multi-group syntax not allowed in group context"
+
+check:
+  match '(1) (2 + 7, 14) (3)'
+  | '($(a :: Multi)) ...': [a, ...]
+  ~matches ['1', '2 + 7; 14', '3']
+
+check:
+  match '1 + 2'
+  | '$a + $b': '($a)'
+  ~matches '(1)'
+
+check:
+  def [none, ...] = []
+  'x; $none ...; y'
+  ~throws "generated an empty group"
+
+check:
+  def none = []
+  'x; $none; y'
+  ~throws "cannot coerce empty list to group syntax"
+
+check:
+  def none = '1; 2'
+  'x; $none; y'
+  ~matches 'x; 1; 2; y'
+
+check:
+  def none = ['1', '2']
+  'x; $none; y'
+  ~matches 'x; 1 2; y'
+
+check:
+  def none = ['1', '2 3']
+  'x; $none; y'
+  ~throws "multi-term syntax not allowed in term context"
+
+check:
+  def none = []
+  'x; $none; y'
+  ~throws "cannot coerce empty list to group syntax"
+
+check:
+  def none = ''
+  'x; $none; y'
+  ~matches 'x; y'
+
+check:
+  def '$tail ...' = ''
+  '1 + $tail ...'
+  ~matches '1 +'

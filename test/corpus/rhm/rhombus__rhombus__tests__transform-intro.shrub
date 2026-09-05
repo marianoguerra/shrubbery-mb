@@ -1,0 +1,142 @@
+
+space.transform ident:
+  space_path demo/ident
+  macro_definer macro
+  meta_namespace ident_meta:
+    parse_syntax_class Parsed
+
+// threads an `amt` value through expansion:
+space.transform scaled:
+  space_path demo/scaled
+  macro_definer macro:
+    ~amt
+  meta_namespace scaled_meta:
+    parse_syntax_class Parsed(amt)
+
+space.transform scaled_recur:
+  space_path demo/scaled_recur
+  macro_definer macro:
+    ~amt
+  meta_namespace scaled_recur_meta:
+    parse_syntax_class Parsed(amt)
+    parsed_packer pack
+    parsed_unpacker unpack
+
+meta:
+  def mutable saved :~ List = []
+
+expr.macro 'reset':
+  saved := []
+  '#void'
+
+ident.macro 'same $(x :: Term)':
+  #//
+  block:
+    import lib("racket/base.rkt")
+    println(base.#{syntax-debug-info}(x))
+    println(base.#{syntax-debug-info}(syntax_meta.flip_introduce(x)))
+  saved := [[x, syntax_meta.flip_introduce(x)], & saved]
+  x
+
+expr.macro 'go $(x :: ident_meta.Parsed) $()':
+  import lib("racket/base.rkt")
+  def res:
+    match x.group
+    | '$_ $(x :: Term)':
+        for all ([plain_x, flipped_x] in saved):
+          syntax_meta.equal_name_and_scopes(flipped_x, syntax_meta.flip_introduce(x))
+  '$(res)'
+
+expr.macro 'intro':
+  'go same ey'
+
+check:
+  go same ex
+  ~is #true
+reset
+check:
+  go same ex
+  ~is #true
+reset
+check:
+  intro
+  ~is #true
+
+scaled.macro 'as_scaled $(x :: expr_meta.Parsed)':
+  ~amt: a
+  '$a * $x'
+expr.macro 'with_scale $n: $(body :: Group)':
+  match body
+  | '$(s :: scaled_meta.Parsed(n.unwrap()))':
+      s
+check:
+  with_scale 2:
+    as_scaled 3 + 4
+  ~is 14
+
+expr.macro 'as_scaled $e':
+  '["does not recur", $e]'
+scaled.macro 'as_scaled_almost $(x :: expr_meta.Parsed)':
+  ~amt: a
+  'as_scaled $x'
+check:
+  with_scale 2:
+    as_scaled_almost 3 + 4
+  ~is ["does not recur", 7]
+
+scaled_recur.macro 'as_scaled_recur $(x :: expr_meta.Parsed)':
+  ~amt: a
+  scaled_recur_meta.pack('($a * $x)')
+expr.macro 'with_scale_recur $n: $(body :: Group)':
+  match body
+  | '$(s :: scaled_recur_meta.Parsed(n.unwrap()))':
+      s
+check:
+  with_scale_recur 2:
+    as_scaled_recur 3 + 4
+  ~is 14
+
+scaled_recur.macro 'as_scaled_twice $(x :: expr_meta.Parsed)':
+  ~amt: a
+  'as_scaled_recur 2 * $x'
+check:
+  with_scale_recur 2:
+    as_scaled_twice 3 + 4
+  ~is 28
+
+space.transform detector_example:
+  space_path my/example/detector/t
+  macro_definer macro
+  meta_namespace detector_example_meta:
+    name_start_syntax_class NameStart
+    reflection space
+    prefix_predicate is_prefix
+detector_example.macro 'pre $tail ...':
+  "oops"
+detector_example.macro '+++ $tail ...':
+  "oops"
+expr.macro 'check_detector($(q :: detector_example_meta.NameStart))':
+  let v = syntax_meta.value(q.name, detector_example_meta.space, fun (): #false)
+  '[$(detector_example_meta.is_prefix(v))]'
+check:
+  check_detector(pre) ~is [#true]
+  check_detector(+++) ~is [#true]
+  check_detector(other) ~is [#false]
+
+check:
+  ~eval
+  import rhombus/meta open
+  space.transform detector_example:
+    space_path my/example/detector/t
+    meta_namespace detector_example_meta:
+      infix_predicate is_prefix
+  ~throws " infix-operator predicate not supported"
+
+check:
+  ~eval
+  import rhombus/meta open
+  space.transform detector_example:
+    space_path my/example/detector/t
+    meta_namespace detector_example_meta:
+      parse_prefix_more_syntax_class PrefixParsed
+  ~throws " infix-more syntax class not supported"

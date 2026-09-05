@@ -1,0 +1,226 @@
+import:
+  rhombus/thread open
+  rhombus/measure
+  rhombus/version_meta
+
+block:
+  let s = Semaphore(0)
+  check s.post() ~is #void
+  check s.wait() ~is #void
+  check s.poll() ~is #false
+  check s.post() ~is #void
+  check s.poll() ~is #true
+  check Semaphore.from_handle(s.handle).post() ~is #void
+  check s.poll() ~is #true
+  check s.post() ~is #void
+  check s ~is_a Evt
+  check s.sync() ~is s
+  check s.post() ~is #void 
+  check Evt.from_handle(s.handle).sync() ~is s.handle
+
+block:
+  let mutable v = 0
+  let th = (thread:
+              v := 1)
+  check th.wait() ~is #void
+  check Thread.from_handle(th.handle).wait() ~is #void
+  check v ~is 1
+  check th ~is_a Evt
+  check th.sync() ~is th
+  check th.send("anything") ~is #false
+  check th.send("anything", ~fail: fun (): "done already") ~is "done already"
+
+block:
+  let orig_th = Thread.current()
+  check Thread.receive_evt().sync(~timeout: 0) ~is #false
+  check Thread.maybe_receive() ~is #false
+  check orig_th ~is_a Thread
+  let th = (thread:
+              orig_th.send(Thread.receive()))
+  th.send(#'ping)
+  check th.wait() ~is #void
+  check Thread.receive_evt() ~is_a Evt
+  check Thread.receive_evt().sync() ~is_a Evt
+  check Thread.receive() ~is #'ping
+  check Thread.receive_evt().sync(~timeout: 0) ~is #false
+  check Thread.maybe_receive() ~is #false
+
+version_meta.when_racket_at_least "8.18.0.11":
+  check: Thread(~pool: Thread.Pool.own,
+                ~keep: Thread.Keep.results,
+                fun (): values(1, 2)).wait()
+         ~is values(1, 2)
+  check: (thread:
+            ~keep: #'results
+            1).wait()
+         ~is 1
+  check: (thread:
+            ~pool: Thread.Pool.own
+            ~keep: #'results
+            values(1, 2)).wait()
+         ~is values(1, 2)
+  check: (thread:
+            5).wait(fun (): #'esc)
+         ~is #void
+  check: (thread:
+            Continuation.escape(Function.pass)).wait(fun (): #'esc)
+         ~is #'esc
+  check Thread.Pool.from_handle(Thread.Pool().handle) ~is_a Thread.Pool
+  check Thread.Pool.own ~is #'own
+  let p = Thread.Pool(1)
+  check p.close() ~is #void
+  check Thread(Function.pass, ~pool: p) ~throws "rallel thread pool has been closed"
+
+block:
+  let mutable v = 0
+  let s = Semaphore(0)
+  let th = (thread:
+              try:
+                s.post()
+                recur loop ():
+                  loop()
+                ~catch _:
+                  v := 1)
+  s.wait()
+  th.break()
+  th.wait()
+  check v ~is 1
+
+block:
+  fun get_exn(mode):
+    let mutable v = 0
+    let s = Semaphore(0)
+    let s2 = Semaphore(0)
+    let th = (thread:
+                try:
+                  s.post()
+                  s2.wait()
+                  ~catch x:
+                    v := x)
+    s.wait()
+    th.break(mode)
+    th.wait()
+    v
+  check get_exn(#'interrupt) ~is_a Exn.Break
+  check get_exn(#'hang_up) ~is_a Exn.Break.HangUp
+  check get_exn(#'terminate) ~is_a Exn.Break.Terminate
+
+block:
+  let th:
+    thread:
+      Thread.sleep(100)
+  check th.kill() ~is #void
+  check th.wait() ~is #void
+
+block:
+  check Evt.always.sync() ~is Evt.always
+  check Evt.never.sync(~timeout: 0) ~is #false
+  check Evt.always.wrap(fun (v):
+                          check v ~is Evt.always
+                          "hi")
+    .sync() ~is "hi"
+  check Evt.choice(Evt.always, Evt.never)
+    .sync() ~is Evt.always
+  block:
+    let e = Evt.choice(Evt.always.wrap(fun (_): "one"),
+                       Evt.always.wrap(fun (_): "two"))
+    let s:
+      for Set (i in 0..50):
+        e.sync()
+    // fails with propability 1 in 2 ** 50
+    check s ~is { "one", "two" }
+  check Evt.guard(fun (): Evt.always).sync() ~is Evt.always
+  check Evt.poll_guard(fun (poll):
+                         check poll ~is #true
+                         Evt.never)
+    .sync(~timeout: 0) ~is #false
+  check Evt.poll_guard(fun (poll):
+                         check poll ~is #false
+                         Evt.always)
+    .sync() ~is Evt.always
+
+block:
+  check Evt.always.replace(fun (v):
+                             check v ~is Evt.always
+                             Evt.always.wrap(fun (v): "replaced"))
+    .sync() ~is "replaced"
+  let e2 = Evt.always.replace(fun (v):
+                                check v ~is Evt.always
+                                "replaced immediately")
+  check e2.sync() ~is e2
+  let e3 = Evt.always.replace(fun (v):
+                                check v ~is Evt.always
+                                values("many", "values"))
+  check e3.sync() ~is e3
+  check Evt.always.wrap(fun (v): values("a", "b", "c"))
+    .replace(fun (a, b, c):
+               Evt.always.wrap(fun (v): values(a, c)))
+    .sync() ~is values("a", "c")
+
+block:
+  let ready = Semaphore()
+  let ch = Channel()
+  check ch.sync(~timeout: 0) ~is #false
+  check Evt.nack_guard(fun (nack :~ Evt):
+                         ready.post()
+                         thread: nack.sync(); ch.put("done")
+                         Evt.never)
+    .sync(ready) ~is ready
+  check ch.get() ~is "done"
+  check Evt.nack_guard(fun (nack :~ Evt):
+                         thread: nack.sync(); ch.put("done")
+                         Evt.always.wrap(fun (_): "ok"))
+    .sync(Evt.never) ~is "ok"
+  check ch.sync(~timeout: 0) ~is #false
+
+check:
+  Evt.alarm(system.milliseconds()).sync() ~is_a Evt
+  Evt.alarm(measure.real_milliseconds(), ~monotonic: #true).sync() ~is_a Evt
+  // assuming that 1_000 seconds do no pass
+  Evt.alarm(system.milliseconds() + 1_000_000).sync(Evt.always) ~is Evt.always
+
+block:
+  let ch: Channel()
+  let th:
+    thread:
+      ch.put(42)
+      let v = ch.get()
+      ch.put(v)
+      ch.put(101)
+      ch.get()
+  check ch.get() ~is 42
+  ch.put(1)
+  check ch.get() ~is 1
+  check ch.sync() ~is 101
+  let e1:
+    ch.put_evt(53)
+  let e2:
+    e1.sync()
+  check e1 ~is e2
+  check e1 is_a Channel.PutEvt ~is #true
+
+block:
+  let ev: Evt.always.wrap(fun (v): v == Evt.always)
+  check ev.sync() ~is #true
+
+  let ch: Channel()
+  let ev: ch.wrap(fun (v): v + 1)
+  thread:
+    ch.put(10)
+  check ev.sync() ~is 11
+
+block:
+  class Ch():
+    implements Synchronizable
+    field ch :~ Channel = Channel()
+    override method as_evt(): ch
+    method trigger():
+      thread:
+        ch.put(10)
+
+  let ch: Ch()
+  ch.trigger()
+  check ch.sync() ~is 10
+
+  ch.trigger()
+  check ch.wrap((_ + 1)).sync() ~is 11

@@ -1,0 +1,66 @@
+import:
+  lib("racket/gui/easy.rkt")
+  rhombus/draw/private/symbol_map.symbol_map_annot
+  "window-child-help.rkt".mix_window_child_callbacks
+  "window-callback.rhm".WindowCallbacks
+  "view.rhm":
+    expose:
+      View
+      WindowChildView
+      WindowView
+  "view.rhm"!private:
+    expose:
+      BaseWindowView
+      WindowViewI
+      to_view
+  "obs.rhm":
+    expose:
+      Obs
+      ObsOrValue
+  "view-help.rkt"
+  "window-help.rkt".add_window_callbacks
+  "menu.rhm".MenuBar
+
+export:
+  Dialog
+
+class Dialog():
+  extends BaseWindowView
+  implements WindowViewI
+
+  constructor (~title: title :: ObsOrValue.of(String) = "Untitled",
+               ~size: size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~align: alignment :: ObsOrValue.of(View.Alignment) = [#'center, #'top],
+               ~position: position :: ObsOrValue.of(View.Position) = #'center,
+               ~min_size: min_size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~stretch: stretch :: ObsOrValue.of(View.Stretch) = [#true, #true],
+               ~enable: enable :: ObsOrValue.of(Boolean) = #true,
+               ~style: style :: ObsOrValue.of(List.of(Dialog.Style)) = [],
+               ~window_callbacks: wcb :: maybe(WindowCallbacks) = #false,
+               child :: ObsOrValue.of(WindowChildView && !WindowView),
+               ...):
+    #{view-help}.#{mix-wrap}(
+      fun (mixin):
+        let mixin = mix_window_child_callbacks(mixin, wcb)
+        super(easy.dialog(~title: obs.unwrap(title),
+                          ~size: obs.unwrap_list(size, values),
+                          ~alignment: obs.unwrap_list(alignment, values),
+                          ~position: obs.unwrap(position),
+                          ~#{min-size}: obs.unwrap_list(min_size, values),
+                          ~stretch: obs.unwrap_list(stretch, values),
+                          ~style: obs.unwrap_list(style, convert_style),
+                          ~mixin: fun (cls):
+                                    mixin(add_window_callbacks(cls, enable)),
+                          to_view(child).handle,
+                          ...))
+          <| ()
+    )
+
+  export:
+    Style
+
+  symbol_map_annot Style convert_style
+  | no_caption = #{no-caption}
+  | no_sheet = #{no-sheet}
+  | resize_border = #{resize-border}
+  | close_button = #{close-button}

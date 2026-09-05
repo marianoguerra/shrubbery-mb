@@ -1,0 +1,4 @@
+import:
+  rhombus/net/cookie/user_agent
+export:
+  all_from(.user_agent)

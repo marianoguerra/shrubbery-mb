@@ -1,0 +1,350 @@
+import:
+  lib("racket/base.rkt") as rkt
+  lib("rhombus/private/amalgam.rkt")!evt
+  "private/thread.rkt" as rkt_thd
+
+export:
+  thread
+  Thread
+  Semaphore
+  Channel
+  Synchronizable
+  Evt
+  only_space annot:
+    evt.Evt
+    evt.ProgressEvt
+    evt.CommitEvt
+
+expr.macro 'thread:
+              $(group_option_sequence
+                | '~pool: $(pool :: Block)':
+                    default pool = ': #false'
+                | '~keep: $(keep :: Block)':
+                    default keep = ': #false')
+              $body
+              ... ~nonempty':
+  'Thread(fun (): $body; ...,
+          ~pool $pool,
+          ~keep $keep)'
+
+namespace ~open:
+  export: Thread
+  class Thread(private hand):
+    opaque
+    internal _Thread
+    implements evt.Evt
+    private implements evt._Evt
+    constructor (thunk :: Function.of_arity(0),
+                 ~pool: pool :: maybe(Thread.Pool || Any.of(#'own)) = #false,
+                 ~keep: keep :: maybe(Thread.Keep) = #false):
+      super(rkt_thd.thread(thunk,
+                           ~pool:
+                             match pool
+                             | pool :: Thread.Pool: pool.handle
+                             | ~else: pool,
+                           ~keep: keep))
+    override property handle: hand
+    private override property sync_handle: rkt.#{wrap-evt}(hand, fun (v): this)
+
+    private implements Equatable
+    private override equals(other :~ Thread, recur):
+      recur(hand, other.hand)
+    private override hash_code(recur):
+      recur(hand)
+
+    method wait(fail_k :: Function.of_arity(0) = Function.pass):
+      rkt_thd.#{thread-wait}(hand, fail_k)
+    method break(kind :: Thread.Break = #'interrupt):
+      rkt.#{break-thread}(hand, match kind
+                                | #'interrupt: #false
+                                | #'hang_up: #'#{hang-up}
+                                | #'terminate: #'terminate)
+    method kill():
+      rkt.#{kill-thread}(hand)
+
+    method send(v,
+                ~fail: fail :: maybe(Function.of_arity(0)) described_as (maybe(() -> ~any)) = #false):
+      rkt.#{thread-send}(hand, v, fail)
+
+    export:
+      from_handle
+      current
+      receive
+      maybe_receive
+      receive_evt
+      sleep
+      Break
+      Pool
+      Keep
+
+    fun sleep(n :: NonnegReal):
+      rkt.sleep(n)
+
+    fun from_handle(hand) :~ Thread:
+      ~who: who
+      unless rkt.#{thread?}(hand)
+      | error(~who: who, "not a thread handle",
+              error.val(hand))
+      _Thread(hand)
+
+    fun current() :~ Thread:
+      _Thread(rkt.#{current-thread}())
+    fun receive():
+      rkt.#{thread-receive}()
+    fun maybe_receive():
+      rkt.#{thread-try-receive}()
+    fun receive_evt() :~ evt.Evt:
+      _ThreadReceiveEvt(rkt.#{thread-receive-evt}())
+
+    enum Break
+    | interrupt
+    | hang_up
+    | terminate
+
+    class Pool(private hand):
+      opaque
+      internal _Pool
+      constructor (n :: PosInt = processor_count()):
+        super(rkt_thd.#{make-parallel-thread-pool}(n))
+      property handle: hand
+      method close():
+        rkt_thd.#{parallel-thread-pool-close}(hand)
+      export:
+        processor_count
+        own
+        from_handle
+      fun processor_count():
+        rkt_thd.#{processor-count}()
+      def own = #'own
+      fun from_handle(hand) :~ Pool:
+        ~who: who
+        unless rkt_thd.#{parallel-thread-pool?}(hand)
+        | error(~who: who, "not a parallel thread pool handle",
+                error.val(hand))
+        _Pool(hand)
+
+    enum Keep
+    | results
+
+namespace ~open:
+  export: Semaphore
+  class Semaphore(private hand):
+    opaque
+    internal _Semaphore
+    implements evt.Evt
+    private implements evt._Evt
+    constructor (init :: Nat = 0):
+      super(rkt.#{make-semaphore}(init))
+    override property handle: hand
+    private override property sync_handle: rkt.#{wrap-evt}(hand, fun (v): this)
+    method post():
+      rkt.#{semaphore-post}(hand)
+    method wait():
+      rkt.#{semaphore-wait}(hand)
+    method poll():
+      rkt.#{semaphore-try-wait?}(hand)
+
+    export:
+      from_handle
+
+  fun from_handle(hand) :: Semaphore:
+    ~who: who
+    unless rkt.#{semaphore?}(hand)
+    | error(~who: who, "not a semaphore handle")
+    _Semaphore(hand)
+
+namespace ~open:
+  export:
+    Channel
+
+  class Channel(private hand):
+    export:
+      only_space annot:
+        PutEvt
+    opaque
+    internal _Channel
+    implements evt.Evt
+    constructor ():
+      super(rkt.#{make-channel}())
+    override property handle: hand
+    method get():
+      rkt.#{channel-get}(hand)
+    method put(value):
+      rkt.#{channel-put}(hand, value)
+    method put_evt(value) :~ evt.Evt:
+      PutEvt(rkt.#{channel-put-evt}(hand, value))
+
+    class PutEvt(hand):
+      implements evt.Evt
+      private implements evt._Evt
+      opaque
+      override property handle: hand
+      private override property sync_handle: rkt.#{wrap-evt}(hand, fun (e): this)
+
+interface Synchronizable:
+  extends evt.Evt
+  override property handle: rkt.#{guard-evt}(fun (): as_evt().handle)
+  method as_evt() :~ evt.Evt
+
+class AlwaysEvt():
+  implements evt.Evt
+  private implements evt._Evt
+  opaque
+  override property handle: rkt.#{always-evt}
+  private override property sync_handle: rkt.#{wrap-evt}(rkt.#{always-evt}, fun (b): this)
+  private implements Printable
+  private override describe(mode, recur): "Evt.always"
+
+class NeverEvt():
+  implements evt.Evt
+  private implements evt._Evt
+  opaque
+  override property handle: rkt.#{never-evt}
+  private override property sync_handle: rkt.#{wrap-evt}(rkt.#{never-evt}, fun (b): this)
+  private implements Printable
+  private override describe(mode, recur): "Evt.never"
+
+class SystemIdleEvt():
+  implements evt.Evt
+  private implements evt._Evt
+  opaque
+  override property handle: rkt.#{system-idle-evt}()
+  private override property sync_handle: rkt.#{wrap-evt}(rkt.#{system-idle-evt}(), fun (b): this)
+  private implements Printable
+  private override describe(mode, recur): "Evt.system_idle"
+
+class AlarmEvt(private _handle):
+  implements evt.Evt
+  internal _AlarmEvt
+  constructor ~none
+  private implements evt._Evt
+  opaque
+  override property handle: _handle
+  private override property sync_handle: rkt.#{wrap-evt}(handle, fun (b): this)
+  private implements Printable
+  private override describe(mode, recur): "Evt.alarm(...)"
+
+class ThreadReceiveEvt(private _handle):
+  implements evt.Evt
+  internal _ThreadReceiveEvt
+  constructor ~none
+  private implements evt._Evt
+  opaque
+  override property handle: _handle
+  private override property sync_handle: rkt.#{wrap-evt}(handle, fun (b): this)
+  private implements Printable
+  private override describe(mode, recur): "Thread.receive_evt(...)"
+
+class GuardEvt(private _handle):
+  implements evt.Evt
+  internal _GuardEvt
+  constructor ~none
+  private implements evt._Evt
+  opaque
+  override property handle: _handle
+  private override property sync_handle: _handle
+  private implements Printable
+  private override describe(mode, recur): "Evt.guard(...)"
+
+class NackGuardEvt(private _handle):
+  implements evt.Evt
+  internal _NackGuardEvt
+  constructor ~none
+  private implements evt._Evt
+  opaque
+  override property handle: _handle
+  private override property sync_handle: _handle
+  private implements Printable
+  private override describe(mode, recur): "Evt.nack_guard(...)"
+
+class PollGuardEvt(private _handle):
+  implements evt.Evt
+  internal _PollGuardEvt
+  constructor ~none
+  private implements evt._Evt
+  opaque
+  override property handle: _handle
+  private override property sync_handle: _handle
+  private implements Printable
+  private override describe(mode, recur): "Evt.poll_guard(...)"
+
+class NackEvt(private _handle):
+  implements evt.Evt
+  internal _NackEvt
+  constructor ~none
+  private implements evt._Evt
+  opaque
+  override property handle: _handle
+  private override property sync_handle: rkt.#{wrap-evt}(_handle, fun (v): this)
+
+class ChoiceEvt(private _handle):
+  implements evt.Evt
+  internal _ChoiceEvt
+  constructor ~none
+  private implements evt._Evt
+  opaque
+  override property handle: _handle
+  private override property sync_handle: _handle
+  private implements Printable
+  private override describe(mode, recur): "Evt.choice(...)"
+
+class GenericEvt(private _handle):
+  implements evt.Evt
+  internal _GenericEvt
+  constructor ~none
+  opaque
+  override property handle: _handle
+  private implements Printable
+  private override describe(mode, recur): "Evt.from_handle(...)"
+
+fun sync_handle(e :~ evt.Evt):
+  match e
+  | e :: evt.__Evt:
+      e.sync_handle
+  | ~else:
+      e.handle
+
+namespace Evt:
+  export:
+    rename:
+      evt.Evt.sync as sync
+      evt.Evt.wrap as wrap
+      evt.Evt.replace as replace
+      evt.WrapReturn as WrapReturn
+      evt.Evt.handle as handle
+    always
+    never
+    system_idle
+    alarm
+    guard
+    nack_guard
+    poll_guard
+    choice
+    from_handle
+
+  alias 'Evt': 'evt.Evt'
+
+  def always = AlwaysEvt()
+  def never = NeverEvt()
+  def system_idle = SystemIdleEvt()
+
+  fun alarm(msecs :: Real, ~monotonic =  #false) :~ AlarmEvt:
+    _AlarmEvt(rkt.#{alarm-evt}(msecs, monotonic))
+
+  fun guard(maker :: () -> Evt) :~ GuardEvt:
+    _GuardEvt(rkt.#{guard-evt}(fun (): sync_handle(maker())))
+
+  fun nack_guard(maker :: (Evt) -> evt.Evt) :~ NackGuardEvt:
+    _NackGuardEvt(rkt.#{nack-guard-evt}(fun (nack): sync_handle(maker(_NackEvt(nack)))))
+
+  fun poll_guard(maker :: (Any) -> Evt) :~ PollGuardEvt:
+    _PollGuardEvt(rkt.#{poll-guard-evt}(fun (p): sync_handle(maker(p))))
+
+  fun choice(evt :: Evt, ...) :~ ChoiceEvt:
+    _ChoiceEvt(rkt.#{choice-evt}(sync_handle(evt), ...))
+
+  fun from_handle(v) :~ Evt:
+    ~who: who
+    unless rkt.#{evt?}(v)
+    | error(~who: who, "not an evt handle")
+    _GenericEvt(v)

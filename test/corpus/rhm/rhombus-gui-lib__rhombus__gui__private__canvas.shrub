@@ -1,0 +1,96 @@
+import:
+  rhombus/draw/private/rkt
+  rhombus/draw
+  lib("racket/gui/easy.rkt")
+  rhombus/draw/private/symbol_map.symbol_map_annot
+  "window-child-help.rkt".mix_window_child_callbacks
+  "window-callback.rhm".WindowCallbacks
+  "view.rhm".View
+  "view.rhm"!private.BaseWindowView
+  rhombus/draw/private/dc!internal.SomeDC
+  "event.rhm"!private:
+    expose:
+      _MouseEvent
+      _KeyEvent
+  "event.rhm":
+    expose:
+      MouseEvent
+      KeyEvent
+  "obs.rhm":
+    expose:
+      ObsOrValue
+  "canvas-help.rkt".add_canvas_callbacks
+  "view-help.rkt"
+
+export:
+  Canvas
+  CanvasContext
+
+def canvas_dcs = WeakMutableMap.by(===)()
+
+class Canvas():
+  extends BaseWindowView
+
+  constructor (data,
+               draw :: (draw.DC, Any) -> ~any,
+               ~label: label :: ObsOrValue.of(maybe(View.LabelString)) = #false,
+               ~key: on_key :: (KeyEvent, CanvasContext) -> ~any = Function.pass,
+               ~mouse: on_mouse :: (MouseEvent, CanvasContext) -> ~any = Function.pass,
+               ~enable: enable :: ObsOrValue.of(Boolean) = #true,
+               ~style: style :: ObsOrValue.of(List.of(Canvas.Style)) = [],
+               ~margin: margin :: ObsOrValue.of(View.Margin) = [0, 0],
+               ~min_size: min_size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~stretch: stretch :: ObsOrValue.of(View.Stretch) = [#true, #true],
+               ~window_callbacks: wcb :: WindowCallbacks = WindowCallbacks()):
+    #{view-help}.#{mix-wrap}(
+      fun (mixin):
+        let mixin = mix_window_child_callbacks(mixin, wcb)
+        super(easy.canvas(obs.unwrap(data),
+                          fun (dc_handle, data):
+                            let dc: canvas_dcs.maybe[dc_handle]
+                                      || (block:
+                                            let dc = SomeDC(dc_handle)
+                                            dc.smoothing := #'smoothed
+                                            canvas_dcs[dc_handle] := dc
+                                            dc)
+                            draw(dc, data),
+                          ~label: obs.unwrap(label),
+                          ~#{enabled?}: obs.unwrap(enable),
+                          ~style: obs.unwrap_list(style, convert_style),
+                          ~margin: obs.unwrap_list(margin, values),
+                          ~#{min-size}: obs.unwrap_list(min_size, values),
+                          ~stretch: obs.unwrap_list(stretch, values),
+                          ~mixin: fun (c):
+                                    mixin(add_canvas_callbacks(
+                                            c,
+                                            fun (ev, w_handle): on_key(_KeyEvent(ev)(), _CanvasContext(w_handle)),
+                                            fun (ev, w_handle): on_mouse(_MouseEvent(ev)(), _CanvasContext(w_handle))
+                                          ))))
+          <| ()
+    )
+
+  export:
+    Style
+
+  symbol_map_annot Style convert_style
+  | border
+  | control_border = #{control-border}
+  | choice = combo
+  | vscroll
+  | hscroll
+  | resize_corner = #{resize-corner}
+  | gl
+  | no_autoclear = #{no-autoclear}
+  | transparent
+  | no_focus = #{no-focus}
+
+interface CanvasContext:
+  property client_size :~ draw.Size
+
+class _CanvasContext(private _handle):
+  implements CanvasContext
+  constructor _CanvasContext(handle):
+    super(handle)
+  override property client_size:
+    let (w, h) = rkt.send _handle.#{get-client-size}()
+    draw.Size(w, h)

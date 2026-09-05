@@ -1,0 +1,204 @@
+
+use_static
+
+class O(v):
+  nonfinal
+class O2(w):
+  extends O  
+
+O2("B1", "B1")
+
+class A0():
+  implements Callable
+  override method call() :: O:
+    O("A0")
+  method call_self():
+    this().v
+
+class A1():
+  nonfinal
+  implements Callable
+  override method call() :: O:
+    O("A1")
+
+class B1():
+  extends A1
+  implements Callable
+  override method call() :: O2:
+    O2("B1", "B1")
+
+class C1():
+  extends A1
+  override method call() :: O2:
+    O2("C1", "C1")
+
+class A2():
+  nonfinal
+  implements Callable
+
+class B2():
+  extends A2
+  override method call() :: O:
+    O("B2")
+
+interface I3:
+  extends Callable
+
+class A3():
+  implements I3
+  override method call() :: O:
+    O("A3")
+
+class A4():
+  nonfinal
+  implements I3
+
+class B4():
+  extends A4
+  override method call() :: O:
+    O("B4")
+
+class A5():
+  nonfinal
+  private implements Callable
+  private override method call() :: O:
+    O("A5")
+
+class B5():
+  nonfinal
+  extends A5
+
+class C5():
+  extends B5
+  implements Callable
+  override method call() :: O2:
+    O2("C5", "C5")
+
+class C6():
+  extends B5
+  private implements Callable
+  private override method call() :: O:
+    O("C6")
+
+interface I7:
+  extends I3
+  override method call() :: O:
+    O("I7")
+
+class A7():
+  nonfinal
+  implements I7
+
+class B7():
+  extends A7
+  override method call() :: O2:
+    O2("B7", "B7")
+
+interface I8:
+  extends Callable
+  override method call() :: O
+
+class A8():
+  implements I8
+  override method call() :: O:
+    O("A8")
+
+check:
+  A0()().v ~is "A0"
+  A1()().v ~is "A1"
+  B1()().v ~is "B1"
+  B1()().w ~is "B1"
+  C1()().v ~is "C1"
+  C1()().w ~is "C1"
+  B2()().v ~is "B2"
+  A3()().v ~is "A3"
+  (A3() :: I3)() ~is O("A3")
+  B4()().v ~is "B4"
+  A5()().v ~is "A5"
+  B5()().v ~is "A5"
+  C5()().v ~is "C5"
+  C5()().w ~is "C5"
+  C6()().v ~is "C6"
+  A7()().v ~is "I7"
+  (A7() :: I7)().v ~is "I7"
+  B7()().v ~is "B7"
+  B7()().w ~is "B7"
+  A8()().v ~is "A8"
+  (A8() :: I8)().v ~is "A8"
+  (dynamic(A0()) :: A0)().v ~is "A0"
+  A0().call_self() ~is "A0"
+
+block:
+  use_dynamic
+  check:
+    (dynamic(A0()))().v ~is "A0"
+
+block:
+  class Proc(name):
+    private implements Callable
+    private override
+    | call(): #void
+    private implements Printable
+    private override describe(mode, recur):
+      "#<function:" +& name +& ">"
+  check:
+    Proc("ok")() ~is #void
+    to_string(Proc("ok")) ~is "#<function:ok>"
+
+check:
+  A0() ~is_a Function
+  B1() ~is_a Function
+  C6() ~is_a Function
+
+// check that `Function` methods are available statically
+check:
+  A0().arity() ~is values(1, [], [])
+  A1().arity() ~is values(1, [], [])
+  A3().arity() ~is values(1, [], [])
+  A7().arity() ~is values(1, [], [])
+  A8().arity() ~is values(1, [], [])
+  B1().arity() ~is values(1, [], [])
+  B2().arity() ~is values(1, [], [])
+  B4().arity() ~is values(1, [], [])
+  B5().arity() ~is values(1, [], [])
+  B7().arity() ~is values(1, [], [])
+  C1().arity() ~is values(1, [], [])
+  C5().arity() ~is values(1, [], [])
+  C6().arity() ~is values(1, [], [])
+
+// check that `Function` methods are available dynamically
+block:
+  use_dynamic
+  check:
+    dynamic(A0()).arity() ~is values(1, [], [])
+    dynamic(A1()).arity() ~is values(1, [], [])
+    dynamic(A3()).arity() ~is values(1, [], [])
+    dynamic(A7()).arity() ~is values(1, [], [])
+    dynamic(A8()).arity() ~is values(1, [], [])
+    dynamic(B1()).arity() ~is values(1, [], [])
+    dynamic(B2()).arity() ~is values(1, [], [])
+    dynamic(B4()).arity() ~is values(1, [], [])
+    dynamic(B5()).arity() ~is values(1, [], [])
+    dynamic(B7()).arity() ~is values(1, [], [])
+    dynamic(C1()).arity() ~is values(1, [], [])
+    dynamic(C5()).arity() ~is values(1, [], [])
+    dynamic(C6()).arity() ~is values(1, [], [])
+
+class OwnArity():
+  implements Callable
+  override method call(x):
+    x+1
+  // takes precedence over `Function` methods
+  method arity():
+    "yes"
+
+check:
+  OwnArity()(3) ~is 4
+  OwnArity().arity() ~is "yes"
+  OwnArity().map([1, 2]) ~is [2, 3]
+block:
+  use_dynamic
+  check:
+    dynamic(OwnArity())(3) ~is 4
+    dynamic(OwnArity()).arity() ~is "yes"
+    dynamic(OwnArity()).map([1, 2]) ~is [2, 3]

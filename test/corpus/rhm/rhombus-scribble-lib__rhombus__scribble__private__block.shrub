@@ -1,0 +1,102 @@
+
+import:
+  "util.rhm" open
+  lib("scribble/base.rkt")
+  "pad.rkt" as rkt_pad
+
+export:
+  para
+  nested
+  centered
+  margin_note
+  margin_note_block
+  Item
+  MarginSide
+  itemlist
+  item
+  verbatim
+  tabular
+  Cell
+
+fun para(~style: paragraph_style :: maybe(StyleLike) = #false,
+         pre_content :: PreContent) :: Paragraph:
+  ~doc
+  base.para(~style: paragraph_style,
+            pre_content)
+
+fun nested(~style: nested_flow_style :: maybe(StyleLike) = #false,
+           pre_flow :: PreFlow) :: NestedFlow:
+  ~doc
+  base.nested(~style: nested_flow_style,
+              pre_flow)
+
+fun centered(pre_flow :: PreFlow) :: FlowBlock:
+  ~doc
+  base.centered(pre_flow)
+
+enum MarginSide:
+  ~doc
+| left
+| right
+
+fun margin_note(~at: at :: MarginSide = #'right,
+                pre_content :: PreContent)
+  :: Element:
+    ~doc
+    base.#{margin-note*}(~#{left?}: at == #'left,
+                         pre_content)
+
+fun margin_note_block(~at: at :: MarginSide = #'right,
+                      pre_flow :: PreFlow)
+  :: FlowBlock:
+    ~doc
+    base.#{margin-note}(~#{left?}: at == #'left,
+                        pre_flow)
+
+annot.macro 'Item': 'satisfying(base.#{item?})'
+
+fun itemlist(~style: itemization_style :: maybe(StyleLike) = #false,
+             item :: Item,
+             ...)
+  :: Itemization:
+    ~doc
+    base.itemlist(~style: itemization_style, item, ...)
+
+fun item(pre_flow :: PreFlow) :: Item:
+  ~doc
+  base.item(pre_flow)
+
+enum Cell:
+  ~doc
+| ~is_a FlowBlock
+| ~is_a Content
+| cont
+
+fun tabular(
+  cells :: List.of(List.of(Cell)),
+  ~style: table_style :: maybe(StyleLike) = #false,
+  ~pad: pad :: Real || [Real, Real] || [Real, Real, Real, Real] = 0,
+  ~sep: sep :: maybe(FlowBlock || Content) = #false,
+  ~column_properties: col_props :: List = [],
+  ~row_properties: row_props :: List = [],
+  ~cell_properties: cell_props :: List.of(List) = [],
+  ~sep_properties: sep_props :: maybe(List) = #false
+) :: Table:
+  ~doc
+  rkt_pad.tabular(convert_list_of_lists(cells, ~per: convert_list),
+                  ~style: table_style,
+                  ~pad: match pad
+                        | _ :: Real: pad
+                        | [h, v]: PairList[h, v]
+                        | [l, t, r, b]: PairList[l, t, r, b],
+                  ~sep: sep,
+                  ~#{column-properties}: convert_list(col_props, ~per: convert_list),
+                  ~#{row-properties}: convert_list(row_props, ~per: convert_list),
+                  ~#{cell-properties}: convert_list_of_lists(cell_props, ~per: convert_list),
+                  ~#{sep-properties}: convert_list(sep_props, ~per: convert_list))
+
+fun verbatim(~indent: indent :: Nat = 0,
+             [content :: Content, ...])
+  :: FlowBlock:
+    ~doc
+    base.verbatim(~indent: indent, content, ...)

@@ -1,0 +1,5 @@
+import:
+  rhombus/ffi/finalize
+
+export:
+  all_from(.finalize)

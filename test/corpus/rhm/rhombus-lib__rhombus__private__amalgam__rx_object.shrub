@@ -1,0 +1,263 @@
+import:
+  lib("racket/base.rkt")
+  "core-meta.rkt" open
+  "alias.rkt" open
+  "maybe.rhm" open
+  "recur.rhm" open
+  "error.rhm" open
+  "rx_match.rhm" open
+  "rx-object.rkt" as rkt
+
+export:
+  RX
+  _RX
+  splice_regexp
+  freeze
+
+// shadowed in `RX`
+alias 'MATCH': 'match'
+
+class RX(private _rkt_partial_rx,
+         private _rkt_rx,
+         private _num_captures :~ Int,
+         private _vars :~ Map,
+         private _has_backref,
+         private _str):
+  internal _RX
+  constructor (): error(~who: #'RX, "cannot instantiate directly")
+
+  export:
+    from_handles
+    quote
+
+  private implements Printable
+  private override describe(mode, recur) :: String:
+    _str
+
+  property handle: _rkt_rx
+  property in_handle: _rkt_partial_rx
+
+  property num_captures :~ Int: _num_captures
+  property capture_names :~ Map: _vars
+  property has_backreference: _has_backref
+  property element :~ Symbol:
+    if base.#{byte-regexp?}(_rkt_rx)
+    | #'char
+    | #'bytes
+
+  class_clause.macro 'match_method $name($input $(input_ann :: Sequence), $start, $end, $out, $prefix) :~ $res_ann ...:
+                        $(body :: Block)':
+    let input_ann:
+      match input_ann
+      | '': ':: String || Bytes || Port.Input'
+      | ~else: input_ann
+    'method $name($input $input_ann,
+                  ~start: $start :: Int = 0,
+                  ~end: $end :: maybe(Int) = #false,
+                  ~unmatched_out: $out :: maybe(Port.Output) = #false,
+                  ~input_prefix: $prefix :: Bytes = #"") :: $res_ann ...
+       $body'
+
+  private method
+  | strings_result(#false): #false
+  | strings_result(m :~ PairList):
+      def mList = (for List (elem in m): freeze(elem))
+      RXMatch(mList[0], mList.rest, _vars)
+
+  match_method match(input, start_pos, end_pos, output_port, input_prefix) :~ maybe(RXMatch):
+    strings_result(
+      base.#{regexp-match}(_rkt_rx, input, start_pos, end_pos, output_port, input_prefix)
+    )
+
+  match_method match_in(input, start_pos, end_pos, output_port, input_prefix) :~ maybe(RXMatch):
+    strings_result(
+      base.#{regexp-match}(_rkt_partial_rx, input, start_pos, end_pos, output_port, input_prefix)
+    )
+
+  match_method try_match(input :: Port.Input, start_pos, end_pos, output_port, input_prefix) :~ maybe(RXMatch):
+    strings_result(
+      base.#{regexp-try-match}(_rkt_rx, input, start_pos, end_pos, output_port, input_prefix)
+    )
+
+  match_method try_match_in(input, start_pos, end_pos, output_port, input_prefix) :~ maybe(RXMatch):
+    strings_result(
+      base.#{regexp-try-match}(_rkt_partial_rx, input, start_pos, end_pos, output_port, input_prefix)
+    )
+
+  match_method match_range(input, start_pos, end_pos, output_port, input_prefix) :~ maybe(RXMatch):
+    MATCH base.#{regexp-match-positions}(_rkt_rx, input, start_pos, end_pos, output_port, input_prefix)
+    | PairList[Pair(s0, e0), maybe_pr, ...]:
+        RXMatch(s0 .. e0, [maybe_range(maybe_pr), ...], _vars)
+    | ~else: #false
+
+  match_method match_range_in(input, start_pos, end_pos, output_port, input_prefix) :~ maybe(RXMatch):
+    MATCH base.#{regexp-match-positions}(_rkt_partial_rx, input, start_pos, end_pos, output_port, input_prefix)
+    | PairList[Pair(s0, e0), maybe_pr, ...]:
+        RXMatch(s0 .. e0, [maybe_range(maybe_pr), ...], _vars)
+    | ~else: #false
+
+  match_method is_match(input, start_pos, end_pos, output_port, input_prefix) :~ Boolean:
+    base.#{regexp-match?}(_rkt_rx, input, start_pos, end_pos, output_port, input_prefix)
+
+  match_method is_match_in(input, start_pos, end_pos, output_port, input_prefix) :~ Boolean:
+    base.#{regexp-match?}(_rkt_partial_rx, input, start_pos, end_pos, output_port, input_prefix)
+
+  method max_lookbehind():
+    base.#{regexp-max-lookbehind}(_rkt_partial_rx)
+
+  method matches(input :: String || Bytes || Port.Input,
+                 ~start: start_pos :: Int = 0,
+                 ~end: end_pos :: maybe(Int) = #false,
+                 ~input_prefix: input_prefix :: Bytes = #"") :~ List:
+    def m :~ PairList = base.#{regexp-match*}(_rkt_partial_rx, input, start_pos, end_pos, input_prefix)
+    for List (elem in m):
+      freeze(elem)
+
+  method split(input :: String || Bytes || Port.Input,
+               ~start: start_pos :: Int = 0,
+               ~end: end_pos :: maybe(Int) = #false,
+               ~input_prefix: input_prefix :: Bytes = #"") :~ List:
+    def m :~ PairList = base.#{regexp-split}(_rkt_partial_rx, input, start_pos, end_pos, input_prefix)
+    for List (elem in m):
+      freeze(elem)
+
+  fun check_filter(who, in, out):
+    fun bad(kind):
+      error(~who: who,
+            ~exn: Exn.Fail.Annot,
+            "expected " ++ kind ++ "string result from replacing function",
+            error.val(~label: "result", out))
+    cond
+    | in is_a Bytes:
+        unless out is_a Bytes
+        | bad("byte ")
+    | ~else:
+        unless out is_a String
+        | bad("")
+    out
+
+  method replace(input :: String || Bytes,
+                 insert :: String || Bytes || Function.of_arity(num_captures+1),
+                 ~input_prefix: input_prefix :: Bytes = #""):
+    let insert:
+      if insert is_a Function
+      | fun (m, &ms): check_filter(#'#{RX.replace}, m, insert(m, & ms))
+      | base.#{regexp-replace-quote}(insert)
+    freeze(base.#{regexp-replace}(_rkt_partial_rx, input, insert, input_prefix))
+
+  method replace_all(input :: String || Bytes,
+                     insert :: String || Bytes || Function.of_arity(num_captures+1),
+                     ~start: start_pos :: Int = 0,
+                     ~end: end_pos :: maybe(Int) = #false,
+                     ~input_prefix: input_prefix :: Bytes = #""):
+    let insert:
+      if insert is_a Function
+      | fun (m, & ms): check_filter(#'#{RX.replace_all}, m, insert(m, & ms))
+      | base.#{regexp-replace-quote}(insert)
+    freeze(base.#{regexp-replace*}(_rkt_partial_rx, input, insert, start_pos, end_pos, input_prefix))
+
+fun from_handles(rx,
+                 partial_rx,
+                 num_captures :: Nat,
+                 vars :: Map.of(Symbol, Nat),
+                 ~has_backref: has_backref :: Any.to_boolean = #false,
+                 ~source: source :: String = "rx'....'") :~ RX:
+  ~name: RX.from_handles
+  fun bad(rx, mode):
+    error(~who: #'#{RX.from_handles},
+          ~exn: Exn.Fail.Annot,
+          "not a primitive regular expression for " ++ mode ++ " mode",
+          error.val(rx))
+  unless base.#{regexp?}(rx)
+  | bad("whole-match")
+  unless base.#{regexp?}(partial_rx)
+  | bad("partial-match")
+  _RX(partial_rx, rx, num_captures, vars, has_backref, source)
+
+fun quote(str :: ReadableString || Bytes) :~ RX:
+  ~name: RX.quote
+  let q = base.#{regexp-quote}(str)
+  let partial_rx:
+    if q is_a ReadableString
+    | base.#{pregexp}(q)
+    | base.#{byte-pregexp}(q)
+  let rx:
+    match q
+    | q :: ReadableString: base.#{pregexp}("^" ++ q ++ "$")
+    | q :: Bytes: base.#{byte-pregexp}(#"^" ++ q ++ #"$")
+  _RX(partial_rx, rx, 0, {}, #false, "rx'....'")
+
+fun maybe_range(maybe_pr):
+  match maybe_pr
+  | Pair(s, e): s .. e
+  | ~else: #false
+
+fun freeze(elem):
+  match elem
+  | str :: ReadableString: to_string(str)
+  | bstr :: Bytes: bstr
+  | ~else: #false
+
+fun splice_regexp(who, PairList(a, ...) && as, var_seq, has_backref, src) :~ RX:
+  fun extract(a):
+    match a
+    | _ :: String: a
+    | _ :: Bytes: a
+    | Pair(_, regexp :: _RX):
+        when has_backref && (regexp._num_captures != 0)
+        | error(~who: who,
+                ~exn: Exn.Fail.Annot,
+                "cannot splice regexp that has capture groups into a pattern with backreferences",
+                error.val(~label: "regexp", regexp))
+        when regexp._has_backref
+        | error(~who: who,
+                ~exn: Exn.Fail.Annot,
+                "cannot splice regexp with backreferences into a larger pattern",
+                error.val(~label: "regexp", regexp))
+        let str = base.#{object-name}(regexp.in_handle)
+        if str is_a ReadableString
+        | "(?:" ++ str ++ ")"
+        | #"(?:" ++ str ++ #")"
+    | Pair(src_str, val):
+        error(~who: who,
+              ~exn: Exn.Fail.Annot,
+              error.annot_msg("spliced value for " +& src_str),
+              error.annot("RX"),
+              error.val(~label: "spliced value", val))
+  let [ex_a, ...] = [extract(a), ...]
+  let is_str = all(ex_a is_a String, ...)
+  unless is_str || all(ex_a is_a Bytes, ...)
+  | error(~who: who,
+          ~exn: Exn.Fail.Annot,
+          "cannot splice mixture of string and byte string regexps")
+  let str = if is_str | String.append(ex_a, ...) | Bytes.append(ex_a, ...)
+  let (num_captures, vars):
+    recur loop(vars :~ Map = {}, as = as, var_seq = var_seq, di = 0):
+      match var_seq
+      | []: values(di, vars)
+      | [#false, & var_seq]: loop(vars, as, var_seq, di+1)
+      | [#'~splice, & var_seq]:
+          recur as_loop(as = as):
+            match as
+            | PairList(Pair(_, regexp :: _RX), & as):
+                let vars:
+                  for values(vars :~ Map = vars) ((k, v) in regexp._vars):
+                    vars ++ { k: v + di }
+                loop(vars, as, var_seq, di + regexp._num_captures)
+            | PairList(_, & as):
+                as_loop(as)
+      | [sym, & var_seq]:
+          loop(vars ++ { sym: di + 1 }, as, var_seq, di+1)
+  _RX(if is_str
+      | base.#{pregexp}(str)
+      | base.#{byte-pregexp}(str),
+      if is_str
+      | base.#{pregexp}("^(?:" ++ str ++ ")$")
+      | base.#{byte-pregexp}(#"^(?:" ++ str ++ #")$"),
+      num_captures,
+      vars,
+      has_backref,
+      src)
+
+// register predicate and selector for use by `String`
+rkt.#{set-rx!}(fun (x): x is_a RX, _RX._rkt_partial_rx)

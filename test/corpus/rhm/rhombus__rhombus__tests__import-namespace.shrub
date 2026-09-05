@@ -1,0 +1,305 @@
+
+namespace n:
+  export: exint
+  def exint = 10
+  bind.macro 'exint': '(_ :: Int)'
+  annot.macro 'exint': 'Int'
+
+check:
+  import: .n as ex_c
+  def ex_c.exint = 10
+  10 :: ex_c.exint
+  ex_c.exint
+  ~is 10
+
+check:
+  def n.exstr = "11"
+  annot.macro 'n.exstr': 'String'
+  import: .n as ex_c
+  def ex_c.exint = 10
+  [10 :: ex_c.exint,
+   ex_c.exint,
+   "11" :: ex_c.exstr,
+   ex_c.exstr]
+  ~is [10, 10, "11", "11"]
+
+check:
+  import: .n as ex_c
+  def ex_c.exint = "10"
+  #void
+  ~throws "value does not satisfy annotation"
+
+check:
+  import: .n as ex_c
+  "10" :: ex_c.exint
+  ~throws "value does not satisfy annotation"
+
+check:
+  import: .n open
+  def exint = 10
+  10 :: exint
+  exint
+  ~is 10
+
+check:
+  defn.macro 'open_n':
+    ~op_stx self
+    'import: .n open ~scope_like $self'
+  open_n
+  def exint = 10
+  10 :: exint
+  exint
+  ~is 10
+
+check:
+  import:
+    .n:
+      open
+      rename: exint as ex_int
+  def ex_int = 10
+  10 :: ex_int
+  ex_int
+  ~is 10
+
+check:
+  import:
+    .n as ex_c:
+      rename: exint as ex_int
+  def ex_c.ex_int = 10
+  10 :: ex_c.ex_int
+  ex_c.ex_int
+  ~is 10
+
+check:
+  import:
+    .n:
+      expose: exint
+      rename: exint as ex_int
+  def ex_int = 10
+  10 :: ex_int
+  ex_int
+  ~is 10
+
+check:
+  import:
+    .n:
+      expose: exint as ex_int
+  def ex_int = 10
+  10 :: ex_int
+  ex_int
+  ~is 10
+
+check:
+  import:
+    .n:
+      open
+      only_space: expr
+  exint
+  ~is 10
+
+check:
+  import:
+    .n as ex_c:
+      only_space: expr
+  ex_c.exint
+  ~is 10
+
+check:
+  ~eval
+  block:
+    import rhombus/meta open
+    namespace n:
+      export: exint
+      def exint = 10
+      bind.macro 'exint': '(_ :: Int)'
+      annot.macro 'exint': 'Int'
+    import:
+      .n:
+        open
+        only_space: expr
+    10 :: exint
+  ~throws "not bound as an annotation"
+
+check:
+  ~eval
+  block:
+    import rhombus/meta open
+    namespace n:
+      export: exint
+      def exint = 10
+      bind.macro 'exint': '(_ :: Int)'
+      annot.macro 'exint': 'Int'
+    import:
+      .n as ex_c:
+        only_space: expr
+    10 :: ex_c.exint
+  ~throws "identifier not provided"
+
+check:
+  import:
+    .n:
+      open
+      only_space: annot
+  def exint = 11
+  exint
+  ~is 11
+
+check:
+  import:
+    .n:
+      open
+      only_space: annot
+  11 :: exint
+  ~is 11
+
+check:
+  import:
+    .n as ex_c:
+      only_space: annot
+  11 :: ex_c.exint
+  ~is 11
+
+block:
+  namespace n2:
+    import:
+      .n open:
+        except_space: bind
+    export: exint
+    bind.macro 'exint': '(_ :: PosInt)'
+  check:
+    import .n2 as ex_c
+    def ex_c.exint = 10
+    10 :: ex_c.exint
+    ex_c.exint
+    ~is 10
+  check:
+    import .n as ex_c
+    def ex_c.exint = -10
+    ~completes
+  check:
+    import .n2 as ex_c
+    def ex_c.exint = -10
+    #void
+    ~throws "value does not satisfy annotation"
+  check:
+    import .n2 open
+    def exint = -10
+    #void
+    ~throws "value does not satisfy annotation"
+
+check:
+  namespace ns:
+    export:
+      only_space annot:
+        Streeng
+  annot.macro 'Streeng': 'String'
+  import .ns
+  "10" :: ns.Streeng
+  ~is "10"
+
+block:
+  // make sure non-macro-introduced names are not
+  // mismatched with macro-introduced namespace names
+  defn.macro 'datatype $name':
+    '«namespace ADT:
+        export:
+          only_space annot: $name
+        class $name ()
+      import:
+        .ADT . $name
+    »'
+  datatype List
+  check:
+    [1, 2] is_a List ~is #false
+    List(1, 2) ~is [1, 2]
+
+block:
+  // similar, but for `expose`
+  defn.macro 'datatype $name':
+    '«namespace ADT:
+        export:
+          only_space annot: $name
+        class $name ()
+      import:
+        .ADT as ignored:
+          expose: $name
+    »'
+  datatype List
+  check:
+    [1, 2] is_a List ~is #false
+    List(1, 2) ~is [1, 2]
+
+check:
+  import .List.iota
+  iota(2)
+  ~is [0, 1]
+
+check:
+  import rhombus.List.iota
+  iota(2)
+  ~is [0, 1]
+
+
+check:
+  import: .n as ~none:
+            expose: exint
+  def exint = 10
+  10 :: exint
+  exint
+  ~is 10
+
+check:
+  import lib("rhombus/tests/example-b.rhm").ex_a
+  ex_a.alpha
+  ~is "alpha"
+
+check:
+  import lib("rhombus/tests/example-b.rhm").ex_a:
+    expose: alpha
+  [alpha, ex_a.beta]
+  ~is ["alpha", "beta"]
+
+check:
+  import lib("rhombus/tests/example-b.rhm").ex_a as ~none:
+    expose: alpha
+  alpha
+  ~is "alpha"
+
+block:
+  namespace m:
+    namespace ns:
+      export:
+        Foo
+        x
+      namespace Foo:
+        export def z = 6
+      namespace Foo.Bar:
+        export def y = 10
+      class Foo.Bar.X():
+        export i
+        def i = 0
+      def x = 5
+    export:
+      ns.Foo
+      ns.x
+
+  check m.Foo.z ~is 6
+  check m.Foo.Bar.y ~is 10
+  check m.Foo.Bar.X.i ~is 0
+  check m.Foo.Bar.X() ~is_a m.Foo.Bar.X
+
+  block:
+    import .m as m2:
+      expose:
+        Foo
+        x
+
+    check m2.Foo.z ~is 6
+    check m2.Foo.Bar.y ~is 10
+    check m2.Foo.Bar.X.i ~is 0
+    check m2.Foo.Bar.X() ~is_a m2.Foo.Bar.X
+
+    check Foo.z ~is 6
+    check Foo.Bar.y ~is 10
+    check Foo.Bar.X.i ~is 0
+    check Foo.Bar.X() ~is_a Foo.Bar.X

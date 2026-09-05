@@ -1,0 +1,84 @@
+
+module combined:
+  def c1 = 1
+
+module combined:
+  def c2 = 2
+  export: c1 c2
+
+module separate ~lang rhombus:
+  def s1 = "s1"
+  export s1
+
+module ~splice combined_with_lang ~lang rhombus:
+  def s2 = "s2"
+  export s2
+
+module ~splice combined_with_lang ~lang rhombus:
+  def s3 = s2 ++ "+1"
+  export s3
+
+// This test will get run multiple times
+// due to the `test` module
+check:
+  import:
+    self!separate    
+  separate.s1
+  ~is "s1"
+  
+module ~late afterward ~lang rhombus:
+  def a1 = "a1"
+  export a1
+
+// This `test` module is able to `eval` uses
+// of the enclosing module
+module test:
+  check:
+    import:
+      parent!separate    
+    separate.s1
+    ~is "s1"
+  
+  check:
+    ~eval
+    import: rhombus/tests/module!afterward
+    afterward.a1
+    ~is "a1"
+
+  check:
+    ~eval
+    import: rhombus/tests/module!combined
+    [combined.c1, combined.c2]
+    ~is [1, 2]
+
+  check:
+    ~eval
+    import: rhombus/tests/module!combined_with_lang as combined
+    [combined.s2, combined.s3]
+    ~is ["s2", "s2+1"]
+
+// ----------------------------------------
+
+module a ~lang rhombus:
+  export y
+  def y = "y"
+
+module m ~lang rhombus:
+  module ~early mn ~lang rhombus:
+    import parent ! ! a
+    export xn
+    def xn = a.y
+  import self!mn
+  export x
+  def x = "x" ++ mn.xn
+
+import: self!m as m
+
+check m.x ~is "xy"
+
+def z = "z"
+export z
+
+module ~late main ~lang rhombus:
+  import parent as p
+  check p.z ~is "z"

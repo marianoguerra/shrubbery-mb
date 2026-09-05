@@ -1,0 +1,204 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check ~meta:
+    defn_meta.pack_s_exp(tree)
+
+// definition form, which returns either a block of definitions
+// or a block of definitions and a sequence of expressions
+
+defn.macro 'define_eight $e ...':
+  match '$e ...'
+  | '$name':
+      'def $name = 8'
+
+define_eight ate
+check:
+  ate
+  ~is 8
+
+defn.macro 'define_and_use $id $e ...':
+  match '$e ...'
+  | '$name: $rhs ...':
+      'def $name: $rhs ...
+       def $id = Syntax.literal($name)'
+
+define_and_use use_nine nine: 1+8
+check:
+  nine
+  ~is 9
+check:
+  use_nine
+  ~matches 'nine'
+
+// declaration form
+
+decl.macro 'empty_import $e ...':
+  match '$e ...'
+  | '':
+      'import:«»'
+
+empty_import
+
+check:
+  ~eval
+  import: rhombus/meta open
+  decl.macro 'empty_import': 'oops'
+  block:
+    empty_import
+    "ok"
+  ~throws "misuse as an expression"
+
+// definition-sequence macros
+defn.sequence_macro 'reverse_defns; $defn1 ...; $defn2 ...; $tail; ...':
+  values('$defn2 ...; $defn1 ...', '$tail; ...')
+
+reverse_defns
+def seq_x = seq_y+1
+def seq_y = 10
+
+check:
+  seq_x
+  ~is 11
+
+check:
+  reverse_defns
+  def seq2_x = seq2_y+1
+  def seq2_y = 100
+  seq2_x
+  ~is 101
+
+block:
+  defn.macro
+  | 'multi_case 1 $id':
+      'def $id = "one"'
+  | 'multi_case 2 $id':
+      'def $id = "two"'
+
+  multi_case 1 a
+  multi_case 2 b
+
+  check:
+    a ~is "one"
+    b ~is "two"
+
+// dotted name as macro
+check:
+  defn.macro '(List.three) $id $x':
+    'def $id: [$x, $x, $x]'
+  List.three bells "ding"
+  bells
+  ~is ["ding", "ding", "ding"]
+
+check:
+  defn.macro 'List.three $id $x':
+    'def $id: [$x, $x, $x]'
+  List.three bells "ding"
+  bells
+  ~is ["ding", "ding", "ding"]
+
+// operator as macro
+check:
+  defn.macro '!!! $id $x':
+    'def $id: [$x, $x, $x]'
+  !!! bells "dong"
+  bells
+  ~is ["dong", "dong", "dong"]
+
+// implicit as macro
+check:
+  defn.macro '#%parens ($(defn :: Multi))':
+    '$defn'
+  (def ding = "ding",
+   def dong = "dong")
+  [ding, dong]
+  ~is ["ding", "dong"]
+
+// namespace extension
+block:
+  namespace n
+
+  defn.macro '(n.dz) $id':
+    'def $id = 0'
+
+  n.dz k
+  check k ~is 0
+
+  block:
+   import .n open
+   dz w
+   check w ~is 0
+
+block:
+  namespace n
+
+  defn.macro 'n.dz $id':
+    'def $id = 0'
+
+  n.dz k
+  check k ~is 0
+
+  block:
+   import .n open
+   dz w
+   check w ~is 0
+
+// options
+check:
+  defn.macro 'check_options $all $op':
+    ~all_stx stx
+    ~op_stx self
+    '«def $all = Syntax.literal '$stx'
+      def $op = Syntax.literal '$self'
+      »'
+  check_options stx self
+  values(stx, self)
+  ~matches values(
+    'check_options stx self',
+    'check_options',
+  )
+
+check:
+  defn.sequence_macro 'check_options $all $op; $tail; ...':
+    ~all_stx stx
+    ~op_stx self
+    values(
+      '«def $all = Syntax.literal '$stx'
+        def $op = Syntax.literal '$self'
+        »',
+      '$tail; ...'
+    )
+  check_options stx self
+  values(stx, self)
+  ~matches values(
+    'check_options stx self
+     values(stx, self)',
+    'check_options',
+  )
+
+check:
+  defn.sequence_macro 'guard_let_pos $lhs ... $(bound_as expr_meta.space: '=') $(rhs :: Group)
+                       $tail
+                       ...':
+    values('guard.let ($lhs ...) :: PosInt = $rhs
+            | error("not positive!!!")
+            $tail
+            ...',
+           '')
+  guard_let_pos x = 7
+  "done!"
+  ~is "done!"
+
+block:
+  defn.macro '(f).g': '"ok"'
+  check f.g ~is "ok"
+
+check:
+  ~eval
+  import rhombus/meta open
+  defn.macro 'f.g': '"ok"'
+  ~throws "f: not defined as a namespace"
+
+block:
+  defn.macro '($)g': '"ok"'
+  check $g ~is "ok"

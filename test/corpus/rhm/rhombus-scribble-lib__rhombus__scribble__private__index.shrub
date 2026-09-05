@@ -1,0 +1,72 @@
+
+import:
+  "util.rhm" open
+  lib("scribble/base.rkt")
+  "desc-extras.rkt".#{desc-extras/c}
+  "maybe_drop_extras.rhm" open
+
+export:
+  indexed
+  as_indexed
+  section_indexed
+  index_section
+  ExtrasMap
+
+module for_extras:
+  export:
+    ExtrasMap
+    convert_extras
+
+annot.macro 'ExtrasMap':
+  let '$(map_annot :: annot_meta.Parsed)' = 'Map.of(Symbol, Any)'
+  let (_, map_statinfo) = annot_meta.unpack_predicate(map_annot)
+  annot_meta.pack_predicate('is_extras_map',
+                            map_statinfo)
+
+fun indexed(
+  words :: (String ||  List.of(String)),
+  ~content: content :: (String ||  List.of(String)) = words,
+  ~extras: extras :: ExtrasMap = {},
+  pre_content :: PreContent
+) :: Element:
+    ~doc
+    let norm_words = (if words is_a String | [words] | words)
+    let norm_content = (if content is_a String | [content] | content)
+    unless List.length(content) == List.length(words)
+    | error(~who: #'index,
+            ~exn: Exn.Fail.Annot,
+            "word count and content count do no match",
+            error.val(~label: "word list", words),
+            error.val(~label: "content list", content))
+    maybe_drop_extras:
+      base.#{index*}(convert_list(words), convert_list(content), pre_content,
+                     ~extras: convert_extras(extras))
+
+fun as_indexed(
+  pre_content :: PreContent,
+  ~extras: extras :: ExtrasMap = {}
+) :: Element:
+  ~doc
+  maybe_drop_extras:
+    base.#{as-index}(pre_content,
+                     ~extras: convert_extras(extras))
+
+fun section_indexed(
+  words :: String || List.of(String),
+  ~extras: extras :: ExtrasMap = {}
+) :~ PartDecl:
+  ~doc
+  maybe_drop_extras:
+    base.#{section-index}(& (if words is_a String | [words] | words),
+                          ~extras: convert_extras(extras))
+
+fun index_section(~tag : tag :: (False || String) = "doc-index")
+  :: Part:
+    ~doc
+    base.#{index-section}(~tag: tag)
+
+fun is_extras_map(v):
+  #{desc-extras/c}(v)
+
+fun convert_extras(m :~ Map):
+  m

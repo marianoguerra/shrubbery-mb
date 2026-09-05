@@ -1,0 +1,390 @@
+
+check:
+  5 div 2 ~is 2
+  5 rem 2 ~is 1
+  5 mod 2 ~is 1
+  5 mod -2 ~is -1
+  5 rem -2 ~is 1
+
+  math.numerator(5/2) ~is 5
+  math.denominator(10/4) ~is 2
+
+  5.0 is_a Exact ~is #false
+  5.0 is_a Inexact ~is #true
+  5 is_a Exact ~is #true
+  5 is_a Inexact ~is #false
+
+  math.exact(5.0) ~is 5
+  math.inexact(5) ~is 5.0
+
+check:
+  1 is_a Int ~is #true
+  0 is_a Int ~is #true
+  -1 is_a Int ~is #true
+
+  1 is_a PosInt ~is #true
+  0 is_a PosInt ~is #false
+  -1 is_a PosInt ~is #false
+
+  1 is_a NegInt ~is #false
+  0 is_a NegInt ~is #false
+  -1 is_a NegInt ~is #true
+
+  1 is_a NonnegInt ~is #true
+  0 is_a NonnegInt ~is #true
+  -1 is_a NonnegInt ~is #false
+
+  1 is_a Nat ~is #true
+  0 is_a Nat ~is #true
+  -1 is_a Nat ~is #false
+
+  1 is_a Int.in(1, 2) ~is #true
+  1 is_a Int.in(1 ~inclusive, 2) ~is #true
+  1 is_a Int.in(1 ~exclusive, 2) ~is #false
+  1 is_a Int.in(1, 2 ~inclusive) ~is #true
+  1 is_a Int.in(1, 2 ~exclusive) ~is #true
+
+  2 is_a Int.in(1, 2) ~is #true
+  2 is_a Int.in(1 ~inclusive, 2) ~is #true
+  2 is_a Int.in(1 ~exclusive, 2) ~is #true
+  2 is_a Int.in(1, 2 ~inclusive) ~is #true
+  2 is_a Int.in(1, 2 ~exclusive) ~is #false
+
+  1 is_a Int.in(1 ..= 2) ~is #true
+  1 is_a Int.in(1 <..= 2) ~is #false
+  1 is_a Int.in(1 <.. 2) ~is #false
+  1 is_a Int.in(1 .. 2) ~is #true
+  1 is_a Int.in(1 ..) ~is #true
+  1 is_a Int.in(..= 2) ~is #true
+  1 is_a Int.in(1 <..) ~is #false
+  1 is_a Int.in(.. 2) ~is #true
+
+  2 is_a Int.in(1 ..= 2) ~is #true
+  2 is_a Int.in(1 <..= 2) ~is #true
+  2 is_a Int.in(1 <.. 2) ~is #false
+  2 is_a Int.in(1 .. 2) ~is #false
+  2 is_a Int.in(1 ..) ~is #true
+  2 is_a Int.in(..= 2) ~is #true
+  2 is_a Int.in(1 <..) ~is #true
+  2 is_a Int.in(.. 2) ~is #false
+
+  2 is_a Int.in(1 * 1 .. 2 + 0) ~is #false
+
+  1 is_a Int.in(..) ~is #true
+  2 is_a Int.in(..) ~is #true
+
+  1 is_a Int.in(Function.black_box(1 ..= 2)) ~is #true
+  1 is_a Int.in(Function.black_box(1 <..= 2)) ~is #false
+  1 is_a Int.in(Function.black_box(1 <.. 2)) ~is #false
+  1 is_a Int.in(Function.black_box(1 .. 2)) ~is #true
+
+  2 is_a Int.in(Function.black_box(1 ..= 2)) ~is #true
+  2 is_a Int.in(Function.black_box(1 <..= 2)) ~is #true
+  2 is_a Int.in(Function.black_box(1 <.. 2)) ~is #false
+  2 is_a Int.in(Function.black_box(1 .. 2)) ~is #false
+
+  1 is_a Int.in(Function.black_box(..)) ~is #true
+  2 is_a Int.in(Function.black_box(..)) ~is #true
+
+  1 is_a Int.in("oops", 2) ~throws values("Int.in: " ++ error.annot_msg(), "Int", "\"oops\"")
+  1 is_a Int.in(1, "oops") ~throws values("Int.in: " ++ error.annot_msg(), "Int", "\"oops\"")
+  1 is_a Int.in("oops" .. 2) ~throws values("..: " ++ error.annot_msg(), "Int", "\"oops\"")
+  1 is_a Int.in(1 .. "oops") ~throws values("..: " ++ error.annot_msg(), "Int", "\"oops\"")
+  1 is_a Int.in("oops" ..= 2) ~throws values("..=: " ++ error.annot_msg(), "Int", "\"oops\"")
+  1 is_a Int.in(1 ..= "oops") ~throws values("..=: " ++ error.annot_msg(), "Int", "\"oops\"")
+
+  1 is_a Int.in(Function.black_box("oops" .. 2)) ~throws values("..: " ++ error.annot_msg(), "Int", "\"oops\"")
+  1 is_a Int.in(Function.black_box(1 .. "oops")) ~throws values("..: " ++ error.annot_msg(), "Int", "\"oops\"")
+  1 is_a Int.in(Function.black_box("oops" ..= 2)) ~throws values("..=: " ++ error.annot_msg(), "Int", "\"oops\"")
+  1 is_a Int.in(Function.black_box(1 ..= "oops")) ~throws values("..=: " ++ error.annot_msg(), "Int", "\"oops\"")
+
+  1 is_a Int.in("oops") ~throws values("Int.in: " ++ error.annot_msg(), "Range", "\"oops\"")
+
+  1 is_a Int.in(5 .. 0) ~throws values(
+    "..: starting point must be less than or equal to ending point",
+    "starting point: 5",
+    "ending point: 0",
+  )
+  1 is_a Int.in(5 <.. 0) ~throws values(
+    "<..: starting point must be less than ending point",
+    "starting point: 5",
+    "ending point: 0",
+  )
+  1 is_a Int.in(0 <.. 0) ~throws values(
+    "<..: starting point must be less than ending point",
+    "starting point: 0",
+    "ending point: 0",
+  )
+  1 is_a Int.in(5 <.. 5) ~throws values(
+    "<..: starting point must be less than ending point",
+    "starting point: 5",
+    "ending point: 5",
+  )
+
+  1 is_a Int.in(Function.black_box(5 .. 0)) ~throws values(
+    "..: starting point must be less than or equal to ending point",
+    "starting point: 5",
+    "ending point: 0",
+  )
+  1 is_a Int.in(Function.black_box(5 <.. 0)) ~throws values(
+    "<..: starting point must be less than ending point",
+    "starting point: 5",
+    "ending point: 0",
+  )
+  1 is_a Int.in(Function.black_box(0 <.. 0)) ~throws values(
+    "<..: starting point must be less than ending point",
+    "starting point: 0",
+    "ending point: 0",
+  )
+  1 is_a Int.in(Function.black_box(5 <.. 5)) ~throws values(
+    "<..: starting point must be less than ending point",
+    "starting point: 5",
+    "ending point: 5",
+  )
+
+block:
+  fun f(x :: Int, y :: Int.in(x ..= x + 1)):
+    [x, y]
+  check f(1, 2) ~is [1, 2]
+  check f(1, 3) ~throws error.annot_msg("argument")
+
+check:
+  1 is_a NonnegReal ~is #true
+  0 is_a NonnegReal ~is #true
+  -1 is_a NonnegReal ~is #false
+
+  1 is_a PosReal ~is #true
+  0 is_a PosReal ~is #false
+  -1 is_a PosReal ~is #false
+
+  1 is_a NegReal ~is #false
+  0 is_a NegReal ~is #false
+  -1 is_a NegReal ~is #true
+
+  1 is_a Real.at_least(1.0) ~is #true
+  0.9 is_a Real.at_least(1.0) ~is #false
+
+  1.1 is_a Real.above(1.0) ~is #true
+  1.0 is_a Real.above(1.0) ~is #false
+
+  0.9 is_a Real.below(1.0) ~is #true
+  1.0 is_a Real.below(1.0) ~is #false
+
+  1 is_a Real.at_most(1.0) ~is #true
+  1.1 is_a Real.at_most(1.0) ~is #false
+
+  "0.9" is_a Real.at_least(0) ~is #false
+
+  0.9 is_a Real.in(1, 2) ~is #false
+  1.0 is_a Real.in(1, 2) ~is #true
+  1.0 is_a Real.in(1 ~inclusive, 2) ~is #true
+  1.0 is_a Real.in(1 ~exclusive, 2) ~is #false
+  1.1 is_a Real.in(1 ~exclusive, 2) ~is #true
+  2.0 is_a Real.in(1 ~exclusive, 2) ~is #true
+  2.0 is_a Real.in(1 ~exclusive, 2 ~inclusive) ~is #true
+  2.0 is_a Real.in(1 ~exclusive, 2 ~exclusive) ~is #false
+  2.0 is_a Real.in(1, 2 ~exclusive) ~is #false
+  1.0 is_a Real.in(1, 2 ~exclusive) ~is #true
+
+  "0.9" is_a Real.in(0, 1) ~is #false
+
+  1 is_a Real.above("oops") ~throws values(error.annot_msg(), "Real", "\"oops\"")
+  1 is_a Real.at_least("oops") ~throws values(error.annot_msg(), "Real", "\"oops\"")
+  1 is_a Real.below("oops") ~throws values(error.annot_msg(), "Real", "\"oops\"")
+  1 is_a Real.at_most("oops") ~throws values(error.annot_msg(), "Real", "\"oops\"")
+  1 is_a Real.in("oops", 2) ~throws values(error.annot_msg(), "Real", "\"oops\"")
+  1 is_a Real.in(1, "oops") ~throws values(error.annot_msg(), "Real", "\"oops\"")
+
+  to_string(1/2) ~is "1/2"
+  to_string(1/2, ~mode: #'expr) ~is "1/2"
+  to_string(#{1+2i}) ~is "1+2i"
+  to_string(#{1+2i}, ~mode: #'expr) ~is "#{1+2i}"
+
+check:
+  ~eval
+  1 is_a Real.in(0 .. 1)
+  ~throws ""
+
+// error reporting
+check:
+  "oops" + 2 ~throws values(
+    "+: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  1 + "oops" ~throws values(
+    "+: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  "oops" - 2 ~throws values(
+    "-: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  1 - "oops" ~throws values(
+    "-: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  - "oops" ~throws values(
+    "-: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  "oops" * 2 ~throws values(
+    "*: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  1 * "oops" ~throws values(
+    "*: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  "oops" / 2 ~throws values(
+    "/: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  1 / "oops" ~throws values(
+    "/: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  "oops" ** 2 ~throws values(
+    "**: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  1 ** "oops" ~throws values(
+    "**: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  "oops" div 2 ~throws values(
+    "div: " ++ error.annot_msg(),
+    error.annot("Integral").msg,
+    error.val("oops").msg,
+  )
+  1 div "oops" ~throws values(
+    "div: " ++ error.annot_msg(),
+    error.annot("Integral").msg,
+    error.val("oops").msg,
+  )
+  "oops" rem 2 ~throws values(
+    "rem: " ++ error.annot_msg(),
+    error.annot("Integral").msg,
+    error.val("oops").msg,
+  )
+  1 rem "oops" ~throws values(
+    "rem: " ++ error.annot_msg(),
+    error.annot("Integral").msg,
+    error.val("oops").msg,
+  )
+  "oops" mod 2 ~throws values(
+    "mod: " ++ error.annot_msg(),
+    error.annot("Integral").msg,
+    error.val("oops").msg,
+  )
+  1 mod "oops" ~throws values(
+    "mod: " ++ error.annot_msg(),
+    error.annot("Integral").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  "oops" .> 2 ~throws values(
+    ".>: " ++ error.annot_msg(),
+    error.annot("Real").msg,
+    error.val("oops").msg,
+  )
+  1 .> "oops" ~throws values(
+    ".>: " ++ error.annot_msg(),
+    error.annot("Real").msg,
+    error.val("oops").msg,
+  )
+  "oops" .>= 2 ~throws values(
+    ".>=: " ++ error.annot_msg(),
+    error.annot("Real").msg,
+    error.val("oops").msg,
+  )
+  1 .>= "oops" ~throws values(
+    ".>=: " ++ error.annot_msg(),
+    error.annot("Real").msg,
+    error.val("oops").msg,
+  )
+  "oops" .< 2 ~throws values(
+    ".<: " ++ error.annot_msg(),
+    error.annot("Real").msg,
+    error.val("oops").msg,
+  )
+  1 .< "oops" ~throws values(
+    ".<: " ++ error.annot_msg(),
+    error.annot("Real").msg,
+    error.val("oops").msg,
+  )
+  "oops" .<= 2 ~throws values(
+    ".<=: " ++ error.annot_msg(),
+    error.annot("Real").msg,
+    error.val("oops").msg,
+  )
+  1 .<= "oops" ~throws values(
+    ".<=: " ++ error.annot_msg(),
+    error.annot("Real").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  "oops" .= 2 ~throws values(
+    ".=: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  1 .= "oops" ~throws values(
+    ".=: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  "oops" .!= 2 ~throws values(
+    ".!=: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+  1 .!= "oops" ~throws values(
+    ".!=: " ++ error.annot_msg(),
+    error.annot("Number").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  use_static
+  fun test(a :: Int.in(-128, 127), b :: Int.in(-128, 127)):
+    a > b
+  ~completes
+
+check:
+  use_static
+  fun test(a :: Int.in(-128 ..= 127), b :: Int.in(-128 ..= 127)):
+    a > b
+  ~completes
+
+check:
+  0 :: Real.above(1) ~throws values(
+    error.annot("Real.above(1)").msg,
+    error.val(0).msg,
+  )
+  0 :: Real.at_least(1) ~throws values(
+    error.annot("Real.at_least(1)").msg,
+    error.val(0).msg,
+  )
+  0 :: Real.below(-1) ~throws values(
+    error.annot("Real.below(-1)").msg,
+    error.val(0).msg,
+  )
+  0 :: Real.at_most(-1) ~throws values(
+    error.annot("Real.at_most(-1)").msg,
+    error.val(0).msg,
+  )

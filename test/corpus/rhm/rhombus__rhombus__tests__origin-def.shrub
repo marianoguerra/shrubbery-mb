@@ -1,0 +1,10 @@
+
+// binding arrows in this file checked by "origin.rhm"
+
+def x1 = 1
+let x2 = 2
+
+block:
+  def x3 = 3
+  let x4 = 4  
+  x1 + x2 + x3 + x4 + (x4)

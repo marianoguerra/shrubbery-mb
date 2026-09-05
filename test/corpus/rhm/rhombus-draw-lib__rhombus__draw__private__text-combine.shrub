@@ -1,0 +1,10 @@
+
+export:
+  DC
+
+namespace DC:
+  export TextCombine
+  enum TextCombine
+  | kern
+  | grapheme
+  | char

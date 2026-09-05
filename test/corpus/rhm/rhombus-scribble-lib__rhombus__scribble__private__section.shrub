@@ -1,0 +1,100 @@
+
+import:
+  "util.rhm" open
+  lib("scribble/base.rkt")
+  lib("version/utils.rkt")
+  "index.rhm"!for_extras open
+  "maybe_drop_extras.rhm" open
+
+export:
+  title
+  section
+  subsection
+  subsubsection
+  subsubsub_section
+
+  default_document_version
+
+fun title(
+  ~tag: tag :: maybe(TagSuffix) = #false,
+  ~tag_prefix: tag_prefix :: maybe(TagPrefix) = #false,
+  ~style: part_style :: maybe(StyleLike) = #false,
+  ~version: vers :: maybe(String) = default_document_version(),
+  ~date: date :: maybe(String) = #false,
+  ~category: category :: DocCategory = #'library,
+  ~foreign_category: foreign_category :: DocCategory = category,
+  ~index_extras: index_extras :: ExtrasMap = {},
+  pre_content :: PreContent
+) :~ PartDecl:
+  ~doc
+  maybe_drop_extras:
+    base.title(~tag: convert_list(tag),
+               ~#{tag-prefix}: pack_tag_prefix(tag_prefix, category, foreign_category),
+               ~style: convert_list(part_style),
+               ~version: vers,
+               ~date: date,
+               ~#{index-extras}: convert_extras(index_extras),
+               pre_content)
+
+defn.macro 'def_section $section: $rkt_section':
+  'fun $section(
+     ~tag: tag :: maybe(TagSuffix) = #false,
+     ~tag_prefix: tag_prefix :: maybe(TagPrefix) = #false,
+     ~style: part_style :: maybe(StyleLike) = #false,
+     ~index_extras: index_extras :: ExtrasMap = {},
+     pre_content :: PreContent
+   ) :~ PartDecl:
+     ~doc
+     maybe_drop_extras:
+       base . $rkt_section(~tag: convert_list(tag),
+                           ~#{tag-prefix}: pack_tag_prefix(tag_prefix, #false, #false),
+                           ~style: convert_list(part_style),
+                           ~#{index-extras}: convert_extras(index_extras),
+                           pre_content)'
+
+def_section section: section
+def_section subsection: subsection
+def_section subsubsection: subsubsection
+
+fun subsubsub_section(
+  ~tag: tag :: maybe(TagSuffix) = #false,
+  pre_content :: PreContent
+) :~ Paragraph:
+  ~doc
+  base.#{subsubsub*section}(~tag: convert_list(tag),
+                            pre_content)
+
+fun pack_tag_prefix(tag_prefix, category, foreign_category):
+  if utils.#{version<?}(system.racket_version(), "8.14.0.5") // assuming implies "scribble-lib" version 1.54
+  | tag_prefix
+  | let t = { #'#{default-language-family}: PairList["Rhombus"] }
+    fun norm_category(category):
+      match category
+      | [cat, sort_no]: PairList[cat, sort_no]
+      | ~else: PairList[category]
+    let t: if category
+           | t ++ { #'#{doc-properties}:
+                      { #'#{language-family}: PairList["Rhombus"],
+                        #'category: { "Rhombus": norm_category(category),
+                                      #'default: norm_category(foreign_category) } } }
+           | t
+    fun normalize(tag_prefix):
+      match tag_prefix
+      | mp :: ModulePath: mp.s_exp()
+      | ~else: tag_prefix
+    let tp:
+      match tag_prefix
+      | False: { }
+      | tp :: Map: tp ++ { #'#{tag-prefix} : normalize(tp[#'#{tag-prefix}]) }
+      | ~else: { #'#{tag-prefix} : normalize(tag_prefix) }
+    t ++ tp
+
+fun author(c :: Content,
+           ~email: email :: maybe(String),
+           ~obfuscate: obfuscate = #false):
+  if email
+  | base.#{author+email}(c, email, ~#{obfuscate?}: obfuscate)
+  | base.author(c)
+
+fun default_document_version():
+  system.version() +& "+" +& system.racket_version()

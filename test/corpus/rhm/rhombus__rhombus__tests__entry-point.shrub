@@ -1,0 +1,89 @@
+import:
+  meta:
+    rhombus.check
+
+block:
+  import "static_arity.rhm"
+  static_arity.check ~meta:
+    entry_point_meta.pack(s)
+
+check:
+  entry_point.macro 'identity':
+    ~mode mode
+    ~adjustment adj
+    if (mode == #'shape)
+    | { #'arity: 2 }
+    | check:
+        adj ~is_a entry_point_meta.Adjustment
+        adj.prefix_arguments ~is_a List.of(Syntax)
+      match 'fun (x): x'
+      | '$(e :: entry_point_meta.Parsed(adj))':
+          e
+
+  class C():
+    method m:
+      identity
+  C().m("ok")
+  ~is "ok"
+
+check:
+  entry_point.macro 'identity':
+    ~mode mode
+    ~adjustment adj
+    if (mode == #'shape)
+    | { #'arity: [2, [], []], #'name: #'identity }
+    | 'fun (x): x'
+
+  class C():
+    method m:
+      identity
+  C().m("ok")
+  ~is "ok"
+
+check:
+  entry_point.macro 'identity':
+    ~mode mode
+    ~adjustment adj
+    if (mode == #'shape)
+    | { #'arity: [2, [], []] }
+    | let [id, ...] = adj.prefix_arguments
+      entry_point_meta.pack('fun ($id, ..., x):
+                               $(adj.wrap_body(2, 'x'))')
+
+  class C():
+    method m:
+      identity
+  C().m("ok")
+  ~is "ok"
+
+check:
+  entry_point.macro 'kw_identity':
+    ~mode mode
+    ~adjustment adj
+    if (mode == #'shape)
+    | { #'arity: [1, [#'~kw], [#'~kw]] }
+    | 'fun (~kw: x): x'
+
+  class C():
+    method m:
+      kw_identity
+  C().m(~kw: "ok")
+  ~is "ok"
+
+check:
+  entry_point.macro 'check_static_info':
+    ~mode mode
+    ~adjustment adj
+    cond
+    | mode compares_equal dynamic(#'shape):
+        { #'arity: [2, [], []] }
+    | mode compares_equal dynamic(#'function):
+        let [id, ...] = adj.prefix_arguments
+        entry_point_meta.pack('fun ($id, ..., x):
+                                 $(adj.wrap_body(2, 'x'))')
+
+  class C():
+    method m:
+      check_static_info
+  C().m("ok")
+  ~is "ok"

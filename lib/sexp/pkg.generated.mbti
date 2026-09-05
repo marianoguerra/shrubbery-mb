@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/sexp"
+
+import {
+  "moonbitlang/core/bigint",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum Datum {
+  Sym(String)
+  Kw(String)
+  Str(String)
+  Bs(Bytes)
+  Ch(Char)
+  Bool_(Bool)
+  Void
+  Int_(@bigint.BigInt)
+  Rat(@bigint.BigInt, @bigint.BigInt)
+  Flo(Double)
+  Nil
+  Pair(Datum, Datum)
+  Vec(Array[Datum])
+} derive(Eq)
+pub fn Datum::canonical(Self) -> String
+pub fn Datum::of_int(Int) -> Self
+pub fn Datum::of_ratio(@bigint.BigInt, @bigint.BigInt) -> Self
+pub fn Datum::write_canonical(Self, StringBuilder) -> Unit
+
+// Type aliases
+
+// Traits

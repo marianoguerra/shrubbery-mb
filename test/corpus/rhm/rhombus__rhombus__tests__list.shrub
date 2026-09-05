@@ -1,0 +1,1097 @@
+import:
+  rhombus/version_meta
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    List(v, ...)
+    List.length(lst) ~method
+    List.cons(a, d)
+    List.add(lst, a) ~method
+    List.get(lst, i) ~method
+    List.set(lst, i, v) ~method
+    List.first(lst)
+    List.last(lst)
+    List.rest(lst)
+    List.map(lst, proc) ~method
+    List.for_each(lst, proc) ~method
+    List.filter(lst) ~method
+    List.partition(lst, proc) ~method
+    List.contains(lst, val, [eql]) ~method
+    List.index(lst, v, [eql]) ~method
+    List.find(lst, pred) ~method
+    List.find_index(lst, pred) ~method
+    List.remove(lst, val) ~method
+    List.delete(lst, i) ~method
+    List.insert(lst, i, val) ~method
+    List.reverse(lst) ~method
+    List.append(lst, ...) ~method
+    List.drop(lst, n) ~method
+    List.drop_last(lst, n) ~method
+    List.take(lst, n) ~method
+    List.take_last(lst, n) ~method
+    List.sublist(lst, start, [end]) ~method
+    List.slice(lst, start, [end]) ~method
+    List.sort(lst, [is_less]) ~method
+    List.iota(n)
+    List.copy(lst) ~method
+    List.to_list(lst) ~method
+    List.to_sequence(lst) ~method
+
+check:
+  to_string(List) ~is "#<function:List>"
+
+check:
+  List.length([1, 2, 3])
+  ~is 3
+
+check:
+  List.length({1, 2, 3})
+  ~throws values(
+    "List.length: " ++ error.annot_msg(),
+    error.annot("List").msg,
+    error.val({1, 2, 3}).msg,
+  )
+
+check:
+  [1] :: NonemptyList
+  ~is [1]
+
+check:
+  [] :: NonemptyList
+  ~throws "does not satisfy annotation"
+
+block:
+  use_static
+  check:
+    [1, 2, 3].length()
+    ~is 3
+  check:
+    [1, 2, 3][0]
+    ~is 1
+  check:
+    [1, 2, 3].get(0)
+    ~is 1
+  check:
+    [1, 2, 3].set(1, "two")
+    ~is [1, "two", 3]
+  check:
+    [1, 2, 3] ++ [4, 5]
+    ~is [1, 2, 3, 4, 5]
+  check:
+    [1, 2, 3] ++ PairList[4, 5]
+    ~throws values(
+      "List.append: " ++ error.annot_msg(),
+      error.annot("List").msg,
+      error.val(PairList[4, 5]).msg,
+    )
+  check:
+    [1, 2, 3] ++ "oops"
+    ~throws values(
+      "List.append: " ++ error.annot_msg(),
+      error.annot("List").msg,
+      error.val("oops").msg,
+    )
+  check:
+    [1, 2, 3].append([4, 5])
+    ~is [1, 2, 3, 4, 5]
+  check:
+    [1, 2, 3].first
+    ~is 1
+  check:
+    [1, 2, 3].rest
+    ~is [2, 3]
+  check:
+    List(1, 2, 3).length()
+    ~is 3
+  check:
+    def lst = [1, 2, 3]
+    lst.length()
+    ~is 3
+  check:
+    def lst :: List = dynamic([1, 2, 3])
+    lst.length()
+    ~is 3
+  check:
+    def lst :~ List = dynamic([1, 2, 3])
+    lst.length()
+    ~is 3
+  check:
+    def lst :: List.of(Int) = dynamic([1, 2, 3])
+    lst.length()
+    ~is 3
+  check:
+    def [v, ...] = dynamic([1, 2, 3])
+    [v, ...].length()
+    ~is 3
+  check:
+    def lst :: List.of(List) = dynamic([[1, 2, 3]])
+    lst.first.length()
+    ~is 3
+  check:
+    def lst :: List.of(Int) = dynamic([1, 2, 3])
+    lst.rest.length()
+    ~is 2
+  check:
+    def lst :: NonemptyList.of(List) = dynamic([[1, 2, 3]])
+    lst.first.length()
+    ~is 3
+  check:
+    List.cons(1, [2, 3])
+    ~is [1, 2, 3]
+  check:
+    List.cons(1, [2, 3]).length()
+    ~is 3
+
+block:
+  check:
+    1 :: List
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: List.of(Any)
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: List.of(converting(fun (_): #false))
+    ~throws "does not satisfy annotation"
+  check:
+    [1, 2, 3] :: List.of(converting(fun (n :: Int): n+1))
+    ~is [2, 3, 4]
+  check:
+    1 :: NonemptyList
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: NonemptyList.of(Any)
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: NonemptyList.of(converting(fun (_): #false))
+    ~throws "does not satisfy annotation"
+  check:
+    [1, 2, 3] :: NonemptyList.of(converting(fun (n :: Int): n+1))
+    ~is [2, 3, 4]
+
+block:
+  use_static
+  def lst :: List.later_of(String) = ["a", "b", 3]
+  check lst[0] ~is "a"
+  check lst[1] ~is "b"
+  check lst[2] ~throws "current element does not satisfy annotation"
+  check (lst ++ ["d", "e"])[3] ~is "d"
+  check (["z"] ++ lst)[0] ~is "z"
+  check (["z"] ++ lst)[3] ~throws "current element does not satisfy annotation"
+  check lst ++ ["d", 5] ~throws "appended element does not satisfy annotation"
+  check [0] ++ lst ~throws "appended element does not satisfy annotation"
+  check lst.add("z")[3] ~is "z"
+  check lst.add(100) ~throws "new element does not satisfy annotation"
+
+check:
+  ~eval
+  [] :: List.later_of(ReadableString.to_string)
+  ~throws "converter annotation not supported for elements"
+
+block:
+  check:
+    dynamic([1, 2, 3]).length()
+    ~is 3
+  check:
+    dynamic([1, 2, 3]).first
+    ~is 1
+  check:
+    dynamic([1, 2, 3]).rest
+    ~is [2, 3]
+  check:
+    dynamic([1, 2, 3])[0]
+    ~is 1
+  check:
+    dynamic([1, 2, 3]).get(0)
+    ~is 1
+  check:
+    dynamic([1, 2, 3]) ++ [4, 5]
+    ~is [1, 2, 3, 4, 5]
+  check:
+    dynamic([1, 2, 3]) ++ PairList[4, 5]
+    ~throws "cannot append a list and other value"
+  check:
+    dynamic([1, 2, 3]) ++ "oops"
+    ~throws "cannot append a list and other value"
+  check:
+    dynamic([1, 2, 3]).append([4, 5])
+    ~is [1, 2, 3, 4, 5]
+
+block:
+  def [x, ...] = [1, 2, 3]
+  check:
+    [x, ...]
+    ~is [1, 2, 3]
+  check:
+    [x, ..., 0]
+    ~is [1, 2, 3, 0]
+  check:
+    [0, x, ...]
+    ~is [0, 1, 2, 3]
+  check:
+    [& PairList[10, 11], & [12, 13], x, ..., 0]
+    ~is [10, 11, 12, 13, 1, 2, 3, 0]
+  check:
+    [[x], ...]
+    ~is [[1], [2], [3]]
+  def [[z, ...], ...] = [[1, 2, 3], [4, 5]]
+  check:
+    [[z, ...], ...]
+    ~is [[1, 2, 3], [4, 5]]
+
+block:
+  def [x, ...] = [1, 2, 3]
+  check:
+    List(x, ...)
+    ~is [1, 2, 3]
+  check:
+    List(x, ..., 0)
+    ~is [1, 2, 3, 0]
+  check:
+    List(0, x, ...)
+    ~is [0, 1, 2, 3]
+  check:
+    List(& PairList(10, 11), & List(12, 13), x, ..., 0)
+    ~is [10, 11, 12, 13, 1, 2, 3, 0]
+  check:
+    List(List(x), ...)
+    ~is [[1], [2], [3]]
+  def [[z, ...], ...] = [[1, 2, 3], [4, 5]]
+  check:
+    List(List(z, ...), ...)
+    ~is [[1, 2, 3], [4, 5]]
+
+check:
+  def [0] = [0]
+  ~completes
+
+check:
+  def [0, _, ...] = [0, 1, 2]
+  ~completes
+
+check:
+  def [0, x, ...] = [0, 1, 2]
+  [x, ...]
+  ~is [1, 2]
+
+check:
+  def [0, & rst] = [0, 1, 2]
+  rst
+  ~is [1, 2]
+
+check:
+  def [0, _, ..., 2] = [0, 1, 2]
+  ~completes
+
+check:
+  def [0, x, ..., 2] = [0, 1, 2]
+  [x, ...]
+  ~is [1]
+
+check:
+  def [0, & rst, 2] = [0, 1, 2]
+  rst
+  ~is [1]
+
+check:
+  def [0, 1, 2, _, ...] = [0, 1, 2]
+  ~completes
+
+check:
+  def [0, 1, 2, x, ...] = [0, 1, 2]
+  [x, ...]
+  ~is []
+
+check:
+  def [0, 1, 2, & rst] = [0, 1, 2]
+  rst
+  ~is []
+
+check:
+  match []
+  | List.empty: "empty"
+  | ~else: "other"
+  ~is "empty"
+
+check:
+  match [1]
+  | List.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  match (for List (i in []): i)
+  | List.empty: "empty"
+  | ~else: "other"
+  ~is "empty"
+
+check:
+  use_static
+  [1, 2].reverse().reverse()
+  ~is [1, 2]
+
+block:
+  use_static
+  check [1, 2].map(fun (x): x + 1).reverse() ~is [3, 2]
+  block:
+    def mutable sum = 0
+    check [1, 2].for_each(fun (x): sum := sum + x) ~is #void
+    check sum ~is 3
+  check [1, 3, 2, 4].filter(~keep: (_ > 2)) ~is [3, 4]
+  check [1, 3, 2, 4].filter(~skip: (_ > 2)) ~is [1, 2]
+  check [1, 3, 2, 4].filter(~keep: (_ > 1), ~skip: (_ > 3)) ~is [3, 2]
+  check [1, 3, 2, 4].filter(~keep: (_ > 2)).length() ~is 2
+  check [1, 3, 2, 4].partition((_ > 2)) ~is values([3, 4], [1, 2])
+  check:
+    let (a, b) = [1, 3, 2, 4].partition((_ > 2))
+    [a.length(), b.length()]
+    ~is [2, 2]
+
+check:
+  List.append(& [[1, 2], [3], [4, 5]]) ~is [1, 2, 3, 4, 5]
+  [1, 2].append() ~is [1, 2]
+  [1, 2].append([3]) ~is [1, 2, 3]
+  [1, 2].append([3], [4, 5]) ~is [1, 2, 3, 4, 5]
+  [1, 2].append(3) ~throws values(
+    "List.append: " ++ error.annot_msg(),
+    error.annot("List").msg,
+    error.val(3).msg
+  )
+
+check:
+  match []
+  | List.cons(hd, tl): "no"
+  | []: "empty"
+  ~is "empty"
+
+block:
+  use_static
+  check:
+    2 in [1, 2, 3] ~is #true
+    4 in [1, 2, 3] ~is #false
+    [1, 2, 3].contains(2) ~is #true
+    [1, 2, 3].contains(4) ~is #false
+    [1, 2, 3].contains(-3, fun (x, y): x == -y) ~is #true
+    [1, 2, 3].contains(-4, fun (x, y): x == -y) ~is #false
+
+check:
+  1 in dynamic([1, 2, 3]) ~is #true
+  dynamic([1, 2, 3]).contains(1) ~is #true
+  dynamic([1, 2, 3]).contains(-1, fun (x, y): x == -y) ~is #true
+
+block:
+  use_static
+  check:
+    [1, 2, 3].index(2) ~is 1
+    [1, 2, 3].index(4) ~is #false
+    [1, 2, 3].index(-3, fun (x, y): x == -y) ~is 2
+    [1, 2, 3].index(-4, fun (x, y): x == -y) ~is #false
+
+check:
+  dynamic([1, 2, 3]).index(1) ~is 0
+  dynamic([1, 2, 3]).index(-1, fun (x, y): x == -y) ~is 0
+
+block:
+  let bx = Box(1)
+  let bx_copy = bx.copy()
+  block:
+    use_static
+    check:
+      bx_copy in [bx] ~is #false
+      [bx].contains(bx_copy) ~is #false
+      [bx].contains(bx_copy, fun (x, y): x is_now y) ~is #true
+  check:
+    bx_copy in dynamic([bx]) ~is #false
+    dynamic([bx]).contains(bx_copy) ~is #false
+    dynamic([bx]).contains(bx_copy, fun (x, y): x is_now y) ~is #true
+
+check:
+  [1, 2, 3].find(fun (x): x > 1) ~is 2
+  [1, 2, 3].find(fun (x): x > 10) ~is #false
+  dynamic([1, 2, 3]).find(fun (x): x > 1) ~is 2
+  [1, 2, 3].find_index(fun (x): x > 1) ~is 1
+  [1, 2, 3].find_index(fun (x): x > 10) ~is #false
+  dynamic([1, 2, 3]).find_index(fun (x): x > 1) ~is 1
+
+check:
+  [1, 2, 3].remove(2) ~is [1, 3]
+  [1, 2, 3].remove(4) ~is [1, 2, 3]
+  [1, 2, 2, 3].remove(4) ~is [1, 2, 2, 3]
+  dynamic([1, 2, 3]).remove(1) ~is [2, 3]
+
+check:
+  [1, 2, 3].insert(2, "x") ~is [1, 2, "x", 3]
+  [1, 2, 3].insert(3, "x") ~is [1, 2, 3, "x"]
+  [1, 2, 3].insert(0, "x") ~is ["x", 1, 2, 3]
+  dynamic([1, 2, 3]).insert(1, "x") ~is [1, "x", 2, 3]
+
+check:
+  [1, 2, 3].delete(2) ~is [1, 2]
+  [1, 2, 3].delete(0) ~is [2, 3]
+  dynamic([1, 2, 3]).delete(1) ~is [1, 3]
+
+check:
+  [1, 2, 3].drop(2) ~is [3]
+  List.drop([1, 2, 3], 2) ~is [3]
+  [1, 2, 3].drop_last(2) ~is [1]
+  List.drop_last([1, 2, 3], 2) ~is [1]
+  [1, 2, 3].take(2) ~is [1, 2]
+  List.take([1, 2, 3], 2) ~is [1, 2]
+  [1, 2, 3].take_last(2) ~is [2, 3]
+  List.take_last([1, 2, 3], 2) ~is [2, 3]
+  [1, 2, 3, 4, 5, 6].sublist(2, 4) ~is [3, 4]
+  List.sublist([1, 2, 3, 4, 5, 6], 2, 4) ~is [3, 4]
+  [1, 2, 3, 4, 5, 6].sublist(2..=4) ~is [3, 4, 5]
+  List.sublist([1, 2, 3, 4, 5, 6], 2..=4) ~is [3, 4, 5]
+  [1, 2, 3, 4, 5, 6].sublist(2..) ~is [3, 4, 5, 6]
+  List.sublist([1, 2, 3, 4, 5, 6], 2..) ~is [3, 4, 5, 6]
+  [1, 2, 3, 4, 5, 6].sublist(..4) ~is [1, 2, 3, 4]
+  List.sublist([1, 2, 3, 4, 5, 6], ..4) ~is [1, 2, 3, 4]
+  [1, 2, 3, 4, 5, 6].sublist(..) ~is [1, 2, 3, 4, 5, 6]
+  List.sublist([1, 2, 3, 4, 5, 6], ..) ~is [1, 2, 3, 4, 5, 6]
+  [1, 2, 3, 4, 5, 6].slice(2) ~is [3, 4, 5, 6]
+  List.slice([1, 2, 3, 4, 5, 6], 2) ~is [3, 4, 5, 6]
+  [1, 2, 3, 4, 5, 6].slice(2, 5) ~is [3, 4, 5]
+  List.slice([1, 2, 3, 4, 5, 6], 2, 5) ~is [3, 4, 5]
+  [1, 2, 3, 4, 5, 6].slice(2, -1) ~is [3, 4, 5]
+  List.slice([1, 2, 3, 4, 5, 6], 2, -1) ~is [3, 4, 5]
+  [1, 2, 3, 4, 5, 6].slice(-4, 5) ~is [3, 4, 5]
+  List.slice([1, 2, 3, 4, 5, 6], -4, 5) ~is [3, 4, 5]
+  [1, 2, 3, 4, 5, 6].slice(2, 1) ~throws "invalid slice bounds"
+  [1, 2, 3, 4, 5, 6].slice(-2, -5) ~throws "invalid slice bounds"
+  [1, 2, 3, 4, 5, 6].slice(-7, 6) ~throws "invalid slice bounds"
+
+check:
+  [1, 2, 3].sort() ~is [1, 2, 3]
+  List.sort([1, 2, 3]) ~is [1, 2, 3]
+  [1, 2, 3].sort(fun (x, y): x > y) ~is [3, 2, 1]
+  List.sort([1, 2, 3], fun (x, y): x > y) ~is [3, 2, 1]
+  ["", "a", "ab"].sort() ~is ["", "a", "ab"]
+  List.sort(["", "a", "ab"]) ~is ["", "a", "ab"]
+  ["", "a", "ab"].sort(fun (x, y): x > y) ~is ["ab", "a", ""]
+  List.sort(["", "a", "ab"], fun (x, y): x > y) ~is ["ab", "a", ""]
+
+check:
+  use_static
+  List.rest([1, 2, 3]).map(math.abs)
+  ~is [2, 3]
+
+check:
+  use_static
+  "no such thing" in List.empty
+  ~is #false
+
+check:
+  use_static
+  List.empty.contains("no such thing")
+  ~is #false
+
+check:
+  use_static
+  def List.empty && empty = dynamic([])
+  "no such thing" in empty
+  ~is #false
+
+check:
+  use_static
+  def List.empty && empty = dynamic([])
+  empty.contains("no such thing")
+  ~is #false
+
+block:
+  use_static
+  def l = [1, 2, 3]
+  def l_copy = l.copy()
+  check l_copy ~is_now MutableList[1, 2, 3]
+  check l_copy ~is_now MutableList[& l]
+  check l_copy === l.copy() ~is #false
+
+block:
+  def l = [1, 2, 3]
+  def l_copy = dynamic(l).copy()
+  check l_copy ~is_now MutableList[1, 2, 3]
+  check l_copy ~is_now MutableList[& l]
+  check l_copy === dynamic(l).copy() ~is #false
+
+block:
+  use_static
+  def l = [1, 2, 3]
+  def l2 = l ++ l
+  check l.to_list() === l ~is #true
+  check l2.to_list() === l2 ~is #true
+
+block:
+  def l = [1, 2, 3]
+  def l2 = l ++ l
+  check dynamic(l).to_list() === l ~is #true
+  check dynamic(l2).to_list() === l2 ~is #true
+
+block:
+  use_static
+  def lst = ["a", "b", "c"]
+  check:
+    for List (x in lst):
+      x
+    ~is ["a", "b", "c"]
+  check:
+    for List (x in List.to_sequence(lst)):
+      x
+    ~is ["a", "b", "c"]
+  check:
+    for List (x in lst.to_sequence()):
+      x
+    ~is ["a", "b", "c"]
+
+block:
+  check:
+    List.to_sequence("oops")
+    ~throws values(
+      "List.to_sequence: " ++ error.annot_msg(),
+      error.annot("List").msg,
+      error.val("oops").msg,
+    )
+  check:
+    ("oops" :~ List).to_sequence()
+    ~throws values(
+      "List.to_sequence: " ++ error.annot_msg(),
+      error.annot("List").msg,
+      error.val("oops").msg,
+    )
+  check:
+    for List (x in "oops" :~ List):
+      x
+    ~throws values(
+      "List.to_sequence: " ++ error.annot_msg(),
+      error.annot("List").msg,
+      error.val("oops").msg,
+    )
+  check:
+    for List (x in List.to_sequence("oops")):
+      x
+    ~throws values(
+      "List.to_sequence: " ++ error.annot_msg(),
+      error.annot("List").msg,
+      error.val("oops").msg,
+    )
+  check:
+    for List (x in ("oops" :~ List).to_sequence()):
+      x
+    ~throws values(
+      "List.to_sequence: " ++ error.annot_msg(),
+      error.annot("List").msg,
+      error.val("oops").msg,
+    )
+
+check:
+  to_string([]) ~is "[]"
+  to_string([1, 2, 3]) ~is "[1, 2, 3]"
+
+check:
+  let [a, b, ...] = [1, 2, 3]
+  [a, [b, ...]]
+  ~is [1, [2, 3]]
+
+check:
+  let [a, ..., b] = [1, 2, 3]
+  [[a, ...], b]
+  ~is [[1, 2], 3]
+
+check:
+  let [a, b, ...] = [1]
+  let [c, ..., d] = [2]
+  [a, [b, ...], [c, ...], d]
+  ~is [1, [], [], 2]
+
+check:
+  let [a, b, ..., c, d] = [1, 2, 3, 4, 5, 6]
+  [a, [b, ...], c, d]
+  ~is [1, [2, 3, 4], 5, 6]
+
+check:
+  let [a, & b, c, d] = [1, 2, 3, 4, 5, 6]
+  [a, b, c, d]
+  ~is [1, [2, 3, 4], 5, 6]
+
+block:
+  fun f(x, ...):
+    match [x, ...]
+    | [1, a, ...]: {a, ...}
+    | [2, a, ...]: [a, ...]
+    | [3, a, ..., 4]: [a, ...]
+    | [x, & y, z]: [x, y, z]
+  check f(1, 2, 3) ~is {2, 3}
+  check f(2, 3, 4, 5) ~is [3, 4, 5]
+  check f(3, 4, 5, 6, 4) ~is [4, 5, 6]
+  check f(3, 4) ~is []
+  check f(3, 4, 5, 6) ~is [3, [4, 5], 6]
+
+check:
+  def [x, ..., y, ...] = [1, 2]
+  [[x, ...], [y, ...]]
+  ~is [[1, 2], []]
+
+check:
+  def [x, ..., y, ... ~nonempty] = [1, 2]
+  [[x, ...], [y, ...]]
+  ~is [[1], [2]]
+
+check:
+  def [x :: Int, ..., y :: Int, ... ~nonempty, & tail] = [1, 2, "a", "b"]
+  [[x, ...], [y, ...], tail]
+  ~is [[1], [2], ["a", "b"]]
+
+check:
+  def [x, ..., 2, y, ...] = [1, 2, 3, 4]
+  [[x, ...], [y, ...]]
+  ~is [[1], [3, 4]]
+
+check:
+  def [& x, y, ...] = [1, 2]
+  [x, [y, ...]]
+  ~is [[1, 2], []]
+
+check:
+  def [x, ..., & y, z] = [1, 2]
+  [[x, ...], y, z]
+  ~is [[1], [], 2]
+
+check:
+  def [x, ..., & y, z] = [1, 2]
+  [PairList[x, ...], y, z]
+  ~is [PairList[1], [], 2]
+
+check:
+  def [x :: Int, ..., & y :: List.of(Int), z] = [1, 2]
+  [[x, ...], y, z]
+  ~is [[1], [], 2]
+
+check:
+  def [x :: Int, ..., & y :: List.of(String), z] = [1, 2, "c", "d", 4]
+  [[x, ...], y, z]
+  ~is [[1, 2], ["c", "d"], 4]
+
+check:
+  def [x :: Int, ..., & y :: List.of(String), z, ...] = [1, 2, "c", "d", 5, "f"]
+  [[x, ...], y, [z, ...]]
+  ~is [[1, 2], ["c", "d"], [5, "f"]]
+
+check:
+  def [x :: PathString.to_path, ..., z, & y :: List.of(PathString.to_path)] = ["a", "b", 0, "c", "d"]
+  [[x, ...], y, z]
+  ~is [[Path("a"), Path("b")], [Path("c"), Path("d")], 0]
+
+check:
+  match [1, "end", 2, 3, 4, "end", 5]
+  | [& [x, ..., "end"], ..., z]:
+      [[[x, ...], ...], z]
+  ~is [[[1, "end", 2, 3, 4]], 5]
+
+check:
+  match [1, "end", 2, 3, 4, "end", 5]
+  | [& [x, ..., "end", & z0], ..., z]:
+      [[[x, ...], ...], z]
+  ~is [[[1, "end", 2, 3, 4]], 5]
+
+check:
+  match [1, "end", 2, 3, 4, "end", 5]
+  | [& [x :: Int, ..., "end"], ..., z]:
+      [[[x, ...], ...], z]
+  ~is [[[1], [2, 3, 4]], 5]
+
+check:
+  match [4, 5]
+  | [& [x, ...], ... ~nonempty, z]:
+      [[[x, ...], ...], z]
+  ~is [[[4]], 5]
+
+check:
+  match [5]
+  | [& [x, ...], ... ~nonempty, z]:
+      [[[x, ...], ...], z]
+  | ~else:
+      #false
+  ~is #false
+
+check:
+  match [1, 2, 3]
+  | [b, & a, ...]: [a, ...]
+  ~is [[2, 3]]
+
+check:
+  match [1, 2, 3]
+  | [b, & a, ... ~once]: [a, ...]
+  ~is [[2, 3]]
+
+check:
+  def [1, x, y] = [1, 2, 3]
+  [x, y]
+  ~is [2, 3]
+
+check:
+  def [1, x, y] = [1, 3]
+  "oops"
+  ~throws "matching(List[1, _, _])"
+
+check:
+  def [1, x, ... ~nonempty, 3] = [5]
+  "oops"
+  ~throws "matching(List[1, _, ... ~nonempty, 3])"
+
+check:
+  def [1, x, ... ~once, 3] = [5]
+  "oops"
+  ~throws "matching(List[1, _, ... ~once, 3])"
+
+check:
+  def [1, x, ... ~nonempty, 3, & _] = [5]
+  "oops"
+  ~throws "matching(List[1, _, ... ~nonempty, 3, & _])"
+
+check:
+  def [1, x, ... ~once, 3, & _] = [5]
+  "oops"
+  ~throws "matching(List[1, _, ... ~once, 3, & _])"
+
+check:
+  def [1, x, ..., 3] = [5]
+  "oops"
+  ~throws "matching(List[1, _, ..., 3])"
+
+check:
+  def [1, & x, 3] = [5]
+  "oops"
+  ~throws "matching(List[1, & _, 3])"
+
+check:
+  def [1, & x, ..., 3] = [5]
+  "oops"
+  ~throws "matching(List[1, & _, ..., 3])"
+
+check:
+  [each [1, 2, 3], ...] ~is [1, 2, 3]
+
+// check element static info in `each`
+block:
+  use_static
+  class Doggo(name):
+    method bork():
+      println("woof! " +& name)
+  check:
+    let lst :: List.of(Doggo) = [Doggo("Spot"), Doggo("Rover")]
+    Function.pass((each lst).bork(), ...)
+    ~prints "woof! Spot\nwoof! Rover\n"
+
+check:
+  ("oops" :~ List)[0]
+  ~throws values(
+    "List.get: " ++ error.annot_msg(),
+    error.annot("List").msg,
+    error.val("oops").msg,
+  )
+
+version_meta.when_racket_at_least "8.14.0.2":
+  check:
+    ([1, 2, 3] :~ List)["oops"]
+    ~throws values(
+      "List.get: " ++ error.annot_msg(),
+      error.annot("Nat").msg,
+      error.val("oops").msg,
+    )
+  check:
+    ([1, 2, 3] :~ List)[-1]
+    ~throws values(
+      "List.get: " ++ error.annot_msg(),
+      error.annot("Nat").msg,
+      error.val(-1).msg,
+    )
+
+check:
+  ("oops" :~ List).first
+  ~throws values(
+    "List.first: " ++ error.annot_msg(),
+    error.annot("NonemptyList").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  ("oops" :~ List).last
+  ~throws values(
+    "List.last: " ++ error.annot_msg(),
+    error.annot("NonemptyList").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  ("oops" :~ List).rest
+  ~throws values(
+    "List.rest: " ++ error.annot_msg(),
+    error.annot("NonemptyList").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  List.append("oops") ~throws values(
+    "List.append: " ++ error.annot_msg(),
+    error.annot("List").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ List).append() ~throws values(
+    "List.append: " ++ error.annot_msg(),
+    error.annot("List").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ List) ++ [1, 2, 3] ~throws values(
+    "List.append: " ++ error.annot_msg(),
+    error.annot("List").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  1 in ("oops" :~ List) ~throws values(
+    "List.contains: " ++ error.annot_msg(),
+    error.annot("List").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ List).contains(1) ~throws values(
+    "List.contains: " ++ error.annot_msg(),
+    error.annot("List").msg,
+    error.val("oops").msg,
+  )
+  [1, 2, 3].contains(1, "oops") ~throws values(
+    "List.contains: " ++ error.annot_msg(),
+    error.annot("Function.of_arity(2)").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  [1, 2, 3][5] ~throws values(
+    "List.get: " ++ "index is out of range",
+    error.text(~label: "index", "5").msg,
+    error.text(~label: "valid range", "[0, 2]").msg,
+    error.val(~label: "list", [1, 2, 3]).msg,
+  )
+  [1, 2, 3].take(5) ~throws values(
+    "List.take: " ++ "index is out of range",
+    error.text(~label: "index", "5").msg,
+    error.text(~label: "valid range", "[0, 3]").msg,
+    error.val(~label: "list", [1, 2, 3]).msg,
+  )
+  [1, 2, 3].drop(5) ~throws values(
+    "List.drop: " ++ "index is out of range",
+    error.text(~label: "index", "5").msg,
+    error.text(~label: "valid range", "[0, 3]").msg,
+    error.val(~label: "list", [1, 2, 3]).msg,
+  )
+  [1, 2, 3].sublist(5, 5) ~throws values(
+    "List.sublist: " ++ "starting index is out of range",
+    error.text(~label: "starting index", "5").msg,
+    error.text(~label: "valid range", "[0, 3]").msg,
+    error.val(~label: "list", [1, 2, 3]).msg,
+  )
+  [1, 2, 3].sublist(1, 5) ~throws values(
+    "List.sublist: " ++ "ending index is out of range",
+    error.text(~label: "ending index", "5").msg,
+    error.text(~label: "valid range", "[1, 3]").msg,
+    error.val(~label: "list", [1, 2, 3]).msg,
+  )
+
+block:
+  expr.macro 'list_bounds($(a :: annot_meta.Parsed))':
+    let (_, _, si) = annot_meta.unpack_converter(a)
+    match statinfo_meta.find(si, statinfo_meta.list_bounds_key)
+    | '$min $max':
+        '[#%literal $min, #%literal $max]'
+    | ~else:
+        '#false'
+  annot.macro 'Triple': 'matching([_, _, _])'
+  check:
+    list_bounds(matching([x, y, z])) ~is [3, 3]
+    list_bounds(matching([x, ..., z])) ~is [1, #false]
+    list_bounds(matching([x, ... ~nonempty, z])) ~is [2, #false]
+    list_bounds(matching([x, ... ~once, z])) ~is [1, 2]
+    list_bounds(matching([& y, z])) ~is [1, #false]
+    list_bounds(matching([x, & y, z])) ~is [2, #false]
+    list_bounds(matching([x, y, ..., z])) ~is [2, #false]
+    list_bounds(matching([x, y, ..., z, ...])) ~is [1, #false]
+    list_bounds(matching([x, y, ... ~nonempty, z, ...])) ~is [2, #false]
+    list_bounds(matching([x, y, ..., z, ... ~nonempty])) ~is [2, #false]
+    list_bounds(matching([x, y, ... ~nonempty, z, ... ~nonempty])) ~is [3, #false]
+    list_bounds(matching([x, y, ... ~once, z, ... ~once])) ~is [1, 3]
+    list_bounds(matching([x, & [y1, y2, y3], z])) ~is [5, 5]
+    list_bounds(matching([& y, ..., z])) ~is [1, #false]
+    list_bounds(matching([& [x, y, z], ..., z])) ~is [1, #false]
+    list_bounds(matching([& [x, y, z], ... ~nonempty, z])) ~is [4, #false]
+    list_bounds(matching([& [x, y, z], ... ~once, z])) ~is [1, 4]
+    list_bounds(Triple) ~is [3, 3]
+    list_bounds(matching([x, & _ :: Triple, y])) ~is [5, 5]
+    list_bounds(matching([x, & _ :: List && Triple, y])) ~is [5, 5]
+    list_bounds(matching([x, & _ :: Triple || List, y])) ~is [2, #false]
+    list_bounds(matching([x, y, ...] where: x = [y, ...].length)) ~is [1, #false]
+    list_bounds(matching([_, & [x, y, ...] where: x = [y, ...].length, _])) ~is [3, #false]
+    list_bounds(NonemptyList) ~is [1, #false]
+
+block:
+  fun f(x :: List.of(Any.of(block: println("now"); 1))):
+    x
+  check f([1, 1, 1]) ~prints "now\n"
+  check f([1, 1, 1]) ~prints "now\n"
+  check f([]) ~prints "now\n"
+
+block:
+  fun f(x :: List.later_of(Any.of(block: println("now"); 1)), ...):
+    [x, ...][0]
+  check f([1, 1, 1]) ~prints "now\n"
+  check f([]) ~prints "now\n"
+  check f([1, 1, 1])[1] ~prints "now\n"
+  check f([1, 1, 1], [1])[1] ~prints "now\n"
+  check:
+    let lst = f([1, 1, 1])
+    [lst[1], lst[2]]
+    ~prints "now\n"
+
+block:
+  fun f(x :: MutableList.now_of(Any.of(block: println("now"); 1)), ...):
+    [x, ...][0]
+  check f(MutableList[1, 1, 1]) ~prints "now\n"
+  check f(MutableList[1, 1, 1]) ~prints "now\n"
+  check f(MutableList[1, 1, 1], MutableList[1]) ~prints "now\n"
+  check f(MutableList[]) ~prints "now\n"
+
+block:
+  fun f(x :: MutableList.later_of(Any.of(block: println("now"); 1)), ...):
+    [x, ...][0]
+  check f(MutableList[1, 1, 1]) ~prints "now\n"
+  check f(MutableList[1, 1, 1], MutableList[]) ~prints "now\n"
+  check f(MutableList[]) ~prints "now\n"
+  check f(MutableList[1, 1, 1])[1] ~prints "now\n"
+  check:
+    let lst = f(MutableList[1, 1, 1])
+    [lst[1], lst[2]]
+    ~prints "now\n"
+
+// dependent result annotations
+block:
+  use_static
+  def los = ["a", "b", "c"]
+  check los.get(0).length() ~is 1
+  check List.first(los).length() ~is 1
+  check List.last(los).length() ~is 1
+  check List.rest(los)[0].length() ~is 1
+  check los.add("z")[0].length() ~is 1
+  check los.set(0, "zz")[0].length() ~is 2
+  check List.cons("zz", los)[0].length() ~is 2
+  check los.delete(1)[0].length() ~is 1
+  check los.drop(1)[0].length() ~is 1
+  check los.take(1)[0].length() ~is 1
+  check los.drop_last(1)[0].length() ~is 1
+  check los.take_last(1)[0].length() ~is 1
+  check los.sublist(0..1)[0].length() ~is 1
+  check los.slice(0, 1)[0].length() ~is 1
+  check los.reverse()[0].length() ~is 1
+  check los.find((_ == "a")).length() ~is 1
+  check los.remove("a")[0].length() ~is 1
+  check los.filter(~keep: (_ == "a"))[0].length() ~is 1
+  check los.sort((_ :: String < _))[0].length() ~is 1
+  check los.to_list()[0].length() ~is 1
+  check (for List (e in los.to_sequence()): e.length()) ~is [1, 1, 1]
+  def mlos :: MutableList.later_of(String) = MutableList["a", "b", "c"]
+  check mlos.snapshot().get(0).length() ~is 1
+  check ["a1", "b"][0].length() ~is 2
+  let [x, ...] = ["a", "b"]
+  check [x, ...][0].length() ~is 1
+  check ["zzzz", x, ...][0].length() ~is 4
+  check ["a1", "b", & ["ccccc"]][2].length() ~is 5
+  check (["a"] ++ ["b"])[0].length() ~is 1
+
+block:
+  use_static
+  def los = List["a", "b", "c"]
+  check los.get(0).length() ~is 1
+
+block:
+  use_static
+  def los = List["a", "b", "c"]
+  check los.get(0).length() ~is 1
+
+check:
+  ~eval
+  use_static
+  ["a1", "b", #"no"][0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+check:
+  ~eval
+  use_static
+  ["a1", "b", & ["c", #"no"]][0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+check:
+  ~eval
+  use_static
+  def [x, ...] = [1]
+  ["a1", "b", x, ...][0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+block:
+  use_static
+  let [x, y] :: [String, String] = dynamic(["a", "b"])
+  check x.length() ~is 1
+  check y.length() ~is 1
+
+block:
+  use_static
+  let xs :: [String, ...] = dynamic(["a", "bb"])
+  check xs[0].length() ~is 1
+  check xs[1].length() ~is 2
+
+block:
+  use_static
+  let xs :: List.tuple_of[String, ...] = dynamic(["a", "bb"])
+  check xs[0].length() ~is 1
+  check xs[1].length() ~is 2
+
+block:
+  use_static
+  let ps :: [[Bytes, String], ...] = dynamic([[#"a", "a"], [#"bb", "bb"]])
+  check ps[0].length() ~is 2
+  let [[pa, pa2], [pb, pb2]] = ps
+  check pa.length() ~is 1
+  check pa2.length() ~is 1
+  check pb.length() ~is 2
+  check pb2.length() ~is 2
+
+block:
+  use_static
+  let ps = [[#"a", "a"], [#"bb", "bb"]]
+  check ps[0].length() ~is 2
+  let [[pa, pa2], [pb, pb2]] = ps
+  check pa.length() ~is 1
+  check pa2.length() ~is 1
+  check pb.length() ~is 2
+  check pb2.length() ~is 2
+
+block:
+  use_static
+  class Posn(x, y): nonfinal
+  class Posn3D(z): extends Posn
+  let [x, y, ...] :: [Posn3D, Posn, ...] = dynamic([Posn3D(1, 2, 3), Posn(4, 5), Posn(6, 7)])
+  check x.z ~is 3
+  check [y.y, ...] ~is [5, 7]
+
+// result info for `List.iota`
+block:
+  use_static
+  check:
+    List.iota(5) ~is [0, 1, 2, 3, 4]
+    List.iota(5).length() ~is 5
+    List.iota(5)[0] < dynamic(1) ~is #true
+  check:
+    for List (i in List.iota(5)):
+      i < dynamic(1)
+    ~is [#true, #false, #false, #false, #false]

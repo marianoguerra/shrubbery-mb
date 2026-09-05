@@ -1,0 +1,64 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check ~meta:
+    repet_meta.pack_list(s)
+    repet_meta.unpack_list(s)
+
+repet.macro 'nat3':
+  ~op_stx self
+  repet_meta.pack_list('($self,
+                         List[0, 1, 2],
+                         1,
+                         0,
+                         ())')
+
+check:
+  [nat3, ...] ~is [0, 1, 2]
+  {nat3: nat3, ...} ~is {0: 0, 1: 1, 2: 2}
+  {nat3: "ok", ...} ~is {0: "ok", 1: "ok", 2: "ok"}
+
+repet.macro 'enumed($from, $(sub :: repet_meta.Parsed))':
+  ~op_stx self
+  def '($orig, $expr, $depth, $use_depth, $statinfos)':
+    repet_meta.unpack_list(sub)
+  def (pred, si):
+    annot_meta.unpack_predicate(match 'List' | '$(p :: annot_meta.Parsed)': p)
+  repet_meta.pack_list('($self(),
+                         for List (elem in $expr,
+                                   i in $from..):
+                           [i, elem],
+                         $depth,
+                         $use_depth,
+                         $si)')
+
+check:
+  [enumed(10, nat3), ...] ~is [[10, 0], [11, 1], [12, 2]]
+
+check:
+  use_static
+  [enumed(10, nat3), ...][0].length()
+  ~is 2
+
+repet.macro 'new_enumed($from, $to, $(sub :: repet_meta.Parsed))':
+  ~all_stx stx
+  let '($_, ($binds, ..., ($inner_bind, ...)), $body, $use_depth, $_)':
+    repet_meta.unpack_generator(sub)
+  let (_, si):
+    let '$(p :: annot_meta.Parsed)' = 'List'
+    annot_meta.unpack_predicate(p)
+  repet_meta.pack_generator(
+    '($stx,
+      ($binds, ..., ($inner_bind, ..., ((i), $from .. $to))),
+      [i, $body],
+      $use_depth,
+      $si)'
+  )
+
+check:
+  [new_enumed(10, 13, nat3), ...] ~is [[10, 0], [11, 1], [12, 2]]
+
+check:
+  use_static
+  [new_enumed(10, 13, nat3), ...][0].length()
+  ~is 2

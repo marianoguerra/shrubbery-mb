@@ -1,0 +1,570 @@
+
+operator a +* b:
+  (a + b) * b
+
+check:
+  3 +* 4
+  ~is 28
+
+check:
+  operator x mod y:
+    x - math.floor(x / y) * y
+  10 mod 3
+  ~is 1
+
+operator (;«x mod y»):
+  x - math.floor(x / y) * y
+
+check:
+  10 mod 3
+  ~is 1
+
+// with precedence and associativity
+
+block:
+  operator (a ++* b):
+    ~weaker_than: *
+    ~associativity: ~right
+    (a + b) * b
+
+  check:
+    3 ++* 4 * 2 ++* 5 ~is 4420
+    3 ++* ((4 * 2) ++* 5) ~is 4420
+
+block:
+  operator ++*:
+    ~weaker_than: *
+    ~associativity: ~right
+  | (a ++* b):
+      (a + b) * b
+
+  check:
+    3 ++* 4 * 2 ++* 5 ~is 4420
+    3 ++* ((4 * 2) ++* 5) ~is 4420
+
+block:
+  operator ++*:
+    ~weaker_than: *
+  | (a ++* b):
+      ~associativity: ~right
+      (a + b) * b
+
+  check:
+    3 ++* 4 * 2 ++* 5 ~is 4420
+    3 ++* ((4 * 2) ++* 5) ~is 4420
+
+block:
+  operator ++*:
+    ~associativity: ~right
+  | (a ++* b):
+      ~weaker_than: *
+      (a + b) * b
+
+  check:
+    3 ++* 4 * 2 ++* 5 ~is 4420
+    3 ++* ((4 * 2) ++* 5) ~is 4420
+
+// defining a prefix operator
+
+operator (!! b):
+  ! ! b
+
+check:
+  !!#true
+  ~is #true
+
+// defining an operator that is both prefix and infix
+block:
+  operator
+  | (** exponent):
+      2 ** exponent
+  | (base ** exponent):
+      if exponent == 0
+      | 1
+      | base * (base ** (exponent-1))
+
+  check:
+    3 ** 8 ~is 6561
+    ** 10 ~is 1024
+
+// defining an operator that is both prefix and postfix
+block:
+  operator
+  | (** exponent):
+      math.expt(2, exponent)
+  | (base **):
+      base * base
+
+  check:
+    3 ** ~is 9
+    ** 10 ~is 1024
+
+// multi-case prefix operator
+block:
+  operator
+  | (** (a :: Int)): "" +& a
+  | (** (a :: String)): a
+
+  check:
+    ** 10 ~is "10"
+    ** "apple" ~is "apple"
+    ** #'sym ~throws "no matching case for arguments"
+
+// multi-case infix operator
+block:
+  operator
+  | (0 ** a): 0
+  | (1 ** a): a
+
+  check:
+    1 ** 10 ~is 10
+    0 ** "apple" ~is 0
+    2 ** 10 ~throws "no matching case for arguments"
+
+// multi-case prefix and infix
+block:
+  operator
+  | (** (a :: Int)): "" +& a
+  | (** (a :: String)): a
+  | (0 ** a): 0
+  | (1 ** a): a
+
+  check:
+    ** 10 ~is "10"
+    ** "apple" ~is "apple"
+    ** #'sym ~throws "no matching case for arguments"
+    1 ** 10 ~is 10
+    0 ** "apple" ~is 0
+    2 ** 10 ~throws "no matching case for arguments"
+
+
+// multi-case postfix
+check:
+  operator
+  | (0 !):
+      ~stronger_than: * /
+      1
+  | (n !): n * (n-1)!
+  10!
+  ~is 3628800
+
+check:
+  ~eval
+  operator
+  | 0 ** a: 0
+  | 1 **: 1
+  ~throws "combination of infix and postfix cases not allowed"
+
+check:
+  ~eval
+  operator
+  | (0 ** a): 0
+  | (** a): 0
+  | (1 **): 1
+  ~throws "combination of infix and postfix cases not allowed"
+
+check:
+  ~eval
+  operator
+  | 0 ** a: 0
+  | ** a: 0
+  | 1 **: 1
+  ~throws "combination of infix and postfix cases not allowed"
+
+check:
+  ~eval
+  operator
+  | ** **: 0
+  ~throws "expected non-operator"
+
+check:
+  ~eval
+  operator
+  | (0 ** a): 0
+  | (1 ??): 1
+  ~throws "case operator does not match the initial case operator"
+
+check:
+  ~eval
+  operator **:
+  | (0 ** a): 0
+  | (1 ??): 1
+  ~throws "case operator does not match the declared operator"
+
+check:
+  ~eval
+  operator
+  | (0 ** a): 0
+  | (1 ** b):
+      ~weaker_than: +
+      1
+  ~throws "precedence option not allowed after first infix case"
+
+check:
+  ~eval
+  operator
+  | (0 **): 0
+  | (1 **):
+      ~weaker_than: +
+      1
+  ~throws "precedence option not allowed after first postfix case"
+
+check:
+  ~eval
+  operator
+  | (** 0): 0
+  | (** 1):
+      ~weaker_than: +
+      1
+  ~throws "precedence option not allowed after first prefix case"
+
+check:
+  ~eval
+  operator **:
+    ~associativity: ~none
+  | (** 0): 0
+  | (** 1): 1
+  ~throws "associativity specified without infix cases"
+
+check:
+  ~eval
+  operator
+  | (0 ** a): 0
+  | (1 ** b):
+      ~associativity: ~left
+      1
+  ~throws "associativity option not allowed after first infix case"
+
+// check postfix operator as repetition
+check:
+  operator n??: n
+  def [a, ...] = [1, 2, 3]
+  [a??, ...]
+  ~is [1, 2, 3]
+
+// check result annotations
+block:
+  use_static
+  check:
+    operator (>< (xs :: List)) :: List:
+      xs.reverse()
+    (>< [1, 2, 3])[0]
+    ~is 3
+  check:
+    operator >< :: List
+    | >< (xs :: List):
+        xs.reverse()
+    (>< [1, 2, 3])[0]
+    ~is 3
+  check:
+    operator
+    | (>< (xs :: List)) :: List:
+        xs.reverse()
+    (>< [1, 2, 3])[0]
+    ~is 3
+  check:
+    operator ((xs :: List) ><) :: List:
+      xs.reverse()
+    ([1, 2, 3] ><)[0]
+    ~is 3
+  check:
+    operator >< :: List
+    | (xs :: List) ><:
+        xs.reverse()
+    ([1, 2, 3] ><)[0]
+    ~is 3
+  check:
+    operator
+    | ((xs :: List) ><) :: List:
+        xs.reverse()
+    ([1, 2, 3] ><)[0]
+    ~is 3
+  check:
+    operator ((xs :: List) <> (ys :: List)) :: List:
+      xs ++ ys
+    ([1, 2, 3] <> [4, 5, 6])[0]
+    ~is 1
+  check:
+    operator <> :: List
+    | (xs :: List) <> (ys :: List):
+        xs ++ ys
+    ([1, 2, 3] <> [4, 5, 6])[0]
+    ~is 1
+  check:
+    operator
+    | ((xs :: List) <> (ys :: List)) :: List:
+        xs ++ ys
+    ([1, 2, 3] <> [4, 5, 6])[0]
+    ~is 1
+
+check:
+  operator ? :: converting(fun (_): println("main"))
+  | (? #false) :: converting(fun (_): println("prefix: false")):
+      #void
+  | (? #true) :: converting(fun (_): println("prefix: true")):
+      #void
+  | (#false ?) :: converting(fun (_): println("postfix: false")):
+      #void
+  | (#true ?) :: converting(fun (_): println("postfix: true")):
+      #void
+  ?#false
+  ?#true
+  #false?
+  #true?
+  ~prints "prefix: false\nmain\nprefix: true\nmain\npostfix: false\nmain\npostfix: true\nmain\n"
+
+check:
+  operator ? :: converting(fun (_): println("main"))
+  | (? #false) :: converting(fun (_): println("prefix: false")):
+      #void
+  | (? #true) :: converting(fun (_): println("prefix: true")):
+      #void
+  | (#false ? #false) :: converting(fun (_): println("infix: false")):
+      #void
+  | (#true ? #true) :: converting(fun (_): println("infix: true")):
+      #void
+  ?#false
+  ?#true
+  #false?#false
+  #true?#true
+  ~prints "prefix: false\nmain\nprefix: true\nmain\ninfix: false\nmain\ninfix: true\nmain\n"
+
+// name and who
+
+block:
+  operator ((a :: Int) ?):
+    ~who who
+    ~name ques
+    who
+  check 10 ? ~is #'ques
+  check "no" ? ~throws values("ques:")
+
+block:
+  operator ((a :: Int) ?):
+    ~who: who
+    ~name: ques
+    who
+  check 10 ? ~is #'ques
+  check "no" ? ~throws values("ques:")
+
+block:
+  operator ((a :: Int) ? b):
+    ~who: who
+    ~name: ques
+    who
+  check 10 ? 0 ~is #'ques
+  check "no" ? 0 ~throws values("ques:")
+
+block:
+  operator (? (a :: Int)):
+    ~who: who
+    ~name: ques
+    who
+  check ? 10 ~is #'ques
+  check ? "no" ~throws values("ques:")
+
+block:
+  operator
+  | ((a :: Int) ?):
+      ~who: who
+      ~name: ques
+      who
+  check 10 ? ~is #'ques
+  check "no" ? ~throws values("ques:")
+
+block:
+  operator
+  | ((a :: Int) ? b):
+      ~who: who
+      ~name: ques
+      who
+  check 10 ? 0 ~is #'ques
+  check "no" ? 0 ~throws values("ques:")
+
+block:
+  operator
+  | (? (a :: Int)):
+      ~who: who
+      ~name: ques
+      who
+  check ? 10 ~is #'ques
+  check ? "no" ~throws values("ques:")
+
+block:
+  operator ?:
+    ~name: ques
+    ~who: who
+  | (? (a :: Int)):
+      who
+  | ((a :: Int) ? b):
+      who
+  check ? 10 ~is #'ques
+  check 10 ? 2 ~is #'ques
+  check "no" ? 0 ~throws values("ques:")
+  check ? "no" ~throws values("ques:")
+
+
+block:
+  operator ?:
+    ~who: who
+  | (? (a :: Int)):
+      ~name: ques
+      who
+  | ((a :: Int) ? b):
+      who
+  check ? 10 ~is #'ques
+  check 10 ? 2 ~is #'ques
+  check "no" ? 0 ~throws values("ques:")
+  check ? "no" ~throws values("ques:")
+
+block:
+  operator ?:
+    ~who: who
+  | (? (a :: Int)):
+      ~name: ques
+      who
+  | ((a :: Int) ?):
+      who
+  check ? 10 ~is #'ques
+  check 10 ? ~is #'ques
+  check "no" ? ~throws values("ques:")
+  check ? "no" ~throws values("ques:")
+
+check:
+  ~eval
+  operator ?:
+    ~who: who
+  | (? (a :: Int)):
+      ~name: ques
+      who
+  | ((a :: Int) ?):
+      ~name: ques
+      who
+  ~throws "name option not allowed after first operator case"
+
+check:
+  ~eval
+  operator ?:
+    ~name: ques
+    ~who: who
+  | (? (a :: Int)):
+      ~name: ques
+      who
+  | ((a :: Int) ?):
+      who
+  ~throws "name option not allowed in operator case"
+
+// regression test for static info in repetitions
+block:
+  use_static
+  let [x, ...] = [1, 2, 3, 4, 5]
+  operator (x times y) :: Number:
+    x*y
+  check:
+    [x*x < dynamic(10), ...] ~is [#true, #true, #true, #false, #false]
+    [(x times x) < dynamic(10), ...] ~is [#true, #true, #true, #false, #false]
+  operator (two_times x) :: Number:
+    2*x
+  check:
+    [2*x < dynamic(5), ...] ~is [#true, #true, #false, #false, #false]
+    [(two_times x) < dynamic(5), ...] ~is [#true, #true, #false, #false, #false]
+  operator ((x) times_two) :: Number:
+    x*2
+  check:
+    [x*2 < dynamic(5), ...] ~is [#true, #true, #false, #false, #false]
+    [(x times_two) < dynamic(5), ...] ~is [#true, #true, #false, #false, #false]
+
+// check handling of precedence in different cases
+block:
+  let [x, ...] = [1, 2, 3, 4, 5]
+  operator (x add y):
+    ~weaker_than: *
+    x+y
+  check:
+    2 add 1*2 ~is 4
+    [2 add x*2, ...] ~is [4, 6, 8, 10, 12]
+  operator (two_add y):
+    ~weaker_than: *
+    2+y
+  check:
+    two_add 1*2 ~is 4
+    [two_add x*2, ...] ~is [4, 6, 8, 10, 12]
+  operator ((x) add_two):
+    ~weaker_than: *
+    x+2
+  check:
+    1*2 add_two ~is 4
+    [x*2 add_two, ...] ~is [4, 6, 8, 10, 12]
+  operator add_two_add:
+    ~weaker_than: *
+  | (add_two_add y): 2+y
+  | (x add_two_add y): x+y
+  check:
+    add_two_add 1*2 ~is 4
+    2 add_two_add 1*2 ~is 4
+    [add_two_add x*2, ...] ~is [4, 6, 8, 10, 12]
+    [2 add_two_add x*2, ...] ~is [4, 6, 8, 10, 12]
+  operator two_add_two:
+    ~weaker_than: *
+  | (two_add_two y): 2+y
+  | ((x) two_add_two): x+2
+  check:
+    two_add_two 1*2 ~is 4
+    1*2 two_add_two ~is 4
+    [two_add_two x*2, ...] ~is [4, 6, 8, 10, 12]
+    [x*2 two_add_two, ...] ~is [4, 6, 8, 10, 12]
+
+// check handling of order in different cases
+block:
+  import:
+    rhombus/meta.addition
+  let [x, ...] = [1, 2, 3, 4, 5]
+  operator (x add y):
+    ~order: addition
+    x+y
+  check:
+    2 add 1*2 ~is 4
+    [2 add x*2, ...] ~is [4, 6, 8, 10, 12]
+  operator (two_add y):
+    ~order: addition
+    2+y
+  check:
+    two_add 1*2 ~is 4
+    [two_add x*2, ...] ~is [4, 6, 8, 10, 12]
+  operator ((x) add_two):
+    ~order: addition
+    x+2
+  check:
+    1*2 add_two ~is 4
+    [x*2 add_two, ...] ~is [4, 6, 8, 10, 12]
+  operator add_two_add:
+    ~order: addition
+  | (add_two_add y): 2+y
+  | (x add_two_add y): x+y
+  check:
+    add_two_add 1*2 ~is 4
+    2 add_two_add 1*2 ~is 4
+    [add_two_add x*2, ...] ~is [4, 6, 8, 10, 12]
+    [2 add_two_add x*2, ...] ~is [4, 6, 8, 10, 12]
+  operator two_add_two:
+    ~order: addition
+  | (two_add_two y): 2+y
+  | ((x) two_add_two): x+2
+  check:
+    two_add_two 1*2 ~is 4
+    1*2 two_add_two ~is 4
+    [two_add_two x*2, ...] ~is [4, 6, 8, 10, 12]
+    [x*2 two_add_two, ...] ~is [4, 6, 8, 10, 12]
+
+block:
+  namespace n:
+    export:
+      &&&
+    operator (a &&& b):
+      [[a, b]]
+  operator (a ||| b):
+    ~stronger_than:
+      n.(&&&)
+    {{a, b}}
+  check 8 n.(&&&) 9 ||| 10 ~is [[8, {{9, 10}}]]
+

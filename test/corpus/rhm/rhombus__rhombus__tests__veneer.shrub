@@ -1,0 +1,543 @@
+
+veneer RevList(this :: List):
+  implements MutableIndexable
+  override get(i):
+    this[this.length() - i - 1]
+  override set(i, v):
+    println("dropping " +& v)
+  implements Appendable
+  override append(other) :~ RevList:
+    this ++ other
+  method m():
+    this.length()
+  sequence '$lhs: $rhs':
+    '(~outer_binds:
+        lst :~ List = $rhs,
+      ~recur_binds:
+        pos = lst.length(),
+      ~head_guard:
+        pos > 0,
+      ~inner_binds:
+        $lhs = lst[pos-1],
+      ~recur_args:
+        (pos - 1))'
+
+block:
+  def r :: RevList = dynamic([1, 2, 3])
+  check:
+    r.m() ~is 3
+    r[2] ~is 1
+    r[2] := "plate" ~prints "dropping plate\n"
+    (r ++ [4, 5, 6])[0] ~is 6
+    (for List (i in r): i) ~is [3, 2, 1]
+
+check:
+  RevList([1, 2, 3]).m() ~is 3
+  RevList.m([1, 2, 3]) ~is 3
+  ([1, 2, 3] :: RevList).m() ~is 3
+  RevList([5, 2]).m() ~is 2
+  RevList.m([5, 2]) ~is 2
+  ([5, 2] :: RevList).m() ~is 2
+
+check:
+  RevList("oops") ~throws values(
+    "argument does not satisfy annotation",
+    "List",
+    "\"oops\"",
+  )
+  "oops" :: RevList ~throws values(
+    "value does not satisfy annotation",
+    "RevList",
+    "\"oops\"",
+  )
+
+veneer InfiniteString(this :: ReadableString.to_string):
+  converter
+  implements Indexable
+  override get(i):
+    if i >= this.length() | Char" " | this[i]
+  implements Appendable
+  override append(other :: InfiniteString) :: InfiniteString:
+    this
+  method m():
+    "m"
+
+check:
+  InfiniteString("apple") ~is "apple"
+  "apple" :: InfiniteString ~is "apple"
+  InfiniteString("apple")[1000] ~is Char" "
+  ("apple" :: InfiniteString)[1000] ~is Char" "
+  InfiniteString("apple").m() ~is "m"
+  InfiniteString.m("apple") ~is "m"
+  ("apple" :: InfiniteString).m() ~is "m"
+
+check:
+  InfiniteString(5) ~throws values(
+    "argument does not satisfy annotation",
+    "ReadableString.to_string",
+    "5"
+  )
+  5 :: InfiniteString ~throws values(
+    "value does not satisfy annotation",
+    "InfiniteString",
+    "5"
+  )
+  InfiniteString.m(5) ~throws values(
+    "argument does not satisfy annotation",
+    "ReadableString.to_string",
+    "5"
+  )
+
+veneer RevList2(this :: List):
+  implements Indexable
+  override get(i):
+    this[this.length() - i - 1]
+  expression 'RevList2[$elem, ...]':
+    'dynamic([$elem, ...]) :~ RevList2'
+
+check:
+  RevList2[1, 2, 3][0] ~is 3
+  ([1, 2, 3] :: RevList2)[0] ~is 3
+
+veneer Num(this :: Int):
+  implements Indexable
+  override get(i):
+    this + i
+  method m():
+    [this]
+
+veneer PlusNum(this :: PosInt):
+  implements Indexable
+  extends Num
+  override method get(v):
+    this - v
+
+block:
+  def n :: Num = 5
+  check:
+    n ~is 5
+    n[1] ~is 6
+    n.get(2) ~is 7
+    n.m() ~is [5]
+    n is_a Indexable ~is #false
+
+check:
+  PlusNum(7) ~is 7
+  (7 :: PlusNum) ~is 7
+  PlusNum(7)[9] ~is -2
+  (7 :: PlusNum)[9] ~is -2
+  PlusNum(7).m() ~is [7]
+  PlusNum.m(7) ~is [7]
+  (7 :: PlusNum).m() ~is [7]
+
+veneer IdSet(this :~ Map):
+  method add(id :~ Identifier) :~ IdSet:
+    this ++ { id.unwrap(): id }
+  method to_set():
+    for Set ((id, _) in this):
+      id
+
+check:
+  IdSet({}).add('id1').add('id2').to_set() ~is {#'id1, #'id2}
+  ({} :: IdSet).add('id1').add('id2').to_set() ~is {#'id1, #'id2}
+
+check:
+  IdSet("oops") ~is "oops"
+  "oops" :~ IdSet ~is "oops"
+  "oops" :: IdSet ~is "oops"
+
+veneer IdSet2(this :~ Map):
+  converter
+  method add(id :: Identifier) :: IdSet2:
+    this ++ { id.unwrap(): id }
+  method to_set():
+    for Set ((id, _) in this):
+      id
+
+check:
+  IdSet2({}).add('id1').add('id2').to_set() ~is {#'id1, #'id2}
+  ({} :: IdSet2).add('id1').add('id2').to_set() ~is {#'id1, #'id2}
+
+check:
+  IdSet2("oops") ~is "oops"
+  "oops" :: IdSet2 ~is "oops"
+
+// check evaluation/expansion of annotations in veneers
+check:
+  veneer Unchecked(this :~ Any.of(error("should not get here")))
+  ~completes
+
+check:
+  veneer Unchecked(this :~ Any.of(error("should not get here"))):
+    converter
+  ~completes
+
+check:
+  veneer Checked(this :: Any.of(error("should get here")))
+  #void
+  ~throws "should get here"
+
+check:
+  veneer Checked(this :: Any.of(error("should get here"))):
+    converter
+  #void
+  ~throws "should get here"
+
+check:
+  ~eval
+  import rhombus/meta open
+  expr.macro 'meta_error($msg)':
+    syntax_meta.error(msg)
+  veneer Unchecked(this :~ Any.of(meta_error("should not get here")))
+  ~completes
+
+check:
+  ~eval
+  use_static
+  import rhombus/meta open
+  expr.macro 'meta_error($msg)':
+    syntax_meta.error(msg)
+  veneer Unchecked(this :~ Any.of(meta_error("should not get here"))):
+    converter
+  ~completes
+
+check:
+  ~eval
+  import rhombus/meta open
+  expr.macro 'meta_error($msg)':
+    syntax_meta.error(msg)
+  veneer Checked(this :: Any.of(meta_error("should get here")))
+  ~throws "should get here"
+
+check:
+  ~eval
+  import rhombus/meta open
+  expr.macro 'meta_error($msg)':
+    syntax_meta.error(msg)
+  veneer Checked(this :: Any.of(meta_error("should get here"))):
+    converter
+  ~throws "should get here"
+
+veneer WeirdString(this :: String):
+  implements Comparable
+  override compare_to(other):
+    -1
+  override compares_unequal(other):
+    #true
+
+check:
+  ("smaller" :: WeirdString).compare_to("greater") ~is -1
+  ("smaller" :: WeirdString) < ("greater" :: WeirdString) ~is #true
+  ("smaller" :: WeirdString) <= ("greater" :: WeirdString) ~is #true
+  ("smaller" :: WeirdString) > ("greater" :: WeirdString) ~is #false
+  ("smaller" :: WeirdString) >= ("greater" :: WeirdString) ~is #false
+  ("same" :: WeirdString) compares_equal ("same" :: WeirdString) ~is #false
+  ("same" :: WeirdString) compares_unequal ("same" :: WeirdString) ~is #true
+
+check:
+  ~eval
+  use_dynamic
+  veneer RevList(this :: List)
+  [] :: RevList
+  ~throws "not allowed in a dynamic context"
+
+check:
+  ~eval
+  use_dynamic
+  veneer RevList(this :: List)
+  RevList([])
+  ~throws "not allowed in a dynamic context"
+
+// options in `dot`
+block:
+  import rhombus/meta open
+  veneer Something(this :~ False):
+    dot '$left . check_options':
+      ~op_stx self
+      ~head_stx call
+      ~is_static is_static
+      ~tail '$()'
+      'values(
+         Syntax.literal '$self',
+         Syntax.literal '$call',
+         #%literal $is_static,
+       )'
+  check:
+    Something(#false).check_options
+    ~matches values(
+      '.',
+      '$_ . check_options',
+      #true,
+    )
+  check:
+    Something.check_options(Something(#false))
+    ~matches values(
+      'check_options',
+      'check_options($_)',
+      #true,
+    )
+
+block:
+  def Ghost = "not defined later"
+  veneer Ghost(this :: Int):
+    expression ~none
+  check Ghost ~is "not defined later"
+
+check:
+  ~eval
+  veneer Stubborn(this :: Any):
+    expression ~error
+  Stubborn(0)
+  ~throws "cannot be used as an expression"
+
+block:
+  veneer X(this :: String):
+    constructor (x, y):
+      x +& y
+    method m(): this
+  check X("x", 10).m() ~is "x10"
+
+block:
+  veneer X(this :: ReadableString.to_string):
+    converter
+    constructor (x, y):
+      (x +& y).copy()
+    method m(): this
+
+  check X("x", 10).m() ~is "x10"
+
+block:
+  veneer X(this :: Int):
+    constructor (x, y):
+      x +& y
+    method m(): this
+  check X("x", 10).m() ~throws error.annot_msg("constructor result")
+
+// check that `:~` doesn't imply a check, but static info is
+// propagated to constructor use
+block:
+  veneer X(this :~ Int):
+    constructor (x, y):
+      x +& y
+    method m(): this
+  check X("x", 10).m() ~is "x10"
+
+block:
+  veneer X(this :: ReadableString.to_string):
+    converter
+    constructor (x):
+      x
+    method m(): this
+  check X(1).m() ~throws error.annot_msg("constructor result")
+
+block:
+  veneer Stubborn(this :: Int):
+    expression ~error
+    constructor S(x): x
+  check S(10) ~is 10
+  check S("10") ~throws error.annot_msg("constructor result")
+
+check:
+  ~eval
+  veneer Stubborn(this :: Any):
+    expression ~error
+    constructor (x): x
+  ~throws "unnamed constructor inaccessible due to expression macro"
+
+check:
+  ~eval
+  veneer Stubborn(this :: Any):
+    expression ~none
+    constructor (x): x
+  ~throws "unnamed constructor inaccessible due to expression macro"
+
+// check prefix in post forms
+block:
+  veneer A(this :: Any):
+    export:
+      whoami
+      try_input
+      try_output
+    fun whoami():
+      ~who: who
+      who
+    fun try_input(_ :: Never):
+      error("should not get here")
+    fun try_output() :: Never:
+      "oops"
+  check:
+    A.whoami() ~is #'#{A.whoami}
+    A.try_input("oops") ~throws values(
+      "A.try_input: " ++ error.annot_msg("argument"),
+      error.annot("Never").msg,
+      error.val("oops", ~label: "argument").msg,
+    )
+    A.try_output() ~throws values(
+      "A.try_output: " ++ error.annot_msg("result"),
+      error.annot("Never").msg,
+      error.val("oops", ~label: "result").msg,
+    )
+
+// check static info in `matching`
+block:
+  veneer X(this :: Listable):
+    method m(): this
+  check:
+    X([1, 2, 3]).m() ~is [1, 2, 3]
+    X(PairList[1, 2, 3]).m() ~is PairList[1, 2, 3]
+  check:
+    ([1, 2, 3] :: X).m() ~is [1, 2, 3]
+    (PairList[1, 2, 3] :: X).m() ~is PairList[1, 2, 3]
+  check:
+    [1, 2, 3] :: matching(_ :: X) ~is [1, 2, 3]
+    PairList[1, 2, 3] :: matching(_ :: X) ~is PairList[1, 2, 3]
+  check:
+    ([1, 2, 3] :: matching(_ :: X)).m() ~is [1, 2, 3]
+    (PairList[1, 2, 3] :: matching(_ :: X)).m() ~is PairList[1, 2, 3]
+  check:
+    ([1, 2, 3] :: matching(_ :: X)).length() ~is 3
+    (PairList[1, 2, 3] :: matching(_ :: X)).length() ~is 3
+
+check:
+  ~eval
+  use_static
+  veneer X(this :: Listable):
+    method m(): this
+  (dynamic([1, 2, 3]) :: matching(_ :: X)).to_list()
+  ~throws "no such field or method (based on static information)"
+
+block:
+  veneer X(this :: Listable):
+    converter
+    method m(): this
+  check:
+    X([1, 2, 3]).m() ~is [1, 2, 3]
+    X(PairList[1, 2, 3]).m() ~is PairList[1, 2, 3]
+  check:
+    ([1, 2, 3] :: X).m() ~is [1, 2, 3]
+    (PairList[1, 2, 3] :: X).m() ~is PairList[1, 2, 3]
+  check:
+    [1, 2, 3] :: matching(_ :: X) ~is [1, 2, 3]
+    PairList[1, 2, 3] :: matching(_ :: X) ~is PairList[1, 2, 3]
+  check:
+    (dynamic([1, 2, 3]) :: matching(_ :: X)).to_list() ~is [1, 2, 3]
+    (dynamic(PairList[1, 2, 3]) :: matching(_ :: X)).to_list() ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: matching(_ :: X)).length() ~is 3
+    (PairList[1, 2, 3] :: matching(_ :: X)).length() ~is 3
+
+check:
+  ~eval
+  use_static
+  veneer X(this :: Listable):
+    converter
+    method m(): this
+  ([1, 2, 3] :: matching(_ :: X)).m() ~is [1, 2, 3]
+  ~throws "no such field or method (based on static information)"
+
+block:
+  veneer X(this :: Listable.to_list):
+    converter
+    method m(): this
+  check:
+    X([1, 2, 3]).m() ~is [1, 2, 3]
+    X(PairList[1, 2, 3]).m() ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: X).m() ~is [1, 2, 3]
+    (PairList[1, 2, 3] :: X).m() ~is [1, 2, 3]
+  check:
+    [1, 2, 3] :: matching(_ :: X) ~is [1, 2, 3]
+    PairList[1, 2, 3] :: matching(_ :: X) ~is PairList[1, 2, 3]
+  check:
+    (dynamic([1, 2, 3]) :: matching(_ :: X)).to_list() ~is [1, 2, 3]
+    (dynamic(PairList[1, 2, 3]) :: matching(_ :: X)).to_list() ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: matching(_ :: X)).length() ~is 3
+    (PairList[1, 2, 3] :: matching(_ :: X)).length() ~is 3
+
+check:
+  ~eval
+  use_static
+  veneer X(this :: Listable.to_list):
+    converter
+    method m(): this
+  ([1, 2, 3] :: matching(_ :: X)).m() ~is [1, 2, 3]
+  ~throws "no such field or method (based on static information)"
+
+// regression test: internal identifiers shouldn't be exposed
+check:
+  ~eval
+  veneer X(this :: Any)
+  #{X?}
+  ~throws "X?: undefined"
+
+check:
+  ~eval
+  veneer X(this :: Any.to_boolean):
+    converter
+  #{X-convert}
+  ~throws "X-convert: undefined"
+
+// regression test: parsing of method clauses
+block:
+  veneer V(this :: Any):
+    method m(): "m"
+    property p: "p"
+    method get():
+      [m(), p]
+  check V(#false).get() ~is ["m", "p"]
+
+block:
+  veneer V(this :: Any):
+    final m(): "m"
+    final method m2(): "m2"
+    final property p: "p"
+    method get():
+      [m(), m2(), p]
+  check V(#false).get() ~is ["m", "m2", "p"]
+
+block:
+  veneer V(this :: Any):
+    implements Indexable
+    override get(i):
+      "get"
+    implements Appendable
+    override method append(other):
+      "append"
+  check V(#false)[#false] ~is "get"
+  check V(#false) ++ V(#false) ~is "append"
+
+block:
+  veneer V(this :: Any):
+    private implements Indexable
+    private override get(i):
+      "get"
+    private implements Appendable
+    private override method append(other):
+      "append"
+  check V(#false)[#false] ~is "get"
+  check V(#false) ++ V(#false) ~is "append"
+
+block:
+  veneer V(this :: Any):
+    protected implements Indexable
+    final override get(i):
+      "get"
+    protected implements Appendable
+    final override method append(other):
+      "append"
+  check V(#false)[#false] ~is "get"
+  check V(#false) ++ V(#false) ~is "append"
+
+namespace db:
+  export: Connection Comparable
+  veneer Connection(this :~ Any):
+    method list_tables() :~ List.of(String):
+      ["a", "b"]
+veneer Connection(this :: db.Connection):
+  extends db.Connection
+  implements db.Comparable
+  method initialize():
+    def tables = list_tables()
+    tables
+  override method compare_to(o): 0

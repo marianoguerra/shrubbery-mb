@@ -1,0 +1,160 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    Listable.to_list(v) ~method
+
+check [] ~is_a Listable
+check [1] ~is_a Listable
+check MutableList[] ~is_a Listable
+check MutableList[1] ~is_a Listable
+check PairList[] ~is_a Listable
+check PairList[1] ~is_a Listable
+check Array(1, 2) ~is_a Listable
+check 0..2 ~is_a Listable
+check 0..=2 ~is_a Listable
+check 0.. ~is_a !Listable
+check .. ~is_a !Listable
+
+block:
+  use_static
+  check [].to_list() ~is []
+  check [3, 2, 1].to_list() ~is [3, 2, 1]
+  check PairList[].to_list() ~is []
+  check PairList[3, 2, 1].to_list() ~is [3, 2, 1]
+  check Array(10, 20, 30).to_list() ~is [10, 20, 30]
+  check Listable.to_list(0..4) ~is [0, 1, 2, 3]
+  check [].to_list().length() ~is 0
+  check PairList[].to_list().length() ~is 0
+  check [1, 2, 3].to_list().length() ~is 3
+  check PairList[1, 2, 3].to_list().length() ~is  3
+  check Array(10, 20, 30, 40).to_list().length() ~is 4
+  check Listable.to_list(0..5).length() ~is 5
+
+block:
+  check dynamic([]).to_list() ~is []
+  check dynamic([].to_list)() ~is []
+  check dynamic(([] :~ Listable).to_list)() ~is []
+  check dynamic([3, 2, 1]).to_list() ~is [3, 2, 1]
+  check dynamic(PairList[]).to_list() ~is []
+  check dynamic(PairList[3, 2, 1]).to_list() ~is [3, 2, 1]
+  check dynamic(Array(10, 20, 30)).to_list() ~is [10, 20, 30]
+  check dynamic([]).to_list().length() ~is 0
+  check dynamic(PairList[]).to_list().length() ~is 0
+  check dynamic([1, 2, 3]).to_list().length() ~is 3
+  check dynamic(PairList[1, 2, 3]).to_list().length() ~is  3
+  check dynamic(Array(10, 20, 30, 40)).to_list().length() ~is 4
+
+block:
+  class Posn(x, y):
+    implements Listable
+    override to_list(): [x, y]
+
+  check Posn(1, 2).to_list() ~is [1, 2]
+  check Listable.to_list(Posn(1, 2)) ~is [1, 2]
+  block:
+    use_static
+    check Posn(1, 2).to_list() ~is [1, 2]
+    check Posn(1, 2).to_list().length() ~is 2
+    check Listable.to_list(Posn(1, 2)) ~is [1, 2]
+    check Listable.to_list(Posn(1, 2)).length() ~is 2
+    check (Posn(1, 2) :~ Listable).to_list() ~is [1, 2]
+    check (Posn(1, 2) :~ Listable).to_list().length() ~is 2
+
+block:
+  class Broken():
+    implements Listable
+    override to_list(): "oops"
+
+  check Broken().to_list() ~throws values(
+    "result does not satisfy annotation",
+    "List",
+    "\"oops\"",
+  )
+  check (Broken() :~ Listable).to_list() ~throws values(
+    "result does not satisfy annotation",
+    "List",
+    "\"oops\"",
+  )
+  check Broken() :: Listable.to_list ~throws values(
+    "result does not satisfy annotation",
+    "List",
+    "\"oops\"",
+  )
+  check (Broken() :~ Listable).to_list() ~throws values(
+    "result does not satisfy annotation",
+    "List",
+    "\"oops\"",
+  )
+  check [& Broken()] ~throws values(
+    "result does not satisfy annotation",
+    "List",
+    "\"oops\"",
+  )
+  check PairList[& Broken()] ~throws values(
+    "result does not satisfy annotation",
+    "List",
+    "\"oops\"",
+  )
+
+check:
+  [& "oops"] ~throws "not a listable for splicing into a list"
+  PairList[& "oops"] ~throws "not a listable for splicing into a pair list"
+
+check:
+  ~eval
+  [] :: Listable.assume_of(ReadableString.to_string)
+  ~throws "converter annotation not supported for elements"
+
+block:
+  use_static
+  let x :: Listable.assume_of(String) = dynamic(["a"])
+  check Listable.to_list(x)[0].length() ~is 1
+  check x.to_list()[0].length() ~is 1
+
+block:
+  use_static
+  let x :: Listable = (["a"] :: List.of(String))
+  check Listable.to_list(x)[0].length() ~is 1
+  check x.to_list()[0].length() ~is 1
+
+block:
+  use_static
+  let x :: (Listable.assume_of(List.of(String)) || Listable.assume_of(List.of(Int))) = dynamic([["a"]])
+  check Listable.to_list(x)[0].length() ~is 1
+  check x.to_list()[0].length() ~is 1
+
+block:
+  use_static
+  class A():
+    nonfinal
+    method a(): 1
+  class B1():
+    extends A
+  class B2():
+    extends A
+  let x :: (Listable.assume_of(B1) || Listable.assume_of(B2)) = dynamic([B1()])
+  check Listable.to_list(x)[0].a() ~is 1
+  check x.to_list()[0].a() ~is 1
+
+check:
+  ~eval
+  use_static
+  def x :: (Listable.assume_of(String) || Listable.assume_of(Int)) = dynamic(["a"])
+  Listable.to_list(x)[0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+// check input static info for `Listable.to_list`
+block:
+  use_static
+  check:
+    [1, 2, 3] :: matching(_ :: Listable.to_list) ~is [1, 2, 3]
+    PairList[1, 2, 3] :: matching(_ :: Listable.to_list) ~is PairList[1, 2, 3]
+  check:
+    (dynamic([1, 2, 3]) :: matching(_ :: Listable.to_list)).to_list() ~is [1, 2, 3]
+    (dynamic(PairList[1, 2, 3]) :: matching(_ :: Listable.to_list)).to_list() ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: matching(_ :: Listable.to_list)).length() ~is 3
+    (PairList[1, 2, 3] :: matching(_ :: Listable.to_list)).length() ~is 3

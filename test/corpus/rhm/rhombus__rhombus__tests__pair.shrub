@@ -1,0 +1,197 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    Pair(fst, snd)
+    Pair.cons(fst, snd)
+    Pair.first(pr)
+    Pair.rest(pr)
+
+check:
+  Pair(1, 2)
+  ~is Pair.cons(1, 2)
+
+check:
+  Pair
+  ~is Pair.cons
+
+check:
+  Pair(1, PairList[2])
+  ~is PairList[1, 2]
+
+check:
+  def p :: Pair = PairList[1, 2]
+  p
+  ~is PairList[1, 2]
+
+check:
+  Pair.first(1)
+  ~throws values(
+    "Pair.first: " ++ error.annot_msg(),
+    error.annot("Pair").msg,
+    error.val(1).msg,
+  )
+
+check:
+  (1 :~ Pair).first
+  ~throws values(
+    "Pair.first: " ++ error.annot_msg(),
+    error.annot("Pair").msg,
+    error.val(1).msg,
+  )
+
+check:
+  Pair.rest(2)
+  ~throws values(
+    "Pair.rest: " ++ error.annot_msg(),
+    error.annot("Pair").msg,
+    error.val(2).msg,
+  )
+
+check:
+  (2 :~ Pair).rest
+  ~throws values(
+    "Pair.rest: " ++ error.annot_msg(),
+    error.annot("Pair").msg,
+    error.val(2).msg,
+  )
+
+check:
+  Pair("ok", "oops") :: Pair.of(String, Number)
+  ~throws "does not satisfy annotation"
+
+check:
+  PairList["ok", "oops"] :: Pair.of(String, Number)
+  ~throws "does not satisfy annotation"
+
+check:
+  PairList["ok", "fine"] :: Pair.of(String, PairList)
+  ~is PairList["ok", "fine"]
+
+block:
+  use_static
+  check:
+    Pair(1, 2).first
+    ~is 1
+  check:
+    Pair(1, 2).rest
+    ~is 2
+  check:
+    Pair.cons(1, 2).first
+    ~is 1
+  check:
+    Pair.cons(1, 2).rest
+    ~is 2
+  check:
+    def x :: Pair = PairList[1, 2, 3]
+    x.first
+    ~is 1
+  check:
+    def Pair(x, y) = PairList[1, 2, 3]
+    x
+    ~is 1
+  check:
+    def Pair.cons(x, y) = PairList[1, 2, 3]
+    x
+    ~is 1
+  check:
+    (PairList["ok", "fine"] :: Pair.of(String, PairList)).rest
+    ~is PairList["fine"]
+  check:
+    def Pair(x :: PairList, y) = PairList[PairList[1, 2, 3]]
+    x.length()
+    ~is 3
+  check:
+    def Pair.cons(x :: PairList, y) = PairList[PairList[1, 2, 3]]
+    x.length()
+    ~is 3
+  check:
+    (PairList["ok", "fine"] :: Pair.of(String, PairList)).rest.length()
+    ~is 1
+  check:
+    def x :: Pair.of(PairList, Any) = PairList[PairList[1, 2, 3]]
+    x.first.length()
+    ~is 3
+
+block:
+  check:
+    Pair(1, 2) :: Pair.of(
+      converting(fun (1): 2),
+      converting(fun (2): 1)
+    )
+    ~is Pair(2, 1)
+  check:
+    1 :: Pair
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: Pair.of(Any, Any)
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: Pair.of(
+      converting(fun (_): #false),
+      converting(fun (_): #false)
+    )
+    ~throws "does not satisfy annotation"
+
+block:
+  check:
+    dynamic(Pair(1, 2)).first
+    ~is 1
+  check:
+    dynamic(Pair(1, 2)).rest
+    ~is 2
+
+block:
+  use_static
+  class Posn(x, y)
+  class Box(v)
+  def p :: Pair.of(Posn, Box) = dynamic(Pair(Posn(1, 2), Box(3)))
+  check:
+    p.first.x ~is 1
+    p.first.y ~is 2
+    p.rest.v ~is 3
+  def Pair(f, r) :: Pair.of(Posn, Box) = dynamic(Pair(Posn(10, 20), Box(30)))
+  check:
+    f.x ~is 10
+    f.y ~is 20
+    r.v ~is 30
+
+check:
+  to_string(Pair(1, 2)) ~is "Pair(1, 2)"
+  to_string(Pair(1, PairList[2, 3])) ~is "PairList[1, 2, 3]"
+
+block:
+  fun f(x :: Pair.of(Any.of(block: println("now"); 1),
+                     Any.of(block: println("then"); 2)),
+        ...):
+    #'ok
+  check f(Pair(1, 2)) ~prints "now\nthen\n"
+  check f(Pair(1, 2)) ~prints "now\nthen\n"
+  check f(Pair(1, 2), Pair(1, 2)) ~prints "now\nthen\n"
+
+block:
+  fun f(x :: PairList.of(Any.of(block: println("now"); 1))):
+    x
+  check f(PairList[1, 1, 1]) ~prints "now\n"
+  check f(PairList[1, 1, 1]) ~prints "now\n"
+  check f(PairList[]) ~prints "now\n"
+
+// dependent result annotations
+block:
+  use_static
+  def p = Pair("a", #"bb")
+  check Pair.first(p).length() ~is 1
+  check Pair.rest(p).length() ~is 2
+
+block:
+  use_static
+  let PairList[x, y] :: PairList.tuple_of[String, String] = dynamic(PairList["a", "bb"])
+  check x.length() ~is 1
+  check y.length() ~is 2
+
+block:
+  use_static
+  let xs :: PairList.tuple_of[String, ...] = dynamic(PairList["a", "bb"])
+  check xs[0].length() ~is 1
+  check xs[1].length() ~is 2
+

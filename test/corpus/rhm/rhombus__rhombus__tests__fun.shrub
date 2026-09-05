@@ -1,0 +1,489 @@
+
+class Posn(x, y)
+
+block:
+  fun
+  | size(n :: Int):
+      n
+  | size(p :: Posn):
+      p.x + p.y
+  | size(a, b):
+      a+b
+  check:
+    size(Posn(8, 6))
+    ~is 14
+  check:
+    size(1, 2)
+    ~is 3
+
+check:
+  def Posn(px, py) :~ Posn = Posn(1, 2)
+  List(px, py)
+  ~is [1, 2]
+
+block:
+  def identity = fun (x): x
+  check:
+    identity(1 + (fun (x): x) (99) )
+    ~is 100
+  check:
+    identity(1+(fun (x): x)(99))
+    ~is 100
+
+// function result contracts
+
+block:
+  fun add1(x) :: Int:
+    match x
+    | n :: Int : x + 1
+    | ~else: x
+  check:
+    add1(100)
+    ~is 101
+  check:
+    add1("oops")
+    ~throws values(
+      "result does not satisfy annotation",
+      "Int",
+    )
+
+block:
+  fun
+  | add_two(x) :: Number:
+      x + 2.0
+  | add_two(x, y) :: String:
+      x +& " and " +& y
+  check:
+    add_two(7) .= 9.0
+    ~is #true
+  check:
+    add_two(6, 7)
+    ~is "6 and 7"
+
+check:
+  def f = fun (x) :: Int: x
+  f(10)
+  ~is 10
+
+block:
+  use_static
+  fun on_diag(n :: Int) :: Posn:
+    Posn(n, n)
+  check on_diag(1).x ~is 1
+  check:
+    def known_posn = on_diag(2)
+    known_posn.x
+    ~is 2
+
+// `match` variant
+
+block:
+  fun size2 :: Int:
+  | size2("wrong"):
+      "oops"
+  | size2(n :: Int):
+      n
+  | size2(p :: Posn):
+      p.x + p.y
+  | size2(a, b):
+      a+b
+  check size2(10) ~is 10
+  check size2(Posn(1, 2)) ~is 3
+  check size2("wrong") ~throws "does not satisfy annotation"
+
+block:
+  use_static
+  fun flip :: Posn:
+  | flip(Posn(x, y)):
+      Posn(y,x)
+  | flip(x):
+      Posn(0, x)
+  check:
+    flip(Posn(1, 2)) ~is Posn(2, 1)
+    flip(Posn(1, 2)).y ~is 1
+    flip(9) ~is Posn(0, 9)
+
+check:
+  fun size3:
+  | size3(_): "not yet implemented"
+  size3(10)
+  ~is "not yet implemented"
+
+block:
+  def long_form_one = (fun
+                       | (): 1)
+  def longer_form_one = (fun :: Int
+                         | (): 1)
+  check:
+    long_form_one() ~is 1
+    longer_form_one() ~is 1
+
+block:
+  check:
+    fun f() :: values(Int, Int):
+      values(0, 1)
+    def (x, y) = f()
+    [x, y]
+    ~is [0, 1]
+  check:
+    fun f() :: (Int, Int):
+      values(0, 1)
+    def (x, y) = f()
+    [x, y]
+    ~is [0, 1]
+  check:
+    use_static
+    fun f() :: (Int, List):
+      values(0, [1, 2])
+    def (x, y) = f()
+    y[0]
+    ~is 1
+
+block:
+  check:
+    fun f() :: (Int, Int):
+      values(0, "oops")
+    def (x, y) = f()
+    10
+    ~throws values(
+      "results do not satisfy annotation",
+      "(Int, Int)"
+    )
+  check:
+    fun f() :: (Int, Int):
+      0
+    f()
+    ~throws values(
+      "result does not satisfy annotation",
+      "(Int, Int)"
+    )
+  check:
+    fun f() :: Int:
+      values(0, "oops")
+    f()
+    ~throws values(
+      "results do not satisfy annotation",
+      "Int"
+    )
+  check:
+    ~eval
+    fun oops():
+      use_static
+
+      // make sure values are not propagated through a single-value context
+      fun f():: (Int, List):
+        values(1, [2])
+
+      def x = f()
+      def (a, b) = x
+      b[0]
+    ~throws "specialization not known"
+
+check:
+  ~eval
+  fun f(x = "hello" :: String):
+    "ok"
+  ~throws "immediate annotation operator not allowed in default-value expression"
+
+check:
+  use_static
+  (fun (x): x + 1).map([1, 2, 3]).length()
+  ~is 3
+
+check:
+  use_static
+  (fun (x): x + 1).for_each([1, 2, 3])
+  ~is #void
+
+check:
+  List.cons.map([1, 2, 3])
+  ~throws values("expected number of arguments does not match the given number of lists",
+                 "expected: 2",
+                 "given: 1")
+
+check:
+  (fun | (): 0 | (x, y): x).map([1, 2, 3])
+  ~throws values("expected number of arguments does not match the given number of lists",
+                 "given: 1")
+
+check:
+  (fun (x, y, z, ...): x).map([1, 2, 3])
+  ~throws values("expected number of arguments does not match the given number of lists",
+                 "given: 1")
+
+check:
+  ~eval
+  fun (x where x = 1 = 2): 10
+  ~throws "multiple immediate equals not allowed in this group"
+
+// check generation of function calls
+block:
+  fun noop(& args, ~& kw_args):
+    values(args, kw_args)
+  check:
+    noop(1, 2, 3, ~a: "a")
+    ~is values([1, 2, 3], {#'~a: "a"})
+  check:
+    def [x, ...] = [4, 5]
+    noop(1, 2, 3, ~a: "a", x, ...)
+    ~is values([1, 2, 3, 4, 5], {#'~a: "a"})
+  check:
+    def [x, ...] = [4, 5]
+    noop(1, 2, 3, ~a: "a", x, ..., ~& {#'~b: "b"})
+    ~is values([1, 2, 3, 4, 5], {#'~a: "a", #'~b: "b"})
+  check:
+    def [x, ...] = [4, 5]
+    noop(1, 2, 3, ~a: "a", ~& {#'~b: "b"}, x, ...)
+    ~is values([1, 2, 3, 4, 5], {#'~a: "a", #'~b: "b"})
+  check:
+    noop(1, 2, 3, ~a: "a", & [4, 5])
+    ~is values([1, 2, 3, 4, 5], {#'~a: "a"})
+  check:
+    noop(1, 2, 3, ~a: "a", ~& {#'~b: "b"})
+    ~is values([1, 2, 3], {#'~a: "a", #'~b: "b"})
+  check:
+    noop(1, 2, 3, ~a: "a", & [4, 5], ~& {#'~b: "b"})
+    ~is values([1, 2, 3, 4, 5], {#'~a: "a", #'~b: "b"})
+  check:
+    noop(1, 2, 3, ~a: "a", ~& {#'~b: "b"}, & [4, 5])
+    ~is values([1, 2, 3, 4, 5], {#'~a: "a", #'~b: "b"})
+  check:
+    def [x, ...] = [4, 5]
+    noop(1, 2, 3, x, ..., & [6, 7, 8], ~a: "a", ~& {#'~b: "b"})
+    ~is values([1, 2, 3, 4, 5, 6, 7, 8], {#'~a: "a", #'~b: "b"})
+
+// check default values
+check:
+  fun defaults(arg1 = 1,
+               arg2: println("arg2"); 2,
+               ~arg3 = 3,
+               ~arg4: arg4 = 4,
+               ~arg5: arg5: println("arg5"); 5):
+    values(arg1, arg2, arg3, arg4, arg5)
+  check defaults() ~is values(1, 2, 3, 4, 5)
+  check defaults(0) ~is values(0, 2, 3, 4, 5)
+  check defaults(0, 0) ~is values(0, 0, 3, 4, 5)
+  check defaults(0, 0, ~arg3: 0) ~is values(0, 0, 0, 4, 5)
+  check defaults(0, 0, ~arg3: 0, ~arg4: 0) ~is values(0, 0, 0, 0, 5)
+  check defaults(0, 0, ~arg3: 0, ~arg4: 0, ~arg5: 0) ~is values(0, 0, 0, 0, 0)
+  check defaults.name() ~is #'defaults
+  check defaults.arity() ~is values(0b111, [], [#'~arg3, #'~arg4, #'~arg5])
+  ~prints "arg2\narg5\narg2\narg5\narg5\narg5\narg5\n"
+
+check:
+  fun more_defaults(arg1,
+                    ~arg5: arg5 = 5,
+                    arg2: println("arg2"); 2,
+                    ~arg4,
+                    arg3 = 3,
+                    ~arg6: arg6: println("arg5"); 6,
+                    & rest,
+                    ~& kwrest):
+    values(arg1, arg2, arg3, arg4, arg5, arg6, rest, kwrest)
+  check more_defaults(0, ~arg4: 0) ~is values(0, 2, 3, 0, 5, 6, [], {})
+  check more_defaults(0, 0, ~arg4: 0) ~is values(0, 0, 3, 0, 5, 6, [], {})
+  check more_defaults(0, 0, 0, ~arg4: 0) ~is values(0, 0, 0, 0, 5, 6, [], {})
+  check more_defaults(0, 0, 0, ~arg4: 0, ~arg5: 0) ~is values(0, 0, 0, 0, 0, 6, [], {})
+  check more_defaults(0, 0, 0, ~arg4: 0, ~arg5: 0, ~arg6: 0) ~is values(0, 0, 0, 0, 0, 0, [], {})
+  check:
+    more_defaults(0, 0, 0, ~arg4: 0, ~arg5: 0, ~arg6: 0, 7, 8, ~arg9: 9, ~arg10: 10)
+    ~is values(0, 0, 0, 0, 0, 0, [7, 8], {#'~arg9: 9, #'~arg10: 10})
+  check more_defaults.name() ~is #'more_defaults
+  check more_defaults.arity() ~is values(-0b10, [#'~arg4], #false)
+  ~prints "arg2\narg5\narg5\narg5\narg5\n"
+
+// check constraint on optional by-position arguments
+check:
+  ~eval
+  fun invalid(arg1 = 1, arg2):
+    arg1+arg2
+  ~throws "default-value expression missing"
+
+check:
+  ~eval
+  fun (arg1 = 1, arg2):
+    arg1+arg2
+  ~throws "default-value expression missing"
+
+check:
+  ~eval
+  fun invalid(arg1: 1, arg2):
+    arg1+arg2
+  ~throws "default-value expression missing"
+
+check:
+  ~eval
+  fun (arg1: 1, arg2):
+    arg1+arg2
+  ~throws "default-value expression missing"
+
+// check constraint on keyword arguments
+check:
+  ~eval
+  fun invalid(~kw: kw1, ~kw: kw2):
+    kw1+kw2
+  ~throws "duplicate keyword for argument"
+
+check:
+  ~eval
+  fun (~kw: kw1, ~kw: kw2):
+    kw1+kw2
+  ~throws "duplicate keyword for argument"
+
+// check block-style keyword arguments
+check:
+  fun f(~x: x): x
+  f(~x:
+      let v = "value"
+      v)
+  ~is "value"
+
+// check object names of anonymous functions
+check:
+  (fun (): #false).name()
+  ~is #'fun
+
+check:
+  (fun (~& _): #false).name()
+  ~is #'fun
+
+check:
+  (fun | (): #false).name()
+  ~is #'fun
+
+check:
+  (fun | (~& _): #false).name()
+  ~is #'fun
+
+// check argument bindings
+check:
+  import:
+    rhombus/meta open
+  bind.macro 'printed($id)':
+    bind_meta.pack('(printed_infoer, $id)')
+  bind.infoer 'printed_infoer($_, $id)':
+    '("printed(_)",
+      printed,
+      (),
+      (),
+      printed_oncer,
+      printed_matcher,
+      (),
+      printed_committer,
+      printed_binder,
+      $id)'
+  bind.oncer 'printed_oncer($id)':
+    ''
+  bind.matcher 'printed_matcher($_, $id, $IF, $success, $failure)':
+    '$IF #true
+     | $success
+     | $failure'
+  bind.committer 'printed_committer($_, (), $id)':
+    'println(#%literal $("commit " +& id))'
+  bind.binder 'printed_binder($_, (), $id)':
+    'println(#%literal $("bind " +& id))'
+  fun bind(printed(arg1), printed(arg2), & printed(rest), ~& printed(kwrest)):
+    #void
+  bind(1, 2, 3, ~arg3: 3)
+  ~prints "commit arg1"
+    ++ "\n" ++ "bind arg1"
+    ++ "\n" ++ "commit arg2"
+    ++ "\n" ++ "bind arg2"
+    ++ "\n" ++ "commit rest"
+    ++ "\n" ++ "bind rest"
+    ++ "\n" ++ "commit kwrest"
+    ++ "\n" ++ "bind kwrest"
+    ++ "\n"
+
+// check keyword punning
+block:
+  fun noop(~x, ~y): values(x, y)
+  let x = 1
+  let y = 2
+  check noop(~x, ~y) ~is values(1, 2)
+  let x = 3
+  check noop(~x, ~y) ~is values(3, 2)
+  let y = 4
+  check noop(~x, ~y) ~is values(3, 4)
+
+block:
+  fun noop(~x, ~y, & args): values(x, y, args)
+  let x = 1
+  let y = 2
+  check noop(& [3, 4, 5], ~x, ~y) ~is values(1, 2, [3, 4, 5])
+  let x = 3
+  check noop(& [4, 5, 6], ~x, ~y) ~is values(3, 2, [4, 5, 6])
+  let y = 4
+  check noop(& [5, 6, 7], ~x, ~y) ~is values(3, 4, [5, 6, 7])
+
+block:
+  fun noop(~x, ~y, ~& kw_args): values(x, y, kw_args)
+  let x = 1
+  let y = 2
+  let z = 3
+  check noop(~x, ~y, ~z) ~is values(1, 2, {#'~z: 3})
+  let x = 5
+  let w = 6
+  check noop(~x, ~y, ~z, ~w) ~is values(5, 2, {#'~z: 3, #'~w: 6})
+  let y = 7
+  let h = 8
+  check noop(~x, ~y, ~z, ~w, ~h) ~is values(5, 7, {#'~z: 3, #'~w: 6, #'~h: 8})
+
+block:
+  fun noop(~x, ~y, & args, ~& kw_args): values(x, y, kw_args, args)
+  let x = 1
+  let y = 2
+  let z = 3
+  check noop(& [4, 5, 6], ~x, ~y, ~z) ~is values(1, 2, {#'~z: 3}, [4, 5, 6])
+  let x = 5
+  let w = 6
+  check noop(& [7, 8, 9], ~x, ~y, ~z, ~w) ~is values(5, 2, {#'~z: 3, #'~w: 6}, [7, 8, 9])
+  let y = 7
+  let h = 8
+  check noop(& [9, 10, 11], ~x, ~y, ~z, ~w, ~h) ~is values(5, 7, {#'~z: 3, #'~w: 6, #'~h: 8}, [9, 10, 11])
+
+block:
+  fun f(x, ~y: y): #void
+  check f(1, ~y: 2, ~z: 3) ~throws "function call: function does not expect an argument with given keyword\n  function"
+  check f(1) ~throws "function call: required keyword argument not supplied\n  function"
+
+check:
+  ~eval
+  fun | f (x = 10): x
+  ~throws "default-value expressions are not supported in multi-case functions"
+
+check:
+  ~eval
+  fun | f (x: 10): x
+  ~throws "default-value expression blocks are not supported in multi-case functions"
+
+// check keyword-based dispatch
+block:
+  fun
+  | f(): "no key"
+  | f(~a: _): "got a"
+  | f(~& _): "got something else"
+  check f() ~is "no key"
+  check f(~a: "anything") ~is "got a"
+  check f(~b: "anything") ~is "got something else"
+  check f(~a: "anything", ~b: "anything") ~is "got something else"
+
+block:
+  fun
+  | f(): "no key"
+  | f(~& _): "got something else"
+  | f(~a: _): "got a"
+  check f() ~is "no key"
+  check f(~a: "anything") ~is "got something else"
+  check f(~b: "anything") ~is "got something else"
+  check f(~a: "anything", ~b: "anything") ~is "got something else"
+
+block:
+  fun
+  | f(~& _): "got something else"
+  | f(): "no key"
+  | f(~a: _): "got a"
+  check f() ~is "got something else"
+  check f(~a: "anything") ~is "got something else"
+  check f(~b: "anything") ~is "got something else"
+  check f(~a: "anything", ~b: "anything") ~is "got something else"

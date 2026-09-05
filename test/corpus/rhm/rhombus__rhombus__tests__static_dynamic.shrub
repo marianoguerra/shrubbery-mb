@@ -1,0 +1,129 @@
+
+// Dot
+
+check:
+  ~eval
+  import rhombus/meta open
+  use_static
+  expr.macro '$a x $b ...':
+    // static dot:
+    '$a . $b ...'
+  block:
+    use_dynamic
+    10 x a
+  ~throws values("no such field or method",
+                 "based on static information")
+
+check:
+  import rhombus/meta open
+  expr.macro '$a x $b ...':
+    // dynamic dot:
+    '$a . $b ...'
+  block:
+    use_static
+    10 x a
+  ~throws values("no such field or method",
+                 "in value: 10")
+
+// Append
+
+check:
+  ~eval
+  import rhombus/meta open
+  use_static
+  expr.macro '$a x $b':
+    // static:
+    '$a ++ $b'
+  block:
+    use_dynamic
+    1 x 2
+  ~throws values("specialization not known",
+                 "based on static information")
+
+check:
+  import rhombus/meta open
+  expr.macro '$a x $b':
+    // dynamic:
+    '$a ++ $b'
+  block:
+    use_static
+    1 x 2
+  ~throws "value does not satisfy annotation"
+
+// Call
+
+check:
+  ~eval
+  import rhombus/meta open
+  use_static
+  expr.macro '$a x $b':
+    // static:
+    '$a($b)'
+  block:
+    use_dynamic
+    (fun (x, y): x) x 2
+  ~throws values("wrong number of arguments in function call",
+                 "based on static information")
+
+check:
+  import rhombus/meta open
+  expr.macro '$a x $b':
+    // dynamic:
+    '$a($b)'
+  block:
+    use_static
+    (fun (x, y): x) x 2
+  ~throws "wrong number of arguments"
+
+// Index
+
+check:
+  ~eval
+  import rhombus/meta open
+  use_static
+  expr.macro '$a x $b':
+    // static:
+    '$a[$b]'
+  block:
+    use_dynamic
+    1 x 2
+  ~throws values("specialization not known",
+                 "based on static information")
+
+check:
+  import rhombus/meta open
+  expr.macro '$a x $b':
+    // dynamic:
+    '$a[$b]'
+  block:
+    use_static
+    1 x 2
+  ~throws "value does not satisfy annotation"
+
+
+// Macros
+
+expr.macro 'check_static_dynamic $term $()':
+  ~op_stx: self
+  '[$(syntax_meta.is_static(self)),
+    $(syntax_meta.is_static(term))]'
+
+expr.macro 'as_dynamic $term $op $arg ...':
+  ~op_stx: self
+  '$term $(syntax_meta.dynamic_name(op)) $arg ...'
+
+check check_static_dynamic 0 ~is [#false, #false]
+block:
+  use_static
+  check check_static_dynamic 0 ~is [#true, #true]
+  check as_dynamic #false.nonesuch() ~throws "no such field or method"
+
+check:
+  ~eval
+  import rhombus/meta open
+  expr.macro 'as_static $term $op $arg ...':
+    ~op_stx: self
+    '$term $(syntax_meta.dynamic_name(op, ~as_static: #true)) $arg ...'
+  as_static #false.nonesuch()
+  ~throws values("no such field or method",
+                 "based on static information")

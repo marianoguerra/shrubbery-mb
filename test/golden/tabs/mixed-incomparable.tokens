@@ -1,0 +1,9 @@
+identifier	1	0	"a"	-
+block-operator	1	1	":"	-
+whitespace	1	2	"\u{a}"	-
+whitespace	2	0	" \u{9}"	-
+identifier	2	1+1tab+0	"b"	-
+whitespace	2	1+1tab+1	"\u{a}"	-
+whitespace	3	0	"  \u{9}"	-
+identifier	3	2+1tab+0	"c"	-
+whitespace	3	2+1tab+1	"\u{a}"	-

@@ -1,0 +1,18 @@
+{
+  "_comment": [
+    "What each corpus bucket is expected to achieve, per oracle. Data, not code,",
+    "because the expectations FLIP as the port grows: `@` notation is not",
+    "implemented yet, so most of the real-world bucket cannot match today, and a",
+    "gate that fails on every run says nothing on the run where something",
+    "actually breaks.",
+    "",
+    "These are FLOORS and the suite is a ratchet. Dropping below one is a",
+    "regression and fails. Rising above one also fails, so that the improvement",
+    "is recorded here deliberately, in a commit whose diff says what got better."
+  ],
+  "tokens": {
+    "rhm": 382,
+    "spec": 9,
+    "tabs": 8
+  }
+}

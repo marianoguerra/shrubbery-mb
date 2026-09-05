@@ -1,0 +1,21 @@
+
+syntax_class_clause.macro 'maybe_block $id $body':
+  '«: fields: [$body, $('...')]
+    | '$id: $('$')$body; $('...')'
+    | '$id $('$')body0 $('...')':
+        field [$body, $('...')] = ['$('$')body0 $('...')']»'
+
+syntax_class Options:
+  maybe_block options rhs
+
+check:
+  match 'options 1 2'
+  | '$(o :: Options)': [o.rhs, ...]
+  ~matches ['1 2']
+
+check:
+  match 'options:
+           1 2
+           3 4'
+  | '$(o :: Options)': [o.rhs, ...]
+  ~matches ['1 2', '3 4']

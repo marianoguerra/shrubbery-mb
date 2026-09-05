@@ -17,6 +17,9 @@
 # Note on the listing: `just --list` shows the LAST comment line above a recipe,
 # so that line is always the one-line summary and any explanation sits above it.
 
+# The differential harness, and the built binary it drives.
+diff := justfile_directory() / "tools/shrubdiff.py"
+
 # Where the read-only Racket reference lives. Never a build or CI input.
 reference := justfile_directory() / "reference"
 # `shrubbery-lib` declares `collection 'multi`, so putting the checkout on the
@@ -101,7 +104,7 @@ boundary-check:
 
 # Check, format, unit tests, boundaries -- run before committing.
 [group('gates')]
-quick: check fmt test boundary-check
+quick: check fmt test boundary-check diff
 
 # Mirrors .github/workflows/check.yml, including the two `git diff --exit-code`
 # steps -- which is how a stale `.mbti` or an unformatted file is caught.
@@ -116,6 +119,33 @@ ci:
     git diff --exit-code
     moon test --target all
     tools/boundary-check.sh
+    moon build --target native
+    tools/shrubdiff.py tokens --show 0
+
+# ---------------------------------------------------------------------------
+# The differential suite -- the project's real correctness gate
+# ---------------------------------------------------------------------------
+#
+# Hermetic: `test/corpus/` and `test/golden/` are committed, so everything here
+# runs with neither Racket nor the reference checkout present.
+
+# Compare our token stream against the reference's, over the whole corpus.
+[group('diff')]
+diff-tokens *args: build
+    {{diff}} tokens --show 0 {{args}}
+
+# The inner loop when something is failing:
+#
+#     just diff-only spec/input5
+#
+# Run the token oracle over only the files whose path contains PATTERN.
+[group('diff')]
+diff-only pattern: build
+    {{diff}} tokens --filter {{pattern}} --show 3
+
+# Everything hermetic that gates.
+[group('diff')]
+diff: diff-tokens
 
 # ---------------------------------------------------------------------------
 # Regenerating committed artifacts (needs Racket; never in CI)
@@ -142,6 +172,31 @@ unicode-regen:
 [group('regen')]
 column-regen:
     racket tools/gen-column-tests.rkt
+
+# Copies the corpus out of the reference checkout: the 12 inputs from its own
+# test suite, 610 real .rhm modules with their `#lang` lines stripped, and the
+# hand-written tab cases that nothing in the real corpus reaches.
+#
+# Rebuild test/corpus from the reference.
+[group('regen')]
+corpus:
+    racket tools/collect-corpus.rkt
+
+# Full goldens for the buckets a person reads, a digest for the 610-file
+# real-world bucket -- the full dumps are 26 MB of intermediate artifact and a
+# digest detects a divergence just as well.
+#
+# Rebuild test/golden from the reference.
+[group('regen')]
+goldens:
+    racket tools/oracle/collect-goldens.rkt
+
+# Recreate the reference's full answer for ONE file, for reading. The
+# real-world bucket carries digests only, so this is how you see what a
+# divergence there actually is.
+[group('regen')]
+golden-for file:
+    racket tools/oracle/tokens.rkt {{file}}
 
 # Every generated artifact, then check nothing moved.
 [group('regen')]

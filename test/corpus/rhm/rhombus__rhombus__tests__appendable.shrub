@@ -1,0 +1,164 @@
+
+use_static
+
+class O(v):
+  nonfinal
+
+class A():
+  nonfinal
+  implements Appendable
+  override method append(other) :: O:
+    (other is_a A) && O(1)
+  method append_self(other) :: O:
+    this ++ other
+
+class B():
+  nonfinal
+  extends A
+  override method append(other) :: O:
+    (other is_a A) && O(2)
+
+class C():
+  extends B
+
+interface I3:
+  extends Appendable
+
+class A3():
+  implements I3
+  override method append(other) :: O:
+    (other is_a A3) && O(3)
+
+class A4():
+  private implements Appendable
+  private override method append(other) :: O:
+    (other is_a A4) && O(4)
+
+check:
+  (A() ++ A()).v ~is 1
+  (A().append_self(A())).v ~is 1
+  (B() ++ B()).v ~is 2
+  (C() ++ B()).v ~is 2
+  (A3() ++ A3()).v ~is 3
+  (A3() :: I3) ++ A3() ~is O(3)
+  (A4() ++ A4()).v ~is 4
+  A() ++ B() ~throws values(
+    "cannot append an appendable object and other appendable object",
+    "two appendable objects must share the same `append` implementation",
+  )
+  B() ++ A() ~throws values(
+    "cannot append an appendable object and other appendable object",
+    "two appendable objects must share the same `append` implementation",
+  )
+
+block:
+  use_dynamic
+  check:
+    dynamic(A()) ++ B() ~throws values(
+      "cannot append an appendable object and other appendable object",
+      "two appendable objects must share the same `append` implementation",
+    )
+
+check:
+  A() is_a Appendable ~is #true
+  B() is_a Appendable ~is #true
+  C() is_a Appendable ~is #true
+  A4() is_a Appendable ~is #true
+
+  { 1: 2 } is_a Appendable ~is #true
+  { 1, 2 } is_a Appendable ~is #true
+  [1, 2] is_a Appendable ~is #true
+  MutableList[1, 2] is_a Appendable ~is #false
+  PairList[1, 2] is_a Appendable ~is #true
+  Array(1, 2) is_a Appendable ~is #true
+  "apple" is_a Appendable ~is #true
+  #"apple" is_a Appendable ~is #true
+
+  MutableMap{ 1: 2 } is_a Appendable ~is #false
+  MutableSet{ 1, 2 } is_a Appendable ~is #false
+
+  #'apple is_a Appendable ~is #false
+  4 is_a Appendable ~is #false
+
+check:
+  (MutableMap{ 1: 2 } :~ Appendable)
+    ++ MutableMap{ 3: 4 } ~throws values(
+      "Appendable.append: " ++ error.annot_msg(),
+      error.annot("Appendable").msg,
+      error.val(MutableMap{ 1: 2 }).msg,
+  )
+  (MutableSet{ 1, 2 } :~ Appendable)
+    ++ MutableSet{ 3, 4 } ~throws values(
+      "Appendable.append: " ++ error.annot_msg(),
+      error.annot("Appendable").msg,
+      error.val(MutableSet{1, 2}).msg,
+  )
+
+block:
+  use_dynamic
+  fun gen():
+    // check that generated `append` method is fresh
+    class A():
+      implements Appendable
+      override method append(other):
+        0
+    A()
+  check:
+    gen() ++ gen() ~throws values(
+      "cannot append an appendable object and other appendable object",
+      "two appendable objects must share the same `append` implementation",
+    )
+    dynamic("a") ++ "b" ~is "ab"
+    dynamic([]) ++ ["a"] ~is ["a"]
+
+check:
+  def [x :: String, ...] = ["1", "2", "3"]
+  [x ++ "!" ++ "?", ...]
+  ~is ["1!?", "2!?", "3!?"]
+
+check:
+  def [x, ...] = ["1", "2", "3"]
+  ["+" ++ x, ...]
+  ~is ["+1", "+2", "+3"]
+
+block:
+  class Broken():
+    implements Appendable
+    override method append(other):
+      values("oops", "wow")
+  check Broken() ++ Broken() ~throws values(
+    "results do not satisfy annotation",
+    "Any",
+    "\"oops\"", "\"wow\"",
+  )
+  check (Broken() :: Appendable) ++ Broken() ~throws values(
+    "results do not satisfy annotation",
+    "Any",
+    "\"oops\"", "\"wow\"",
+  )
+  check Broken().append(Broken()) ~throws values(
+    "results do not satisfy annotation",
+    "Any",
+    "\"oops\"", "\"wow\"",
+  )
+
+check:
+  // regression check for `++` as a repetition operator
+  let spc = " "
+  fun two_column(l :~ List):
+    if l.length() mod 2 == 0
+    | let [left :~ List, ...] = #void
+      let [right :~ List, ...] = #void
+      [left ++ [spc] ++ right, ...]
+    | #void
+  ~completes
+
+check:
+  // check propagation of static information with `++` as a repetition operator
+  let [[s :: List.of(String)], ...] = [[["1"]]]
+  [s ++ ["2"], ...][0][0].length()
+  ~is 1
+
+check:
+  List.append(dynamic(["x"]), dynamic([1])).length()
+  ~is 2

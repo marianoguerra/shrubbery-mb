@@ -1,0 +1,697 @@
+at	1	0	"@"	-
+opener	1	1	"("	-
+identifier	1	2	"a"	-
+comma-operator	1	3	","	-
+whitespace	1	4	" "	-
+identifier	1	5	"b"	-
+closer	1	6	")"	-
+whitespace	1	7	"\u{a}"	-
+at	2	0	"@"	-
+opener	2	1	"("	-
+identifier	2	2	"a"	-
+comma-operator	2	3	","	-
+whitespace	2	4	" "	-
+identifier	2	5	"b"	-
+closer	2	6	")"	-
+opener	2	7	"("	-
+literal	2	8	"0"	0
+closer	2	9	")"	-
+whitespace	2	10	"\u{a}"	-
+whitespace	3	0	"\u{a}"	-
+at	4	0	"@"	-
+opener	4	1	"["	-
+literal	4	2	"7"	7
+closer	4	3	"]"	-
+whitespace	4	4	"\u{a}"	-
+at	5	0	"@"	-
+at-opener	5	1	"{"	-
+at-content	5	2	"9"	-
+at-closer	5	3	"}"	-
+whitespace	5	4	"\u{a}"	-
+at	6	0	"@"	-
+opener	6	1	"["	-
+literal	6	2	"7"	7
+closer	6	3	"]"	-
+at-opener	6	4	"{"	-
+at-content	6	5	"8, 10 "	-
+at	6	11	"@"	-
+literal	6	12	"\"more\""	"more"
+at-closer	6	18	"}"	-
+whitespace	6	19	"\u{a}"	-
+identifier	7	0	"then"	-
+whitespace	7	4	" "	-
+at	7	5	"@"	-
+opener	7	6	"["	-
+literal	7	7	"7"	7
+closer	7	8	"]"	-
+at-opener	7	9	"{"	-
+at-content	7	10	"8"	-
+at-closer	7	11	"}"	-
+whitespace	7	12	"\u{a}"	-
+identifier	8	0	"then"	-
+whitespace	8	4	" "	-
+at	8	5	"@"	-
+at-opener	8	6	"{"	-
+at-content	8	7	"8"	-
+at-closer	8	8	"}"	-
+whitespace	8	9	"\u{a}"	-
+whitespace	9	0	"\u{a}"	-
+at	10	0	"@"	-
+identifier	10	1	"apple"	-
+at-opener	10	6	"{"	-
+at-content	10	7	"one"	-
+at-closer	10	10	"}"	-
+at-opener	10	11	"{"	-
+at-content	10	12	"two"	-
+at-closer	10	15	"}"	-
+whitespace	10	16	"\u{a}"	-
+at	11	0	"@"	-
+identifier	11	1	"banana"	-
+opener	11	7	"("	-
+literal	11	8	"0"	0
+closer	11	9	")"	-
+at-opener	11	10	"{"	-
+at-content	11	11	"three"	-
+at-closer	11	16	"}"	-
+at-opener	11	17	"{"	-
+at-content	11	18	"four"	-
+at-closer	11	22	"}"	-
+at-opener	11	23	"{"	-
+at-content	11	24	"five"	-
+at-closer	11	28	"}"	-
+whitespace	11	29	"\u{a}"	-
+at	12	0	"@"	-
+identifier	12	1	"coconut"	-
+at-opener	12	8	"{"	-
+at-content	12	9	"six"	-
+at-closer	12	12	"}"	-
+whitespace	12	13	" "	-
+opener	12	14	"{"	-
+identifier	12	15	"seven"	-
+closer	12	20	"}"	-
+whitespace	12	21	"\u{a}"	-
+at	13	0	"@"	-
+identifier	13	1	"donut"	-
+operator	13	6	"+"	-
+identifier	13	7	"eight"	-
+at-opener	13	12	"{"	-
+at-content	13	13	"nine"	-
+at-closer	13	17	"}"	-
+whitespace	13	18	"\u{a}"	-
+at	14	0	"@"	-
+identifier	14	1	"and"	-
+at-opener	14	4	"{"	-
+at	14	5	"@"	-
+identifier	14	6	"eggplant"	-
+at-content	14	14	". ten{eleven}"	-
+at-closer	14	27	"}"	-
+whitespace	14	28	"\u{a}"	-
+whitespace	15	0	"\u{a}"	-
+at	16	0	"@"	-
+identifier	16	1	"one"	-
+operator	16	4	"."	-
+identifier	16	5	"two"	-
+operator	16	8	"."	-
+identifier	16	9	"three"	-
+whitespace	16	14	"\u{a}"	-
+whitespace	17	0	"\u{a}"	-
+at	18	0	"@"	-
+keyword	18	1	"~one"	-
+operator	18	5	"."	-
+identifier	18	6	"two"	-
+opener	18	9	"{"	-
+identifier	18	10	"three"	-
+closer	18	15	"}"	-
+whitespace	18	16	"\u{a}"	-
+whitespace	19	0	"\u{a}"	-
+at	20	0	"@"	-
+identifier	20	1	"none"	-
+at-opener	20	5	"{"	-
+at-closer	20	6	"}"	-
+whitespace	20	7	"\u{a}"	-
+at	21	0	"@"	-
+opener	21	1	"\u{ab}"	-
+literal	21	2	"5"	5
+closer	21	3	"\u{bb}"	-
+opener	21	4	"("	-
+literal	21	5	"3"	3
+closer	21	6	")"	-
+at-opener	21	7	"{"	-
+at-content	21	8	"yohoo "	-
+at	21	14	"@"	-
+literal	21	15	"9"	9
+opener	21	16	"("	-
+identifier	21	17	"a"	-
+comma-operator	21	18	","	-
+whitespace	21	19	" "	-
+identifier	21	20	"b"	-
+comma-operator	21	21	","	-
+whitespace	21	22	" "	-
+identifier	21	23	"c"	-
+closer	21	24	")"	-
+at-opener	21	25	"{"	-
+at-content	21	26	"\u{a}"	-
+at-content	22	0	"               this is plain text"	-
+at-content	22	33	"\u{a}"	-
+at-content	23	0	"               inside braces"	-
+at-closer	23	28	"}"	-
+at-content	23	29	"\u{a}"	-
+at-content	24	0	"        0"	-
+at-content	24	9	"\u{a}"	-
+at-content	25	0	"        "	-
+at-closer	25	8	"}"	-
+whitespace	25	9	"\u{a}"	-
+whitespace	26	0	"\u{a}"	-
+at	27	0	"@"	-
+opener	27	1	"\u{ab}"	-
+identifier	27	2	"bracketed"	-
+closer	27	11	"\u{bb}"	-
+opener	27	12	"("	-
+literal	27	13	"\"apple\""	"apple"
+closer	27	20	")"	-
+whitespace	27	21	"\u{a}"	-
+at	28	0	"@"	-
+opener	28	1	"\u{ab}"	-
+opener	28	2	"{"	-
+identifier	28	3	"bracketed"	-
+closer	28	12	"}"	-
+closer	28	13	"\u{bb}"	-
+opener	28	14	"("	-
+literal	28	15	"\"apple\""	"apple"
+closer	28	22	")"	-
+whitespace	28	23	"\u{a}"	-
+whitespace	29	0	"\u{a}"	-
+at	30	0	"@"	-
+identifier	30	1	"#{s-exp}"	-
+at-opener	30	9	"{"	-
+at-content	30	10	"apple"	-
+at-closer	30	15	"}"	-
+whitespace	30	16	"\u{a}"	-
+at	31	0	"@"	-
+identifier	31	1	"#{s-exp}"	-
+at-opener	31	9	"\|<{"	-
+at-content	31	12	"apple"	-
+at-closer	31	17	"}>\|"	-
+whitespace	31	20	"\u{a}"	-
+at	32	0	"@"	-
+identifier	32	1	"#{s-exp}"	-
+whitespace	32	9	" "	-
+identifier	32	10	"next"	-
+whitespace	32	14	"\u{a}"	-
+whitespace	33	0	"\u{a}"	-
+at	34	0	"@"	-
+opener	34	1	"\u{ab}"	-
+literal	34	2	"1"	1
+whitespace	34	3	" "	-
+literal	34	4	"2"	2
+whitespace	34	5	" "	-
+literal	34	6	"3"	3
+closer	34	7	"\u{bb}"	-
+block-operator	34	8	":"	-
+whitespace	34	9	" "	-
+literal	34	10	"5"	5
+whitespace	34	11	"\u{a}"	-
+at	35	0	"@"	-
+opener	35	1	"\u{ab}"	-
+literal	35	2	"1"	1
+whitespace	35	3	" "	-
+literal	35	4	"2"	2
+whitespace	35	5	" "	-
+literal	35	6	"3"	3
+closer	35	7	"\u{bb}"	-
+at-opener	35	8	"{"	-
+at-content	35	9	"data"	-
+at-closer	35	13	"}"	-
+block-operator	35	14	":"	-
+whitespace	35	15	" "	-
+literal	35	16	"5"	5
+whitespace	35	17	"\u{a}"	-
+whitespace	36	0	"\u{a}"	-
+at	37	0	"@"	-
+identifier	37	1	"x"	-
+at-opener	37	2	"\|{"	-
+at-content	37	4	"hello}there"	-
+at-closer	37	15	"}\|"	-
+whitespace	37	17	"\u{a}"	-
+at	38	0	"@"	-
+identifier	38	1	"x"	-
+at-opener	38	2	"\|(<[{"	-
+at-content	38	7	"hello}there"	-
+at-closer	38	18	"}]>)\|"	-
+whitespace	38	23	"\u{a}"	-
+at	39	0	"@"	-
+identifier	39	1	"x"	-
+at-opener	39	2	"\|(<[{"	-
+at-content	39	7	"hello}"	-
+at	39	13	"\|(<[@"	-
+literal	39	18	"6"	6
+at-content	39	19	" there"	-
+at-closer	39	25	"}]>)\|"	-
+whitespace	39	30	"\u{a}"	-
+at	40	0	"@"	-
+at-opener	40	1	"\|\|{"	-
+at-content	40	4	"text"	-
+at-closer	40	8	"}\|\|"	-
+whitespace	40	11	"\u{a}"	-
+at	41	0	"@"	-
+operator	41	1	"\|\|"	-
+whitespace	41	3	" "	-
+opener	41	4	"{"	-
+identifier	41	5	"not"	-
+whitespace	41	8	" "	-
+identifier	41	9	"text"	-
+closer	41	13	"}"	-
+whitespace	41	14	" "	-
+operator	41	15	"\|\|"	-
+whitespace	41	17	"\u{a}"	-
+whitespace	42	0	"\u{a}"	-
+at	43	0	"@"	-
+identifier	43	1	"x"	-
+at-opener	43	2	"{"	-
+at-content	43	3	"  2"	-
+at-content	43	6	"\u{a}"	-
+at-content	44	0	"  1"	-
+at-content	44	3	"\u{a}"	-
+at-content	45	0	"    4"	-
+at-content	45	5	"\u{a}"	-
+at-content	46	0	"   5  "	-
+at-closer	46	6	"}"	-
+whitespace	46	7	"\u{a}"	-
+whitespace	47	0	"\u{a}"	-
+at	48	0	"@"	-
+at-opener	48	1	"{"	-
+at-content	48	2	"4 "	-
+at-comment	48	4	"@//"	-
+at-opener	48	7	"{"	-
+at-content	48	8	" this is a comment! "	-
+at-closer	48	28	"}"	-
+at-content	48	29	"\u{a}"	-
+at-content	49	0	"  5 "	-
+comment	49	4	"@// line comment\u{a}  "	-
+at-content	50	2	"6"	-
+at-closer	50	3	"}"	-
+whitespace	50	4	"\u{a}"	-
+whitespace	51	0	"\u{a}"	-
+at	52	0	"@"	-
+at-opener	52	1	"{"	-
+at-content	52	2	"7"	-
+at-content	52	3	"\u{a}"	-
+at-content	53	0	"  "	-
+comment	53	2	"@// don't consume next line\u{a}"	-
+at-content	54	0	"\u{a}"	-
+at-content	55	0	"  8"	-
+at-closer	55	3	"}"	-
+whitespace	55	4	"\u{a}"	-
+whitespace	56	0	"\u{a}"	-
+at	57	0	"@"	-
+at-opener	57	1	"{"	-
+at-content	57	2	"7"	-
+at-content	57	3	"\u{a}"	-
+at-content	58	0	"   "	-
+comment	58	3	"@// don't consume next line\u{a}"	-
+at-content	59	0	"\u{a}"	-
+at-content	60	0	"  8"	-
+at-closer	60	3	"}"	-
+whitespace	60	4	"\u{a}"	-
+whitespace	61	0	"\u{a}"	-
+at	62	0	"@"	-
+at-opener	62	1	"{"	-
+at-content	62	2	"7"	-
+at-content	62	3	"\u{a}"	-
+at-content	63	0	"  "	-
+comment	63	2	"@// do consume leading space\u{a}    "	-
+at-content	64	4	"8"	-
+at-closer	64	5	"}"	-
+whitespace	64	6	"\u{a}"	-
+whitespace	65	0	"\u{a}"	-
+at	66	0	"@"	-
+at-opener	66	1	"{"	-
+at-content	66	2	"7 "	-
+comment	66	4	"@// do consume leading space\u{a}    "	-
+at-content	67	4	"8"	-
+at-closer	67	5	"}"	-
+whitespace	67	6	"\u{a}"	-
+whitespace	68	0	"\u{a}"	-
+at	69	0	"@"	-
+at-opener	69	1	"{"	-
+at-content	69	2	"9"	-
+at-content	69	3	"\u{a}"	-
+at-content	70	0	"  "	-
+at	70	2	"@"	-
+literal	70	3	"10"	10
+at-content	70	5	"\u{a}"	-
+at-content	71	0	"  "	-
+comment	71	2	"@// comment\u{a}"	-
+at-content	72	0	"\u{a}"	-
+at-content	73	0	"  "	-
+at-closer	73	2	"}"	-
+whitespace	73	3	"\u{a}"	-
+whitespace	74	0	"\u{a}"	-
+at	75	0	"@"	-
+identifier	75	1	"doc"	-
+at-opener	75	4	"{"	-
+at-content	75	5	"\u{a}"	-
+at-content	76	0	"\u{a}"	-
+at-content	77	0	" space char starts next line"	-
+at-content	77	28	"\u{a}"	-
+at-content	78	0	" "	-
+at-content	78	1	"\u{a}"	-
+at-closer	79	0	"}"	-
+whitespace	79	1	"\u{a}"	-
+whitespace	80	0	"\u{a}"	-
+at	81	0	"@"	-
+identifier	81	1	"itemlist"	-
+opener	81	9	"("	-
+at	81	10	"@"	-
+identifier	81	11	"item"	-
+at-opener	81	15	"{"	-
+at-content	81	16	"x"	-
+at-content	81	17	"\u{a}"	-
+at-content	82	0	"                y"	-
+at-closer	82	17	"}"	-
+comma-operator	82	18	","	-
+whitespace	82	19	"\u{a}"	-
+whitespace	83	0	"          "	-
+at	83	10	"@"	-
+identifier	83	11	"item"	-
+at-opener	83	15	"{"	-
+at-content	83	16	"z"	-
+at-content	83	17	"\u{a}"	-
+at-content	84	0	"                w"	-
+at-closer	84	17	"}"	-
+closer	84	18	")"	-
+whitespace	84	19	"\u{a}"	-
+whitespace	85	0	"\u{a}"	-
+at	86	0	"@"	-
+opener	86	1	"("	-
+identifier	86	2	"in"	-
+whitespace	86	4	" "	-
+identifier	86	5	"#{s-exp}"	-
+whitespace	86	13	" "	-
+identifier	86	14	"mode"	-
+closer	86	18	")"	-
+whitespace	86	19	"\u{a}"	-
+at	87	0	"@"	-
+at-opener	87	1	"{"	-
+at-content	87	2	"also in "	-
+at	87	10	"@"	-
+opener	87	11	"("	-
+identifier	87	12	"#{s-exp}"	-
+closer	87	20	")"	-
+at-content	87	21	" mode"	-
+at-closer	87	26	"}"	-
+whitespace	87	27	"\u{a}"	-
+at	88	0	"@"	-
+at-opener	88	1	"{"	-
+at-content	88	2	"this time in "	-
+at	88	15	"@"	-
+opener	88	16	"("	-
+keyword	88	17	"~#{s-exp-keyword}"	-
+closer	88	34	")"	-
+at-content	88	35	" mode"	-
+at-closer	88	40	"}"	-
+whitespace	88	41	"\u{a}"	-
+whitespace	89	0	"\u{a}"	-
+at	90	0	"@"	-
+identifier	90	1	"elem"	-
+at-opener	90	5	"{"	-
+at	90	6	"@"	-
+identifier	90	7	"a"	-
+opener	90	8	"("	-
+closer	90	9	")"	-
+at	90	10	"@"	-
+identifier	90	11	"b"	-
+opener	90	12	"("	-
+closer	90	13	")"	-
+at-closer	90	14	"}"	-
+whitespace	90	15	"\u{a}"	-
+at	91	0	"@"	-
+identifier	91	1	"elem"	-
+at-opener	91	5	"{"	-
+at	91	6	"@"	-
+identifier	91	7	"a"	-
+at-opener	91	8	"{"	-
+at-closer	91	9	"}"	-
+at	91	10	"@"	-
+identifier	91	11	"b"	-
+opener	91	12	"("	-
+closer	91	13	")"	-
+at-closer	91	14	"}"	-
+whitespace	91	15	"\u{a}"	-
+at	92	0	"@"	-
+identifier	92	1	"a"	-
+opener	92	2	"("	-
+closer	92	3	")"	-
+at	92	4	"@"	-
+identifier	92	5	"b"	-
+opener	92	6	"("	-
+closer	92	7	")"	-
+whitespace	92	8	"\u{a}"	-
+at	93	0	"@"	-
+identifier	93	1	"a"	-
+at-opener	93	2	"{"	-
+at-closer	93	3	"}"	-
+at	93	4	"@"	-
+identifier	93	5	"b"	-
+opener	93	6	"("	-
+closer	93	7	")"	-
+whitespace	93	8	"\u{a}"	-
+whitespace	94	0	"\u{a}"	-
+at	95	0	"@"	-
+opener	95	1	"("	-
+opener	95	2	"\u{ab}"	-
+identifier	95	3	"alpha"	-
+whitespace	95	8	" "	-
+identifier	95	9	"beta"	-
+closer	95	13	"\u{bb}"	-
+closer	95	14	")"	-
+opener	95	15	"("	-
+identifier	95	16	"gamma"	-
+closer	95	21	")"	-
+opener	95	22	"{"	-
+identifier	95	23	"delta"	-
+closer	95	28	"}"	-
+whitespace	95	29	"\u{a}"	-
+at	96	0	"@"	-
+opener	96	1	"("	-
+opener	96	2	"\u{ab}"	-
+identifier	96	3	"alpha"	-
+whitespace	96	8	" "	-
+identifier	96	9	"beta"	-
+closer	96	13	"\u{bb}"	-
+closer	96	14	")"	-
+opener	96	15	"{"	-
+identifier	96	16	"delta"	-
+closer	96	21	"}"	-
+whitespace	96	22	"\u{a}"	-
+at	97	0	"@"	-
+opener	97	1	"("	-
+opener	97	2	"\u{ab}"	-
+identifier	97	3	"alpha"	-
+whitespace	97	8	" "	-
+identifier	97	9	"beta"	-
+closer	97	13	"\u{bb}"	-
+closer	97	14	")"	-
+whitespace	97	15	"\u{a}"	-
+whitespace	98	0	"\u{a}"	-
+at	99	0	"@"	-
+identifier	99	1	"same"	-
+whitespace	99	5	" "	-
+identifier	99	6	"x"	-
+whitespace	99	7	" "	-
+at	99	8	"@"	-
+identifier	99	9	"group"	-
+whitespace	99	14	"\u{a}"	-
+at	100	0	"@"	-
+identifier	100	1	"same"	-
+whitespace	100	5	" "	-
+at	100	6	"@"	-
+identifier	100	7	"group"	-
+whitespace	100	12	"\u{a}"	-
+at	101	0	"@"	-
+identifier	101	1	"same"	-
+opener	101	5	"("	-
+literal	101	6	"1"	1
+closer	101	7	")"	-
+whitespace	101	8	" "	-
+identifier	101	9	"x"	-
+whitespace	101	10	" "	-
+at	101	11	"@"	-
+identifier	101	12	"group"	-
+opener	101	17	"("	-
+literal	101	18	"2"	2
+closer	101	19	")"	-
+whitespace	101	20	"\u{a}"	-
+at	102	0	"@"	-
+identifier	102	1	"same"	-
+opener	102	5	"("	-
+literal	102	6	"1"	1
+closer	102	7	")"	-
+whitespace	102	8	" "	-
+at	102	9	"@"	-
+identifier	102	10	"group"	-
+opener	102	15	"("	-
+literal	102	16	"2"	2
+closer	102	17	")"	-
+whitespace	102	18	"\u{a}"	-
+whitespace	103	0	"\u{a}"	-
+at	104	0	"@"	-
+identifier	104	1	"f"	-
+opener	104	2	"("	-
+identifier	104	3	"arg"	-
+whitespace	104	6	" "	-
+identifier	104	7	"one"	-
+whitespace	104	10	"\u{a}"	-
+whitespace	105	0	"   "	-
+identifier	105	3	"arg"	-
+whitespace	105	6	" "	-
+identifier	105	7	"two"	-
+closer	105	10	")"	-
+whitespace	105	11	"\u{a}"	-
+whitespace	106	0	"\u{a}"	-
+identifier	107	0	"tail"	-
+whitespace	107	4	" "	-
+at	107	5	"@"	-
+opener	107	6	"\u{ab}"	-
+identifier	107	7	"in"	-
+block-operator	107	9	":"	-
+whitespace	107	10	" "	-
+identifier	107	11	"content"	-
+closer	107	18	"\u{bb}"	-
+whitespace	107	19	"\u{a}"	-
+identifier	108	0	"tail"	-
+whitespace	108	4	" "	-
+at	108	5	"@"	-
+opener	108	6	"("	-
+opener	108	7	"\u{ab}"	-
+identifier	108	8	"in"	-
+block-operator	108	10	":"	-
+whitespace	108	11	" "	-
+identifier	108	12	"content"	-
+closer	108	19	"\u{bb}"	-
+closer	108	20	")"	-
+whitespace	108	21	"\u{a}"	-
+identifier	109	0	"tail"	-
+whitespace	109	4	" "	-
+at	109	5	"@"	-
+opener	109	6	"\u{ab}"	-
+bar-operator	109	7.5	"\|"	-
+whitespace	109	8	" "	-
+identifier	109	9	"then"	-
+whitespace	109	13	" "	-
+bar-operator	109	14.5	"\|"	-
+whitespace	109	15	" "	-
+identifier	109	16	"else"	-
+closer	109	20	"\u{bb}"	-
+whitespace	109	21	"\u{a}"	-
+identifier	110	0	"tail"	-
+whitespace	110	4	" "	-
+at	110	5	"@"	-
+opener	110	6	"("	-
+opener	110	7	"\u{ab}"	-
+bar-operator	110	8.5	"\|"	-
+whitespace	110	9	" "	-
+identifier	110	10	"then"	-
+whitespace	110	14	" "	-
+bar-operator	110	15.5	"\|"	-
+whitespace	110	16	" "	-
+identifier	110	17	"else"	-
+closer	110	21	"\u{bb}"	-
+closer	110	22	")"	-
+whitespace	110	23	"\u{a}"	-
+whitespace	111	0	"\u{a}"	-
+at	112	0	"@"	-
+opener	112	1	"("	-
+opener	112	2	"'"	-
+opener	112	3	"\u{ab}"	-
+identifier	112	4	"#{x}"	-
+whitespace	112	8	" "	-
+opener	112	9	"'"	-
+identifier	112	10	"x"	-
+closer	112	11	"'"	-
+closer	112	12	"\u{bb}"	-
+closer	112	13	"'"	-
+closer	112	14	")"	-
+whitespace	112	15	"\u{a}"	-
+whitespace	113	0	"\u{a}"	-
+at	114	0	"@"	-
+identifier	114	1	"str"	-
+at-opener	114	4	"{"	-
+at-content	114	5	"Contents: "	-
+at	114	15	"@"	-
+identifier	114	16	"pct"	-
+opener	114	19	"("	-
+literal	114	20	"0.251"	#f64:3fd010624dd2f1aa
+closer	114	25	")"	-
+at-content	114	26	" apples"	-
+at-content	114	33	"\u{a}"	-
+at-content	115	0	"               "	-
+at	115	15	"@"	-
+identifier	115	16	"pct"	-
+opener	115	19	"("	-
+literal	115	20	"1/6"	1/6
+closer	115	23	")"	-
+at-content	115	24	" bananas"	-
+at-content	115	32	"\u{a}"	-
+at-content	116	0	"               "	-
+at	116	15	"@"	-
+identifier	116	16	"pct"	-
+opener	116	19	"("	-
+literal	116	20	"0.5"	#f64:3fe0000000000000
+closer	116	23	")"	-
+at-content	116	24	" cherries"	-
+at-closer	116	33	"}"	-
+whitespace	116	34	"\u{a}"	-
+whitespace	117	0	"\u{a}"	-
+identifier	118	0	"a"	-
+whitespace	118	1	" "	-
+bar-operator	118	2.5	"\|"	-
+whitespace	118	3	" "	-
+identifier	118	4	"w"	-
+whitespace	118	5	" "	-
+at	118	6	"@"	-
+opener	118	7	"("	-
+opener	118	8	"\u{ab}"	-
+identifier	118	9	"x"	-
+block-operator	118	10	":"	-
+whitespace	118	11	" "	-
+identifier	118	12	"z"	-
+closer	118	13	"\u{bb}"	-
+closer	118	14	")"	-
+whitespace	118	15	" "	-
+bar-operator	118	16.5	"\|"	-
+whitespace	118	17	" "	-
+identifier	118	18	"b"	-
+whitespace	118	19	"\u{a}"	-
+identifier	119	0	"a"	-
+whitespace	119	1	" "	-
+bar-operator	119	2.5	"\|"	-
+whitespace	119	3	" "	-
+identifier	119	4	"w"	-
+whitespace	119	5	" "	-
+at	119	6	"@"	-
+opener	119	7	"("	-
+opener	119	8	"\u{ab}"	-
+identifier	119	9	"x"	-
+block-operator	119	10	":"	-
+whitespace	119	11	"\u{a}"	-
+whitespace	120	0	"           "	-
+identifier	120	11	"z"	-
+closer	120	12	"\u{bb}"	-
+closer	120	13	")"	-
+whitespace	120	14	" "	-
+bar-operator	120	15.5	"\|"	-
+whitespace	120	16	" "	-
+identifier	120	17	"b"	-
+whitespace	120	18	"\u{a}"	-
+whitespace	121	0	"\u{a}"	-
+at	122	0	"@"	-
+at-opener	122	1	"{"	-
+at-closer	122	2	"}"	-
+whitespace	122	3	" "	-
+identifier	122	4	"a"	-
+whitespace	122	5	"\u{a}"	-
+whitespace	123	0	"\u{a}"	-
+identifier	124	0	"The"	-
+whitespace	124	3	" "	-
+identifier	124	4	"end"	-

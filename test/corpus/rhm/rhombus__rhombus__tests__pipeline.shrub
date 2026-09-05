@@ -1,0 +1,106 @@
+
+check:
+  [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    |> List.length
+    |> math.sqrt
+    |> to_string
+  ~is "3"
+
+check:
+  [1, 2, 3].map((- _)) ~is [-1, -2, -3]
+  (- _).map([1, 2, 3]) ~is [-1, -2, -3]
+  [1, 2, 3] |> (- _).map(_) ~is [-1, -2, -3]
+
+check:
+  ~eval
+  (_ . _)
+  ~throws ".: expected an identifier for a field or method name"
+
+check:
+  use_static
+  class Posn(x, y)
+  fun get(n) :~ Posn: Posn(1, 2)
+  (0 |> get).x
+  ~is 1
+
+check:
+  class Posn(x, y)
+  fun get(n, m) :~ Posn: Posn(1, 2)
+  (0 |> get).x
+  ~throws "wrong number of arguments"
+
+check:
+  ~eval
+  use_static
+  class Posn(x, y)
+  fun get(n, m) :~ Posn: Posn(1, 2)
+  (0 |> get).x
+  ~throws values("wrong number of arguments",
+                 "based on static information")
+
+check:
+  use_static
+  "apple" |> (_[0])
+  ~is Char"a"
+
+check:
+  use_static
+  "apple" |> (fun (x): x[0])
+  ~is Char"a"
+
+check:
+  use_static
+  "apple" |> (fun | (x): x[0])
+  ~is Char"a"
+
+check:
+  use_static
+  "a"
+    |> (_ ++ "b")
+    |> (_ ++ "c")
+  ~is "abc"
+
+check:
+  use_static
+  [1, 2, 3]
+    |> List.sort(_, (_ .> _))
+    |> (_.map((_ + 1)))
+    |> (_ ++ [1])
+  ~is [4, 3, 2, 1]
+
+check:
+  ~eval
+  use_static
+  [1, 2, 3]
+    |> List.sort(_, _)
+  ~throws values("wrong number of arguments",
+                 "based on static information")
+
+check:
+  ~eval
+  use_static
+  [1, 2, 3]
+    |> ([0] ++ _ ++ _)
+  ~throws values("wrong number of arguments",
+                 "based on static information")
+
+check:
+  math.sin <| 0 ~is 0
+  List <| (1, 2, & [3, 4]) ~is [1, 2, 3, 4]
+  math.abs <| 0 - 4 ~is 4
+  math.sin <| 1 |> math.sin ~is math.sin(math.sin(1))
+  math.sin <| (1, 2) ~throws "wrong number of arguments"
+
+check:
+  ~eval
+  use_static
+  math.sin <| (1, 2)
+  ~throws values("wrong number of arguments",
+                 "based on static information")
+
+check:
+  ~eval
+  use_static
+  List.cons <| 1
+  ~throws values("wrong number of arguments",
+                 "based on static information")

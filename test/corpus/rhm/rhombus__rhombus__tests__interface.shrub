@@ -1,0 +1,922 @@
+
+check:
+  interface Shape:
+    method area()
+    method ten_area(): 10 * area()
+
+  interface Polygon:
+    extends Shape
+    method sides()
+    method has_corners(): #true
+
+  interface Circle:
+    extends Shape
+    method has_sides(): #false
+
+  class ApproxCircle():
+    implements: Polygon Circle
+    override area(): 33
+    override sides(): 100
+
+  def a = ApproxCircle()
+
+  [a.area(),
+   a.sides(),
+   a.has_corners(),
+   a.has_sides(),
+
+   (a :~ Polygon).has_corners(),
+   (a :~ Circle).has_sides(),
+
+   (a :~ Shape).area(),
+   (a :~ Polygon).area(),
+   (a :~ Circle).area(),
+
+   a.ten_area(),
+
+   Shape.area(a),
+   Circle.area(a)]
+
+  ~is [33, 100, #true, #false,
+       #true, #false,
+       33, 33, 33,
+       330,
+       33, 33]
+
+// conflict
+check:
+  ~eval
+  interface Shape:
+    method draw(): "circle"
+  interface Cowboy:
+    method draw(): "bang"
+  class LoneRanger():
+    implements Shape
+    implements Cowboy
+  ~throws "method supplied by multiple superinterfaces"
+
+// conflict resolved
+check:
+  interface Shape:
+    method draw(): "circle"
+  interface Cowboy:
+    method draw(): "bang"
+  class LoneRanger():
+    implements Shape
+    implements Cowboy
+    override draw(): "bullseye"
+  def l = LoneRanger()
+  [l.draw(), (l :~ Shape).draw(), (l :~ Cowboy).draw()]
+  ~is ["bullseye", "bullseye", "bullseye"]
+
+// diamond
+check:
+  interface Shape:
+    abstract draw
+  interface Cowboy:
+    abstract draw
+  class LoneRanger():
+    implements Shape
+    implements Cowboy
+    override draw(): 10
+  LoneRanger().draw()
+  ~is 10
+
+// diamond with extra methods
+check:
+  interface Shape:
+    abstract draw
+  interface Circle:
+    extends Shape
+    method cdraw(): draw() +& "_circle"
+  interface Square:
+    extends Shape
+    method sdraw(): draw() +& "_square"
+  class Squircle():
+    implements Circle
+    implements Square
+    override draw(): "squircle"
+  [Squircle().cdraw(),
+   Squircle().sdraw()]
+  ~is ["squircle_circle",
+       "squircle_square"]
+
+// super call in interface
+check:
+  interface Shape:
+    method draw(): "shape"
+  interface Circle:
+    extends Shape
+    override draw(): "circle " +& super.draw()
+  class Oval():
+    implements Circle
+  Oval().draw()
+  ~is "circle shape"
+
+// private interface implementation
+check:
+  interface Adder:
+    internal _Adder
+    abstract total
+  class Sum(x):
+    private implements Adder
+    private override total(): x
+  def s = Sum(20)
+  [s is_a Adder,
+   s is_a _Adder,
+   (s :~ _Adder).total()]
+  ~is [#false, #true, 20]
+
+check:
+  interface Adder:
+    abstract total
+  class Sum(x):
+    private implements Adder
+    private override total(): x
+  Sum(20) is_a Adder
+  ~is #false
+
+check:
+  ~eval
+  block:
+    interface Adder:
+      abstract total
+    class Sum(x):
+      private implements Adder
+      private override total(): x
+    Sum(20).total
+  ~throws "no such field"
+
+check:
+  ~eval
+  block:
+    use_static
+    interface Adder:
+      abstract total
+    class Sum(x):
+      private implements Adder
+      private override total(): x
+    Sum(20).total
+  ~throws values("no such field or method", "static")
+
+// implement an interface both privately and publicly => public
+check:
+  interface Adder:
+    abstract total
+  class Sum(x):
+    private implements Adder
+    implements Adder
+    override total(): x
+  [Sum(20) is_a Adder,
+   Sum(21).total()]
+  ~is [#true, 21]
+
+// overlap of private and public is public
+check:
+  interface Stool:
+    internal _Stool
+    abstract legs
+    abstract seat
+  interface Cow:
+    abstract legs
+    abstract horns
+  class MilkShed():
+    private implements Stool
+    implements Cow
+    override legs(): 4
+    override horns(): 2
+    private override seat(): 1
+  def m = MilkShed()
+  check:
+    (m :~ Stool).seat()
+    ~throws "Stool"
+  [m is_a Stool,
+   m is_a _Stool,
+   m is_a Cow,
+   m.legs(),
+   m.horns(),
+   (m :~ _Stool).seat()]
+  ~is [#false, #true, #true,
+       4, 2, 1]
+
+check:
+  interface I1: method m
+  interface I2: abstract m
+  interface I3: method m
+  interface I4: abstract method m
+  interface I5: method m()
+  interface I6: abstract method m()
+  interface I7: method m() :: Int
+  interface I8: abstract method m() :: Int
+  interface I9: method m(x, y) :: Int
+  interface IA: abstract method m(x, y) :: Int
+  interface IB: method m(x :: String, y :: Symbol) :: Int
+  interface IC: abstract method m(x :: String, y :: Symbol) :: Int
+  ~completes
+
+check:
+  interface Foo:
+    method foo() :: Foo
+  interface Bar:
+    extends Foo
+    override method foo() :: Bar
+  ~completes
+
+check:
+  interface Foo:
+    property foo :: Foo
+  interface Bar:
+    extends Foo
+    override property foo :: Bar
+  ~completes
+
+// abstract from common superinterface
+check:
+  interface A:
+    method m()
+  interface B:
+    extends A
+    override method m(): 1
+  interface C:
+    extends A
+  class C1():
+    implements: A B
+  class C2():
+    implements: B A
+  class C3():
+    implements: C B
+  class C4():
+    implements: B C
+    nonfinal
+  class C5():
+    extends C4
+    implements A
+  ~completes
+
+// abstract not from common superinterface
+check:
+  ~eval
+  interface A:
+    method m()
+  interface B:
+    method m(): 1
+  interface C:
+    extends A
+  class C1():
+    implements: A B
+  ~throws "method supplied by multiple superinterfaces and not overridden"
+check:
+  ~eval
+  interface A:
+    method m()
+  interface B:
+    method m(): 1
+  class C1():
+    implements: B A
+  ~throws "method supplied by multiple superinterfaces and not overridden"
+check:
+  ~eval
+  interface A:
+    method m()
+  class C1():
+    method m(): 1
+    nonfinal
+  class C2():
+    extends C1
+    implements: A
+  ~throws "method supplied by multiple classes or superinterfaces and not overridden"
+check:
+  ~eval
+  interface A:
+    method m():1
+  class C1():
+    abstract method m()
+    nonfinal
+  class C2():
+    extends C1
+    implements: A
+  ~throws "method supplied by multiple classes or superinterfaces and not overridden"
+
+block:
+  import rhombus/meta open
+  interface Point:
+    dot '$left . sevens':
+      '77'
+  class Posn(x, y):
+    implements Point
+  check:
+    (Posn(1, 2) :: Point).sevens ~is 77
+    Point.sevens(8) ~is 77
+  check:
+    use_dynamic
+    dynamic(Posn(1, 2)).sevens
+    ~throws "dynamic use of dot syntax"
+
+check:
+  ~eval
+  import rhombus/meta open
+  interface Point:
+    dot '$left . sevens':
+      '77'
+  class Posn(sevens):
+    implements Point
+  ~throws "field name already in interface as dot syntax"
+
+check:
+  ~eval
+  import rhombus/meta open
+  interface A:
+    dot '$left . something':
+      '#true'
+  interface B:
+    dot '$left . something':
+      '#false'
+  class O():
+    implements: A B
+  ~throws "dot syntax supplied by multiple superinterfaces"
+
+check:
+  ~eval
+  import rhombus/meta open
+  interface A:
+    dot '$left . something':
+      '#true'
+  class B():
+    nonfinal
+    dot '$left . something':
+      '#false'
+  class O():
+    implements A
+    extends B
+  ~throws "dot syntax supplied by multiple classes or superinterfaces"
+
+check:
+  ~eval
+  import rhombus/meta open
+  interface A:
+    dot '$left . something':
+      '#true'
+  interface B:
+    method something():
+      #false
+  class O():
+    implements: A B
+  ~throws "name supplied as both method and dot syntax by superinterfaces"
+
+check:
+  ~eval
+  import rhombus/meta open
+  interface A:
+    dot '$left . something':
+      '#true'
+  class B():
+    nonfinal
+    method something():
+      #false
+  class O():
+    implements A
+    extends B
+  ~throws "name supplied as both method and dot syntax by classes or superinterfaces"
+
+// make sure an abstract class can implement an interface
+block:
+  // public implementation
+  block:
+    interface Pointy
+    class Posn(x, y):
+      nonfinal
+      abstract m()
+      implements Pointy
+    class Posn3D(z):
+      extends Posn
+      override m(): 5
+    check Posn3D(1, 2, 3) is_a Pointy ~is #true
+
+  // public implementation with method
+  block:
+    interface Pointy:
+      method m()
+    class Posn(x, y):
+      nonfinal
+      implements Pointy
+    class Posn3D(z):
+      extends Posn
+      override m(): 5
+    check Posn3D(1, 2, 3) is_a Pointy ~is #true
+    check Posn3D(1, 2, 3).m() ~is 5
+
+  // private implementation
+  block:
+    interface Pointy:
+      internal _Pointy
+    class Posn(x, y):
+      nonfinal
+      private implements Pointy
+      abstract m()
+    class Posn3D(z):
+      extends Posn
+      override m(): 5
+    check Posn3D(1, 2, 3) is_a Pointy ~is #false
+    check Posn3D(1, 2, 3) is_a _Pointy ~is #true
+
+  // private implementation with method
+  block:
+    interface Pointy:
+      internal _Pointy
+      method pt()
+    class Posn(x, y):
+      nonfinal
+      private implements Pointy
+      abstract m()
+      private override pt(): m()
+    class Posn3D(z):
+      extends Posn
+      override m(): 5
+    check Posn3D(1, 2, 3) is_a Pointy ~is #false
+    check Posn3D(1, 2, 3) is_a _Pointy ~is #true
+    check (Posn3D(1, 2, 3) :~ _Pointy).pt() ~is 5
+
+// options in `dot`
+block:
+  import rhombus/meta open
+  interface Somethingable:
+    dot '$left . check_options':
+      ~op_stx self
+      ~head_stx call
+      ~is_static is_static
+      ~tail '$()'
+      'values(
+         Syntax.literal '$self',
+         Syntax.literal '$call',
+         #%literal $is_static,
+       )'
+  class Something():
+    implements Somethingable
+  check:
+    Something().check_options
+    ~matches values(
+      '.',
+      '$_ . check_options',
+      #true,
+    )
+  check:
+    Somethingable.check_options(Something())
+    ~matches values(
+      'check_options',
+      'check_options($_)',
+      #true,
+    )
+
+// Check that override of inherited from a private interface
+// works consistently when a subclass overrides again
+block:
+  class V(n)
+
+  interface I:
+    internal _I
+    method m() :~ V
+    property p :~ V
+
+  class C():
+    nonfinal
+    private implements I
+    internal _C
+    private override m(): V(1)
+    private override property p: V(10)
+
+    method m2() :~ V:
+      V(this.m().n)
+    method m3() :~ V:
+      V(this.p.n)
+    method m4() :~ V:
+      V(m().n)
+    method m5() :~ V:
+      V(p.n)
+
+  let c = C()
+  check (c :: _C).m() ~is V(1)
+  check c.m2() ~is V(1)
+  check c.m3() ~is V(10)
+  check c.m4() ~is V(1)
+  check c.m5() ~is V(10)
+  check (c :~ _I).m() ~is V(1)
+  check (c :~ _I).p ~is V(10)
+
+  check c.m2().n ~is 1
+  check c.m3().n ~is 10
+  check (c :~ _I).m().n ~is 1
+  check (c :~ _I).p.n ~is 10
+
+  class C2():
+    extends C
+    internal _C2
+    private implements I
+    private override m(): V(2)
+    private override property p: V(20)
+
+  let c2 = C2()
+  check (c2 :: _C).m() ~is V(2)
+  check (c2 :: _C2).m() ~is V(2)
+  check c2.m2() ~is V(2)
+  check c2.m3() ~is V(20)
+  check c2.m4() ~is V(2)
+  check c2.m5() ~is V(20)
+  check (c2 :~ _I).m() ~is V(2)
+  check (c2 :~ _I).p ~is V(20)
+
+  check (c2 :: _C).m().n ~is 2
+  check (c2 :: _C2).m().n ~is 2
+  check c2.m2().n ~is 2
+  check c2.m3().n ~is 20
+  check (c2 :~ _I).m().n ~is 2
+  check (c2 :~ _I).p.n ~is 20
+
+// Final method form interface is a direct call
+block:
+  interface C:
+    final method call() :: String:
+      "intf"
+  class A(a):
+    nonfinal
+    internal _A
+    private implements C
+  check (A(1) :: _A).call() ~is "intf"
+
+// Private implementation via shared superinterface
+block:
+  interface B:
+    method m()
+  interface I:
+    extends B
+  interface J:
+    extends B
+  class C():
+    nonfinal
+    private implements: I J
+    private override m(): 1
+    method m2(): this.m()
+  class C2():
+    extends C
+    private implements: J
+    private override m(): 2
+  check C2().m2() ~is 2
+
+// Private implementation via shared superinterface
+check:
+  ~eval
+  interface I:
+    method m()
+  interface J:
+    method m()
+  class C():
+    nonfinal
+    private implements: I J
+    private override m(): 1
+  ~throws "cannot override method from multiple privately implemented interfaces"
+
+// Protected implementation
+check:
+  interface I:
+    method m()
+  class C():
+    nonfinal
+    protected implements: I
+    override m(): 1
+  class D():
+    extends C
+    method n():
+      m()
+  [D().n(),
+   try:
+     use_dynamic
+     dynamic(D()).m()
+     ~catch x:
+       "ok"]
+  ~is [1,
+       "ok"]
+
+// Protected implementation promoted to public
+check:
+  interface I:
+    method m()
+  interface J:
+    extends I
+  class C():
+    nonfinal
+    protected implements: I
+    implements: J
+    override m(): 1
+  class D():
+    extends C
+    method n():
+      m()
+  [D().n(),
+   D().m(),
+   block:
+     use_dynamic
+     dynamic(D()).m()]
+  ~is [1, 1, 1]
+
+// Private implementation promoted to protected
+check:
+  interface I:
+    method m()
+  interface J:
+    extends I
+  class C():
+    nonfinal
+    private implements: I
+    protected implements: J
+    override m(): 1
+  class D():
+    extends C
+    method n():
+      m()
+  [D().n(),
+   try:
+     use_dynamic
+     dynamic(D()).m()
+     ~catch x:
+       "ok"]
+  ~is [1,
+       "ok"]
+
+block:
+  def Ghost = "not defined later"
+  interface Ghost:
+    expression ~none
+  check Ghost ~is "not defined later"
+
+block:
+  import rhombus/meta open
+  interface Ghost:
+    annotation ~none
+  annot.macro 'Ghost': 'Int'
+  check 0 is_a Ghost ~is #true
+
+check:
+  ~eval
+  interface Stubborn:
+    expression ~error
+  Stubborn(0)
+  ~throws "cannot be used as an expression"
+
+check:
+  ~eval
+  interface Stubborn
+  Stubborn(0)
+  ~throws "cannot be used as an expression"
+
+check:
+  ~eval
+  interface Stubborn:
+    annotation ~error
+  10 :: Stubborn
+  #void
+  ~throws "cannot be used as an annotation"
+
+block:
+  interface Foo:
+    constructor
+    | (x): x
+    | (x, f): f(x)
+    method m(): this
+  class Bar():
+    implements Foo
+  check Foo(Bar()).m() ~is Bar()
+  check Foo(10).m() ~throws error.annot_msg("constructor result")
+  check Foo([Bar()], fun([x]): x).m() ~is Bar()
+  check Foo([], fun([]): 0).m() ~throws error.annot_msg("constructor result")
+
+block:
+  interface Foo:
+    expression: ~error
+    constructor C(x): x
+    method m(): this
+  class Bar():
+    implements Foo
+  check C(Bar()).m() ~is Bar()
+  check C(10).m() ~throws error.annot_msg("constructor result")
+
+block:
+  interface Foo:
+    expression: ~none
+    constructor C(x): x
+    method m(): this
+  class Bar():
+    implements Foo
+  check C(Bar()).m() ~is Bar()
+  check C(10).m() ~throws error.annot_msg("constructor result")
+
+check:
+  ~eval
+  interface Foo:
+    expression: ~error
+    constructor C(x): x
+  Foo()
+  ~throws "cannot be used as an expression"
+
+block:
+  interface Pointy:
+    ~name Dotty
+    final method m(): 0
+    abstract method n()
+  check print(Pointy.m) ~prints "#<function:Dotty.m>"
+  check print(Pointy.n) ~prints "#<function:Dotty.n>"
+
+// check prefix in post forms
+block:
+  interface A:
+    export:
+      whoami
+      try_input
+      try_output
+    fun whoami():
+      ~who: who
+      who
+    fun try_input(_ :: Never):
+      error("should not get here")
+    fun try_output() :: Never:
+      "oops"
+  check:
+    A.whoami() ~is #'#{A.whoami}
+    A.try_input("oops") ~throws values(
+      "A.try_input: " ++ error.annot_msg("argument"),
+      error.annot("Never").msg,
+      error.val("oops", ~label: "argument").msg,
+    )
+    A.try_output() ~throws values(
+      "A.try_output: " ++ error.annot_msg("result"),
+      error.annot("Never").msg,
+      error.val("oops", ~label: "result").msg,
+    )
+
+block:
+  interface I:
+    implementable I2
+    method m(): "m"
+  class Posn():
+    nonfinal
+    implements I2
+  check Posn() is_a I ~is #true
+  check Posn() is_a I2 ~is #true
+  check Posn().m() ~is "m"
+  check I.m(Posn()) ~is "m"
+  class Posn3D():
+    extends Posn
+    implements I2
+  check Posn3D() is_a I ~is #true
+  check Posn3D() is_a I2 ~is #true
+  check Posn3D().m() ~is "m"
+  check I.m(Posn3D()) ~is "m"
+
+check:
+  ~eval
+  interface I:
+    implementable I2
+  class Posn():
+    implements I
+  ~throws "interface is not implementable"
+
+check:
+  ~eval
+  interface I:
+    implementable I2
+  interface J:
+    extends I
+  ~throws "interface is not implementable"
+
+// regression test: parsing of method clauses
+block:
+  interface I:
+    method m(): "m"
+    property p: "p"
+    method am()
+    property ap
+    method get():
+      [m(), p, am(), ap]
+  class C():
+    implements I
+    override method am(): "am"
+    override property ap: "ap"
+  check C().get() ~is ["m", "p", "am", "ap"]
+
+block:
+  interface I:
+    abstract am()
+    abstract method am2()
+    abstract property ap
+    method get():
+      [am(), am2(), ap]
+  class C():
+    implements I
+    override am(): "am"
+    override method am2(): "am2"
+    override property ap: "ap"
+  check C().get() ~is ["am", "am2", "ap"]
+
+block:
+  interface I:
+    final m(): "m"
+    final method m2(): "m2"
+    final property p: "p"
+    method get():
+      [m(), m2(), p]
+  class C():
+    implements I
+  check C().get() ~is ["m", "m2", "p"]
+
+block:
+  interface I:
+    private m(): "m"
+    private method m2(): "m2"
+    private property p: "p"
+    method get():
+      [m(), m2(), p]
+  class C():
+    implements I
+  check C().get() ~is ["m", "m2", "p"]
+
+block:
+  interface I:
+    protected m(): "m"
+    protected method m2(): "m2"
+    protected property p: "p"
+    protected am()
+    protected method am2()
+    protected property ap
+    method get():
+      [m(), m2(), p, am(), am2(), ap]
+  class C():
+    implements I
+    override am(): "am"
+    override method am2(): "am2"
+    override property ap: "ap"
+  check C().get() ~is ["m", "m2", "p", "am", "am2", "ap"]
+
+block:
+  interface I:
+    abstract protected am()
+    abstract protected method am2()
+    abstract protected property ap
+    method get():
+      [am(), am2(), ap]
+  class C():
+    implements I
+    override am(): "am"
+    override method am2(): "am2"
+    override property ap: "ap"
+  check C().get() ~is ["am", "am2", "ap"]
+
+block:
+  interface I:
+    method am()
+    method am2()
+    property ap
+    method get():
+      [am(), am2(), ap]
+  interface I2:
+    extends I
+    final override am(): "am"
+    final override method am2(): "am2"
+    final override property ap: "ap"
+  class C():
+    implements I2
+  check C().get() ~is ["am", "am2", "ap"]
+
+block:
+  interface I:
+    abstract am()
+    abstract method am2()
+    abstract property ap
+    method get():
+      [am(), am2(), ap]
+  interface I2:
+    extends I
+    abstract override am()
+    abstract override method am2()
+    abstract override property ap
+  class C():
+    implements I2
+    override am(): "am"
+    override method am2(): "am2"
+    override property ap: "ap"
+  check C().get() ~is ["am", "am2", "ap"]
+
+// regression test: `this` in interface body
+block:
+  interface I:
+    method m(): "m"
+    property p: "p"
+    private method pm(): "pm"
+    private property pp: "pp"
+    protected method prm(): "prm"
+    protected property prp: "prp"
+    method get_names():
+      [this.m(), this.p, this.pm(), this.pp, this.prm(), this.prp]
+    property names:
+      this.get_names()
+  class C():
+    implements I
+  check C().get_names() ~is ["m", "p", "pm", "pp", "prm", "prp"]
+  check C().names ~is ["m", "p", "pm", "pp", "prm", "prp"]

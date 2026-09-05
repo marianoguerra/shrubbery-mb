@@ -1,0 +1,131 @@
+import:
+  rhombus/wrapper
+  "rkt.rhm"
+  "type.rhm" open
+  "color.rhm".Color
+  "color.rhm"!private._Color
+  "color.rhm"!private.unwrap_color
+  "symbol_map.rhm".symbol_map_annot
+  "bitmap-interface.rhm".BitmapForward as Bitmap
+  "bitmap-interface.rhm".Bitmap as _Bitmap
+  "bitmap-interface.rhm".bitmap_from_handle
+
+export:
+  Brush
+  LinearGradient
+  RadialGradient
+
+module private:
+  export:
+    _Brush
+
+class LinearGradient(private _handle):
+  internal _LinearGradient
+  property handle: _handle
+
+  constructor (pt1 :: PointLike,
+               pt2 :: PointLike,
+               [[stop :: Real.in(0.0, 1.0), color :: Color], ...]):
+    super(rkt.make_object(rkt.#{linear-gradient%},
+                          pt1.x, pt1.y,
+                          pt2.x, pt2.y,
+                          PairList[PairList[stop, color.handle], ...]))
+
+  property line :: List.of(Point):
+    let (x1, y1, x2, y2) = rkt.send handle.#{get-line}()
+    [Point(x1, y1), Point(x2, y2)]
+
+  property stops :: List.of([Real, Color]):
+    let PairList[PairList[stop, c], ...] = rkt.send handle.#{get-stops}()
+    [[stop, _Color(c)], ...]
+
+class RadialGradient(private _handle):
+  internal _RadialGradient
+  property handle: _handle
+
+  constructor ([pt1 :: PointLike, r1 :: Real],
+               [pt2 :: PointLike, r2 :: Real],
+               [[stop :: Real.in(0.0, 1.0), color :: Color], ...]):
+    super(rkt.make_object(rkt.#{radial-gradient%},
+                          pt1.x, pt1.y, r1,
+                          pt2.x, pt2.y, r2,
+                          PairList[PairList[stop, color.handle], ...]))
+
+  property circles:: List.of([Point, Real]):
+    let (x0, y0, r0, x1, y1, r1) = rkt.send handle.#{get-circles}()
+    [[Point(x0, y0), r0], [Point(x1, y1), r1]]
+
+  property stops :: List.of([Real, Color]):
+    let PairList[PairList[stop, c], ...] = rkt.send handle.#{get-stops}()
+    [[stop, _Color(c)], ...]
+
+class Brush(private _handle):
+  internal _Brush
+  property handle: _handle
+
+  constructor (~color: color :: (String || Color) = "Black",
+               ~style: style :: Brush.Style = #'solid,
+               ~stipple: stipple :: maybe(Bitmap) = #false,
+               ~gradient: gradient :: maybe(LinearGradient || RadialGradient) = #false):
+    let hand:
+      if dynamic(stipple) || gradient
+      | rkt.make_object(rkt.#{brush%}, unwrap_color(color), style_convert(style),
+                        stipple && (stipple :~ _Bitmap).handle,
+                        match gradient
+                        | g :: LinearGradient: g.handle
+                        | g :: RadialGradient: g.handle
+                        | ~else: #false)
+      | rkt.send rkt.#{the-brush-list}
+          .#{find-or-create-brush}(unwrap_color(color), style_convert(style))
+    super(hand)
+
+  property color :: Color: _Color(rkt.send handle.#{get-color}())
+
+  property style: style_unconvert(rkt.send handle.#{get-style}())
+
+  property stipple :: maybe(Bitmap):
+    let bm = rkt.send handle.#{get-stipple}()
+    bm && bitmap_from_handle(bm)
+
+  property gradient :: maybe(LinearGradient || RadialGradient):
+    let g = rkt.send handle.#{get-gradient}()
+    g && (if g rkt.is_a rkt.#{linear-gradient%}
+          | _LinearGradient(g)
+          | _RadialGradient(g))
+
+  reconstructor_fields:
+    color: this.color
+    style: this.style
+    stipple: this.stipple
+    gradient: this.gradient
+  reconstructor (color, style, stipple, gradient):
+    Brush(~color: color, ~style: style, ~stipple: stipple, ~gradient: gradient)
+
+  export:
+    none
+    Style
+    from_handle
+
+  symbol_map_annot Style style_convert style_unconvert
+  | transparent
+  | solid
+  | opaque
+  | hilite
+  | bdiagonal_hatch = #{bdiagonal-hatch}
+  | crossdiag_hatch = #{crossdiag-hatch}
+  | fdiagonal_hatch = #{fdiagonal-hatch}
+  | cross_hatch = #{cross-hatch}
+  | horizontal_hatch = #{horizontal-hatch}
+  | vertical_hatch = #{vertical-hatch}
+
+  fun from_handle(handle) :~ Brush:
+    ~who: who
+    unless handle rkt.is_a rkt.#{brush%}
+    | wrapper.error(~who: who, ~what: "brush", handle)
+    _Brush(handle)
+
+def none = _Brush(rkt.send rkt.#{the-brush-list}
+                    .#{find-or-create-brush}(
+                      rkt.#{make-color}(0, 0, 0),
+                      #'transparent
+                    ))

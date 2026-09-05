@@ -1,0 +1,40 @@
+
+check:
+  use_static
+  def x when x.length() > 1 = "Hello"
+  x.length()
+  ~is 5
+
+check:
+  use_static
+  def x unless x.length() > 10 = "Hello"
+  x.length()
+  ~is 5
+
+block:
+  fun classify(v):
+    match v
+    | n ::Int when (n mod 2) .= 0: "even"
+    | _ :: Int: "odd"
+    | ~else "other"
+  check:
+    classify(0) ~is "even"
+    classify(1) ~is "odd"
+    classify(#false) ~is "other"
+
+check:
+  ~eval
+  def x when x.length() > 10 = "Hello"
+  ~throws "value does not satisfy annotation"
+
+check:
+  ~eval
+  def x unless x.length() < 10 = "Hello"
+  ~throws "value does not satisfy annotation"
+
+check:
+  ~eval
+  block:
+    let x when #true = 1
+    x
+  ~throws "pattern requires early binding of its names"

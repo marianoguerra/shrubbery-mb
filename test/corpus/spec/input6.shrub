@@ -1,0 +1,18 @@
+
+1 // comment on same line
+
+2
+  /* comment weidly indented */
+
+begin:
+ 1+2
+ // comment sticks with block
+ // and this one, too
+
+ // and even this one
+
+(begin:
+   x
+   // block
+ // inner comment
+ ) // after comment

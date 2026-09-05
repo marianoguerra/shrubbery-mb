@@ -1,0 +1,24 @@
+import:
+  rhombus/scribble/manual
+
+export:
+  parens
+  brackets
+  braces
+  s_exp_braces
+  s_exp_kw_braces
+  quotes
+  guillemets
+  block_comment
+
+fun open_close(o, c):
+  @manual.elem{@manual.litchar(o)…@manual.litchar(c)}
+
+def parens = @open_close("(", ")")
+def brackets = @open_close("[", "]")
+def braces = @open_close("{", "}")
+def s_exp_braces = @open_close("#{", "}")
+def s_exp_kw_braces = @open_close("~#{", "}")
+def quotes = @open_close("'", "'")
+def block_comment = @open_close("/*", "*/")
+def guillemets = @open_close("«", "»")

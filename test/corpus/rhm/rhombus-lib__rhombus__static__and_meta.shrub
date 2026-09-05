@@ -1,0 +1,6 @@
+import: "and_meta.rkt"
+export: all_from(.and_meta)
+
+module configure_expand ~lang rhombus:
+  import: "../expand_config.rhm"
+  export: all_from(.expand_config)

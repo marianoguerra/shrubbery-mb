@@ -1,0 +1,42 @@
+define fib(n):
+  match n | 0: « 0 »
+          | 1: « 1 »
+          | n: « fib(n-1) + fib(n-2) »
+
+define fib(n):
+  match n | « 0: 0 » | « 1: 1 » | n: fib(n-1) + fib(n-2)
+
+define fib(n): « match n | « 0: 0 » | « 1: 1 » | n: fib(n-1) + fib(n-2) »
+
+define fib(n): « match n | 0: «0» | 1: «1» | n: « fib(n-1) + fib(n-2) » »
+
+define fib(n): « match n | « 0: «0» » | « 1: «1» » | « n: « fib(n-1) + fib(n-2) » » »
+
+define fib(n): « match n | « 0: «0» » | « 1: «1» » | « n: « fib(n-1) + fib(n-2) » » »
+
+if t | if f | a | b | y
+if t |« if f | a | b » | y
+if t |« tag: if f | a | b » | y
+if t |« tag: «if f | a | b » » | y
+
+x: y: a; b ; c
+x: y:« a; b »; c
+
+if t | x | y; z
+if t | x |« y »; z
+
+empty:«»
+
+x:«
+    #//
+    2;
+    3 »
+
+branch |« x»;
+
+;« top_a; top_b » top_c
+;;;« top_d ;« top_e; top_f » »
+
+if t | x | ;« y »; z
+
+a(;«1», 2)

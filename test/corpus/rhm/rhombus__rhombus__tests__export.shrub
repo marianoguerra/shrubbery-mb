@@ -1,0 +1,274 @@
+import:
+  "empty.rhm"
+
+export:
+  all_from(.empty)
+  all_from("empty.rhm")
+
+namespace ns0:
+  export def x = "x"
+  export class Posn(x, y)
+  export annot.macro 'Five': 'matching(5)'
+check ns0.x ~is "x"
+check ns0.Posn(1, 2) ~is_a ns0.Posn
+check ns0.Posn.x(ns0.Posn(1, 2)) ~is 1
+check 5 ~is_a ns0.Five
+
+namespace ns1:
+  export import rhombus/measure
+check ns1.measure.cpu_milliseconds() ~is_a Int
+
+namespace ns2:
+  export import rhombus/measure open:
+    only cpu_milliseconds
+check ns2.cpu_milliseconds() ~is_a Int
+
+namespace ns3:
+  export import rhombus/measure.cpu_milliseconds
+check ns3.cpu_milliseconds() ~is_a Int
+
+namespace ns4:
+  export import rhombus/measure open:
+    only cpu_milliseconds as msecs
+check ns4.msecs() ~is_a Int
+
+check:
+  ~eval
+  namespace ns:
+    export import rhombus/measure open
+  ~throws "module re-export not supported"
+
+module ~early m1 ~lang rhombus:
+  export import rhombus/measure
+
+import self!m1
+check m1.measure.cpu_milliseconds() ~is_a Int
+
+module ~early m2 ~lang rhombus:
+  export import rhombus/measure open:
+    only cpu_milliseconds
+
+import self!m2
+check m2.cpu_milliseconds() ~is_a Int
+
+module ~early m3 ~lang rhombus:
+  export import rhombus/measure.cpu_milliseconds
+
+import self!m3
+check m3.cpu_milliseconds() ~is_a Int
+
+module ~early m4 ~lang rhombus:
+  export import rhombus/measure open:
+    only cpu_milliseconds as msecs
+
+import self!m4
+check m4.msecs() ~is_a Int
+
+module ~early m5 ~lang rhombus:
+  export import rhombus/measure open
+
+import self!m5
+check m5.cpu_milliseconds() ~is_a Int
+
+namespace ns10:
+  export import:
+    rhombus open:
+      only List as Lyst
+
+check ns10.Lyst(1, 2, 3) ~is [1, 2, 3]
+check [1, 2, 3] is_a ns10.Lyst ~is #true
+
+namespace ns11:
+  export import:
+    rhombus open:
+      only List as Lyst
+      only_space annot
+
+check [1, 2, 3] is_a ns11.Lyst ~is #true
+
+namespace ns12:
+  export import:
+    rhombus open:
+      only List as Lyst
+      only_space expr
+
+check ns12.Lyst(1, 2, 3) ~is [1, 2, 3]
+
+check:
+  ~eval
+  import rhombus/meta open
+  namespace ns:
+    export import:
+      rhombus open:
+        only List as Lyst
+        only_space annot
+  ns.Lyst(1)
+  ~throws "Lyst: identifier not provided by ns"
+
+check:
+  ~eval
+  import rhombus/meta open
+  namespace ns:
+    def Lyst = values
+    export import:
+      rhombus open:
+        only List as Lyst
+        only_space annot
+  ns.Lyst(1)
+  ~throws "Lyst: identifier not provided by ns"
+
+check:
+  ~eval
+  import rhombus/meta open
+  def Lyst = values
+  namespace ns:
+    export import:
+      rhombus open:
+        only List as Lyst
+        only_space annot
+  ns.Lyst(1)
+  ~throws "Lyst: identifier not provided by ns"
+
+module ~early m10 ~lang rhombus:
+  export import:
+    rhombus open:
+      rename List as Lyst
+
+import self!m10
+check m10.Lyst(1, 2, 3) ~is [1, 2, 3]
+check [1, 2, 3] is_a m10.Lyst ~is #true
+
+defn.macro 'namespace_export_nothing $id $(defn :: Sequence)':
+  'namespace $id:
+     export $defn'
+
+check:
+  namespace_export_nothing ns def x = 10
+  block:
+    let x = 11
+    block:
+      import .ns open
+      x
+  ~is 11
+
+defn.macro 'namespace_export_something $id $(defn :: Sequence)':
+  'namespace $id:
+     export ~scope_like $id $defn'
+
+check:
+  namespace_export_something ns def x = 10
+  block:
+    let x = 11
+    block:
+      import .ns open
+      x
+  ~is 10
+
+module ~early A ~lang rhombus/and_meta:
+  export:
+    only_space namespace:
+      Foo
+  namespace Foo
+  def Foo.bar = 42
+
+module ~early B ~lang rhombus:
+  import: parent!A open
+  def x = Foo.bar
+  export x
+
+check:
+  import self!B.x
+  x
+  ~is 42
+
+module ~early Ae ~lang rhombus/and_meta:
+  export:
+    only_space expr:
+      Foo
+  namespace Foo
+  def Foo.bar = 42
+  def Foo = 5
+
+check:
+  import self!Ae.Foo
+  Foo
+  ~is 5
+
+check:
+  ~eval
+  module ~early Ae ~lang rhombus/and_meta:
+    export:
+      only_space expr:
+        Foo
+    namespace Foo
+    def Foo.bar = 42
+    def Foo = 5
+  import self!Ae.Foo
+  Foo.bar
+  ~throws "bar: no such field or method"
+
+block:
+  class Posn(x, y):
+    export def bar = 42
+  check Posn.bar ~is 42
+
+space.enforest myspace:
+  space_path myspace
+  meta_namespace myspace_meta:
+    export def foo = 42
+  export def bar = 43
+meta:
+  check myspace_meta.foo ~is 42
+check myspace.bar ~is 43
+
+module ex_mod1 ~lang rhombus/and_meta:
+  export:
+    all_from(rhombus/and_meta):
+      except:
+        meta:
+          expr_meta
+
+module ex_mod2 ~lang rhombus/and_meta:
+  export:
+    all_from(rhombus/and_meta):
+      except:
+        (meta:
+           expr_meta)
+
+module ~early ex_mod3_only_runtime ~lang rhombus/and_meta:
+  export:
+    only_meta 0:
+      all_from(rhombus/and_meta)
+
+module ~early ex_mod4_only_exptime ~lang rhombus/and_meta:
+  export:
+    only_meta 1:
+      all_from(rhombus/and_meta)
+
+check:
+  import self!ex_mod3_only_runtime as ex
+  ex.List()
+  ~is []
+
+check:
+  ~eval
+  import rhombus/meta open
+  import rhombus/tests/export!ex_mod3_only_runtime as ex
+  meta:
+    ex.List()
+  ~throws "ex: undefined"
+
+check:
+  ~eval
+  import rhombus/meta open
+  import rhombus/tests/export!ex_mod4_only_exptime as ex
+  meta:
+    ex.List()
+  ~completes
+
+check:
+  ~eval
+  import rhombus/meta open
+  import rhombus/tests/export!ex_mod4_only_exptime as ex
+  ex.List()
+  ~throws "ex: undefined"

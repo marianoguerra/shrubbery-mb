@@ -1,0 +1,237 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    Box(v)
+    Box.value(bx, [val])
+    Box.copy(bx) ~method
+    Box.snapshot(bx) ~method
+    Box.compare_and_set(bx, old_val, new_val) ~method
+
+check:
+  Box(1) ~is_now Box(1)
+  Box(1) == Box(1) ~is #false
+  Box(1) is_a Box ~is #true
+  10 is_a Box ~is #false
+  Box(1) is_a MutableBox ~is #true
+  Box(1) is_a ImmutableBox ~is #false
+  10 is_a MutableBox ~is #false
+  10 is_a ImmutableBox ~is #false
+
+block:
+  use_static
+  let bx = Box(10)
+  let bx_snapshot = bx.snapshot()
+  let bx_copy = bx.copy()
+  check:
+    bx ~is_a MutableBox
+    bx.value ~is 10
+    bx_snapshot ~is_a ImmutableBox
+    bx_snapshot.value ~is 10
+    bx_copy ~is_a MutableBox
+    bx_copy.value ~is 10
+    bx_copy === bx ~is #false
+    bx_snapshot === bx ~is #false
+    bx.compare_and_set(100, 200) ~is #false
+    (recur loop (): bx.compare_and_set(10, 200) || loop()) ~is #true
+    bx.value ~is 200
+    (bx :: Box.later_of(Int)).compare_and_set(0, 1) ~throws "cannot atomically compare-and-set content of a wrapped box"
+
+block:
+  use_static
+  let bx = Box(10).snapshot()
+  let bx_snapshot = bx.snapshot()
+  let bx_copy = bx.copy()
+  check:
+    bx ~is_a ImmutableBox
+    bx.value ~is 10
+    bx_snapshot ~is_a ImmutableBox
+    bx_snapshot.value ~is 10
+    bx_copy ~is_a MutableBox
+    bx_copy.value ~is 10
+    bx_copy === bx ~is #false
+    bx_snapshot === bx ~is #true
+
+check:
+  use_static
+  def bx = Box(10)
+  bx.value
+  ~is 10
+
+check:
+  use_static
+  def bx = Box(10)
+  bx.value := 11
+  bx.value
+  ~is 11
+
+check:
+  use_static
+  (dynamic(Box(10)) :~ Box).value
+  ~is 10
+
+check:
+  use_static
+  def bx = dynamic(Box(10))
+  (bx :~ Box).value := 11
+  (bx :~ Box).value
+  ~is 11
+
+check:
+  def bx = Box(10)
+  dynamic(bx).value
+  ~is 10
+
+check:
+  use_dynamic
+  def bx = Box(10)
+  dynamic(bx).value := 11
+  dynamic(bx).value
+  ~is 11
+
+block:
+  def bx = Box(10)
+  check dynamic(bx).compare_and_set(-10, 0) ~is #false
+  check (recur loop (): dynamic(bx).compare_and_set(10, 200) || loop()) ~is #true
+  check bx.value ~is 200
+
+check:
+  10 :: Box
+  ~throws "does not satisfy annotation"
+
+check:
+  10 :: Box.now_of(Any)
+  ~throws "does not satisfy annotation"
+
+check:
+  10 :: Box.later_of(Any)
+  ~throws "does not satisfy annotation"
+
+check:
+  10 :: Box.later_of(converting(fun (_): #false))
+  ~throws "does not satisfy annotation"
+
+check:
+  Box(1) :: Box.now_of(String)
+  ~throws "does not satisfy annotation"
+
+check:
+  Box(1) :: Box.later_of(String)
+  ~completes
+
+check:
+  def bx :: Box.later_of(
+    converting(fun (n :: Int):
+                 println("run")
+                 n+1)):
+    Box(1)
+  println(bx.value)
+  bx.value := 1
+  println(bx.value)
+  ~prints "run\n2\nrun\nrun\n3\n"
+
+check:
+  def bx :: Box.later_of(String) = Box(1)
+  bx.value
+  ~throws values(
+    "current value does not satisfy annotation",
+    "String",
+  )
+
+check:
+  def bx :: Box.later_of(String) = Box("apple")
+  bx.value
+  bx.value := #'oops
+  ~throws values(
+    "new value does not satisfy annotation",
+    "String",
+  )
+
+check:
+  ~eval
+  Box(Box("apple")) :: Box.now_of(Box.later_of(String))
+  ~throws "converter annotation not supported for value"
+
+check:
+  use_static
+  def bx :: Box.later_of(String) = Box("apple")
+  bx.value ++ "jack"
+  ~is "applejack"
+
+check:
+  ~eval
+  use_static
+  def bx :: Box.now_of(String) = Box("apple")
+  bx.value ++ "jack"
+  ~throws "specialization not known"
+
+check:
+  to_string(Box(1)) ~is "Box(1)"
+  to_string(Box(2)) ~is "Box(2)"
+  to_string(Box(3).snapshot()) ~is "Box(3).snapshot()"
+
+check:
+  def b = Box(0)
+  b.value := b
+  to_string(b)
+  ~is "#0=Box(#0#)"
+
+check:
+  ("oops" :~ Box).value
+  ~throws values(
+    "Box.value: " ++ error.annot_msg(),
+    error.annot("Box").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  ("oops" :~ MutableBox).value := 0
+  ~throws values(
+    "Box.value: " ++ error.annot_msg(),
+    error.annot("MutableBox").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  (Box(1).snapshot() :~ MutableBox).value := 0
+  ~throws values(
+    "Box.value: " ++ error.annot_msg(),
+    error.annot("MutableBox").msg,
+    error.val(Box(1).snapshot()).msg,
+  )
+
+block:
+  fun f(x :: Box.now_of(Any.of(block: println("now"); 1)), ...):
+    [x, ...]
+  check f(Box(1), Box(1)) ~prints "now\n"
+  check f(Box(1)) ~prints "now\n"
+
+block:
+  fun f(x :: Box.later_of(Any.of(block: println("now"); 1)), ...):
+    [x, ...]
+  check f(Box(1), Box(1)) ~prints "now\n"
+  check f(Box(1)) ~prints "now\n"
+
+// dependent result annotations
+block:
+  use_static
+  def b :: Box.later_of(String) = Box("a")
+  check b.value.length() ~is 1
+  check Box.value(b).length() ~is 1
+  check Box.snapshot(b).value.length() ~is 1
+
+// check bindings
+check:
+  def Box(x) = Box(1)
+  x
+  ~is 1
+
+check:
+  def Box(x) = Box(1).snapshot()
+  x
+  ~is 1
+
+check:
+  def Box(s :: String) = Box(1)
+  "oops"
+  ~throws "matching(Box(_ :: String))"

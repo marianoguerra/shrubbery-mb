@@ -1,0 +1,1685 @@
+import:
+  rhombus/version_meta
+  rhombus/memory
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    Map(p, ...)
+    Map.length(mp) ~method ReadableMap
+    Map.keys(mp, [try_sort]) ~method ReadableMap
+    Map.values(mp) ~method ReadableMap
+    Map.get(mp, k, [default])  ~method ReadableMap
+    Map.has_key(mp, k) ~method ReadableMap
+    Map.contains(mp, k) ~method ReadableMap
+    Map.copy(mp) ~method ReadableMap
+    Map.snapshot(mp) ~method ReadableMap
+    Map.append(mp0, mp, ...) ~method
+    Map.set(mp, k, v) ~method
+    Map.remove(mp, k) ~method
+    MutableMap.set(mp, k, val) ~method
+    MutableMap.remove(mp, k) ~method
+    Map.to_sequence(mp) ~method ReadableMap
+    Map.by(==)(p, ...)
+    Map.by(===)(p, ...)
+    Map.by(is_now)(p, ...)
+    Map.by(is_same_number_or_object)(p, ...)
+
+check:
+  {"a": 1, #'~b: 2}
+  ~is Map(["a", 1], [#'~b, 2])
+
+check:
+  {"a": 0; 1, #'~b: -2; -3; 2}
+  ~is Map(["a", 1], [#'~b, 2])
+
+check:
+  Map.length({"a": 1, "b": 2})
+  ~is 2
+
+check:
+  Map.length({1, 2, 3})
+  ~throws values(
+    "Map.length: " ++ error.annot_msg(),
+    error.annot("ReadableMap").msg,
+    error.val({1, 2, 3}).msg,
+  )
+
+block:
+  use_static
+  check:
+    {"a": 1, "b": 2}.length()
+    ~is 2
+  check:
+    {"a": 1, "b": 2}["a"] ~is 1
+    {"a": 1, "b": 2}.get("a") ~is 1
+    {"a": 1, "b": 2}.get("c", "other") ~is "other"
+    {"a": 1, "b": 2}.get("c", fun (): "got other") ~is "got other"
+  check:
+    "a" in {"a": 1, "b": 2} ~is #true
+    "b" in {"a": 1, "b": 2} ~is #true
+    1 in {"a": 1, "b": 2} ~is #false
+    "a" !in {"a": 1, "b": 2} ~is #false
+    1 !in {"a": 1, "b": 2} ~is #true
+    {"a": 1, "b": 2}.contains("a") ~is #true
+    {"a": 1, "b": 2}.has_key("a") ~is #true
+    {"a": 1, "b": 2}.contains(1) ~is #false
+    {"a": 1, "b": 2}.has_key(1) ~is #false
+  check:
+    {"a": 1, "b": 2}.set("c", 3) ~is {"a": 1, "b": 2, "c": 3}
+    {"a": 1, "b": 2}.set("a", 3) ~is {"a": 3, "b": 2}
+    Map.set({"a": 1, "b": 2}, "c", 3) ~is {"a": 1, "b": 2, "c": 3}
+  check:
+    ({"a": 1, "b": 2} ++ {"a": 3})["a"] ~is 3
+    ({"a": 1, "b": 2} ++ {"a": 3, "b": 4})["a"] ~is 3
+    {"a": 1, "b": 2} ++ "oops" ~throws values(
+      "Map.append: " ++ error.annot_msg(),
+      error.annot("Map").msg,
+      error.val("oops").msg,
+    )
+    {"a": 1, "b": 2} ++ MutableMap{"a": 3} ~throws values(
+      "Map.append: " ++ error.annot_msg(),
+      error.annot("Map").msg,
+      error.val(MutableMap{"a": 3}).msg,
+    )
+    {"a": 1, "b": 2}.append()["a"] ~is 1
+    {"a": 1, "b": 2}.append({"a": 2})["a"] ~is 2
+    {"a": 1, "b": 2}.append({"a": 2}, {"a": 3})["a"] ~is 3
+  check:
+    { 3: 4 } ++ { 3: 8, 9: 10}
+    ~is { 3: 8, 9: 10}
+  check:
+    Map{"a": 1, "b": 2}.length()
+    ~is 2
+  check:
+    Map(["a", 1], ["b", 2]).length()
+    ~is 2
+  check:
+    MutableMap{"a": 1, "b": 2}.length()
+    ~is 2
+  check:
+    MutableMap(["a", 1], ["b", 2]).length()
+    ~is 2
+  check:
+    def map = {"a": 1, "b": 2}
+    map.length()
+    ~is 2
+  check:
+    def map :: Map = dynamic({"a": 1, "b": 2})
+    map.length()
+    ~is 2
+  check:
+    def map :~ Map = dynamic({"a": 1, "b": 2})
+    map.length()
+    ~is 2
+  check:
+    def map :: Map.of(String, Int) = dynamic({"a": 1, "b": 2})
+    map.length()
+    ~is 2
+
+check:
+  Map.append({1: 1}) ~is {1: 1}
+  Map.append({1: 1}, {1: 2}) ~is {1: 2}
+  Map.append({1: 1}, {1: 2}, {1: 3}) ~is {1: 3}
+  Map.append({1: 1}, {1: 2}, {1: 3}, {1: 4}) ~is {1: 4}
+
+block:
+  use_static
+  check:
+    {"a": 1, "b": 2, "c": 3}
+      .append({"d": 4}, {"e": 5, "f": 6})
+      .remove("b")
+    ~is {"a": 1, "c": 3, "d": 4, "e": 5, "f": 6}
+  check:
+    {"a": 1, "b": 2, "c": 3}
+      .set("d", 4)
+      .remove("b")
+      .append({"e": 5, "f": 6})
+    ~is {"a": 1, "c": 3, "d": 4, "e": 5, "f": 6}
+  block:
+    use_dynamic
+    check:
+      dynamic({"a": 1, "b": 2, "c": 3})
+        .append({"d": 4}, {"e": 5, "f": 6})
+        .remove("b")
+      ~is {"a": 1, "c": 3, "d": 4, "e": 5, "f": 6}
+    check:
+      dynamic({"a": 1, "b": 2, "c": 3})
+        .set("d", 4)
+        .remove("b")
+        .append({"e": 5, "f": 6})
+      ~is {"a": 1, "c": 3, "d": 4, "e": 5, "f": 6}
+
+block:
+  class Entry(key, val):
+    private implements Listable
+    private override to_list(): [key, val]
+  check:
+    Map([1, "1"], PairList[2, "2"], Array(3, "3"), Entry(4, "4"))
+    ~is Map{1: "1", 2: "2", 3: "3", 4: "4"}
+  check:
+    MutableMap([1, "1"], PairList[2, "2"], Array(3, "3"), Entry(4, "4"))
+    ~is_now MutableMap{1: "1", 2: "2", 3: "3", 4: "4"}
+
+block:
+  class Broken():
+    private implements Listable
+    private override to_list(): [1, "1", "oops"]
+  check:
+    Map([1, "1", "oops"])
+    ~throws values(
+      "Map: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && [Any, Any]").msg,
+      "[1, \"1\", \"oops\"]",
+    )
+  check:
+    Map(PairList[1, "1", "oops"])
+    ~throws values(
+      "Map: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && [Any, Any]").msg,
+      "PairList[1, \"1\", \"oops\"]",
+    )
+  check:
+    Map(Array(1, "1", "oops"))
+    ~throws values(
+      "Map: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && [Any, Any]").msg,
+      "Array(1, \"1\", \"oops\")",
+    )
+  check:
+    Map(Broken())
+    ~throws values(
+      "Map: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && [Any, Any]").msg,
+      "Broken()",
+    )
+  check:
+    MutableMap([1, "1", "oops"])
+    ~throws values(
+      "MutableMap: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && [Any, Any]").msg,
+      "[1, \"1\", \"oops\"]",
+    )
+  check:
+    MutableMap(PairList[1, "1", "oops"])
+    ~throws values(
+      "MutableMap: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && [Any, Any]").msg,
+      "PairList[1, \"1\", \"oops\"]",
+    )
+  check:
+    MutableMap(Array(1, "1", "oops"))
+    ~throws values(
+      "MutableMap: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && [Any, Any]").msg,
+      "Array(1, \"1\", \"oops\")",
+    )
+  check:
+    MutableMap(Broken())
+    ~throws values(
+      "MutableMap: " ++ error.annot_msg(),
+      error.annot("Listable.to_list && [Any, Any]").msg,
+      "Broken()",
+    )
+
+block:
+  check:
+    1 :: Map
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: Map.of(Any, Any)
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: Map.of(
+      converting(fun (_): #false),
+      converting(fun (_): #false)
+    )
+    ~throws "does not satisfy annotation"
+  check:
+    {1: 2, 2: 3, 3: 4} :: Map.of(
+      converting(fun (n :: Int): n+1),
+      converting(fun (n :: Int): n-1)
+    )
+    ~is {2: 1, 3: 2, 4: 3}
+
+block:
+  check:
+    dynamic({"a": 1, "b": 2}).length() ~is 2
+    dynamic({"a": 1, "b": 2})["a"] ~is 1
+    dynamic({"a": 1, "b": 2}).get("a") ~is 1
+    dynamic({"a": 1, "b": 2}).get("c", "other") ~is "other"
+  check:
+    dynamic({"a": 1, "b": 2}).set("c", 3) ~is {"a": 1, "b": 2, "c": 3}
+  check:
+    (dynamic({"a": 1, "b": 2}) ++ {"a": 3})["a"] ~is 3
+    (dynamic({"a": 1, "b": 2}) ++ {"a": 3, "b": 4})["a"] ~is 3
+    dynamic({"a": 1, "b": 2}) ++ "oops" ~throws "cannot append an immutable map and other value"
+    dynamic({"a": 1, "b": 2}) ++ MutableMap{"a": 3} ~throws "cannot append an immutable map and other value"
+    dynamic({"a": 1, "b": 2}).append()["a"] ~is 1
+    dynamic({"a": 1, "b": 2}).append({"a": 2})["a"] ~is 2
+    dynamic({"a": 1, "b": 2}).append({"a": 2}, {"a": 3})["a"] ~is 3
+  check:
+    "a" in dynamic({"a": 1, "b": 2}) ~is #true
+    "b" in dynamic({"a": 1, "b": 2}) ~is #true
+    1 in dynamic({"a": 1, "b": 2}) ~is #false
+    "a" !in dynamic({"a": 1, "b": 2}) ~is #false
+    1 !in dynamic({"a": 1, "b": 2}) ~is #true
+    dynamic({"a": 1, "b": 2}).contains("a") ~is #true
+    dynamic({"a": 1, "b": 2}).has_key("a") ~is #true
+    dynamic({"a": 1, "b": 2}).contains(1) ~is #false
+    dynamic({"a": 1, "b": 2}).has_key(1) ~is #false
+
+// See also tests in "rest-args.rhm"
+block:
+  check:
+    {"a": 1, "b": 2, & {"c": 3}}
+    ~is {"a": 1, "b": 2, "c": 3}
+  check:
+    {"a": 1, & {"b": 2, "c": 3}}
+    ~is {"a": 1, "b": 2, "c": 3}
+  check:
+    {& {"b": 2, "c": 3}, "a": 1}
+    ~is {"a": 1, "b": 2, "c": 3}
+  check:
+    {& {"b": 2}, "a": 1, & {"c": 3}}
+    ~is {"a": 1, "b": 2, "c": 3}
+  check:
+    {"c": "oops", "b": "oops", & {"b": 2}, "a": 1, & {"c": 3}}
+    ~is {"a": 1, "b": 2, "c": 3}
+  check:
+    {"b": "oops", & {"b": 2}, "c": "oops", "a": 1, & {"c": 3}}
+    ~is {"a": 1, "b": 2, "c": 3}
+  check:
+    {& {"b": "oops"}, "c": "oops", "b": 2, "a": 1, & {"c": 3}}
+    ~is {"a": 1, "b": 2, "c": 3}
+  check:
+    def mutable x = []
+    [{& (block: x := [1, x]; {"b": 2}), (block: x:= [2, x]; "a"): 1, & (block: x:= [3, x]; {"c": 3})},
+     x]
+    ~is [{"a": 1, "b": 2, "c": 3},
+         [3, [2, [1, []]]]]
+  check:
+    {& "oops"}
+    ~throws "not an immutable map"
+
+block:
+  def [x, ...] = [1, 2, 3]
+  check:
+    {x: x, ..., #true: 0}
+    ~is {1: 1, 2: 2, 3: 3, #true: 0}
+  check:
+    {#true: 0, x: x, ...}
+    ~is {1: 1, 2: 2, 3: 3, #true: 0}
+  check:
+    {#true: 0, & {7: 7}, x: x, ...}
+    ~is {1: 1, 2: 2, 3: 3, 7: 7, #true: 0}
+  def [[z, ...], ...] = [[1, 2, 3], [4, 5]]
+  check:
+    [{z: #true, ...}, ...]
+    ~is [{1: #true, 2: #true, 3: #true}, {4: #true, 5: #true}]
+
+block:
+  def [x, ...] = [1, 2, 3]
+  check:
+    Map([x, x], ..., [#true, 0])
+    ~is {1: 1, 2: 2, 3: 3, #true: 0}
+  check:
+    Map([#true, 0], [x, x], ...)
+    ~is {1: 1, 2: 2, 3: 3, #true: 0}
+  check:
+    Map([#true, 0], & [[7, 7]], [x, x], ...)
+    ~is {1: 1, 2: 2, 3: 3, 7: 7, #true: 0}
+  def [[z, ...], ...] = [[1, 2, 3], [4, 5]]
+  check:
+    [Map([z, #true], ...), ...]
+    ~is [{1: #true, 2: #true, 3: #true}, {4: #true, 5: #true}]
+
+check:
+  def {"x": x, "y": y} = {"x": 1, "y": 2}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def {"x": x, "y": y} = {"x": 1}
+  "oops"
+  ~throws "matching(Map{\"x\": _, \"y\": _})"
+
+check:
+  def {"x": x, "y": y = 2} = {"x": 1}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def {"x": x, "y": y = 2} = {}
+  "oops"
+  ~throws "matching(Map{\"x\": _, \"y\": _ = ....})"
+
+check:
+  def {"x": x, "y": y: 2} = {"x": 1}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def {"x": x, "y": y: 2} = {}
+  "oops"
+  ~throws "matching(Map{\"x\": _, \"y\": _ = ....})"
+
+check:
+  def {"x": x = 1, "y": y = 2} = {}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def {"x": x: 1, "y": y: 2} = {}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def Map{"x": x, "y": y = 2} = {"x": 1}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def Map{"x": x, "y": y: 2} = {"x": 1}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def Map{"x": x = 1, "y": y = 2} = {}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def Map{"x": x: 1, "y": y: 2} = {}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def Map(["x", x], ["y", y]) = {"x": 1, "y": 2}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap{"x": x, "y": y = 2} = {"x": 1}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap{"x": x, "y": y: 2} = {"x": 1}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap{"x": x = 1, "y": y = 2} = {}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap{"x": x: 1, "y": y: 2} = {}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap(["x", x], ["y", y]) = {"x": 1, "y": 2}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap{"x": x, "y": y = 2} = MutableMap{"x": 1}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap{"x": x, "y": y: 2} = MutableMap{"x": 1}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap{"x": x = 1, "y": y = 2} = MutableMap{}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap{"x": x: 1, "y": y: 2} = MutableMap{}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def ReadableMap(["x", x], ["y", y]) = MutableMap{"x": 1, "y": 2}
+  [x, y]
+  ~is [1, 2]
+
+check:
+  def {"x": x} = {"x": 1, "y": 2}
+  x
+  ~is 1
+
+check:
+  def Map{"x": x} = {"x": 1, "y": 2}
+  x
+  ~is 1
+
+check:
+  def Map(["x", x]) = {"x": 1, "y": 2}
+  x
+  ~is 1
+
+check:
+  def ReadableMap{"x": x} = {"x": 1, "y": 2}
+  x
+  ~is 1
+
+check:
+  def ReadableMap(["x", x]) = {"x": 1, "y": 2}
+  x
+  ~is 1
+
+check:
+  def ReadableMap{"x": x} = MutableMap{"x": 1, "y": 2}
+  x
+  ~is 1
+
+check:
+  def ReadableMap(["x", x]) = MutableMap{"x": 1, "y": 2}
+  x
+  ~is 1
+
+check:
+  def ex = "x"
+  def {ex +& "y": xy} = {"xy": 1}
+  xy
+  ~is 1
+
+check:
+  def ex = "x"
+  def Map{ex +& "y": xy} = {"xy": 1}
+  xy
+  ~is 1
+
+check:
+  def ex = "x"
+  def Map([ex +& "y", xy]) = {"xy": 1}
+  xy
+  ~is 1
+
+check:
+  def ex = "x"
+  def ReadableMap{ex +& "y": xy} = {"xy": 1}
+  xy
+  ~is 1
+
+check:
+  def ex = "x"
+  def ReadableMap([ex +& "y", xy]) = {"xy": 1}
+  xy
+  ~is 1
+
+check:
+  def ex = "x"
+  def ReadableMap{ex +& "y": xy} = MutableMap{"xy": 1}
+  xy
+  ~is 1
+
+check:
+  def ex = "x"
+  def ReadableMap([ex +& "y", xy]) = MutableMap{"xy": 1}
+  xy
+  ~is 1
+
+check:
+  def {"x": x, key: val, ...} = {"x": 1, "y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def {"x": x, key: val, ...} = {"y": 2, "z": 3}
+  "oops"
+  ~throws "matching(Map{\"x\": _, _: _, ...})"
+
+check:
+  def Map{"x": x, key: val, ...} = {"x": 1, "y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def ReadableMap{"x": x, key: val, ...} = {"x": 1, "y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def ReadableMap{"x": x, key: val, ...} = MutableMap{"x": 1, "y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def {"x": x, & rst} = {"x": 1, "y": 2, "z": 3}
+  [x, rst]
+  ~is [1, {"y": 2, "z": 3}]
+
+check:
+  def Map{"x": x, & rst} = {"x": 1, "y": 2, "z": 3}
+  [x, rst]
+  ~is [1, {"y": 2, "z": 3}]
+
+check:
+  def ReadableMap{"x": x, & rst} = {"x": 1, "y": 2, "z": 3}
+  [x, rst]
+  ~is [1, {"y": 2, "z": 3}]
+
+check:
+  def ReadableMap{"x": x, & rst} = MutableMap{"x": 1, "y": 2, "z": 3}
+  [x, rst]
+  ~is [1, {"y": 2, "z": 3}]
+
+check:
+  def {"x": x = 1, key: val, ...} = {"y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def Map{"x": x = 1, key: val, ...} = {"y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def ReadableMap{"x": x = 1, key: val, ...} = {"y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def ReadableMap{"x": x = 1, key: val, ...} = MutableMap{"y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def {"x": x: 1, key: val, ...} = {"y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def Map{"x": x: 1, key: val, ...} = {"y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def ReadableMap{"x": x: 1, key: val, ...} = {"y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def ReadableMap{"x": x: 1, key: val, ...} = MutableMap{"y": 2, "z": 3}
+  [x, {key, ...}, {val, ...}]
+  ~is [1, {"y", "z"}, {2, 3}]
+
+check:
+  def {"x": x: 1, & rst} = {"y": 2, "z": 3}
+  [x, rst]
+  ~is [1, {"y": 2, "z": 3}]
+
+check:
+  def Map{"x": x: 1, & rst} = {"y": 2, "z": 3}
+  [x, rst]
+  ~is [1, {"y": 2, "z": 3}]
+
+check:
+  def ReadableMap{"x": x: 1, & rst} = {"y": 2, "z": 3}
+  [x, rst]
+  ~is [1, {"y": 2, "z": 3}]
+
+check:
+  def ReadableMap{"x": x: 1, & rst} = MutableMap{"y": 2, "z": 3}
+  [x, rst]
+  ~is [1, {"y": 2, "z": 3}]
+
+block:
+  fun matcher(mp):
+    match mp
+    | {
+        "x": _:
+               println("didn't match x")
+               #false,
+        "y": _:
+               println("didn't match y")
+               #false,
+        "z": _:
+               println("didn't match z")
+               #false,
+      }:
+        #void
+  check:
+    matcher({})
+    ~prints "didn't match x\ndidn't match y\ndidn't match z\n"
+  check:
+    matcher({"x": #false})
+    ~prints "didn't match y\ndidn't match z\n"
+  check:
+    matcher({"y": #false})
+    ~prints "didn't match x\ndidn't match z\n"
+  check:
+    matcher({"z": #false})
+    ~prints "didn't match x\ndidn't match y\n"
+  check:
+    matcher({"x": #false, "y": #false})
+    ~prints "didn't match z\n"
+  check:
+    matcher({"x": #false, "z": #false})
+    ~prints "didn't match y\n"
+  check:
+    matcher({"y": #false, "z": #false})
+    ~prints "didn't match x\n"
+  check:
+    matcher({"x": #false, "y": #false, "z": #false})
+    ~prints ""
+
+block:
+  fun matcher(mp):
+    match mp
+    | ReadableMap{
+        "x": _:
+               println("didn't match x")
+               #false,
+        "y": _:
+               println("didn't match y")
+               #false,
+        "z": _:
+               println("didn't match z")
+               #false,
+      }:
+        #void
+  check:
+    matcher({})
+    ~prints "didn't match x\ndidn't match y\ndidn't match z\n"
+  check:
+    matcher({"x": #false})
+    ~prints "didn't match y\ndidn't match z\n"
+  check:
+    matcher({"y": #false})
+    ~prints "didn't match x\ndidn't match z\n"
+  check:
+    matcher({"z": #false})
+    ~prints "didn't match x\ndidn't match y\n"
+  check:
+    matcher({"x": #false, "y": #false})
+    ~prints "didn't match z\n"
+  check:
+    matcher({"x": #false, "z": #false})
+    ~prints "didn't match y\n"
+  check:
+    matcher({"y": #false, "z": #false})
+    ~prints "didn't match x\n"
+  check:
+    matcher({"x": #false, "y": #false, "z": #false})
+    ~prints ""
+  check:
+    matcher(MutableMap{})
+    ~prints "didn't match x\ndidn't match y\ndidn't match z\n"
+  check:
+    matcher(MutableMap{"x": #false})
+    ~prints "didn't match y\ndidn't match z\n"
+  check:
+    matcher(MutableMap{"y": #false})
+    ~prints "didn't match x\ndidn't match z\n"
+  check:
+    matcher(MutableMap{"z": #false})
+    ~prints "didn't match x\ndidn't match y\n"
+  check:
+    matcher(MutableMap{"x": #false, "y": #false})
+    ~prints "didn't match z\n"
+  check:
+    matcher(MutableMap{"x": #false, "z": #false})
+    ~prints "didn't match y\n"
+  check:
+    matcher(MutableMap{"y": #false, "z": #false})
+    ~prints "didn't match x\n"
+  check:
+    matcher(MutableMap{"x": #false, "y": #false, "z": #false})
+    ~prints ""
+
+check:
+  match {}
+  | Map.empty: "empty"
+  | ~else: "other"
+  ~is "empty"
+
+check:
+  match MutableMap{}
+  | Map.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  match {1: 2}
+  | Map.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  match MutableMap{1: 2}
+  | Map.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  match {}
+  | ReadableMap.empty: "empty"
+  | ~else: "other"
+  ~is "empty"
+
+check:
+  match MutableMap{}
+  | ReadableMap.empty: "empty"
+  | ~else: "other"
+  ~is "empty"
+
+check:
+  match {1: 2}
+  | ReadableMap.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  match MutableMap{1: 2}
+  | ReadableMap.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  {1: "a", 2: 2, 3: 3}.keys(#true) ~is [1, 2, 3]
+
+block:
+  use_static
+  check {1: "a", 2: "b"}.remove(1) ~is {2: "b"}
+  check {1: "a", 2: "b"}.remove(3) ~is {1: "a", 2: "b"}
+  check {1: "a", 2: "b"}.remove(1)[2] ~is "b"
+  check Map.remove({1: "a", 2: "b"}, 1) ~is {2: "b"}
+  check Map.remove({1: "a", 2: "b"}, 3) ~is {1: "a", 2: "b"}
+  check Map.remove({1: "a", 2: "b"}, 1)[2] ~is "b"
+  block:
+    use_dynamic
+    check dynamic({1: "a", 2: "b"}).remove(1) ~is {2: "b"}
+    check dynamic({1: "a", 2: "b"}).remove(3) ~is {1: "a", 2: "b"}
+
+block:
+  use_static
+  let m = MutableMap{1: "a", 2: "b"}
+  m.remove(1)
+  check m ~is_now MutableMap{2: "b"}
+  m.remove(3)
+  check m ~is_now MutableMap{2: "b"}
+  m[1] := "a"
+  check m ~is_now MutableMap{1: "a", 2: "b"}
+  check MutableMap.remove(m, 1) ~is #void
+  check m ~is_now MutableMap{2: "b"}
+  check MutableMap.remove(m, 3) ~is #void
+  check m ~is_now MutableMap{2: "b"}
+  m.set(1, "a")
+  check m ~is_now MutableMap{1: "a", 2: "b"}
+  block:
+    use_dynamic
+    check dynamic(m).remove(1) ~is #void
+    check m ~is_now MutableMap{2: "b"}
+    check dynamic(m)[1] := "a" ~is #void
+    check m ~is_now MutableMap{1: "a", 2: "b"}
+    check dynamic(m).remove(1) ~is #void
+    check m ~is_now MutableMap{2: "b"}
+    check dynamic(m).set(1, "a") ~is #void
+    check m ~is_now MutableMap{1: "a", 2: "b"}
+
+block:
+  let m = MutableMap{1: "a", 2: "b"}
+  let n = m.copy()
+  check m is_now n ~is #true
+  check m == n ~is #false
+  m[2] := "a"
+  n[1] := "b"
+  check m ~is_now MutableMap{1: "a", 2: "a"}
+  check n ~is_now MutableMap{1: "b", 2: "b"}
+
+block:
+  let m = {1: "a", 2: "b"}
+  let n = m.snapshot()
+  check m === n ~is #true
+
+block:
+  let m = MutableMap{1: "a", 2: "b"}
+  let n = m.snapshot()
+  check m == n ~is #false
+  check m.snapshot() == n ~is #true
+  check m.snapshot() === n ~is #false
+
+block:
+  use_static
+  def mp = {1: "a", 2: "b", 3: "c"}
+  check:
+    for Map ((k, v) in mp):
+      values(k, v)
+    ~is {1: "a", 2: "b", 3: "c"}
+  check:
+    for Map ((k, v) in Map.to_sequence(mp)):
+      values(k, v)
+    ~is {1: "a", 2: "b", 3: "c"}
+  check:
+    for Map ((k, v) in mp.to_sequence()):
+      values(k, v)
+    ~is {1: "a", 2: "b", 3: "c"}
+
+block:
+  use_static
+  def mp = MutableMap{1: "a", 2: "b", 3: "c"}
+  check:
+    for Map ((k, v) in mp):
+      values(k, v)
+    ~is {1: "a", 2: "b", 3: "c"}
+  check:
+    for Map ((k, v) in Map.to_sequence(mp)):
+      values(k, v)
+    ~is {1: "a", 2: "b", 3: "c"}
+  check:
+    for Map ((k, v) in mp.to_sequence()):
+      values(k, v)
+    ~is {1: "a", 2: "b", 3: "c"}
+
+block:
+  check:
+    Map.to_sequence("oops")
+    ~throws values(
+      "Map.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableMap").msg,
+      error.val("oops").msg,
+    )
+  check:
+    ("oops" :~ Map).to_sequence()
+    ~throws values(
+      "Map.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableMap").msg,
+      error.val("oops").msg,
+    )
+  check:
+    for Map ((k, v) in "oops" :~ Map):
+      values(k, v)
+    ~throws values(
+      "Map.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableMap").msg,
+      error.val("oops").msg,
+    )
+  check:
+    for Map ((k, v) in Map.to_sequence("oops")):
+      values(k, v)
+    ~throws values(
+      "Map.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableMap").msg,
+      error.val("oops").msg,
+    )
+  check:
+    for Map ((k, v) in ("oops" :~ Map).to_sequence()):
+      values(k, v)
+    ~throws values(
+      "Map.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableMap").msg,
+      error.val("oops").msg,
+    )
+
+check:
+  use_static
+  class Posn(x, y)
+  def map :: Map.of(List, Posn):
+    {[#'foo]: Posn(1, 2), [1]: Posn(3, 4), [Box(2)]: Posn(4, 5)}
+  for Set ((key, val) in map):
+    key.length() + val.y
+  ~is {3, 5, 6}
+
+check:
+  ~eval
+  use_static
+  // make sure val static info isn't confused for key
+  def map :: Map.of(Any, String):
+    {#'foo: "foo", 1: "1", Box(2): "Box(2)"}
+  for ((key, val) in map):
+    println(key.length() + val.length())
+  ~throws "no such field or method (based on static information)"
+
+check:
+  use_static
+  Map.empty.get("no such thing", #false)
+  ~is #false
+
+check:
+  use_static
+  def Map.empty && empty = dynamic({})
+  empty.get("no such thing", #false)
+  ~is #false
+
+check:
+  use_static
+  Map.empty.remove("no such thing")
+  ~is {}
+
+check:
+  use_static
+  def Map.empty && empty = dynamic({})
+  empty.remove("no such thing")
+  ~is {}
+
+check:
+  use_static
+  ReadableMap.empty.get("no such thing", #false)
+  ~is #false
+
+check:
+  use_static
+  def ReadableMap.empty && empty = dynamic({})
+  empty.get("no such thing", #false)
+  ~is #false
+
+check:
+  ~eval
+  use_static
+  ReadableMap.empty.remove("no such thing")
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  def ReadableMap.empty && empty = dynamic({})
+  empty.remove("no such thing")
+  ~throws "no such field or method (based on static information)"
+
+check:
+  to_string(Map{}) ~is "{}"
+  to_string(Map{1: 2, 3: 4}) ~is "{1: 2, 3: 4}"
+  to_string(MutableMap{}) ~is "MutableMap{}"
+  to_string(MutableMap{1: 2, 3: 4}) ~is "MutableMap{1: 2, 3: 4}"
+  to_string(WeakMutableMap{}) ~is "WeakMutableMap{}"
+  to_string(WeakMutableMap{1: 2, 3: 4}) ~is "WeakMutableMap{1: 2, 3: 4}"
+
+check:
+  def m = MutableMap{1: 2, 3: 4}
+  m[1] := m
+  to_string(m)
+  ~is "#0=MutableMap{1: #0#, 3: 4}"
+
+block:
+  def orig = MutableMap{"x": 1, 2: 5}
+  check orig :: MutableMap.now_of(String, Int) ~throws "value does not satisfy annotation" // "value" is the map
+  check orig :: MutableMap.now_of(Any, Int) ~is orig
+  check orig :: MutableMap.now_of(Any, matching(1)) ~throws "value does not satisfy annotation"
+  check (orig :: MutableMap.now_of(Any, Int))["x"] := "1" ~is #void
+  check orig ~is_now MutableMap{"x": "1", 2: 5}
+
+block:
+  def orig = MutableMap{"x": 1, 2: 5}
+  def m :: MutableMap.later_of(String, Int) = orig
+  check m["x"] ~is 1
+  check m[2] ~throws "key does not satisfy annotation"
+  check m["x"] := "1" ~throws "value does not satisfy annotation"
+  check to_string(m) ~throws "key does not satisfy annotation"
+  check m["x"] := 10 ~is #void
+  check m["y"] := 11 ~is #void
+  check orig[2] ~is 5
+  check orig["x"] ~is 10
+  check orig["y"] ~is 11
+  check m.remove(2) ~throws "key does not satisfy annotation"
+  check m.remove("y") ~is #void
+  check orig.remove(2) ~is #void
+  check to_string(m) ~is "MutableMap{\"x\": 10}"
+
+check:
+  use_static
+  def m :: MutableMap.later_of(Int, String) = MutableMap{100: "1"}
+  m[100] ++ "!"
+  ~is "1!"
+
+block:
+  def m :: Map.later_of(String, Int) = Map{"x": 1, 2: 5}
+  check m["x"] ~is 1
+  check m[2] ~throws "key does not satisfy annotation"
+  check m ++ {"x": "1"} ~throws "value does not satisfy annotation"
+  check to_string(m) ~throws "key does not satisfy annotation"
+  check m ++ {"x": 10} ~is_a Map
+  check m ++ {"y": 11} ~is_a Map
+  check m.remove(2) ~throws "key does not satisfy annotation"
+  check m.remove("x") ~is_a Map
+  check m.remove("y") ~is_a Map
+
+block:
+  class Posn(x, y)
+  let a = Posn(1, 2)
+  let b = Posn(1, 2)
+  let ab = Box(1)
+  let bb = Box(1)
+  check a === b ~is #false
+  def m1 = Map.by(===){ a: 1, b: 2 }
+  def m2 = Map.by(is_same_number_or_object){ a: 1, b: 2, 1 / 2: 3, 2 / 4: 4 }
+  def m3 = Map.by(is_now){ ab: 1, bb: 2 }
+  check m1[a] ~is 1
+  check m1[b] ~is 2
+  check m2[a] ~is 1
+  check m2[b] ~is 2
+  check m2[1/2] ~is 4
+  check m2.length() ~is 3
+  check m3[ab] ~is 2
+  check m3.length() ~is 1
+  let str = to_string(m1)
+  check (str == "Map.by(===){Posn(1, 2): 1, Posn(1, 2): 2}" || str == "Map.by(===){Posn(1, 2): 2, Posn(1, 2): 1}") ~is #true
+  check to_string(m2).substring(0, 33) ~is "Map.by(is_same_number_or_object){"
+  check to_string(m3).substring(0, 15) ~is "Map.by(is_now){"
+  check m1 is_a Map ~is #true
+  check m1 is_a Map.by(===) ~is #true
+  check m1 is_a Map.by(==) ~is #false
+  check {} is_a Map.by(==) ~is #true
+  check m2 is_a Map.by(===) ~is #false
+  check m2 is_a Map.by(is_same_number_or_object) ~is #true
+  check m3 is_a Map.by(===) ~is #false
+  check m3 is_a Map.by(is_now) ~is #true
+  check (for Map.by(===) (i in 0..1): values(i, i+1)) ~is Map.by(===){ 0: 1 }
+  check (for Map.by(is_now) (i in 0..1): values(i, i+1)) ~is Map.by(is_now){ 0: 1 }
+  check (for Map.by(is_same_number_or_object) (i in 0..1): values(i, i+1)) ~is Map.by(is_same_number_or_object){ 0: 1 }
+  let [x, ...] = [1, 2, 3]
+  check Map.by(===){ x: x, ...} ~is Map.by(===){ 1: 1, 2: 2, 3: 3 }
+
+  import rhombus/meta open
+  expr.macro 'check_map_by $(key_comp :: Term)':
+    'block:
+       use_static
+       def is_equals = (match '$key_comp' | '==': #true | ~else: #false)
+       def is_is_now = (match '$key_comp' | 'is_now': #true | ~else: #false)
+       check Map.by($key_comp){} ~is Map.by($key_comp){}
+       check Map.by($key_comp){} ~is_a Map.by($key_comp)
+       check Map.by($key_comp){} is_a Map.by(==) ~is is_equals
+       check Map.by($key_comp){} is_a Map.by(is_now) ~is is_is_now
+       check Map.by($key_comp){ "x": 1 } == { "x": 1 } ~is is_equals
+       check Map.by($key_comp){ "x": 1 } == Map.by(is_now){ "x": 1 } ~is is_is_now
+       check { "x": 1 } == Map.by($key_comp){ "x": 1 } ~is is_equals
+       check Map.by(is_now){ "x": 1 }  == Map.by($key_comp){ "x": 1 } ~is is_is_now
+       check Map.by($key_comp)([1, 2]) ~is Map.by($key_comp){ 1: 2 }
+       check Map.by($key_comp){} ~is_a Map.by($key_comp).of(String, Number)
+       check Map.by($key_comp){ "x": 1 } ~is_a Map.by($key_comp).of(String, Number)
+       check Map.by($key_comp){ "x": 1 } is_a Map.by($key_comp).of(String, Number) ~is #true
+       check Map.by($key_comp){ "x": 1 } is_a Map.by($key_comp).of(Number, String) ~is #false
+       check Map.by($key_comp){} ++ { 0: 1 } ~is Map.by($key_comp){ 0: 1 }
+       check Map.by($key_comp){} ++ { 0: 1, 2: 3 } ~is Map.by($key_comp){ 0: 1, 2: 3 }
+       check Map.by($key_comp){ x: x, $('...')} ~is Map.by($key_comp){ 1: 1, 2: 2, 3: 3 }
+       check Map.by($key_comp){ x: x, $('...')}.length() ~is 3
+       check [Map.by($key_comp){ x: x }, $('...')] ~is [Map.by($key_comp){ 1: 1 },
+                                                        Map.by($key_comp){ 2: 2 },
+                                                        Map.by($key_comp){ 3: 3 }]
+       block:
+         use_static
+         check Map.by($key_comp){}.length() ~is 0
+         check Map.by($key_comp)().length() ~is 0
+         check MutableMap.by($key_comp){}.length() ~is 0
+         check MutableMap.by($key_comp)().length() ~is 0
+         check WeakMutableMap.by($key_comp){}.length() ~is 0
+         check WeakMutableMap.by($key_comp)().length() ~is 0
+
+       check (for Map.by($key_comp) (i in 0..1): values(i, i+1)) ~is Map.by($key_comp){ 0: 1 }
+       block:
+         let Map.by($key_comp){ 1: v } = Map.by($key_comp){ 1: "x" }
+         check v ~is "x"
+       block:
+         let Map.by($key_comp){ 1: v, & rest } = Map.by($key_comp){ 1: "x", 2: 3 }
+         check rest ~is_a Map.by($key_comp)
+         check rest[2] ~is 3
+       let m4 = MutableMap.by($key_comp){}
+       m4[0] := 1
+       check m4[0] ~is 1
+       check m4 ~is_now MutableMap.by($key_comp){ 0: 1 }
+       check m4 ~is_now MutableMap.by($key_comp)([0, 1])
+       check m4 ~is_a MutableMap.by($key_comp)
+       check m4 is_a MutableMap.by(==) ~is is_equals
+       check m4 is_a MutableMap.by(is_now) ~is is_is_now
+       check MutableMap.by($key_comp){ "x": 1 } is_now MutableMap{ "x": 1 } ~is is_equals
+       check MutableMap.by($key_comp){ "x": 1 } is_now MutableMap.by(is_now){ "x": 1 } ~is is_is_now
+       check MutableMap{ "x": 1 }is_now MutableMap.by($key_comp){ "x": 1 } ~is is_equals
+       check MutableMap.by(is_now){ "x": 1 } is_now MutableMap.by($key_comp){ "x": 1 } ~is is_is_now
+       check [MutableMap.by($key_comp){ x: x }, $('...')] ~is_now [MutableMap.by($key_comp){ 1: 1 },
+                                                                   MutableMap.by($key_comp){ 2: 2 },
+                                                                   MutableMap.by($key_comp){ 3: 3 }]
+       class Boson(v)
+       let m5 = WeakMutableMap.by($key_comp){}
+       let mutable boson = Boson("plus")
+       m5[boson] := 1
+       check m5[boson] ~is 1
+       check m5 ~is_now WeakMutableMap.by($key_comp){ boson: 1 }
+       check m5 ~is_now WeakMutableMap.by($key_comp)([boson, 1])
+       check m5 ~is_a WeakMutableMap.by($key_comp)
+       check m5 ~is_a MutableMap.by($key_comp)
+       check m5 is_a WeakMutableMap.by(==) ~is is_equals
+       check m5 is_a WeakMutableMap.by(is_now) ~is is_is_now
+       check WeakMutableMap.by($key_comp){ boson: 1 } is_now WeakMutableMap{ boson: 1 } ~is is_equals
+       check WeakMutableMap.by($key_comp){ boson: 1 } is_now WeakMutableMap.by(is_now){ boson: 1 } ~is is_is_now
+       check WeakMutableMap{ boson: 1 }is_now WeakMutableMap.by($key_comp){ boson: 1 } ~is is_equals
+       check WeakMutableMap.by(is_now){ boson: 1 } is_now WeakMutableMap.by($key_comp){ boson: 1 } ~is is_is_now
+       check [WeakMutableMap.by($key_comp){ x: x }, $('...')] ~is_now [WeakMutableMap.by($key_comp){ 1: 1 },
+                                                                       WeakMutableMap.by($key_comp){ 2: 2 },
+                                                                       WeakMutableMap.by($key_comp){ 3: 3 }]
+       // make sure the map is weak:
+       m5[boson] := boson
+       check m5[boson] ~is boson
+       boson := #false
+       memory.gc()
+       check m5.length() ~is 0'
+  check_map_by ==
+  check_map_by ===
+  check_map_by is_now
+  check_map_by is_same_number_or_object
+
+  block:
+    key_comp.def 'is_anything':
+      ~equals: fun (a, b, recur): #true
+      ~hash_code: fun (a, recur): 1
+    let m = Map.by(is_anything){ 1: 2, 3: 4 }
+    check m.length() ~is 1
+    check m["any value at all"] ~is 4
+    check m.keys() ~is [3]
+
+    key_comp.def 'both_42_or_both_other':
+      ~equals: fun (a, b, recur): if (a == 42) | (b == 42) | (b != 42)
+      ~hash_code: fun (a, recur): if (a == 42) | 42 | 1
+    let m2o = Map.by(both_42_or_both_other){ 1: 2, 42: 9, 3: 4 }
+    check m2o.length() ~is 2
+    check m2o["any non-42 value"] ~is 4
+    check m2o[42] ~is 9
+    check m2o.keys().sort(math.less) ~is [3, 42]
+
+    key_comp.def 'equals':
+      ~equals: fun (a, b, recur): a == b
+      ~hash_code: fun (a, recur): Equatable.hash(a)
+    check_map_by equals
+
+  #void
+
+// splicing of repetitions
+block:
+  import rhombus/meta open
+  key_comp.def 'equals':
+    ~equals: fun (a, b, recur): a == b
+    ~hash_code: fun (a, recur): Equatable.hash(a)
+
+  def [k && v, ...] = [1, 2, 3]
+  check :
+    {k: v, ...}
+    ~is {1: 1, 2: 2, 3: 3}
+  check :
+    Map.by(===){k: v, ...}
+    ~is Map.by(===){1: 1, 2: 2, 3: 3}
+  check :
+    Map.by(is_same_number_or_object){k: v, ...}
+    ~is Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}
+  check :
+    Map.by(is_now){k: v, ...}
+    ~is Map.by(is_now){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){k: v, ...}
+    ~is Map.by(equals){1: 1, 2: 2, 3: 3}
+
+// splicing of mixed-kind sets
+block:
+  import rhombus/meta open
+  key_comp.def 'equals':
+    ~equals: fun (a, b, recur): a == b
+    ~hash_code: fun (a, recur): Equatable.hash(a)
+
+  check:
+    {& {1: 1, 2: 2, 3: 3}}
+    ~is {1: 1, 2: 2, 3: 3}
+  check:
+    {& Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is {1: 1, 2: 2, 3: 3}
+  check:
+    {& Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is {1: 1, 2: 2, 3: 3}
+  check:
+    {& Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is {1: 1, 2: 2, 3: 3}
+  check:
+    {& Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is {1: 1, 2: 2, 3: 3}
+  check:
+    {0: 0, & {1: 1, 2: 2, 3: 3}}
+    ~is {0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    {0: 0, & Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is {0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    {0: 0, & Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is {0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    {0: 0, & Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is {0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    {0: 0, & Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is {0: 0, 1: 1, 2: 2, 3: 3}
+
+  check:
+    Map.by(===){& {1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(===){& Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(===){& Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(===){& Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(===){& Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(===){0: 0, & {1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(===){0: 0, & Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(===){0: 0, & Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(===){0: 0, & Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(===){0: 0, & Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(===){0: 0, 1: 1, 2: 2, 3: 3}
+
+  check:
+    Map.by(is_same_number_or_object){& {1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_same_number_or_object){& Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_same_number_or_object){& Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_same_number_or_object){& Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_same_number_or_object){& Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_same_number_or_object){0: 0, & {1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_same_number_or_object){0: 0, & Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_same_number_or_object){0: 0, & Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_same_number_or_object){0: 0, & Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_same_number_or_object){0: 0, & Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_same_number_or_object){0: 0, 1: 1, 2: 2, 3: 3}
+
+  check:
+    Map.by(is_now){& {1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_now){& Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_now){& Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_now){& Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_now){& Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_now){0: 0, & {1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_now){0: 0, & Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_now){0: 0, & Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_now){0: 0, & Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(is_now){0: 0, & Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(is_now){0: 0, 1: 1, 2: 2, 3: 3}
+
+  check:
+    Map.by(equals){& {1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){& Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){& Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){& Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){& Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){0: 0, & {1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){0: 0, & Map.by(===){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){0: 0, & Map.by(is_same_number_or_object){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){0: 0, & Map.by(is_now){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){0: 0, 1: 1, 2: 2, 3: 3}
+  check:
+    Map.by(equals){0: 0, & Map.by(equals){1: 1, 2: 2, 3: 3}}
+    ~is Map.by(equals){0: 0, 1: 1, 2: 2, 3: 3}
+
+// append of mixed-kind maps
+block:
+  import rhombus/meta open
+  key_comp.def 'equals':
+    ~equals: fun (a, b, recur): a == b
+    ~hash_code: fun (a, recur): Equatable.hash(a)
+
+  check:
+    {}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+    ) ~is {
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal
+    }
+  check:
+    {}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+      Map.by(equals){#'custom: #'custom},
+    ) ~is {
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal, #'custom: #'custom
+    }
+
+  check:
+    Map.by(===){}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+    ) ~is Map.by(===){
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal
+    }
+  check:
+    Map.by(===){}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+      Map.by(equals){#'custom: #'custom},
+    ) ~is Map.by(===){
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal, #'custom: #'custom
+    }
+
+  check:
+    Map.by(is_same_number_or_object){}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+    ) ~is Map.by(is_same_number_or_object){
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal
+    }
+  check:
+    Map.by(is_same_number_or_object){}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+      Map.by(equals){#'custom: #'custom},
+    ) ~is Map.by(is_same_number_or_object){
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal, #'custom: #'custom
+    }
+
+  check:
+    Map.by(is_now){}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+    ) ~is Map.by(is_now){
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal
+    }
+  check:
+    Map.by(is_now){}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+      Map.by(equals){#'custom: #'custom},
+    ) ~is Map.by(is_now){
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal, #'custom: #'custom
+    }
+
+  check:
+    Map.by(equals){}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+    ) ~is Map.by(equals){
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal
+    }
+  check:
+    Map.by(equals){}.append(
+      {#'equal_always: #'equal_always},
+      Map.by(===){#'eq: #'eq},
+      Map.by(is_same_number_or_object){#'eqv: #'eqv},
+      Map.by(is_now){#'equal: #'equal},
+      Map.by(equals){#'custom: #'custom},
+    ) ~is Map.by(equals){
+      #'equal_always: #'equal_always, #'eq: #'eq, #'eqv: #'eqv, #'equal: #'equal, #'custom: #'custom
+    }
+
+check:
+  ("oops" :~ Map)[0]
+  ~throws values(
+    "Map.get: " ++ error.annot_msg(),
+    error.annot("ReadableMap").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  ("oops" :~ MutableMap)[0] := 0
+  ~throws values(
+    "MutableMap.set: " ++ error.annot_msg(),
+    error.annot("MutableMap").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  Map.append("oops") ~throws values(
+    "Map.append: " ++ error.annot_msg(),
+    error.annot("Map").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ Map).append() ~throws values(
+    "Map.append: " ++ error.annot_msg(),
+    error.annot("Map").msg,
+    error.val("oops").msg,
+  )
+  // this case is specially optimized
+  ("oops" :~ Map) ++ {"a": 1} ~throws values(
+    "Map.append: " ++ error.annot_msg(),
+    error.annot("Map").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ Map) ++ {"a": 1, "b": 2} ~throws values(
+    "Map.append: " ++ error.annot_msg(),
+    error.annot("Map").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  "a" in ("oops" :~ Map) ~throws values(
+    "Map.contains: " ++ error.annot_msg(),
+    error.annot("ReadableMap").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ Map).contains("a") ~throws values(
+    "Map.contains: " ++ error.annot_msg(),
+    error.annot("ReadableMap").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ Map).has_key("a") ~throws values(
+    "Map.has_key: " ++ error.annot_msg(),
+    error.annot("ReadableMap").msg,
+    error.val("oops").msg,
+  )
+
+block:
+  fun f(x :: Map.of(Any.of(block: println("now"); 1),
+                    Any.of(block: println("then"); 2)),
+        ...):
+    #'ok
+  check f({1: 2}) ~prints "now\nthen\n"
+  check f({1: 2}) ~prints "now\nthen\n"
+  check f({1: 2}, {1: 2}) ~prints "now\nthen\n"
+
+block:
+  fun f(x :: MutableMap.now_of(Any.of(block: println("now"); 1),
+                               Any.of(block: println("then"); 2)),
+        ...):
+    #'ok
+  check f(MutableMap{1: 2}) ~prints "now\nthen\n"
+  check f(MutableMap{1: 2}) ~prints "now\nthen\n"
+  check f(MutableMap{1: 2}, MutableMap{1: 2}) ~prints "now\nthen\n"
+
+block:
+  fun f(x :: MutableMap.later_of(Any.of(block: println("now"); 1),
+                                 Any.of(block: println("then"); 2)),
+        ...):
+    #'ok
+  check f(MutableMap{1: 2}) ~prints "now\nthen\n"
+  check f(MutableMap{1: 2}) ~prints "now\nthen\n"
+  check f(MutableMap{1: 2}, MutableMap{1: 2}) ~prints "now\nthen\n"
+
+block:
+  fun f(x :: Map.by(===).of(Any.of(block: println("now"); 1),
+                            Any.of(block: println("then"); 2)),
+        ...):
+    #'ok
+  check f(Map.by(===){1: 2}) ~prints "now\nthen\n"
+  check f(Map.by(===){1: 2}) ~prints "now\nthen\n"
+  check f(Map.by(===){1: 2}, Map.by(===){1: 2}) ~prints "now\nthen\n"
+
+// dependent result annotations
+block:
+  use_static
+  def m = { "a" : #"bb" }
+  check m["a"].length() ~is 2
+  check m.get("a").length() ~is 2
+  check m.keys()[0].length() ~is 1
+  check m.values()[0].length() ~is 2
+  check: for List ((k, v) in m.to_sequence()):
+           k.length() + v.length()
+         ~is [3]
+  check m.set("c", #"ddd")["c"].length() ~is 3
+  check m.set("c", #"ddd").keys()[0].length() ~is 1
+  check m.remove("c")["a"].length() ~is 2
+  check m.remove("c").keys()[0].length() ~is 1
+  def mm :: MutableMap.later_of(String, Bytes) = { "a" : #"bb" }.copy()
+  check mm.snapshot().keys()[0].length() ~is 1
+  check mm.snapshot().values()[0].length() ~is 2
+  check m.snapshot().keys()[0].length() ~is 1
+  check m.snapshot().values()[0].length() ~is 2
+  def m2 = { "a": #"bb", & { "c": #"ddd" } }
+  check m2.get("a").length() ~is 2
+  check m2.keys()[0].length() ~is 1
+  let [str, ...] = ["x", "y"]
+  let [bstr, ...] = [#"00", #"11"]
+  check { str: bstr, ...}.keys()[0].length() ~is 1
+  check { str: bstr, ...}.values()[0].length() ~is 2
+  check ({"a": #"00"} ++ {"b": #"111"})["a"].length() ~is 2
+  check ({"a": #"00"} ++ {"b": #"111", "c": #"" })["b"].length() ~is 3
+  check ({"a": #"00"} ++ {"b": #"111"}).keys()[0].length() ~is 1
+  check ({"a": #"00"} ++ {"b": #"111", "c": #"" }).keys()[0].length() ~is 1
+
+check:
+  ~eval
+  use_static
+  def m :: Map.of(String, Bytes) = { "a" : #"bb" }
+  m.set(#"x", #"y").keys()[0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+check:
+  ~eval
+  use_static
+  def m :: Map.of(String, Bytes) = { "a" : #"bb" }
+  m.set("x", "y").values()[0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+check:
+  ~eval
+  use_static
+  def m = { "a" : #"bb", "c": 0 }
+  m.values()[0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+check:
+  ~eval
+  use_static
+  def m = { "a" : #"bb", #'c: #"x" }
+  m.keys()[0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+block:
+  import rhombus/meta open
+  namespace one:
+    export namespace a
+    key_comp.def 'a.foo':
+      ~equals: fun (a, b, recur): a == b
+      ~hash_code: fun (a, recur): 42
+    check Map.by(a.foo)() ~is Map.by(a.foo){}
+  namespace two:
+    import .one open
+    check Map.by(a.foo)() ~is Map.by(a.foo){}
+  #void
+
+// regression test: repetitions in explicit `Map`
+check:
+  let [x, ...] = [1, 2, 3]
+  Map{x: x+1, ...}
+  ~is {1: 2, 2: 3, 3: 4}
+
+check:
+  let [[x, ...], ...] = [[1], [2], [3]]
+  [Map{x: x+1, ...}, ...]
+  ~is [{1: 2}, {2: 3}, {3: 4}]
+
+check:
+  import: rhombus/meta open
+  class Wrapper(inner)
+  key_comp.def 'equal_inner':
+    ~equals:
+      fun(x :~ Wrapper, y :~ Wrapper, rec):
+        rec(x.inner, y.inner)
+    ~hash_code:
+      fun(w :~ Wrapper, rec):
+        rec(w.inner)
+
+  let m = WeakMutableMap.by(equal_inner){}
+  let w = Wrapper(42)
+  m[w] := #true
+  memory.gc()
+  m[w]
+  ~is #true

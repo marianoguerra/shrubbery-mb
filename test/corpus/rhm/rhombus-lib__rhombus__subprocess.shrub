@@ -1,0 +1,159 @@
+import:
+  rhombus/thread open
+  lib("racket/base.rkt") as rkt
+  "private/shell.rkt" as rkt_shell
+  lib("racket/private/streams.rkt") as rkt_stream
+  "private/amalgam/rename-parameter.rkt" as rkt_rename
+
+export:
+  run
+  shell
+  run_shell
+  run_command
+  Subprocess
+  current_group_new
+  current_custodian_mode
+  find_executable_path
+
+def current_group_new:
+  rkt_rename.#{rename-parameter}(rkt.#{subprocess-group-enabled},
+                                 #'current_subprocess_group_enabled)
+
+def current_custodian_mode:
+  rkt_rename.#{rename-parameter}(rkt.#{current-subprocess-custodian-mode},
+                                 #'current_subprocess_custodian_mode)
+
+fun current_group():
+  if current_group_new()
+  | #'new
+  | #'same
+
+class Subprocess(hand, output, input, error_output, desc, is_new):
+  // output, input, and error_output can be a port, thread, or #false
+  opaque
+  internal _Subprocess
+  implements Closeable
+  expression: ~error
+  private implements Printable
+  private override method describe(mode, recur):
+    PrintDesc.concat("Subprocess(", repr(to_string(desc)), ")")
+  property handle: hand
+  property maybe_in :~ maybe(Port.Output && Port.FileStream): input is_a Port.Output && input
+  property maybe_out :~ maybe(Port.Input && Port.FileStream): output is_a Port.Input && output
+  property maybe_err :~ maybe(Port.Input && Port.FileStream): error_output is_a Port.Input && error_output
+  fun not_available(who): error(~who: who, "pipe not available")
+  property in :~ Port.Output && Port.FileStream: maybe_in || not_available(#'in)
+  property out :~ Port.Input && Port.FileStream: maybe_out || not_available(#'out)
+  property err :~ Port.Input && Port.FileStream: maybe_err || not_available(#'err)
+  property pid: rkt.#{subprocess-pid}(hand)
+  override method close():
+    when input is_a Port.Output | Port.Output.close(input)
+    when output is_a Port.Input | Port.Input.close(output)
+    when error_output is_a Port.Input | Port.Input.close(error_output)
+  method wait():
+    rkt.#{sync}(hand)
+    when input is_a Thread | Thread.wait(input)
+    when output is_a Thread | Thread.wait(output)
+    when error_output is_a Thread | Thread.wait(error_output)
+    rkt.#{subprocess-status}(hand)
+  method wait_ok():
+    wait() == 0
+  method poll():
+    if rkt.#{subprocess-status}(hand) == #'running
+    | #false
+    | wait()
+  method interrupt():
+    rkt.#{subprocess-kill}(hand)
+  method kill():
+    rkt.#{subprocess-kill}(hand, #true)
+
+  export:
+    Pipe
+    ErrorPipe
+    NewGroup
+    Group
+
+  enum Pipe
+  | pipe
+  enum ErrorPipe
+  | ~is_a Pipe
+  | out
+
+  annot.macro 'NewGroup':
+    'satisfying(fun (p): p is_a Subprocess && _Subprocess.is_new(p))'
+
+  enum Group
+  | same
+  | new
+  | ~is_a NewGroup
+
+fun do_run(desc :: String,
+           exe :: PathString,
+           ~in: in :: Port.Input || Subprocess.Pipe = stdin,
+           ~out: out :: Port.Output || Subprocess.Pipe = stdout,
+           ~err: err :: Port.Output || Subprocess.ErrorPipe = stderr,
+           ~group: group :: Subprocess.Group || Subprocess.NewGroup = current_group(),
+           arg, ...) :~ Subprocess:
+  let (handle, o, i, e): rkt.subprocess(out != #'pipe && rkt_stream.#{if-stream-out}(#false, out),
+                                        in != #'pipe && rkt_stream.#{if-stream-in}(#false, in),
+                                        if err == #'out
+                                        | #'stdout
+                                        | err != #'pipe && rkt_stream.#{if-stream-out}(#false, err),
+                                        match group
+                                        | #'same: #false
+                                        | #'new: #'new
+                                        | p :: Subprocess: p.hand,
+                                        exe, arg, ...)
+  let break_ok = Semaphore(0)
+  fun wrap(p): if rkt.#{thread?}(p) | Thread.from_handle(p) | p
+  let i = wrap(rkt_stream.#{streamify-in}(in != #'pipe && in, i,
+                                          fun (on): if on
+                                                    | break_ok.post()
+                                                    | break_ok.wait()))
+  let o = wrap(rkt_stream.#{streamify-out}(out != #'pipe && out, o))
+  let e = wrap(rkt_stream.#{streamify-out}(err != #'pipe && err != #'out && err, e))
+  let sp = _Subprocess(handle, o, i, e, desc, group == #'new)
+  when i is_a Thread
+  | // Wait for process to end, then stop copying input:
+    thread:
+      rkt.sync(handle)
+      break_ok.wait()
+      Thread.break(i)
+  sp
+
+fun run(exe :: PathString,
+        ~in: in :: Port.Input || Subprocess.Pipe = stdin,
+        ~out: out :: Port.Output || Subprocess.Pipe = stdout,
+        ~err: err :: Port.Output || Subprocess.ErrorPipe = stderr,
+        ~group: group :: Subprocess.Group || Subprocess.NewGroup = current_group(),
+        arg :: Path || StringNoNull || BytesNoNull, ...) :~ Subprocess:
+  let exe: if Path.parent(exe) == #'relative
+           | find_executable_path(exe) || exe
+           | exe
+  do_run(to_string(exe), exe, arg, ..., ~in: in, ~out: out, ~err: err, ~group: group)
+
+fun run_shell(command :: StringNoNull,
+              ~in: in :: Port.Input || Subprocess.Pipe = stdin,
+              ~out: out :: Port.Output || Subprocess.Pipe = stdout,
+              ~err: err :: Port.Output || Subprocess.ErrorPipe = stderr,
+              ~group: group :: Subprocess.Group || Subprocess.NewGroup = current_group()) :~ Subprocess:
+  let args = rkt_shell.#{shell-path/args}(#'#{subprocess.shell}, command)
+  do_run(command, & args, ~in: in, ~out: out, ~err: err, ~group: group)
+
+fun shell(command :: StringNoNull):
+  let args = rkt_shell.#{shell-path/args}(#'#{subprocess.shell}, command)
+  let sp = do_run(command, & args)
+  sp.wait_ok()
+
+fun run_command(exe :: PathString,
+                command :: StringNoNull,
+                ~in: in :: Port.Input || Subprocess.Pipe = stdin,
+                ~out: out :: Port.Output || Subprocess.Pipe = stdout,
+                ~err: err :: Port.Output || Subprocess.ErrorPipe = stderr,
+                ~group: group :: Subprocess.Group || Subprocess.NewGroup = current_group()) :~ Subprocess:
+  unless system.type() == #'windows
+  | error(~who: #'run_command, "supported only on Windows")
+  do_run(command, exe, #'exact, command, ~in: in, ~out: out, ~err: err, ~group: group)
+
+fun find_executable_path(exe_name :: PathString) :: maybe(Path):
+  rkt.#{find-executable-path}(exe_name)

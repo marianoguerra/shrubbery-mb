@@ -1,0 +1,9 @@
+
+export:
+  exint
+  b_exint
+  a_exint
+
+def exint = 10
+bind.macro 'b_exint': '(_ :: Int)'
+annot.macro 'a_exint': 'Int'

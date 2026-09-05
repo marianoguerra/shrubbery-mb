@@ -1,0 +1,315 @@
+import:
+  rhombus/runtime_path
+  lib("racket/base.rkt")
+  lib("syntax/modread.rkt")
+
+runtime_path.def def_rhm: "origin-def.rhm"
+runtime_path.def namespace_rhm: "origin-namespace.rhm"
+runtime_path.def annot_rhm: "origin-annot.rhm"
+runtime_path.def bind_rhm: "origin-bind.rhm"
+runtime_path.def repet_rhm: "origin-repet.rhm"
+runtime_path.def rx_rhm: "origin-rx.rhm"
+runtime_path.def defctx_rhm: "origin-defctx.rhm"
+runtime_path.def class_rhm: "origin-class.rhm"
+runtime_path.def for_rhm: "origin-for.rhm"
+runtime_path.def stxclass_rhm: "origin-stxclass.rhm"
+runtime_path.def space_rhm: "origin-space.rhm"
+runtime_path.def fun_count_rhm: "origin-fun-count.rhm"
+runtime_path.def annot_delayed_rhm: "origin-annot-delayed.rhm"
+runtime_path.def fun_def_val_rhm: "origin-fun-def-val.rhm"
+runtime_path.def key_comp_rhm: "origin-key-comp.rhm"
+runtime_path.def unquote_bind_rhm: "origin-unquote-bind.rhm"
+
+fun check_origins(o_rhm, space_sym, expect :: Map):
+  Closeable.let inp = Port.Input.open_file(o_rhm)
+  let stx:
+    modread.#{with-module-reading-parameterization}(
+      fun ():
+        base.#{read-syntax}(Port.name(inp), inp)
+    )
+  let exp_stx:
+    parameterize { base.#{current-load-relative-directory}:
+                     Path.parent(o_rhm),
+                   base.#{current-namespace}:
+                     base.#{make-base-namespace}() }:
+      base.#{expand}(stx)
+  let intro: if space_sym
+             | base.#{make-interned-syntax-introducer}(space_sym)
+             | fun (x, mode): x
+  let ns_intro = base.#{make-interned-syntax-introducer}(#'#{rhombus/namespace})
+  let origins = MutableMap{}
+  fun search_props(v):
+    cond
+    | v is_a Identifier:
+        search(v)
+    | v is_a Pair:
+        search_props(Pair.first(v))
+        search_props(Pair.rest(v))
+    | ~else:
+        #void
+  fun search(stx):
+    cond
+    | stx is_a Syntax:
+        when stx is_a Identifier
+          && base.#{syntax-original?}(stx)
+          && !stx.property(#'#{identifier-as-keyword})
+          && (base.#{bound-identifier=?}(stx, intro(stx, #'add))
+                || base.#{bound-identifier=?}(stx, ns_intro(stx, #'add)))
+        | origins[stx.unwrap()] := (origins.maybe[stx.unwrap()] || Set{}) ++ { stx.srcloc() }
+        search_props(base.#{syntax-property}(stx, #'origin))
+        search_props(base.#{syntax-property}(stx, #'#{disappeared-use}))
+        // need to search bindings for uses, but don't add bindings
+        search_props(base.#{syntax-property}(stx, #'#{disappeared-binding}))
+        search(base.#{syntax-e}(stx))
+    | stx is_a Pair:
+        search(Pair.first(stx))
+        search(Pair.rest(stx))
+    | ~else:
+        #void
+  search(exp_stx)
+  for ((sym, n) in expect):
+    check:
+      [sym, origins.maybe[sym]?.length()]
+      ~is [sym, n]
+
+check_origins(def_rhm,
+              #false,
+              { #'let: 2,
+                #'def: 2,
+                #'x1: 2,
+                #'x2: 2,
+                #'x3: 2,
+                #'x4: 3 })
+
+check_origins(namespace_rhm,
+              #'#{rhombus/namespace},
+              { #'ns1: 3 })
+
+check_origins(annot_rhm,
+              #'#{rhombus/annot},
+              { #'Posn: 6,
+                #'Pt: 9,
+                #'Foo: 2,
+                #'Sequence: 1,
+                #'maybe: 1,
+                #'List: 3,
+                #'PairList: 1,
+                #'Map: 1,
+                #'False: 1,
+                #'OR: 2,
+                #'Array: 1,
+                #'#{->}: 1,
+                #'#{&&}: 1,
+                #'#{\|\|}: 2,
+                #'#{!}: 1,
+                #'Function: 1,
+                #'Int: 6,
+                #'PosInt: 1,
+                #'NegInt: 1,
+                #'matching: 1 })
+
+check_origins(bind_rhm,
+              #'#{rhombus/annot},
+              { #'Posn: 24,
+                #'Int: 1,
+                #'PosInt: 1,
+                #'NegInt: 1 })
+
+check_origins(bind_rhm,
+              #'#{rhombus/bind},
+              { #'#{&&}: 2,
+                #'#{\|\|}: 1,
+                #'#{!}: 1,
+                #'#{::}: 8 })
+
+check_origins(repet_rhm,
+              #'#{rhombus/repet},
+              { #'an_x: 4,
+                #'a_y: 3,
+                #'a_t: 2,
+                #'m_arg: 2 })
+
+check_origins(rx_rhm,
+              #'#{rhombus/rx},
+              { #'#{++}: 12,
+                #'#{*}: 1,
+                #'#{?}: 1,
+                #'#{~~}: 1,
+                #'case_sensitive: 1,
+                #'case_insensitive: 1 })
+
+check_origins(defctx_rhm,
+              #'#{rhombus/def_ctx_example},
+              { #'my_example_macro: 2 })
+
+check_origins(class_rhm,
+              #'#{rhombus/namespace},
+              { #'class: 1 })
+
+check_origins(class_rhm,
+              #'#{rhombus/defn},
+              { #'class: 6,
+                #'interface: 1,
+                #'veneer: 1 })
+
+check_origins(class_rhm,
+              #'#{rhombus/class_clause},
+              { #'method: 5,
+                #'field: 2,
+                #'property: 1 })
+
+check_origins(class_rhm,
+              #'#{rhombus/interface_clause},
+              { #'method: 1 })
+
+check_origins(class_rhm,
+              #'#{rhombus/veneer_clause},
+              { #'method: 1 })
+
+check_origins(class_rhm,
+              #'#{rhombus/annot},
+              { #'String: 4,
+                #'Bytes: 1})
+
+check_origins(for_rhm,
+              #'#{rhombus/reducer},
+              { #'List: 1,
+                #'PairList: 1,
+                #'Set: 1 })
+
+check_origins(for_rhm,
+              #'#{rhombus/for_clause},
+              { #'each: 3,
+                #'keep_when: 1,
+                #'skip_when: 1,
+                #'break_when: 1,
+                #'final_when: 1,
+                #'keep_let: 1,
+                #'splice: 4 })
+
+check_origins(for_rhm,
+              #false,
+              { #'#{..}: 3,
+                #'#{<}: 2,
+                #'#{==}: 2,
+                #'#{+}: 3,
+                #'#{-}: 1,
+                #'dynamic: 1,
+                #'#{|.|}: 1 })
+
+check_origins(for_rhm,
+              #'#{rhombus/bind},
+              { #'_: 1,
+                #'#{::}: 6 })
+
+check_origins(for_rhm,
+              #'#{rhombus/annot},
+              { #'Int: 1,
+                #'PosInt: 2,
+                #'NegInt: 1,
+                #'Nat: 1,
+                #'List: 1 })
+
+check_origins(stxclass_rhm,
+              #'#{rhombus/namespace},
+              { #'syntax_class: 1 })
+
+check_origins(stxclass_rhm,
+              #false,
+              { #'ns: 6 })
+
+check_origins(stxclass_rhm,
+              #'#{rhombus/defn},
+              { #'syntax_class: 10 })
+
+check_origins(stxclass_rhm,
+              #'#{rhombus/bind},
+              { #'#{$}: 25,
+                #'pattern: 1,
+                #'as: 3 })
+
+check_origins(stxclass_rhm,
+              #'#{rhombus/stxclass},
+              { #'Int: 3,
+                #'NumStr: 2,
+                #'NumStrGroup: 2,
+                #'Group: 1 })
+
+check_origins(stxclass_rhm,
+              #'#{rhombus/syntax_class_clause},
+              { #'splice: 19,
+                #'splice_alt: 2,
+                #'kind: 8,
+                #'fields: 6,
+                #'root_swap: 6,
+                #'description: 6,
+                #'error_mode: 6 })
+
+check_origins(stxclass_rhm,
+              #'#{rhombus/pattern_clause},
+              { #'splice: 4,
+                #'match_when: 1,
+                #'match_unless: 1,
+                #'match_def: 1 })
+
+check_origins(stxclass_rhm,
+              #'#{rhombus/unquote_bind},
+              { #'#{::}: 12,
+                #'_: 4,
+                #'pattern: 1 })
+
+check_origins(space_rhm,
+              #false,
+              { #'paren_local_x: 2,
+                #'as_demo: 2 })
+
+check_origins(space_rhm,
+              #'#{rhombus/example/demo},
+              { #'ddef: 2 })
+
+check_origins(fun_count_rhm,
+              #false,
+              { #'Function: 4 })
+
+check_origins(annot_delayed_rhm,
+              #'#{rhombus/annot},
+              { #'Forward: 3,
+                #'Int: 1 })
+
+check_origins(fun_def_val_rhm,
+              #false,
+              { #'fun: 2,
+                #'#%literal: 2,
+                #'#{|#'|}: 2,
+                #'Char: 2,
+                #'Byte: 2 })
+
+check_origins(key_comp_rhm,
+              #'#{rhombus/key_comp},
+              { #'is_now: 20,
+                #'#{===}: 6 })
+
+check_origins(unquote_bind_rhm,
+              #'#{rhombus/namespace},
+              { #'match: 4 })
+
+check_origins(unquote_bind_rhm,
+              #'#{rhombus/bind},
+              { #'#{$}: 22 })
+
+check_origins(unquote_bind_rhm,
+              #'#{rhombus/unquote_bind},
+              { #'the: 13,
+                #'_: 6,
+                #'#{&&}: 1,
+                #'#{\|\|}: 1,
+                #'#{!}: 1,
+                #'group_option_sequence: 1,
+                #'term_option_sequence: 1 })
+
+check_origins(unquote_bind_rhm,
+              #'#{rhombus/pattern_clause},
+              { #'splice: 5,
+                #'default: 1,
+                #'description: 2,
+                #'bool: 5 })

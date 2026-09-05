@@ -1,0 +1,2 @@
+import: rhombus/slideshow
+export: all_from(.slideshow)

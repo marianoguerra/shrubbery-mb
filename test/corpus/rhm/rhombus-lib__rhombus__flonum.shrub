@@ -1,0 +1,136 @@
+import:
+  lib("racket/flonum.rkt") as rkt
+  "private/flbit-field.rkt" as bit
+  "private/unsafeable.rhm"
+  "private/flonum.rkt" as rhm_fl
+
+export:
+  + - * / **
+  < <= == != >= >
+  abs
+  min
+  max
+  floor
+  ceiling
+  round
+  truncate
+  sin
+  cos
+  tan
+  asin
+  acos
+  atan
+  sqrt
+  log
+  exp
+  to_single
+  bit_field
+  from_int
+  to_int
+  rename:
+    rhm_fl.#{flonum.Array} as Array
+
+// For error reporting, the Racket-level functions are renamed by
+// Rhombus's built-in rewrite table
+
+unsafeable.operator ((x :~ Flonum) + (y :~ Flonum)) :~ Flonum:
+  ~order: addition
+  rkt.#{fl+}(x, y)
+
+unsafeable.operator
+| ((x :~ Flonum) - (y :~ Flonum)) :~ Flonum:
+    ~order: addition
+    rkt.#{fl-}(x, y)
+| (- (y :~ Flonum)) :~ Flonum:
+    rkt.#{fl-}(y)
+
+unsafeable.operator ((x :~ Flonum) * (y :~ Flonum)) :~ Flonum:
+  ~order: multiplication
+  rkt.#{fl*}(x, y)
+
+unsafeable.operator ((x :~ Flonum) / (y :~ Flonum)) :~ Flonum:
+  ~order: multiplication
+  rkt.#{fl/}(x, y)
+
+unsafeable.operator ((x :~ Flonum) ** (y :~ Flonum)) :~ Flonum:
+  ~order: exponentiation
+  rkt.#{flexpt}(x, y)
+
+unsafeable.operator ((x :~ Flonum) < (y :~ Flonum)):
+  ~order: order_comparison
+  rkt.#{fl<}(x, y)
+unsafeable.operator ((x :~ Flonum) <= (y :~ Flonum)):
+  ~order: order_comparison
+  rkt.#{fl<=}(x, y)
+unsafeable.operator ((x :~ Flonum) == (y :~ Flonum)):
+  ~order: order_comparison
+  rkt.#{fl=}(x, y)
+unsafeable.operator ((x :~ Flonum) != (y :~ Flonum)):
+  ~order: order_comparison
+  ! rkt.#{fl=}(x, y)
+unsafeable.operator ((x :~ Flonum) >= (y :~ Flonum)):
+  ~order: order_comparison
+  rkt.#{fl>=}(x, y)
+unsafeable.operator ((x :~ Flonum) > (y :~ Flonum)):
+  ~order: order_comparison
+  rkt.#{fl>}(x, y)
+
+unsafeable.fun abs(x :~ Flonum) :~ Flonum:
+  rkt.flabs(x)
+
+unsafeable.fun min(x :~ Flonum, y :~ Flonum, ...) :~ Flonum:
+  rkt.flmin(x, y, ...)
+
+unsafeable.fun max(x :~ Flonum, y :~ Flonum, ...) :~ Flonum:
+  rkt.flmax(x, y, ...)
+
+unsafeable.fun floor(x :~ Flonum) :~ Flonum:
+  rkt.flfloor(x)
+
+unsafeable.fun ceiling(x :~ Flonum) :~ Flonum:
+  rkt.flceiling(x)
+
+unsafeable.fun round(x :~ Flonum) :~ Flonum:
+  rkt.flround(x)
+
+unsafeable.fun truncate(x :~ Flonum) :~ Flonum:
+  rkt.fltruncate(x)
+
+unsafeable.fun sin(x :~ Flonum) :~ Flonum:
+  rkt.flsin(x)
+
+unsafeable.fun cos(x :~ Flonum) :~ Flonum:
+  rkt.flcos(x)
+
+unsafeable.fun tan(x :~ Flonum) :~ Flonum:
+  rkt.fltan(x)
+
+unsafeable.fun asin(x :~ Flonum) :~ Flonum:
+  rkt.flasin(x)
+
+unsafeable.fun acos(x :~ Flonum) :~ Flonum:
+  rkt.flacos(x)
+
+unsafeable.fun atan(x :~ Flonum) :~ Flonum:
+  rkt.flatan(x)
+
+unsafeable.fun sqrt(x :~ Flonum) :~ Flonum:
+  rkt.flsqrt(x)
+
+unsafeable.fun log(x :~ Flonum) :~ Flonum:
+  rkt.fllog(x)
+
+unsafeable.fun exp(x :~ Flonum) :~ Flonum:
+  rkt.flexp(x)
+
+unsafeable.fun to_single(x :~ Flonum) :~ Flonum:
+  rkt.flsingle(x)
+
+unsafeable.fun bit_field(x :~ Flonum, start :~ Nat, end :~ Nat) :~ Int:
+  bit.#{flbit-field}(x, start, end)
+
+unsafeable.fun from_int(x :~ Int) :~ Flonum:
+  rkt.#{->fl}(x)
+
+unsafeable.fun to_int(x :~ Flonum) :~ Int:
+  rkt.#{fl->exact-integer}(x)

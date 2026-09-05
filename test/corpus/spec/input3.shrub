@@ -1,0 +1,124 @@
+@(a, b)
+@(a, b)(0)
+
+@[7]
+@{9}
+@[7]{8, 10 @"more"}
+then @[7]{8}
+then @{8}
+
+@apple{one}{two}
+@banana(0){three}{four}{five}
+@coconut{six} {seven}
+@donut+eight{nine}
+@and{@eggplant. ten{eleven}}
+
+@one.two.three
+
+@~one.two{three}
+
+@none{}
+@«5»(3){yohoo @9(a, b, c){
+               this is plain text
+               inside braces}
+        0
+        }
+
+@«bracketed»("apple")
+@«{bracketed}»("apple")
+
+@#{s-exp}{apple}
+@#{s-exp}|<{apple}>|
+@#{s-exp} next
+
+@«1 2 3»: 5
+@«1 2 3»{data}: 5
+
+@x|{hello}there}|
+@x|(<[{hello}there}]>)|
+@x|(<[{hello}|(<[@6 there}]>)|
+@||{text}||
+@|| {not text} ||
+
+@x{  2
+  1
+    4
+   5  }
+
+@{4 @//{ this is a comment! }
+  5 @// line comment
+  6}
+
+@{7
+  @// don't consume next line
+
+  8}
+
+@{7
+   @// don't consume next line
+
+  8}
+
+@{7
+  @// do consume leading space
+    8}
+
+@{7 @// do consume leading space
+    8}
+
+@{9
+  @10
+  @// comment
+
+  }
+
+@doc{
+
+ space char starts next line
+ 
+}
+
+@itemlist(@item{x
+                y},
+          @item{z
+                w})
+
+@(in #{s-exp} mode)
+@{also in @(#{s-exp}) mode}
+@{this time in @(~#{s-exp-keyword}) mode}
+
+@elem{@a()@b()}
+@elem{@a{}@b()}
+@a()@b()
+@a{}@b()
+
+@(«alpha beta»)(gamma){delta}
+@(«alpha beta»){delta}
+@(«alpha beta»)
+
+@same x @group
+@same @group
+@same(1) x @group(2)
+@same(1) @group(2)
+
+@f(arg one
+   arg two)
+
+tail @«in: content»
+tail @(«in: content»)
+tail @«| then | else»
+tail @(«| then | else»)
+
+@('«#{x} 'x'»')
+
+@str{Contents: @pct(0.251) apples
+               @pct(1/6) bananas
+               @pct(0.5) cherries}
+
+a | w @(«x: z») | b
+a | w @(«x:
+           z») | b
+
+@{} a
+
+The end

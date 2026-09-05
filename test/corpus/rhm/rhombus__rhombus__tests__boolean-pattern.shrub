@@ -1,0 +1,127 @@
+
+check:
+  use_static
+  def x && [y] = [10]
+  [[x, y], x.length()]
+  ~is [[[10], 10], 1]
+
+check:
+  // static info flows from lhs to rhs
+  use_static
+  class Posn(x, y)
+  def Posn(x, y) && z = dynamic(Posn(1, 2))
+  z.x
+  ~is 1
+
+check:
+  // static info doesn't go right to left
+  ~eval
+  use_static
+  class Posn(x, y)
+  def z && Posn(x, y) = dynamic(Posn(1, 2))
+  z.x
+  ~throws values("no such field or method", "static")
+
+block:
+  fun try(v):
+    match v
+    | [x] || [a, b, c]: "lists"
+    | ~else: "other"
+  check:
+    try([1])
+    ~is "lists"
+  check:
+    try([1, 2, 3])
+    ~is "lists"
+  check:
+    try([])
+    ~is "other"
+
+block:
+  fun try(v):
+    match v
+    | ![x, y]: "not two lists"
+    | ~else: "two lists"
+  check try([1]) ~is "not two lists"
+  check try([1, 2]) ~is "two lists"
+  check try([1, 2, 3]) ~is "not two lists"
+
+check:
+  import:
+    rhombus/meta open
+  bind.macro 'printed($pat)':
+    let '$(b :: bind_meta.Parsed)' = pat
+    bind_meta.pack('(printed_infoer, [$pat, $b])')
+  bind.infoer 'printed_infoer($si, [$pat, $b])':
+    let '($ann_str,
+          $name,
+          $si,
+          $defs,
+          $oncer,
+          $matcher,
+          $evidence,
+          $committer,
+          $binder,
+          $data)':
+      bind_meta.unpack_info(bind_meta.get_info(b, si))
+    '($("printed(" +& ann_str +& ")"),
+      $name,
+      $si,
+      $defs,
+      printed_oncer,
+      printed_matcher,
+      $evidence,
+      printed_committer,
+      printed_binder,
+      [$pat, $oncer, $matcher, $committer, $binder, $data])'
+  bind.oncer 'printed_oncer([$pat, $oncer, $_, $_, $_, $data])':
+    'println(#%literal $("oncer: " +& pat))
+     $oncer($data)'
+  bind.matcher 'printed_matcher($arg, [$pat, $_, $matcher, $_, $_, $data],
+                                $IF, $success, $fail)':
+    'block:
+       println(#%literal $("matcher: " +& pat))
+       $matcher($arg, $data,
+                $IF, $success, $fail)'
+  bind.committer 'printed_committer($arg, $evidence, [$pat, $_, $_, $committer, $_, $data])':
+    'println(#%literal $("committer: " +& pat))
+     $committer($arg, $evidence, $data)'
+  bind.binder 'printed_binder($arg, $evidence, [$pat, $_, $_, $_, $binder, $data])':
+    'println(#%literal $("binder: " +& pat))
+     $binder($arg, $evidence, $data)'
+  def printed([]) || printed([_]) || printed([_, _]) = []
+  def printed([]) || printed([_]) || printed([_, _]) = [1]
+  def printed([]) || printed([_]) || printed([_, _]) = [1, 2]
+  #void
+  ~prints "oncer: []"
+    ++ "\n" ++ "oncer: [_]"
+    ++ "\n" ++ "oncer: [_, _]"
+    ++ "\n" ++ "matcher: []"
+    ++ "\n" ++ "oncer: []"
+    ++ "\n" ++ "oncer: [_]"
+    ++ "\n" ++ "oncer: [_, _]"
+    ++ "\n" ++ "matcher: []"
+    ++ "\n" ++ "matcher: [_]"
+    ++ "\n" ++ "oncer: []"
+    ++ "\n" ++ "oncer: [_]"
+    ++ "\n" ++ "oncer: [_, _]"
+    ++ "\n" ++ "matcher: []"
+    ++ "\n" ++ "matcher: [_]"
+    ++ "\n" ++ "matcher: [_, _]"
+    ++ "\n"
+
+check: match #"x" | is_now #"x": "yes"
+       ~is "yes"
+check: match #"x".copy() | is_now #"x": "yes"
+       ~is "yes"
+check: match "x".copy() | is_now "x": "yes"
+       ~is "yes"
+check: match "x".copy()
+       | is_now #"x": "yes"
+       | ~else: "no"
+       ~is "no"
+
+// check precedence of boolean operators
+check:
+  1 matches (1 || !2 && "1") ~is #true
+  "1" matches (1 || !2 && "1") ~is #true

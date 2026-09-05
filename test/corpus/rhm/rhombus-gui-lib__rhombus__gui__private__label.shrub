@@ -1,0 +1,42 @@
+import:
+  lib("racket/gui/easy.rkt")
+  rhombus/draw
+  "window-child-help.rkt".mix_window_child_callbacks
+  "window-callback.rhm".WindowCallbacks
+  "view.rhm".View
+  "view.rhm"!private.BaseWindowView
+  "view-help.rkt"
+  "obs.rhm":
+    expose:
+      Obs
+      ObsOrValue
+
+export:
+  Label
+
+class Label(private _at_label :: Obs):
+  extends BaseWindowView
+
+  constructor (label :: ObsOrValue.of(View.LabelString),
+               ~color: color :: ObsOrValue.of(maybe(draw.Color)) = #false,
+               ~font: font :: draw.Font = View.normal_control_font,
+               ~margin: margin :: ObsOrValue.of(View.Margin) = [2, 2],
+               ~min_size: min_size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~stretch: stretch :: ObsOrValue.of(View.Stretch) = [#false, #false],
+               ~window_callbacks: wcb :: maybe(WindowCallbacks) = #false):
+    let at_label = obs.to_obs(label)
+    #{view-help}.#{mix-wrap}(
+      fun (mixin):
+        let mixin = mix_window_child_callbacks(mixin, wcb)
+        super(easy.text(obs.unwrap(at_label),
+                        ~color: obs.unwrap_convert(color, fun (c): c && (c :~ draw.Color).handle),
+                        ~font: font.handle,
+                        ~margin: obs.unwrap_list(margin, values),
+                        ~#{min-size}: obs.unwrap_list(min_size, values),
+                        ~stretch: obs.unwrap_list(stretch, values),
+                        ~mixin: mixin))
+          <| (at_label)
+    )
+
+  property at_label :: Obs:
+    _at_label.map(values)

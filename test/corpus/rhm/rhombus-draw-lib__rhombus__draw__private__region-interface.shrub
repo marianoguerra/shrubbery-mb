@@ -1,0 +1,10 @@
+
+export:
+  Region
+
+class Region(private _handle):
+  nonfinal
+  property handle: _handle
+
+  constructor (hand):
+    super(hand)

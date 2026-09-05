@@ -1,0 +1,117 @@
+
+block:
+  import:
+    "example-a.rhm" as ex_a
+  check:
+    ex_a.alpha
+    ~is "alpha"
+  check:
+    ex_a.beta
+    ~is "beta"
+  check:
+    ex_a.ExList(1, 2, 3)
+    ~is [1, 2, 3]
+  check:
+    match [1, 2, 3]
+    | ex_a.ExList(n, ...): [0, n, ...]
+    ~is [0, 1, 2, 3]
+  check:
+    ex_a.ExList.length([1, 2, 3])
+    ~is 3
+  check:
+    ([1, 2, 3] :: ex_a.ExList.of(Int))
+    ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: ex_a.ExList.of(String))
+    ~throws "value does not satisfy annotation"
+
+block:
+  import:
+    "example-a.rhm" open
+  check:
+    alpha
+    ~is "alpha"
+  check:
+    beta
+    ~is "beta"
+  check:
+    ExList(1, 2, 3)
+    ~is [1, 2, 3]
+  check:
+    match [1, 2, 3]
+    | ExList(n, ...): [0, n, ...]
+    ~is [0, 1, 2, 3]
+  check:
+    ExList.length([1, 2, 3])
+    ~is 3
+  check:
+    ([1, 2, 3] :: ExList.of(Int))
+    ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: ExList.of(String))
+    ~throws "value does not satisfy annotation"
+
+block:
+  import:
+    "example-a.rhm".ExList
+  check:
+    ExList(1, 2, 3)
+    ~is [1, 2, 3]
+  check:
+    match [1, 2, 3]
+    | ExList(n, ...): [0, n, ...]
+    ~is [0, 1, 2, 3]
+  check:
+    ExList.length([1, 2, 3])
+    ~is 3
+  check:
+    ([1, 2, 3] :: ExList.of(Int))
+    ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: ExList.of(String))
+    ~throws "value does not satisfy annotation"
+
+block:
+  import:
+    "example-a.rhm".ExList
+  check:
+    ExList(1, 2, 3)
+    ~is [1, 2, 3]
+  check:
+    match [1, 2, 3]
+    | ExList(n, ...): [0, n, ...]
+    ~is [0, 1, 2, 3]
+  check:
+    ([1, 2, 3] :: ExList.of(Int))
+    ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: ExList.of(String))
+    ~throws "value does not satisfy annotation"
+
+block:
+  import:
+    "example-a.rhm".ExList open
+  check:
+    ([1, 2, 3] :: of(Int))
+    ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: of(String))
+    ~throws "value does not satisfy annotation"
+
+block:
+  import:
+    "example-a.rhm".ExList as XList
+  check:
+    XList(1, 2, 3)
+    ~is [1, 2, 3]
+  check:
+    match [1, 2, 3]
+    | XList(n, ...): [0, n, ...]
+    ~is [0, 1, 2, 3]
+  check:
+    ([1, 2, 3] :: XList.of(Int))
+    ~is [1, 2, 3]
+  check:
+    ([1, 2, 3] :: XList.of(String))
+    ~throws "value does not satisfy annotation"
+

@@ -1,0 +1,733 @@
+import:
+  rhombus/version_meta
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    to_string(v)
+    String.make(n, char)
+    String.length(str) ~method ReadableString
+    String.get(str, i) ~method ReadableString
+    String.find(str, substr) ~method ReadableString
+    String.contains(str, substr) ~method ReadableString
+    String.starts_with(str, substr) ~method ReadableString
+    String.ends_with(str, substr) ~method ReadableString
+    String.to_string(str) ~method ReadableString
+    ReadableString.to_string(str) ~method
+    String.maybe_to_int(str) ~method ReadableString
+    String.maybe_to_number(str) ~method ReadableString
+    String.to_int(str) ~method ReadableString
+    String.to_number(str) ~method ReadableString
+    String.from_int(n)
+    String.from_number(n)
+    String.substring(str, start, [end]) ~method ReadableString
+    String.slice(str, start, [end]) ~method ReadableString
+    String.append(str, ...) ~method ReadableString
+    String.replace(str, from, to) ~method ReadableString
+    String.trim(str, [sep]) ~method ReadableString
+    String.split(str, [sep]) ~method ReadableString
+    String.upcase(str) ~method ReadableString
+    String.downcase(str) ~method ReadableString
+    String.locale_upcase(str) ~method ReadableString
+    String.locale_downcase(str) ~method ReadableString
+    String.normalize_nfd(str) ~method ReadableString
+    String.normalize_nfkd(str) ~method ReadableString
+    String.normalize_nfc(str) ~method ReadableString
+    String.normalize_nfkc(str) ~method ReadableString
+    String.utf8_bytes(str, [err_b], [start], [end]) ~method ReadableString
+    String.latin1_bytes(str, [err_b], [start], [end]) ~method ReadableString
+    String.locale_bytes(str, [err_b], [start], [end]) ~method ReadableString
+    String.utf8_length(str, [start], [end]) ~method ReadableString
+    String.grapheme_span(str, [start], [end]) ~method ReadableString
+    String.grapheme_count(str, [start], [end]) ~method ReadableString
+    String.to_sequence(str) ~method ReadableString
+    String.to_list(str) ~method ReadableString
+    String.from_list(lst)
+    String.copy(str) ~method ReadableString
+    String.snapshot(str) ~method ReadableString
+
+check:
+  "hello" :: String ~is "hello"
+  1 +& 2 ++ "3" ~is "123"
+  String.make(5, Char"h") ~is "hhhhh"
+
+block:
+  use_static
+  check:
+    def hello = "hello"
+    hello.length()
+    ~is 5
+  check:
+    "hello".length() ~is 5
+    "hello"[0] ~is Char"h"
+    "hello".get(0) ~is Char"h"
+    "hello" ++ " " ++ "world" ~is "hello world"
+    "hello" ++ " " ++ #"world" ~throws values(
+      "String.append: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val(#"world").msg,
+    )
+    "hello".append(" world") ~is "hello world"
+    "hello".append(" world", " and bye") ~is "hello world and bye"
+    "hello".maybe_to_int() ~is #false
+    "17".maybe_to_int() ~is 17
+    "17".maybe_to_int(~radix: 16) ~is 23
+    "hello".maybe_to_number() ~is #false
+    "4.35".maybe_to_number() ~is 4.35
+    "4.35".maybe_to_number(~radix: 16) ~is 4.20703125
+    "hello".to_int() ~throws values(
+      "String.to_int: string does not parse as an integer",
+      error.val("hello", ~label: "string").msg,
+    )
+    "hello".to_int(~radix: 16) ~throws values(
+      "String.to_int: string does not parse as an integer",
+      error.val("hello", ~label: "string").msg,
+    )
+    "17".to_int() ~is 17
+    "17".to_int(~radix: 16) ~is 23
+    "hello".to_number() ~throws values(
+      "String.to_number: string does not parse as a number",
+      error.val("hello", ~label: "string").msg,
+    )
+    "4.35".to_number() ~is 4.35
+    "4.35".to_number(~radix: 16) ~is 4.20703125
+    "hello".upcase() ~is "HELLO"
+    "Hello".downcase() ~is "hello"
+    "Hello".foldcase() ~is "hello"
+    "hello".titlecase() ~is "Hello"
+    "hello".locale_upcase() ~is_a String
+    "Hello".locale_downcase() ~is_a String
+    "hello".substring(1, 3) ~is "el"
+    "hello".substring(1..=3) ~is "ell"
+    "hello".substring(1..) ~is "ello"
+    "hello".substring(..3) ~is "hel"
+    "hello".substring(..) ~is "hello"
+    "hello".slice(1, 3) ~is "el"
+    "hello".slice(1, -3) ~is "e"
+    "hello".slice(-1) ~is "o"
+    "hÉllo".utf8_bytes() ~is #"h\303\211llo"
+    "hÉllo".utf8_bytes(#false, 2) ~is #"llo"
+    "hÉllo".latin1_bytes() ~is #"h\311llo"
+    "hello".locale_bytes() ~is #"hello"
+    "hÉllo".utf8_bytes().length() ~is 6
+    "hÉllo".utf8_length() ~is 6
+    "hÉllo".utf8_length(2) ~is 3
+    "hÉllo".utf8_length(1, 3) ~is 3
+    "Hello".normalize_nfd() ~is "Hello"
+    "Hello".normalize_nfkd() ~is "Hello"
+    "Hello".normalize_nfc() ~is "Hello"
+    "Hello".normalize_nfkc() ~is "Hello"
+    "Hello".grapheme_span(2) ~is 1
+    "Hello".grapheme_count(2) ~is 3
+    "Hello".grapheme_span(2, 4) ~is 1
+    "Hello".grapheme_count(2, 4) ~is 2
+    "Hello".find("ello") ~is 1
+    "Hello".find("howdy") ~is #false
+    "Hello".contains("ello") ~is #true
+    "Hello".contains("howdy") ~is #false
+    "Hello".starts_with("ello") ~is #false
+    "Hello".ends_with("ello") ~is #true
+    "Hello".starts_with("Hel") ~is #true
+    "Hello".ends_with("hel") ~is #false
+    "Hello".replace("l", "x") ~is "Hexlo"
+    "Hello".replace("l", "x", ~all: #true) ~is "Hexxo"
+    "Hello World".split() ~is ["Hello", "World"]
+    "Hello World".split().length() ~is 2
+    "Hello World".split("l") ~is ["He", "", "o Wor", "d"]
+    "Hello World".split("l", ~repeat: #true) ~is ["He", "o Wor", "d"]
+    "Hello".split("H") ~is ["ello"]
+    "Hello".split("H", ~trim: #false) ~is ["", "ello"]
+    " Hello  ".trim() ~is "Hello"
+    " Hello  ".trim(~start: #false) ~is " Hello"
+    " Hello  ".trim(~end: #false) ~is "Hello  "
+    "_Hello__".trim("_") ~is "Hello_"
+    "_Hello__".trim("_", ~repeat: #true) ~is "Hello"
+    "_Hello__".trim("_", ~start: #false) ~is "_Hello_"
+    "_Hello__".trim("_", ~end: #false) ~is "Hello__"
+    "Hello".copy() ~is_now "Hello"
+    "Hello".copy() == "Hello" ~is #false
+    "Hello".snapshot() ~is_now "Hello"
+    "Hello".snapshot() == "Hello" ~is #true
+    "Hello".copy().snapshot() == "Hello" ~is #true
+    "Hello".to_string() ~is "Hello"
+
+check:
+  dynamic("hello").length() ~is 5
+  dynamic("hello")[0] ~is Char"h"
+  dynamic("hello").get(0) ~is Char"h"
+  dynamic("hello" ++ " ") ++ "world" ~is "hello world"
+  dynamic("hello" ++ " ") ++ #"world" ~throws "cannot append a string and other value"
+  dynamic("hello").append(" world") ~is "hello world"
+  dynamic("hello").append(" world", " and bye") ~is "hello world and bye"
+  dynamic("hello").maybe_to_int() ~is #false
+  dynamic("17").maybe_to_int() ~is 17
+  dynamic("17").maybe_to_int(~radix: 16) ~is 23
+  dynamic("hello").maybe_to_number() ~is #false
+  dynamic("4.35").maybe_to_number() ~is 4.35
+  dynamic("4.35").maybe_to_number(~radix: 16) ~is 4.20703125
+  dynamic("hello").to_int() ~throws values(
+    "String.to_int: string does not parse as an integer",
+    error.val("hello", ~label: "string").msg,
+  )
+  dynamic("17").to_int() ~is 17
+  dynamic("17").to_int(~radix: 16) ~is 23
+  dynamic("hello").to_number() ~throws values(
+    "String.to_number: string does not parse as a number",
+    error.val("hello", ~label: "string").msg,
+  )
+  dynamic("4.35").to_number(~radix: 16) ~is 4.20703125
+  dynamic("hello").upcase() ~is "HELLO"
+  dynamic("Hello").downcase() ~is "hello"
+  dynamic("hello").locale_upcase() ~is_a String
+  dynamic("Hello").locale_downcase() ~is_a String
+  dynamic("Hello").foldcase() ~is "hello"
+  dynamic("hello").titlecase() ~is "Hello"
+  dynamic("hello").substring(1, 3) ~is "el"
+  dynamic("hello").substring(1..=3) ~is "ell"
+  dynamic("hello").substring(1..) ~is "ello"
+  dynamic("hello").substring(..3) ~is "hel"
+  dynamic("hello").substring(..) ~is "hello"
+  dynamic("hello").slice(2, -1) ~is "ll"
+  dynamic("hÉllo").utf8_bytes() ~is #"h\303\211llo"
+  dynamic("hÉllo").utf8_bytes(#false, 2) ~is #"llo"
+  dynamic("hÉllo").latin1_bytes() ~is #"h\311llo"
+  dynamic("hello").locale_bytes() ~is #"hello"
+  dynamic("hÉllo").utf8_length() ~is 6
+  dynamic("Hello").normalize_nfd() ~is "Hello"
+  dynamic("Hello").normalize_nfkd() ~is "Hello"
+  dynamic("Hello").normalize_nfc() ~is "Hello"
+  dynamic("Hello").normalize_nfkc() ~is "Hello"
+  dynamic("Hello").grapheme_span(2) ~is 1
+  dynamic("Hello").grapheme_count(2) ~is 3
+  dynamic("Hello").grapheme_span(2, 4) ~is 1
+  dynamic("Hello").grapheme_count(2, 4) ~is 2
+  dynamic("Hello").find("ello") ~is 1
+  dynamic("Hello").contains("ello") ~is #true
+  dynamic("Hello").contains("howdy") ~is #false
+  dynamic("Hello").ends_with("ello") ~is #true
+  dynamic("Hello").starts_with("Hel") ~is #true
+  dynamic("Hello").replace("l", "x") ~is "Hexlo"
+  dynamic("Hello").replace("l", "x", ~all: #true) ~is "Hexxo"
+  dynamic("Hello World").split() ~is ["Hello", "World"]
+  dynamic("Hello World").split("l", ~repeat: #true) ~is ["He", "o Wor", "d"]
+  dynamic(" Hello  ").trim() ~is "Hello"
+  dynamic("_Hello__").trim("_", ~start: #false) ~is "_Hello_"
+  dynamic("Hello").copy() ~is_now "Hello"
+  dynamic("Hello").snapshot() ~is "Hello"
+  dynamic("Hello").to_string() ~is "Hello"
+
+check:
+  String.length("hello") ~is 5
+  String.maybe_to_int("17") ~is 17
+  String.maybe_to_int("17", ~radix: 16) ~is 23
+  String.maybe_to_int("17", ~radix: 160) ~throws values(
+    error.val(160).msg,
+    error.annot("Int.in(2 ..= 16)").msg
+  )
+  String.maybe_to_int("17", ~radix: "nan") ~throws values(
+    error.val("nan").msg,
+    error.annot("Int.in(2 ..= 16)").msg
+  )
+  String.maybe_to_number("4.35") ~is 4.35
+  String.maybe_to_number("4.35", ~radix: 16) ~is 4.20703125
+  String.maybe_to_number("17", ~radix: 160) ~throws values(
+    error.val(160).msg,
+    error.annot("Int.in(2 ..= 16)").msg
+  )
+  String.to_int("17") ~is 17
+  String.to_int("17", ~radix: 16) ~is 23
+  String.to_int("17", ~radix: 160) ~throws values(
+    error.val(160).msg,
+    error.annot("Int.in(2 ..= 16)").msg
+  )
+  String.to_number("4.35") ~is 4.35
+  String.to_number("4.35", ~radix: 16) ~is 4.20703125
+  String.to_number("17", ~radix: 160) ~throws values(
+    error.val(160).msg,
+    error.annot("Int.in(2 ..= 16)").msg
+  )
+  String.from_int(16) ~is "16"
+  String.from_int(16, ~radix: 8) ~is "20"
+  String.from_int(17, ~radix: 160) ~throws values(
+    error.val(160).msg,
+    error.annot("Int.in(2 ..= 16)").msg
+  )
+  String.from_number(16.5) ~is "16.5"
+  String.upcase("hello") ~is "HELLO"
+  String.downcase("Hello") ~is "hello"
+  String.foldcase("Hello") ~is "hello"
+  String.titlecase("hello") ~is "Hello"
+  String.substring("hello", 1, 3) ~is "el"
+  String.substring("hello", 1..=3) ~is "ell"
+  String.substring("hello", 1..) ~is "ello"
+  String.substring("hello", ..3) ~is "hel"
+  String.substring("hello", ..) ~is "hello"
+  String.slice("hello", 2) ~is "llo"
+  String.slice("hello", 2, -2) ~is "l"
+  String.utf8_bytes("hÉllo") ~is #"h\303\211llo"
+  String.utf8_bytes("hÉllo", #false, 2) ~is #"llo"
+  String.latin1_bytes("hÉllo") ~is #"h\311llo"
+  String.locale_bytes("hello") ~is #"hello"
+  String.normalize_nfd("Hello") ~is "Hello"
+  String.normalize_nfkd("Hello") ~is "Hello"
+  String.normalize_nfc("Hello") ~is "Hello"
+  String.normalize_nfkc("Hello") ~is "Hello"
+  String.grapheme_span("Hello", 2) ~is 1
+  String.grapheme_count("Hello", 2) ~is 3
+  String.grapheme_span("Hello", 2, 4) ~is 1
+  String.grapheme_count("Hello", 2, 4) ~is 2
+  String.contains("Hello", "ello") ~is #true
+  String.contains("Hello", "howdy") ~is #false
+
+check:
+  String.append() ~is ""
+  String.append("this".copy()) ~is "this"
+  String.append("this".copy(), ", that".copy()) ~is "this, that"
+  String.append("this".copy(), " and ", "that".copy()) ~is "this and that"
+  String.append("this".copy(), ", this", ", and ", "that".copy()) ~is "this, this, and that"
+
+check:
+  to_string("hello") ~is "hello"
+  to_string("hello".copy()) ~is "hello"
+  to_string("hello", ~mode: #'expr) ~is "\"hello\""
+  to_string("hello".copy(), ~mode: #'expr) ~is "\"hello\".copy()"
+
+check:
+  String.join(["Hello", "World"]) ~is "Hello World"
+  String.join(["Hello", "World"], "xx") ~is "HelloxxWorld"
+  String.join(["Hello"], "xx") ~is "Hello"
+  String.join(["lions", "tigers", "bears"], ", ", ~before_last: ", and ") ~is "lions, tigers, and bears"
+
+block:
+  use_static
+  let str = "Hello World"
+  let split_strs = str.split(" ")
+  check split_strs ~is ["Hello", "World"]
+  check split_strs.length() ~is 2
+  check split_strs[0].length() ~is 5
+  let joined_str = String.join(split_strs, " ")
+  check joined_str ~is str
+  check joined_str.length() ~is 11
+  check joined_str[0].to_int() ~is Char"H".to_int()
+
+check:
+  "a" is_a MutableString ~is #false
+  "a".copy() is_a MutableString ~is #true
+
+check:
+  ~eval
+  "a" :: StringCI
+  ~throws "not allowed in a dynamic context"
+
+check:
+  ~eval
+  def s :: StringCI = "a"
+  ~throws "not allowed in a dynamic context"
+
+block:
+  use_static
+  let a :: StringCI = "a"
+  let A :: StringCI = "A"
+  let b :: StringCI = "b"
+  let B :: StringCI = "B"
+  check:
+    a < B ~is #true
+    b < A ~is #false
+    a <= B ~is #true
+    a <= A ~is #true
+    b <= A ~is #false
+    a >= B ~is #false
+    a >= A ~is #true
+    b >= A ~is #true
+    a > B ~is #false
+    a > A ~is #false
+    b > A ~is #true
+    a compares_equal a ~is #true
+    a compares_equal A ~is #true
+    a compares_equal B ~is #false
+    a compares_unequal a ~is #false
+    a compares_unequal A ~is #false
+    a compares_unequal B ~is #true
+
+block:
+  use_static
+  let a :: ReadableStringCI = "a"
+  let A :: ReadableStringCI = "A"
+  let b :: ReadableStringCI = "b"
+  let B :: ReadableStringCI = "B"
+  check:
+    a < B ~is #true
+    b < A ~is #false
+    a <= B ~is #true
+    a <= A ~is #true
+    b <= A ~is #false
+    a >= B ~is #false
+    a >= A ~is #true
+    b >= A ~is #true
+    a > B ~is #false
+    a > A ~is #false
+    b > A ~is #true
+    a compares_equal a ~is #true
+    a compares_equal A ~is #true
+    a compares_equal B ~is #false
+    a compares_unequal a ~is #false
+    a compares_unequal A ~is #false
+    a compares_unequal B ~is #true
+
+check:
+  ~eval
+  "a" :: StringLocale
+  ~throws "not allowed in a dynamic context"
+
+check:
+  ~eval
+  def s :: StringLocale = "a"
+  ~throws "not allowed in a dynamic context"
+
+block:
+  use_static
+  let a :: StringLocale = "a"
+  let also_a :: StringLocale = "a"
+  check:
+    a < also_a ~is #false
+    a <= also_a ~is #true
+    a > also_a ~is #false
+    a >= also_a ~is #true
+    a compares_equal also_a ~is #true
+    a compares_unequal also_a ~is #false
+
+block:
+  use_static
+  let a :: ReadableStringLocale = "a"
+  let also_a :: ReadableStringLocale = "a"
+  check:
+    a < also_a ~is #false
+    a <= also_a ~is #true
+    a > also_a ~is #false
+    a >= also_a ~is #true
+    a compares_equal also_a ~is #true
+    a compares_unequal also_a ~is #false
+
+block:
+  use_static
+  let a :: StringLocaleCI = "a"
+  let also_a :: StringLocaleCI = "a"
+  check:
+    a < also_a ~is #false
+    a <= also_a ~is #true
+    a > also_a ~is #false
+    a >= also_a ~is #true
+    a compares_equal also_a ~is #true
+    a compares_unequal also_a ~is #false
+
+block:
+  use_static
+  let a :: ReadableStringLocaleCI = "a"
+  let also_a :: ReadableStringLocaleCI = "a"
+  check:
+    a < also_a ~is #false
+    a <= also_a ~is #true
+    a > also_a ~is #false
+    a >= also_a ~is #true
+    a compares_equal also_a ~is #true
+    a compares_unequal also_a ~is #false
+
+block:
+  use_static
+  def str = "abc"
+  check:
+    for List (x in str):
+      x
+    ~is [Char"a", Char"b", Char"c"]
+  check:
+    for List (x in String.to_sequence(str)):
+      x
+    ~is [Char"a", Char"b", Char"c"]
+  check:
+    for List (x in str.to_sequence()):
+      x
+    ~is [Char"a", Char"b", Char"c"]
+
+block:
+  check:
+    String.to_sequence(#"oops")
+    ~throws values(
+      "String.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val(#"oops").msg,
+    )
+  check:
+    (#"oops" :~ ReadableString).to_sequence()
+    ~throws values(
+      "String.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val(#"oops").msg,
+    )
+  check:
+    for List (x in #"oops" :~ ReadableString):
+      x
+    ~throws values(
+      "String.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val(#"oops").msg,
+    )
+  check:
+    for List (x in String.to_sequence(#"oops")):
+      x
+    ~throws values(
+      "String.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val(#"oops").msg,
+    )
+  check:
+    for List (x in (#"oops" :~ ReadableString).to_sequence()):
+      x
+    ~throws values(
+      "String.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val(#"oops").msg,
+    )
+
+check:
+  String.snapshot(#"oops") ~throws values(
+    "String.snapshot: " ++ error.annot_msg(),
+    error.annot("ReadableString").msg,
+    error.val(#"oops").msg,
+  )
+  String.to_string(#"oops") ~throws values(
+    "String.to_string: " ++ error.annot_msg(),
+    error.annot("ReadableString").msg,
+    error.val(#"oops").msg,
+  )
+  (#"oops" :~ ReadableString).snapshot() ~throws values(
+    "String.snapshot: " ++ error.annot_msg(),
+    error.annot("ReadableString").msg,
+    error.val(#"oops").msg,
+  )
+  (#"oops" :~ ReadableString).to_string() ~throws values(
+    "String.to_string: " ++ error.annot_msg(),
+    error.annot("ReadableString").msg,
+    error.val(#"oops").msg,
+  )
+  ReadableString.to_string(#"oops") ~throws values(
+    "ReadableString.to_string: " ++ error.annot_msg("argument"),
+    error.annot("ReadableString").msg,
+    error.val(~label: "argument", #"oops").msg,
+  )
+
+check:
+  (#"oops" :~ ReadableString)[0]
+  ~throws values(
+    "String.get: " ++ error.annot_msg(),
+    error.annot("ReadableString").msg,
+    error.val(#"oops").msg,
+  )
+
+check:
+  ("oops" :~ ReadableString)["oops"]
+  ~throws values(
+    "String.get: " ++ error.annot_msg(),
+    error.annot("Nat").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  ("oops" :~ ReadableString)[-1]
+  ~throws values(
+    "String.get: " ++ error.annot_msg(),
+    error.annot("Nat").msg,
+    error.val(-1).msg,
+  )
+
+check:
+  String.append(#"oops") ~throws values(
+    "String.append: " ++ error.annot_msg(),
+    error.annot("ReadableString").msg,
+    error.val(#"oops").msg,
+  )
+  (#"oops" :~ ReadableString).append() ~throws values(
+    "String.append: " ++ error.annot_msg(),
+    error.annot("ReadableString").msg,
+    error.val(#"oops").msg,
+  )
+
+version_meta.when_racket_at_least "8.14.0.7":
+  check:
+    String.make("oops", Char"a")
+    ~throws values(
+      "String.make: " ++ error.annot_msg(),
+      error.annot("Nat").msg,
+      error.val("oops").msg,
+    )
+  check:
+    String.make(-1, Char"a")
+    ~throws values(
+      "String.make: " ++ error.annot_msg(),
+      error.annot("Nat").msg,
+      error.val(-1).msg,
+    )
+  check:
+    String.make(5, "oops")
+    ~throws values(
+      "String.make: " ++ error.annot_msg(),
+      error.annot("Char").msg,
+      error.val("oops").msg,
+    )
+  check:
+    String.make(5, "a")
+    ~throws values(
+      "String.make: " ++ error.annot_msg(),
+      error.annot("Char").msg,
+      error.val("a").msg,
+    )
+  check:
+    String.make(5, Byte#"a")
+    ~throws values(
+      "String.make: " ++ error.annot_msg(),
+      error.annot("Char").msg,
+      error.val(97).msg,
+    )
+
+// checks static infos for elements
+block:
+  use_static
+  check "a"[0] < "b"[0] ~is #true
+  check "a"[0] <= "b"[0] ~is #true
+  check "a"[0] compares_equal "b"[0] ~is #false
+  check "a"[0] compares_unequal "b"[0] ~is #true
+  check "a"[0] >= "b"[0] ~is #false
+  check "a"[0] > "b"[0] ~is #false
+  check Char.from_int("a"[0].to_int()) ~is Char"a"
+
+block:
+  fun f(s):
+    match s
+    | n :: String.to_int && Int.in(-3 ..= 3): [n]
+    | n :: String.to_int: n
+    | n :: String.to_number: { n }
+    | ~else: #false
+  check f("10") ~is 10
+  check f("1") ~is [1]
+  check f("10.0") ~is { 10.0 }
+  check f("10".copy()) ~is #false
+  check f("1".copy()) ~is #false
+  check f("10.0".copy()) ~is #false
+  check f(10.0) ~is #false
+
+// check result info for `(maybe_)to_{int,number}` methods
+block:
+  use_static
+  def int_str = "1"
+  check:
+    int_str.to_int() < dynamic(2) ~is #true
+    int_str.maybe_to_int()!! < dynamic(2) ~is #true
+
+block:
+  use_static
+  def num_str = "1.0"
+  check:
+    num_str.to_number() < dynamic(2.0) ~is #true
+    num_str.maybe_to_number()!! < dynamic(2.0) ~is #true
+
+// check input static info for `String.to_{int,number}`
+block:
+  use_static
+  check:
+    "123" :: matching(_ :: String.to_int) ~is "123"
+    "123" :: matching(_ :: String.to_number) ~is "123"
+  check:
+    (dynamic("123") :: matching(_ :: String.to_int)).length() ~is 3
+    (dynamic("123") :: matching(_ :: String.to_number)).length() ~is 3
+  check:
+    ([1, 2, 3] :~ matching(_ :: String.to_int)).length() ~throws values(
+      "String.length: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val([1, 2, 3]).msg,
+    )
+    (PairList[1, 2, 3] :~ matching(_ :: String.to_int)).length() ~throws values(
+      "String.length: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val(PairList[1, 2, 3]).msg,
+    )
+  check:
+    ([1, 2, 3] :~ matching(_ :: String.to_number)).length() ~throws values(
+      "String.length: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val([1, 2, 3]).msg,
+    )
+    (PairList[1, 2, 3] :~ matching(_ :: String.to_number)).length() ~throws values(
+      "String.length: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val(PairList[1, 2, 3]).msg,
+    )
+  check:
+    ([1, 2, 3] :~ matching(_ :: String.to_int)).first ~is 1
+    (PairList[1, 2, 3] :~ matching(_ :: String.to_int)).first ~is 1
+  check:
+    ([1, 2, 3] :~ matching(_ :: String.to_number)).first ~is 1
+    (PairList[1, 2, 3] :~ matching(_ :: String.to_number)).first ~is 1
+
+// `ReadableString.to_string`
+block:
+  use_static
+  check:
+    ReadableString.to_string("hello") ~is "hello"
+    ReadableString.to_string("hello".copy()) ~is "hello"
+  check:
+    "hello" :: ReadableString.to_string ~is "hello"
+    "hello".copy() :: ReadableString.to_string ~is "hello"
+  check:
+    (dynamic("hello") :: ReadableString.to_string).length() ~is 5
+    (dynamic("hello".copy()) :: ReadableString.to_string).length() ~is 5
+
+block:
+  use_static
+  check:
+    "hello" :: matching(_ :: ReadableString.to_string) ~is "hello"
+    "hello".copy() :: matching(_ :: ReadableString.to_string) ~is_now "hello"
+    ("hello".copy() :: matching(_ :: ReadableString.to_string)) == "hello" ~is #false
+  check:
+    (dynamic("hello") :: matching(_ :: ReadableString.to_string)).length() ~is 5
+    (dynamic("hello".copy()) :: matching(_ :: ReadableString.to_string)).length() ~is 5
+  check:
+    ([1, 2, 3] :~ matching(_ :: ReadableString.to_string)).length() ~throws values(
+      "String.length: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val([1, 2, 3]).msg,
+    )
+    (PairList[1, 2, 3] :~ matching(_ :: ReadableString.to_string)).length() ~throws values(
+      "String.length: " ++ error.annot_msg(),
+      error.annot("ReadableString").msg,
+      error.val(PairList[1, 2, 3]).msg,
+    )
+  check:
+    ([1, 2, 3] :~ matching(_ :: ReadableString.to_string)).first ~is 1
+    (PairList[1, 2, 3] :~ matching(_ :: ReadableString.to_string)).first ~is 1
+
+check:
+  "a" is_a StringNoNull ~is #true
+  "" is_a StringNoNull ~is #true
+  "a\0b" is_a StringNoNull ~is #false
+  "a".copy() is_a StringNoNull ~is #false
+
+block:
+  use_static
+  check:
+    "a".to_list() ~is [Char"a"]
+    "a".to_list().length() ~is 1
+    String.from_list([Char"a", Char"b", Char"c"]) ~is "abc"
+    String.from_list([Char"a", Char"b", Char"c"])[0].to_int() ~is Byte#"a"
+    String.from_list([1]) ~throws values("from_list",
+                                         error.annot_msg(),
+                                         error.annot("List.of(Char)").msg)
+
+block:
+  // check rx with string methods
+  import:
+    rhombus/rx open
+  check "apple".replace(rx'"p" +', "!") ~is "a!le"
+  check "appleppp".replace(rx'"p" +', "!") ~is "a!leppp"
+  check "appleppp".replace(rx'"p" +', "!", ~all: #true) ~is "a!le!"
+  check "apple".split(rx'"p" +') ~is ["a", "le"]
+  check "apple".trim(rx'"p" +') ~is "apple"
+  check "pappleppp".trim(rx'"p" +') ~is "apple"

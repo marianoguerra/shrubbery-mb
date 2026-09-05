@@ -1,0 +1,19 @@
+import:
+  lib("shrubbery/parse.rkt")
+
+export:
+  read
+  ReadMode
+
+enum ReadMode
+| top
+| interactive
+| line
+| text
+
+fun read(~in: in :: Port.Input = Port.Input.current(),
+         ~mode: mode :: ReadMode = #'top,
+         ~start_column: start :: Nat = 0):
+  parse.#{parse-all}(in,
+                     ~mode: mode,
+                     ~#{start-column}: start)

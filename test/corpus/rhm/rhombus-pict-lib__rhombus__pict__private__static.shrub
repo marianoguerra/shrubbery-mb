@@ -1,0 +1,2178 @@
+import:
+  rhombus/version
+  rhombus/draw:
+    expose:
+      Color
+      DC
+      RecordDC
+  lib("pict/main.rkt") as rkt:
+    expose #{pict?}
+    except dc
+    rename #{unsafe-dc} as dc
+  lib("file/convertible.rkt") as fileconv
+  lib("pict/convert.rkt") as pictconv
+  "last.rhm" open
+
+export:
+  Color
+  ColorMode
+  LineWidth
+  HorizAlignment
+  VertAlignment
+  EpochAlignment
+  DurationAlignment
+  TimeAlignment
+  OverlayOrder
+  HorizAttachment
+  TimeOrder
+  ConnectStyle
+  ConnectLineStyle
+  ArcDirection
+  FindMode
+  Refocus
+  Rounded
+  AutoReal
+
+  Pict:
+    only_space namespace annot
+  only_space annot:
+    StaticPict
+    NothingPict
+  only_space namespace:
+    rename:
+      StaticPict_public as StaticPict
+
+  PictIdentity
+
+  nothing
+
+  text
+
+  beside
+  stack
+  overlay
+
+  blank
+  line
+  rectangle
+  square
+  ellipse
+  circle
+  triangle
+  polygon
+  bitmap
+  dc
+
+  Find
+  connect
+  pin
+
+  table
+
+  explain_bbox
+
+module private:
+  export:
+    Pict
+    set_convert
+    _Pict
+    StaticPict
+    NothingPict
+    ContainerPict
+    _ContainerPict
+    static_instance
+    remove_nothings
+    set_switch
+    set_animate
+    genident
+    PictIdentity
+    METHOD
+    do_convert
+
+enum ColorMode
+| ~is_a Color
+| ~is_a String
+| inherit
+
+enum LineWidth
+| ~is_a Real
+| inherit
+
+enum HorizAlignment | left | center | right
+enum VertAlignment | top | topline | center | baseline | bottom
+enum EpochAlignment | early | center | stretch | late
+enum DurationAlignment | sustain | pad
+enum TimeAlignment | ~is_a Int | start | sync | insert | end
+enum OverlayOrder | front | back
+enum HorizAttachment | line | paragraph
+enum TimeOrder | before | after
+enum ConnectStyle | line | arrow | arrows
+enum ConnectLineStyle | solid | long_dash | dot | short_dash | dot_dash
+enum ArcDirection | cw | ccw
+enum FindMode | always | maybe
+enum AutoReal | ~is_a Real | auto
+
+def empty_instances = []
+
+annot.delayed_declare SnapshotPict
+
+class PictIdentity(mutable desc):
+  opaque
+  implements Printable
+  override describe(mode, recur):
+    PrintDesc.list("PictIdentity(",
+                   [recur(Equatable.identity_hash(this))],
+                   ")")
+  method description():
+    let base :~ List:
+      recur loop (desc = desc) :~ List:
+        match desc
+        | #false: []
+        | desc :: String: [repr(desc)]
+        | desc :: PictIdentity: loop(desc.desc)
+        | [d, ...]: List.append(loop(d), ...)
+        | ~else: [repr(desc)]
+    let me = to_string(Equatable.identity_hash(this))
+    base ++ [me]
+
+fun genident(desc = #false):
+  fun simplify(desc, strip = #false):
+    match desc
+    | d :: PictIdentity:
+        simplify(d.desc, strip)
+    | [tag, desc, _, ...]:
+        if strip
+        | simplify(desc, #true)
+        | [tag, simplify(desc, #true)]
+    | ~else: desc
+  PictIdentity(simplify(desc, #false))
+
+expr.macro 'METHOD($name, $arg, ...)':
+  'fun (this :~ _Pict): this . $name($arg, ...)'
+
+class Pict():
+  nonfinal
+  export from_handle
+  internal _Pict
+
+  private implements Equatable
+  private override equals(other, recur):
+    other === this
+  private override hash_code(recur):
+    Equatable.identity_hash(this)
+
+  primitive_property fileconv.#{prop:convertible}:
+    fun (self :~ Pict, req, defval):
+      fileconv.convert(self.snapshot().draw_handle, req, defval)
+  primitive_property pictconv.#{prop:pict-convertible}:
+    fun (self :~ Pict):
+      self.snapshot().draw_handle
+
+  private implements Printable
+  private override describe(mode, recur):
+    PrintDesc.special(snapshot().draw_handle, ~mode: #'print,
+                      PrintDesc.list("Pict(",
+                                     description(),
+                                     ")"))
+  abstract method description() :~ String
+
+  abstract property identity
+
+  abstract property width :~ Real
+  abstract property height :~ Real
+  abstract property ascent :~ Real
+  abstract property descent :~ Real
+
+  abstract property duration :~ Int
+  abstract method epoch_extent(i :: Int) :~ Real
+  abstract method snapshot(epoch :: Int = 0,
+                           n :: Real.in(0, 1) = 0,
+                           ~rebuild_prompt: rebuild_prompt = #true) :~ SnapshotPict
+
+  abstract property children :~ List.of(Pict)
+  abstract property _children_starts :~ List.of(Int)
+
+  abstract method paragraph_end_bounds() :~ values(Real, Real, Real, Real, Real, Real)
+  abstract method set_paragraph_end_bounds(dx :: Real, dy :: Real,
+                                           width :: Real, height :: Real,
+                                           ascent :: Real, descent :: Real) :~ Pict
+
+  abstract method draw(dc :: DC,
+                       ~dx: dx :: Real = 0,
+                       ~dy: dy :: Real = 0) :~ Void
+  abstract method drawer() :~ Function.of_arity(1, ~dx, ~dy)
+
+  abstract method launder(~rebuild_prompt: rebuild_prompt = #false) :~ Pict
+  abstract method ghost(do_ghost = #true) :~ Pict
+  abstract method refocus(to_p :: Pict) :~ Pict
+
+  method blank(~rebuild_prompt: rebuild_prompt = #true) :~ Pict:
+    this.launder(~rebuild_prompt: rebuild_prompt).ghost()
+
+  abstract protected method _pad(left_amt :: Real, top_amt :: Real,
+                                 right_amt :: Real, bottom_amt :: Real,
+                                 desc) :~ Pict
+  method pad(around :: Real = 0,
+             ~horiz: horiz :: Real = around,
+             ~vert: vert :: Real = around,
+             ~left: left :: Real = horiz,
+             ~top: top :: Real = vert,
+             ~right: right :: Real = horiz,
+             ~bottom: bottom :: Real = vert) :~ Pict:
+    _pad(left, top, right, bottom, #false)
+
+  method translate(dx :: Real, dy :: Real) :~ Pict:
+    if dy .= 0
+    | _pad(dx, 0, -dx, 0, #false)
+    | // can't use `pad`, because we don't want to change the ascent or descent
+      pin(this,
+          ~on: blank(),
+          ~at: Find.abs(dx, dy))
+
+  method set_description(desc :: String) :~ Pict:
+    _pad(0, 0, 0, 0, desc)
+
+  abstract method scale :~ Pict
+  | scale(amt :: Real)
+  | scale(h_amt :: Real, v_amt :: Real)
+
+  abstract method rotate(radians :: Real) :~ Pict
+  method hflip() :~ Pict:
+    scale(-1, 1).pad(~right: width, ~left: width)
+  method vflip() :~ Pict:
+    hflip().rotate(math.pi)
+
+  abstract method drop_baseline(amt :: Real) :~ Pict
+  abstract method drop_topline(amt :: Real) :~ Pict
+
+  abstract method shear(horiz :: Real, vert :: Real) :~ Pict
+
+  abstract method colorize(c :: (Color || String)) :~ Pict
+  abstract method line_width(w :: NonnegReal) :~ Pict
+
+  abstract method alpha(n :: Real.in(0, 1), ~composite: composite = #true) :~ Pict
+
+  abstract method clip() :~ Pict
+
+  abstract method freeze(~scale: scale :: Real = 2.0) :~ Pict
+  method refocus_around_ink() :~ Pict:
+    if (system.racket_version() :: version.Version) < ("9.2.0.4" :: version.Version)
+    | let h = snapshot().handle
+      let p_h = rkt.#{panorama}(h)
+      let (t, l) = rkt.#{lt-find}(p_h, h)
+      let (r, b) = rkt.#{rb-find}(p_h, h)
+      let w = rkt.#{pict-width}(p_h)
+      let h = rkt.#{pict-height}(p_h)
+      pad(~top: t, ~left: l, ~right: w - r, ~bottom: h - b)
+    | let p_w = width
+      let p_h = height
+      let dc = RecordDC([p_w, p_h], ~record_ink: #true)
+      draw(dc)
+      let r = dc.ink_extent()
+      pad(~left: -r.x, ~top: -r.y, ~right: (r.x + r.width) - p_w, ~bottom: (r.y + r.height) - p_h)
+
+  abstract protected method _time_pad(before :: Int, after :: Int) :~ Pict
+  abstract method time_clip(~keep: keep :: maybe(TimeOrder) = #false,
+                            ~nonsustaining: nonsustaining = keep != #'after) :~ Pict
+  method delay(n :: Nat) :~ Pict: time_clip(~keep: #'after).time_pad(~before: n)
+  abstract method sustain(n :: Int = 1) :~ Pict
+  abstract method nonsustaining() :~ Pict
+  abstract method epoch_set_extent(i :: Int, extent :: NonnegReal) :~ Pict
+
+  abstract method epoch_metadata(i :: Int) :~ Map
+  abstract method epoch_set_metadata(i :: Int, metadata :: Map) :~ Pict
+
+  abstract method metadata() :~ Map
+  abstract method set_metadata(metadata :: Map) :~ Pict
+
+  method time_pad(~all: all :: Int = 0,
+                  ~before: before :: Int = all,
+                  ~after: after :: Int = all) :~ Pict:
+    _time_pad(before, after)
+
+  abstract method time_insert(at_epoch :: Int, n_epochs :: Int = 1) :~ Pict
+
+  method instantaneous() :~ Pict:
+    let p = snapshot(~rebuild_prompt: #false)
+    Pict.time_clip(pict_animate(fun (n, ~deps: [p]): if n .= 0 | p | nothing,
+                                [p],
+                                0 /* extent */))
+
+  method rebuild(~pre: pre_adjuster :: Function.of_arity(1) described_as Pict -> Pict
+                         = fun (p): p,
+                 ~post: adjuster :: Function.of_arity(1) described_as Pict -> Pict
+                          = fun (p): p,
+                 ~config: config_adjuster :: Function.of_arity(1) described_as Map -> Map
+                            = fun (config): config,
+                 ~as_rebuilt = #true) :~ Pict:
+    let (p, _) = _replace(pre_adjuster,
+                          adjuster,
+                          config_adjuster,
+                          Map.by(===){},
+                          as_rebuilt)
+    p
+
+  method replace(from :: Pict, to :: Pict, ~as_rebuilt = #true) :~ Pict:
+    let (p, _) = _replace(fun (p): p,
+                          fun (p): p,
+                          fun (c): c,
+                          Map.by(===){ from.identity: if as_rebuilt
+                                                      | Pict._identify_as(to, from.identity)
+                                                      | to },
+                          as_rebuilt)
+    p
+
+  method configure(key, val) :~ Pict:
+    rebuild(~config: fun (config :: Map):
+                       if config.has_key(key)
+                       | config ++ { key: val }
+                       | config)
+
+  abstract protected method _replace(pre_adjuster, adjuster, config_adjuster, subst, as_rebuilt) :~ (Pict, Map)
+
+  protected method _do_replace(pre_adjuster, adjuster, config_adjuster,
+                               subst :~ Map, as_rebuilt,
+                               _children, _dependencies, _config,
+                               _rebuild):
+    cond
+    | this in subst:
+        values(subst[this], subst)
+    | identity in subst:
+        values(subst[identity], subst)
+    | ~else:
+        let new = pre_adjuster(this)
+        cond
+        | new != this:
+            unless new is_a Pict
+            | error(~who: #'rebuild,
+                    ~exn: Exn.Fail.Annot,
+                    error.annot_msg("pre-adjust function's result"),
+                    error.annot("Pict"),
+                    error.val(~label: "function", pre_adjuster),
+                    error.val(~label: "result", new))
+            let new = (if as_rebuilt | Pict._identify_as(new, identity) | new)
+            values(new, subst ++ { this: new })
+        | ~else:
+            let (new, subst :~ Map):
+              match  _dependencies || _children:
+              | [] when !_config:
+                  values(this, subst)
+              | [dep, ...]:
+                  let ([new_dep, ...], subst :~ Map):
+                    for values(new_deps :~ List = [], subst = subst) (dep in [dep, ...]):
+                      let (new_dep, new_subst):
+                        match dep
+                        | dep :: Pict: dep._replace(pre_adjuster, adjuster, config_adjuster, subst, as_rebuilt)
+                        | dep :: _Find: dep._replace(pre_adjuster, adjuster, config_adjuster, subst, as_rebuilt)
+                      values(new_deps.add(new_dep), new_subst)
+                  let new_config:
+                    _config && (block:
+                                  let c = config_adjuster(_config)
+                                  unless c is_a Map
+                                  | error(~who: #'rebuild,
+                                          ~exn: Exn.Fail.Annot,
+                                          error.annot_msg("config-adjust function's result"),
+                                          error.annot("Pict"),
+                                          error.val(~label: "function", config_adjuster),
+                                          error.val(~label: "result", c))
+                                  c)
+                  let new:
+                    if (all(new_dep === dep, ...)
+                          && new_config == _config)
+                    | this
+                    | _rebuild([new_dep, ...]
+                                 ++ (if new_config | [new_config] | []))
+                  values(new, subst)
+              | child :~ _StaticPict:
+                  let (new_child, subst :~ Map) = child._replace(pre_adjuster, adjuster, config_adjuster, subst, as_rebuilt)
+                  let new_config: _config && adjuster(_config)
+                  if (new_child === child
+                        && new_config == _config)
+                  | values(this, subst)
+                  | let new = (if new_config | _rebuild(new_child, new_config) | _rebuild(new_child))
+                    values (new, subst)
+            let new = adjuster(new)
+            if new === this
+            | values(this, subst)
+            | unless new is_a Pict
+              | error(~who: #'rebuild,
+                      ~exn: Exn.Fail.Annot,
+                      error.annot_msg("post-adjust function's result"),
+                      error.annot("Pict"),
+                      error.val(~label: "function", adjuster),
+                      error.val(~label: "result", new))
+              let new = Pict._identify_as(new, identity)
+              values(new, subst ++ { this: new })
+
+  abstract protected method _identify_as(identity)
+
+  method find_rebuilt(p :: Pict) :~ maybe(Pict):
+    if p.identity == identity
+    | this
+    | for any (c in children):
+        c.find_rebuilt(p)
+
+class StaticPict(private _handle,
+                 private _identity_f :~ PictIdentity,
+                 private _children :~ Pict || List,
+                 private _dependencies :~ maybe(List),
+                 private _config :~ maybe(Map),
+                 // tree of `Pair(identity, handle)`, which maps animated-pict identities
+                 // to handles within `_handle` that represents those aniimated picts
+                 private _instances :~ List,
+                 private _rebuild,
+                 private _metadata :~ Map):
+  extends Pict
+  nonfinal
+  opaque
+  internal _StaticPict
+  constructor
+  | (): super()(rkt.blank(), genident(), [], #false, #false, empty_instances, #false, {})
+  | (children, rebuild): super()(rkt.blank(), genident(), children, #false, #false, empty_instances, rebuild, {})
+
+  override method description(): _identity_f.description()
+
+  property handle: _handle
+  override property identity: _identity_f
+  override property width: rkt.#{pict-width}(_handle)
+  override property height: rkt.#{pict-height}(_handle)
+  override property ascent: rkt.#{pict-ascent}(_handle)
+  override property descent: rkt.#{pict-descent}(_handle)
+
+  property draw_handle:
+    let drawer = rkt.#{make-pict-drawer}(_handle)
+    rkt.dc(fun (rkt_dc, dx, dy):
+             let dc = DC.from_handle(rkt_dc)
+             let saved = dc.smoothing
+             dc.smoothing := #'smoothed
+             drawer(rkt_dc, dx, dy)
+             dc.smoothing := saved,
+           width, height, ascent, descent)
+
+  override property duration: 1
+  override method epoch_extent(i :: Int): 0
+
+  override method paragraph_end_bounds(): rkt_last_box(_handle)
+  override method set_paragraph_end_bounds(dx :: Real, dy :: Real,
+                                           width :: Real, height :: Real,
+                                           ascent :: Real, descent :: Real):
+    let new_handle = rkt_set_last_box(_handle, dx, dy, width, height, ascent, descent)
+    static_pict(new_handle, this, _instances, METHOD(set_paragraph_end_bounds, dx, dy, width, height, ascent, descent))
+
+  override method snapshot(epoch :: Int = 0,
+                           n :: Real.in(0, 1) = 0,
+                           ~rebuild_prompt: rebuild_prompt = #true):
+    let rebuild:
+      if rebuild_prompt
+      | fun (p): p
+      | METHOD(snapshot, epoch, n, ~rebuild_prompt: #false)
+    if epoch == 0
+    | static_pict(_handle, this, _instances, rebuild)
+    | static_pict(rkt.ghost(_handle), this, _instances, rebuild)
+
+  override method draw(dc :: DC, ~dx: dx :: Real = 0, ~dy: dy :: Real = 0):
+    rkt.#{draw-pict}(_handle, dc.handle, dx, dy)
+  override method drawer():
+    let proc = rkt.#{make-pict-drawer}(_handle)
+    fun (dc :: DC , ~dx: dx :: Real = 0, ~dy: dy :: Real = 0):
+      proc(dc.handle, dx, dy)
+
+  override property children:
+    if _children is_a Pict
+    | [_children]
+    | _children
+
+  override property _children_starts:
+    for List (c in children):
+      0
+
+  override method launder(~rebuild_prompt: rebuild_prompt = #false) :~ Pict:
+    if rebuild_prompt
+    | static_pict(rkt.launder(_handle), [], empty_instances, fun (p): p)
+    | static_pict(rkt.launder(_handle), this, empty_instances, METHOD(launder))
+
+  override method ghost(do_ghost = #true) :~ Pict:
+    if do_ghost
+    | static_pict(rkt.ghost(_handle), this, _instances, METHOD(ghost))
+    | this
+
+  override method refocus(to_p :: Pict) :~ Pict:
+    fun retry([this :~ Pict, to_p]): this.refocus(to_p)
+    match to_p
+    | to_p :: _StaticPict:
+        static_pict(rkt.refocus(_handle, to_p.handle), this, _instances,
+                    ~dependencies: [this, to_p], retry)
+    | ~else:
+        let to_handle = find_instance(this, to_p)
+        if to_handle
+        | static_pict(rkt.refocus(handle, to_handle), this, _instances,
+                      ~dependencies: [this, to_p], retry)
+        | error(~who: #'refocus,
+                "pict not found",
+                error.val(~label: "pict", to_p),
+                error.val(~label: "within pict", this))
+
+  override method _pad(left :: Real, top :: Real,
+                       right :: Real, bottom :: Real,
+                       desc):
+    static_pict(rkt.inset(_handle, left, top, right, bottom), this, _instances,
+                METHOD(_pad, left, top, right, bottom, desc),
+                ~desc: desc || this.identity)
+
+  override method drop_baseline(amt :: Real) :~ Pict:
+    static_pict(rkt_adjust_ascent_descent(_handle, 0, -amt), this, _instances,
+                METHOD(drop_baseline, amt))
+  override method drop_topline(amt :: Real) :~ Pict:
+    static_pict(rkt_adjust_ascent_descent(_handle, amt, 0), this, _instances,
+                METHOD(drop_topline, amt))
+
+  fun _raw_scale(handle, h_amt, v_amt):
+    let p = rkt.scale(handle, h_amt, v_amt)
+    let p = if h_amt .= 0 || v_amt .= 0 | rkt.ghost(p) | p
+    p
+
+  override method
+  | scale(amt :: Real) :~ Pict:
+      static_pict(_raw_scale(_handle, amt, amt), this, _instances, METHOD(scale, amt))
+  | scale(h_amt :: Real, v_amt :: Real) :~ Pict:
+      static_pict(_raw_scale(_handle, h_amt, v_amt), this, _instances, METHOD(scale, h_amt, v_amt))
+
+  override method rotate(radians :: Real) :~ Pict:
+    static_pict(rkt.rotate(_handle, radians), this, _instances, METHOD(rotate, radians))
+
+  override method shear(horiz :: Real, vert :: Real) :~ Pict:
+    static_pict(rkt.shear(_handle, horiz, vert), this, _instances, METHOD(shear, horiz, vert))
+
+  override method colorize(c :: (Color || String)) :~ Pict:
+    let c = as_color(c)
+    static_pict(rkt.colorize(_handle, c), this, _instances, METHOD(colorize, c))
+  override method line_width(w :: NonnegReal) :~ Pict:
+    static_pict(rkt.linewidth(w, _handle), this, _instances, METHOD(line_width, w))
+
+  override method alpha(n :: Real.in(0, 1), ~composite: composite = #true) :~ Pict:
+    static_pict(rkt.cellophane(_handle, n, ~#{composite?}: composite), this, _instances, METHOD(alpha, n))
+
+  override method clip() :~ Pict:
+    static_pict(rkt.clip(_handle), this, _instances, METHOD(clip))
+
+  override method freeze(~scale: scale :: Real = 2.0):
+    let f_handle = rkt.#{lt-superimpose}(draw_handle, rkt.ghost(handle))
+    static_pict(rkt.freeze(f_handle, ~scale: scale), this, _instances, METHOD(freeze, ~scale: scale))
+
+  override method time_clip(~keep: keep :: maybe(TimeOrder) = #false,
+                            ~nonsustaining: nonsustaining = keep != #'after) :~ Pict:
+    convert([this], #'center, #'pad, fun (ps :~ List, dt, n): ps[0])
+      .time_clip(~keep: keep, ~nonsustaining: nonsustaining)
+
+  override method _time_pad(before :: Int, after :: Int) :~ Pict:
+    if before == 0 && after == 0
+    | this
+    | convert([this], #'center, #'pad, fun (ps :~ List, dt, n): ps[0])._time_pad(before, after)
+  override method sustain(n :: Int = 1) :~ Pict:
+    if n == 0
+    | this
+    | convert([this], #'center, #'pad, fun (ps :~ List, dt, n): ps[0]).sustain(n)
+  override method nonsustaining() :~ Pict:
+    convert([this], #'center, #'pad, fun (ps :~ List, dt, n): ps[0]).nonsustaining()
+
+  override method epoch_set_extent(i :: Int, extent :: NonnegReal):
+    convert([this], #'center, #'pad, fun ([p], dt, n): p).epoch_set_extent(i, extent)
+
+  override method metadata(): _metadata
+  override method set_metadata(metadata :: Map):
+    static_pict(rkt.inset(_handle, 0), this, _instances, METHOD(set_metadata, metadata),
+                ~metadata: metadata)
+
+  override method epoch_metadata(epoch :: Int): {}
+  override method epoch_set_metadata(i :: Int, metadata :: Map):
+    if metadata == {}
+    | this
+    | convert([this], #'center, #'pad, fun ([p], dt, n): p).epoch_set_metadata(i, metadata)
+
+  override time_insert(at_epoch :: Int, n_epochs :: Nat = 1):
+    if at_epoch == 0
+    | sustain(n_epochs)
+    | this
+
+  override method _replace(pre_adjuster, adjuster, config_adjuster, subst :~ Map, as_rebuilt):
+    _do_replace(pre_adjuster, adjuster, config_adjuster, subst, as_rebuilt,
+                _children, _dependencies, _config,
+                _rebuild)
+
+  override method _identify_as(identity):
+    static_pict(_handle, this, [_instances, Pair(identity, _handle)], fun (p): p,
+                ~identity: identity,
+                ~dependencies: this)
+
+namespace StaticPict_public:
+  export:
+    rename:
+      StaticPict.handle as handle
+      StaticPict.draw_handle as draw_handle
+
+annot.delayed_complete SnapshotPict: StaticPict
+
+fun static_pict(handle, children, instances :~ List, rebuild = #false,
+                ~dependencies: dependencies = #false,
+                ~config: config = #false,
+                ~metadata: metadata = {},
+                ~desc: desc = match children | s :: _StaticPict: s._identity_f | ~else: #false,
+                ~identity: identity = genident(desc)) :~ StaticPict:
+  _StaticPict()(handle, identity, children, dependencies, config, instances.add(Pair(identity, handle)), rebuild, metadata)
+
+def mutable do_convert = (fun (_, ...): error("convert not ready"))
+fun convert(p :~ List.of(Pict), epoch, duration, combine, non_sustain_combine = combine,
+            ~dependencies: dependencies = #false,
+            ~rebuild: rebuild = #false,
+            ~desc: desc = #false) :~ Pict:
+  do_convert(p, epoch, duration, combine, non_sustain_combine, dependencies, #false, desc, rebuild)
+fun set_convert(proc):
+  do_convert := proc
+
+// used by `sequential` and `concurrent`
+class ContainerPict(private ps :~ List.of(Pict)):
+  extends StaticPict
+  internal _ContainerPict
+  constructor (ps, children, rebuild):
+    super(children, rebuild)(ps)
+  override method _identify_as(identity):
+    this
+
+class NothingPict():
+  ~name Pict
+  extends StaticPict
+  constructor (): super()()
+
+  private implements Printable
+  private override describe(mode, recur): "NothingPict()"
+
+  override method description(): "nothing"
+
+  override property identity: #false
+  override property width: 0
+  override property height: 0
+  override property ascent: 0
+  override property descent: 0
+
+  override property duration: 1
+  override method
+  | epoch_extent(i :: Int): 0
+  | epoch_extent(i :: Int, extent :: NonnegReal): this
+
+  override method paragraph_end_bounds(): values(0, 0, 0, 0, 0)
+  override method set_paragraph_end_bounds(dx :: Real, dy :: Real,
+                                           width :: Real, height :: Real,
+                                           ascent :: Real, descent :: Real):
+    this
+
+  override method snapshot(epoch :: Int = 0,
+                           n :: Real.in(0, 1) = 0,
+                           ~rebuild_prompt: _ = #true):
+    this
+
+  override method launder(~rebuild_prompt = #false): this
+  override method ghost(do_ghost = #true): this
+  override method refocus(to_p :: Pict):
+    error(~who: #'refocus, "cannot refocus nothing")
+
+  override method _pad(left_amt :: Real, top_amt :: Real,
+                       right_amt :: Real, bottom_amt :: Real,
+                       desc):
+    this
+
+  override method drop_baseline(amt :: Real): this
+  override method drop_topline(amt :: Real): this
+
+  override method
+  | scale(amt :: Real): this
+  | scale(h_amt :: Real, v_amt :: Real): this
+
+  override method rotate(radians :: Real): this
+  override method shear(horiz :: Real, vert :: Real): this
+
+  override method colorize(c :: (Color || String)): this
+  override method line_width(w :: NonnegReal): this
+
+  override method alpha(n :: Real.in(0, 1), ~composite: composite = #true): this
+
+  override method clip(): this
+
+  override method time_clip(~keep: keep :: maybe(TimeOrder) = #false,
+                            ~nonsustaining: nonsustaining = keep != #'after): this
+
+  override method _time_pad(before :: Int, after :: Int): this
+  override method sustain(n :: Int = 1): this
+  override method nonsustaining(): this
+
+  override method epoch_set_extent(i :: Int, extent :: NonnegReal): this
+  override method epoch_metadata(epoch :: Int): {}
+  override method epoch_set_metadata(i :: Int, metadata :: Map): this
+
+  override method metadata(): {}
+  override method set_metadata(metadata :: Map): this
+
+  override method freeze(~scale: scale :: Real = 2.0): this
+
+  override method _replace(pre_adjuster, adjuster, config_adjuster, subst, as_rebuilt): this
+
+  override method _identify_as(identity): this
+
+def nothing = NothingPict()
+
+fun remove_nothings(ps :~ List):
+  for List (p in ps):
+    skip_when p == nothing
+    p
+
+fun from_handle(p :: satisfying(#{pict?}),
+                combining :: List.of(StaticPict) = [],
+                rebuild :: maybe(Function.of_arity(1)) = #false) :~ Pict:
+  let [sub :~ _StaticPict, ...] = combining
+  static_pict(p, [sub, ...], [sub._instances, ...], rebuild)
+
+fun static_instance([p :: Pict, ...], as_p :: _StaticPict,
+                    ~identity: identity = genident(),
+                    ~dependencies: dependencies = #false,
+                    ~config: config = #false,
+                    ~rebuild: rebuild = fun (p): p):
+  if as_p == nothing
+  | as_p
+  | let handle: rkt.inset(as_p.handle, 0) // fresh identity
+    static_pict(handle, as_p, as_p._instances ++ [Pair(p.identity, handle), ...], rebuild,
+                ~identity: identity,
+                ~dependencies: dependencies,
+                ~config: config)
+
+fun find_instance(p :: _StaticPict, q :~ Pict):
+  recur loop (instances :: List = p._instances):
+    for any (inst in instances):
+      match inst
+      | Pair(key, handle):
+          key === q.identity && handle
+      | ~else:
+          loop(inst)
+
+def default_font = draw.Font()
+
+// ------------------------------------------------------------
+
+fun beside(~sep: sep ::Real = 0,
+           ~vert: vert :: VertAlignment = #'center,
+           ~order: order :: OverlayOrder = #'front,
+           ~attach: attach :: HorizAttachment = #'line,
+           ~epoch: epoch :: EpochAlignment = #'center,
+           ~duration: duration :: DurationAlignment = #'sustain,
+           p :: Pict, ...) :~ Pict:
+  recur retry (ps = [p, ...]):
+    match remove_nothings(ps):
+    | []:
+        nothing
+    | [p]: p
+    | [p :: _StaticPict, ...]:
+        let desc = ["beside", p.identity, ...]
+        let children = [p, ...]
+        let all_instances = [p._instances, ...]
+        let rkt_append:
+          match vert
+          | #'top: rkt.#{ht-append}
+          | #'topline: rkt.#{htl-append}
+          | #'center: rkt.#{hc-append}
+          | #'baseline: rkt.#{hbl-append}
+          | #'bottom: rkt.#{hb-append}
+        let new_handle:
+          if order == #'front
+          | if attach == #'line
+            | let [handle, ...]: unique_last_last([p.handle, ...])
+              rkt_append(sep, handle, ...)
+            | rkt_last_append(rkt_append, sep, [p.handle, ...])
+          | let gs: [rkt.launder(rkt.ghost(p.handle)), ...]
+            let g_hand:
+              if attach == #'line
+              | rkt_append(sep, & gs)
+              | rkt_last_append(rkt_append, sep, gs)
+            for values(hand = g_hand) (p_hand in [p.handle, ...],
+                                       g in gs):
+              rkt.#{pin-under}(hand, g, rkt.#{lt-find}, p_hand)
+        static_pict(new_handle, children, all_instances, retry,
+                    ~desc: desc)
+    | ps && [p :~ Pict, ...]:
+        let desc = ["beside", p.identity, ...]
+        convert(ps, epoch, duration, fun(ps, dt, n): retry(ps),
+                ~desc: desc)
+
+namespace beside:
+  export:
+    top topline center baseline bottom
+  fun top(~sep: sep :: Real = 0, p :: Pict, ...) :~ Pict:
+    beside(~sep: sep, ~vert: #'top, p, ...)
+  fun topline(~sep: sep :: Real = 0, p :: Pict, ...) :~ Pict:
+    beside(~sep: sep, ~vert: #'topline, p, ...)
+  fun center(~sep: sep :: Real = 0, p :: Pict, ...) :~ Pict:
+    beside(~sep: sep, ~vert: #'center, p, ...)
+  fun baseline(~sep: sep :: Real = 0, p :: Pict, ...) :~ Pict:
+    beside(~sep: sep, ~vert: #'baseline, p, ...)
+  fun bottom(~sep: sep :: Real = 0, p :: Pict, ...) :~ Pict:
+    beside(~sep: sep, ~vert: #'bottom, p, ...)
+
+fun stack(~sep: sep :: Real = 0,
+          ~horiz: horiz :: HorizAlignment = #'center,
+          ~order: order :: OverlayOrder = #'front,
+          ~epoch: epoch :: EpochAlignment = #'center,
+          ~duration: duration :: DurationAlignment = #'sustain,
+          p :: Pict, ...) :~ Pict:
+  recur retry (ps = [p, ...], dt = 0, n = 0):
+    match remove_nothings(ps):
+    | []:
+        nothing
+    | [p]: p
+    | [p :: _StaticPict, ...]:
+        let desc = ["stack", p.identity, ...]
+        let children = [p, ...]
+        let all_instances = [p._instances, ...]
+        let new_handle:
+          if order == #'front
+          | let [p_handle, ...]: unique_last_last([p.handle, ...])
+            match horiz
+            | #'left: rkt.#{vl-append}(sep, p_handle, ...)
+            | #'center: rkt.#{vc-append}(sep, p_handle, ...)
+            | #'right: rkt.#{vr-append}(sep, p_handle, ...)
+          | let [g, ...] = [rkt.launder(rkt.ghost(p.handle)), ...]
+            let g_hand:
+              match horiz
+              | #'left: rkt.#{vl-append}(sep, g, ...)
+              | #'center: rkt.#{vc-append}(sep, g, ...)
+              | #'right: rkt.#{vr-append}(sep, g, ...)
+            for values(hand = g_hand) (p_hand in [p.handle, ...],
+                                       g in [g, ...]):
+              rkt.#{pin-under}(hand, g, rkt.#{lt-find}, p_hand)
+        static_pict(new_handle, children, all_instances,
+                    fun (ps): retry(ps, dt, n),
+                    ~desc: desc)
+    | ps && [p :~ Pict, ...]:
+        let desc = ["stack", p.identity, ...]
+        convert(ps, epoch, duration, retry,
+                ~desc: desc)
+
+namespace stack:
+  export:
+    left center right
+  fun left(~sep: sep :: Real = 0, p :: Pict, ...) :~ Pict:
+    stack(~sep: sep, ~horiz: #'left, p, ...)
+  fun center(~sep: sep :: Real = 0, p :: Pict, ...) :~ Pict:
+    stack(~sep: sep, ~horiz: #'center, p, ...)
+  fun right(~sep: sep :: Real = 0, p :: Pict, ...) :~ Pict:
+    stack(~sep: sep, ~horiz: #'right, p, ...)
+
+fun overlay(~dx: dx :: maybe(Real) = #false,
+            ~dy: dy :: maybe(Real) = #false,
+            ~horiz: horiz :: HorizAlignment = (if dx || dy | #'left | #'center),
+            ~vert: vert :: VertAlignment = (if dx || dy | #'top | #'center),
+            ~order: order :: OverlayOrder = #'front,
+            ~epoch: epoch :: EpochAlignment = #'center,
+            ~duration: duration :: DurationAlignment = #'sustain,
+            p :: Pict, ...) :~ Pict:
+  ~who: who
+  let dx = dx || 0
+  let dy = dy || 0
+  recur retry (ps = [p, ...]):
+    match remove_nothings(ps):
+    | []:
+        nothing
+    | [p]: p
+    | [p :: _StaticPict, ...]:
+        let desc = ["overlay", p.identity, ...]
+        let children = [p, ...]
+        let all_instances = [p._instances, ...]
+        let ps = [p._handle, ...]
+        fun build(ps :~ List):
+          if dy .= 0 && dx .= 0
+          | let [p, ...]:
+              if order == #'back | ps.reverse() | ps
+            match horiz
+            | #'left:
+                match vert:
+                | #'top: rkt.#{lt-superimpose}(p, ...)
+                | #'topline: rkt.#{ltl-superimpose}(p, ...)
+                | #'center: rkt.#{lc-superimpose}(p, ...)
+                | #'baseline: rkt.#{lbl-superimpose}(p, ...)
+                | #'bottom: rkt.#{lb-superimpose}(p, ...)
+            | #'center:
+                match vert:
+                | #'top: rkt.#{ct-superimpose}(p, ...)
+                | #'topline: rkt.#{ctl-superimpose}(p, ...)
+                | #'center: rkt.#{cc-superimpose}(p, ...)
+                | #'baseline: rkt.#{cbl-superimpose}(p, ...)
+                | #'bottom: rkt.#{cb-superimpose}(p, ...)
+            | #'right:
+                match vert:
+                | #'top: rkt.#{rt-superimpose}(p, ...)
+                | #'topline: rkt.#{rtl-superimpose}(p, ...)
+                | #'center: rkt.#{rc-superimpose}(p, ...)
+                | #'baseline: rkt.#{rbl-superimpose}(p, ...)
+                | #'bottom: rkt.#{rb-superimpose}(p, ...)
+          | fun get_pt(p, i):
+              values((match horiz
+                      | #'left: 0
+                      | #'center: rkt.#{pict-width}(p) / 2
+                      | #'right: rkt.#{pict-width}(p))
+                       + (if i == 0
+                          | math.max(0, dx)
+                          | math.max(0, -dx)),
+                     (match vert
+                      | #'top: 0
+                      | #'topline: rkt.#{pict-ascent}(p)
+                      | #'center: rkt.#{pict-height}(p) / 2
+                      | #'baseline: rkt.#{pict-height}(p) - rkt.#{pict-descent}(p)
+                      | #'bottom: rkt.#{pict-height}(p))
+                       + (if i == 0
+                          | math.max(0, dy)
+                          | math.max(0, -dy)))
+            let (init_x, init_y) = get_pt(ps[0], 0)
+            let (min_x, min_y, max_x, max_y):
+              for values(min_x = init_x, min_y = init_y,
+                         max_x = init_x, max_y = init_y):
+                each p in ps.rest
+                let (x, y) = get_pt(p, 1)
+                values(math.min(min_x, x),
+                       math.min(min_y, y),
+                       math.max(max_x, x),
+                       math.max(max_y, y))
+            let new_ps:
+              for List (p in ps,
+                        i in 0..):
+                let (x, y) = get_pt(p, i)
+                rkt.inset(p, max_x - x, max_y - y, 0, 0)
+            let new_ps:
+              if order == #'back | new_ps.reverse() | new_ps
+            rkt.#{lt-superimpose}(& new_ps)
+        static_pict(build(ps), children, all_instances, retry,
+                    ~desc: desc)
+    | ps && [p :~ Pict, ...]:
+        let desc = ["overlay", p.identity, ...]
+        convert(ps, epoch, duration, fun (ps, dt, n): retry(ps),
+                ~desc: desc)
+
+namespace overlay:
+  export:
+    center
+    left
+    right
+    top
+    topline
+    baseline
+    bottom
+    left_top top_left
+    left_topline topline_left
+    left_center center_left
+    left_baseline baseline_left
+    left_bottom bottom_left
+    center_top top_center
+    center_topline topline_center
+    center_center
+    center_baseline baseline_center
+    center_bottom bottom_center
+    right_top top_right
+    right_topline topline_right
+    right_center center_right
+    right_baseline baseline_right
+    right_bottom bottom_right
+
+  defn.macro 'def_overlay $name(~horiz: $horiz, ~vert: $vert)':
+    'fun $name(p :: Pict, $('...')) :~ Pict:
+       overlay(~horiz: $horiz,
+               ~vert: $vert,
+               p, $('...'))'
+
+  def_overlay center(~horiz: #'center, ~vert: #'center)
+  def_overlay left(~horiz: #'left, ~vert: #'center)
+  def_overlay right(~horiz: #'right, ~vert: #'center)
+  def_overlay top(~horiz: #'center, ~vert: #'top)
+  def_overlay topline(~horiz: #'center, ~vert: #'topline)
+  def_overlay baseline(~horiz: #'center, ~vert: #'baseline)
+  def_overlay bottom(~horiz: #'center, ~vert: #'bottom)
+
+  def_overlay left_top(~horiz: #'left, ~vert: #'top)
+  def_overlay top_left(~horiz: #'left, ~vert: #'top)
+  def_overlay left_topline(~horiz: #'left, ~vert: #'topline)
+  def_overlay topline_left(~horiz: #'left, ~vert: #'topline)
+  def_overlay left_center(~horiz: #'left, ~vert: #'center)
+  def_overlay center_left(~horiz: #'left, ~vert: #'center)
+  def_overlay left_baseline(~horiz: #'left, ~vert: #'baseline)
+  def_overlay baseline_left(~horiz: #'left, ~vert: #'baseline)
+  def_overlay left_bottom(~horiz: #'left, ~vert: #'bottom)
+  def_overlay bottom_left(~horiz: #'left, ~vert: #'bottom)
+
+  def_overlay right_top(~horiz: #'right, ~vert: #'top)
+  def_overlay top_right(~horiz: #'right, ~vert: #'top)
+  def_overlay right_topline(~horiz: #'right, ~vert: #'topline)
+  def_overlay topline_right(~horiz: #'right, ~vert: #'topline)
+  def_overlay right_center(~horiz: #'right, ~vert: #'center)
+  def_overlay center_right(~horiz: #'right, ~vert: #'center)
+  def_overlay right_baseline(~horiz: #'right, ~vert: #'baseline)
+  def_overlay baseline_right(~horiz: #'right, ~vert: #'baseline)
+  def_overlay right_bottom(~horiz: #'right, ~vert: #'bottom)
+  def_overlay bottom_right(~horiz: #'right, ~vert: #'bottom)
+
+  def_overlay center_top(~horiz: #'center, ~vert: #'top)
+  def_overlay top_center(~horiz: #'center, ~vert: #'top)
+  def_overlay center_topline(~horiz: #'center, ~vert: #'topline)
+  def_overlay topline_center(~horiz: #'center, ~vert: #'topline)
+  def_overlay center_center(~horiz: #'center, ~vert: #'center)
+  def_overlay center_baseline(~horiz: #'center, ~vert: #'baseline)
+  def_overlay baseline_center(~horiz: #'center, ~vert: #'baseline)
+  def_overlay center_bottom(~horiz: #'center, ~vert: #'bottom)
+  def_overlay bottom_center(~horiz: #'center, ~vert: #'bottom)
+
+fun text(content :: String,
+         ~font: font :: draw.Font = default_font) :~ Pict:
+  static_pict(rkt.text(content, font.handle), [], empty_instances,
+              ~desc: content)
+
+fun blank(size = 0,
+          ~width: width :: Real = size,
+          ~height: height :: Real = size,
+          ~ascent: ascent :: Real = height,
+          ~descent: descent :: Real = 0) :~ StaticPict:
+  static_pict(rkt.blank(width, height, ascent, descent), [], empty_instances,
+              ~desc: "blank")
+
+fun make_dc_pict(draw_it, w, h, a, d, line, line_width, fill):
+  rkt.dc(fun (dc_handle, dx, dy):
+              let dc = draw.DC.from_handle(dc_handle)
+              dc.save()
+              match fill
+              | #false: dc.brush := draw.Brush.none
+              | #'inherit: dc.brush := draw.Brush(~color: dc.pen.color)
+              | ~else: dc.brush := draw.Brush(~color: fill)
+              match line
+              | #'inherit:
+                  when line_width != #'inherit
+                  | dc.pen := dc.pen with (width = line_width)
+              | #false: dc.pen := draw.Pen.none
+              | ~else: dc.pen := draw.Pen(~color: line,
+                                          ~width: (if line_width == #'inherit
+                                                   | dc.pen.width
+                                                   | line_width))
+              draw_it(dc, dx, dy)
+              dc.restore(),
+         w, h, a, d)
+
+fun line(~dx: dx :: Real = 0,
+         ~dy: dy :: Real = 0,
+         ~line: color :: ColorMode = #'inherit,
+         ~line_width: width :: LineWidth = #'inherit) :~ Pict:
+  let ln:
+    cond
+    | dx == 0: if dy == 0
+               | rkt.blank()
+               | rkt.vline(0, dy)
+    | dy == 0: rkt.hline(dx, 0)
+    | ~else:
+        rkt.dc(fun (dc_handle, ddx, ddy):
+                 let dc = draw.DC.from_handle(dc_handle)
+                 dc.line([ddx, ddy], [ddx + dx, ddy + dy]),
+               dx, dy)
+  let cln:
+    if color != #'inherit
+    | rkt.colorize(ln, as_color(color))
+    | ln
+  static_pict(if width != #'inherit
+              | rkt.linewidth(width, cln)
+              | cln,
+              [],
+              empty_instances)
+
+fun as_color(color):
+  match color
+  | #'inherit: #false
+  | s :: String: s
+  | c :: Color: c.handle
+
+fun as_width(w):
+  match w
+  | #'inherit: #false
+  | ~else: w
+
+fun maybe_pad(p :~ Pict, dw, dh):
+  if dw .= 0 && dh .= 0
+  | p
+  | p.pad(~horiz: dw/2, ~vert: dh/2)
+
+enum Rounded
+| ~is_a Real
+| default
+
+enum Refocus
+| ~is_a Pict
+| around
+
+fun extract_auto_sizes(around, width, height, resize):
+  let w:
+    if width == #'auto
+    | match around
+      | around :: Pict: around.width
+      | ~else: 32
+    | width
+  let h:
+    if height == #'auto
+    | match around
+      | around :: Pict: around.height
+      | ~else: w
+    | height
+  values(resize(w, h),
+         resize(h, w))
+
+fun do_around(~desc: desc,
+              ~around: around,
+              ~width: width,
+              ~height: height,
+              ~resize: resize,
+              ~make: make,
+              ~order: order,
+              ~refocus: refocus,
+              ~epoch: epoch,
+              ~duration: duration):
+  recur retry(around = around, refocus = refocus, ghosted = #false):
+    match around
+    | _ :: NothingPict:
+        nothing
+    | _ :: False || StaticPict:
+        let (width, height) = extract_auto_sizes(around, width, height, resize)
+        let r: make(width, height)
+        let r = if ghosted | rkt.ghost(r) | r
+        let r :~ Pict:
+          match around
+          | around :: _StaticPict:
+              let new_handle:
+                if order == #'front
+                | rkt.#{cc-superimpose}(r, around._handle)
+                | rkt.#{cc-superimpose}(around._handle, r)
+              static_pict(new_handle, around, around._instances,
+                          fun (around): retry(around, #false, ghosted),
+                          ~desc: desc)
+          | ~else: static_pict(r, [], empty_instances, ~desc: desc)
+        match refocus
+        | #false: r
+        | #'around: (if around | r.refocus(around) | r)
+        | ~else: r.refocus(refocus)
+    | ~else:
+        cond
+        | refocus is_a Pict:
+            convert([around], epoch, duration,
+                    fun ([around], dt, n): retry(around, refocus, #false),
+                    fun ([around], dt, n): retry(around, refocus, #true),
+                    ~dependencies: [around, refocus],
+                    ~rebuild: fun ([around, refocus]):
+                                retry(around, refocus, #true),
+                    ~desc: desc)
+        | ~else:
+            convert([around], epoch, duration,
+                    fun ([around], dt, n): retry(around, refocus, #false),
+                    fun ([around], dt, n): retry(around, refocus, #true),
+                    ~rebuild: fun ([around]): retry(around, refocus, #false),
+                    ~desc: desc)
+
+fun do_rectangle(~desc: desc,
+                 ~around: around,
+                 ~width: width,
+                 ~height: height,
+                 ~resize: resize,
+                 ~fill: fill,
+                 ~line: line,
+                 ~line_width: line_width,
+                 ~rounded: rounded,
+                 ~order: order,
+                 ~refocus: refocus,
+                 ~epoch: epoch,
+                 ~duration: duration):
+  do_around(~desc: desc,
+            ~around: around,
+            ~width: width,
+            ~height: height,
+            ~resize: resize,
+            ~order: order,
+            ~refocus: refocus,
+            ~epoch: epoch,
+            ~duration: duration,
+            ~make: fun (width, height):
+                     cond
+                     | fill:
+                         if rounded
+                         | rkt.#{filled-rounded-rectangle}(width,
+                                                           height,
+                                                           if rounded == #'default | -0.25 | rounded,
+                                                           ~color: as_color(fill),
+                                                           ~#{draw-border?}: line,
+                                                           ~#{border-color}: line && as_color(line),
+                                                           ~#{border-width}: as_width(line_width))
+                         | rkt.#{filled-rectangle}(width,
+                                                   height,
+                                                   ~color: as_color(fill),
+                                                   ~#{draw-border?}: line,
+                                                   ~#{border-color}: line && as_color(line),
+                                                   ~#{border-width}: as_width(line_width))
+                     | line:
+                         if rounded
+                         | rkt.#{rounded-rectangle}(width,
+                                                    height,
+                                                    if rounded == #'default | -0.25 | rounded,
+                                                    ~#{border-color}: as_color(line),
+                                                    ~#{border-width}: as_width(line_width))
+                         | rkt.#{rectangle}(width,
+                                            height,
+                                            ~#{border-color}: as_color(line),
+                                            ~#{border-width}: as_width(line_width))
+                     | ~else:
+                         rkt.blank(width,
+                                   height))
+
+fun rectangle(~around: around :: maybe(Pict) = #false,
+              ~width: width :: AutoReal = #'auto,
+              ~height: height :: AutoReal = #'auto,
+              ~fill: fill :: maybe(ColorMode) = #false,
+              ~line: line :: maybe(ColorMode) = !fill && #'inherit,
+              ~line_width: line_width :: LineWidth = #'inherit,
+              ~rounded: rounded :: maybe(Rounded) = #false,
+              ~order: order :: OverlayOrder = #'front,
+              ~refocus: refocus :: maybe(Refocus) = #'around,
+              ~epoch: epoch :: EpochAlignment = #'center,
+              ~duration: duration :: DurationAlignment = #'sustain) :~ Pict:
+  do_rectangle(~desc: "rectangle",
+               ~around: around,
+               ~width: width,
+               ~height: height,
+               ~resize: fun (d, other): d,
+               ~fill: fill,
+               ~line: line,
+               ~line_width: line_width,
+               ~rounded: rounded,
+               ~order: order,
+               ~refocus: refocus,
+               ~epoch: epoch,
+               ~duration: duration)
+
+fun square(~around: around :: maybe(Pict) = #false,
+           ~size: size :: AutoReal = #'auto,
+           ~fill: fill :: maybe(ColorMode) = #false,
+           ~line: line :: maybe(ColorMode) = !fill && #'inherit,
+           ~line_width: line_width :: LineWidth = #'inherit,
+           ~rounded: rounded :: maybe(Rounded) = #false,
+           ~order: order :: OverlayOrder = #'front,
+           ~refocus: refocus :: maybe(Refocus) = #'around,
+           ~epoch: epoch :: EpochAlignment = #'center,
+           ~duration: duration :: DurationAlignment = #'sustain) :~ Pict:
+  do_rectangle(~desc: "square",
+               ~around: around,
+               ~width: size,
+               ~height: size,
+               ~resize: fun (d, other): math.max(d, other),
+               ~line: line,
+               ~fill: fill,
+               ~line_width: line_width,
+               ~rounded: rounded,
+               ~order: order,
+               ~refocus: refocus,
+               ~epoch: epoch,
+               ~duration: duration)
+
+fun do_ellipse(~desc: desc,
+               ~around: around,
+               ~width: width,
+               ~height: height,
+               ~resize: resize,
+               ~arc: arc,
+               ~start: start,
+               ~end: end,
+               ~fill: fill,
+               ~line: line,
+               ~line_width: line_width,
+               ~order: order,
+               ~refocus: refocus,
+               ~epoch: epoch,
+               ~duration: duration):
+  do_around(~desc: desc,
+            ~around: around,
+            ~width: width,
+            ~height: height,
+            ~resize: resize,
+            ~order: order,
+            ~refocus: refocus,
+            ~epoch: epoch,
+            ~duration: duration,
+            ~make: fun (width, height):
+                     cond
+                     | arc:
+                         make_dc_pict(fun (dc :~ draw.DC, dx, dy):
+                                        dc.arc(draw.Rect(dx, dy, width, height),
+                                               if arc == #'cw | end | start,
+                                               if arc == #'cw | start | end),
+                                      width, height, height, 0,
+                                      line,
+                                      line_width,
+                                      fill)
+                     | fill:
+                         rkt.#{filled-ellipse}(width,
+                                               height,
+                                               ~color: as_color(fill),
+                                               ~#{draw-border?}: line,
+                                               ~#{border-color}: line && as_color(line),
+                                               ~#{border-width}: line && as_width(line_width))
+                     | line:
+                         rkt.#{ellipse}(width,
+                                        height,
+                                        ~#{border-color}: as_color(line),
+                                        ~#{border-width}: as_width(line_width))
+                     | ~else:
+                         rkt.blank(width,
+                                   height))
+
+fun ellipse(~around: around :: maybe(Pict) = #false,
+            ~width: width :: AutoReal = #'auto,
+            ~height: height :: AutoReal = #'auto,
+            ~arc: arc :: maybe(ArcDirection) = #false,
+            ~start: start :: Real = 0,
+            ~end: end :: Real = 2 * math.pi,
+            ~fill: fill :: maybe(ColorMode) = #false,
+            ~line: line :: maybe(ColorMode) = !fill && #'inherit,
+            ~line_width: line_width :: LineWidth = #'inherit,
+            ~order: order :: OverlayOrder = #'front,
+            ~refocus: refocus :: maybe(Refocus) = #'around,
+            ~epoch: epoch :: EpochAlignment = #'center,
+            ~duration: duration :: DurationAlignment = #'sustain) :~ Pict:
+  do_ellipse(~desc: "ellipse",
+             ~around: around,
+             ~width: width,
+             ~height: height,
+             ~resize: fun (d, other): d,
+             ~arc: arc,
+             ~start: start,
+             ~end: end,
+             ~fill: fill,
+             ~line: line,
+             ~line_width: line_width,
+             ~order: order,
+             ~refocus: refocus,
+             ~epoch: epoch,
+             ~duration: duration)
+
+fun circle(~around: around :: maybe(Pict) = #false,
+           ~size: size :: AutoReal = #'auto,
+           ~arc: arc :: maybe(ArcDirection) = #false,
+           ~start: start :: Real = 0,
+           ~end: end :: Real = 2 * math.pi,
+           ~fill: fill :: maybe(ColorMode) = #false,
+           ~line: line :: maybe(ColorMode) = !fill && #'inherit,
+           ~line_width: line_width :: LineWidth = #'inherit,
+           ~order: order :: OverlayOrder = #'front,
+           ~refocus: refocus :: maybe(Refocus) = #'around,
+           ~epoch: epoch :: EpochAlignment = #'center,
+           ~duration: duration :: DurationAlignment = #'sustain) :~ Pict:
+  do_ellipse(~desc: "circle",
+             ~around: around,
+             ~width: size,
+             ~height: size,
+             ~resize: fun (d, other): math.max(d, other),
+             ~arc: arc,
+             ~start: start,
+             ~end: end,
+             ~line: line,
+             ~fill: fill,
+             ~line_width: line_width,
+             ~order: order,
+             ~refocus: refocus,
+             ~epoch: epoch,
+             ~duration: duration)
+
+fun polygon([pt :: draw.PointLike.to_point, ...],
+            ~fill: fill :: maybe(ColorMode) = #false,
+            ~line: line :: maybe(ColorMode) = !fill && #'inherit,
+            ~line_width: line_width :: LineWidth = #'inherit) :~ Pict:
+  let w = math.max(pt.x, ...)
+  let h = math.max(pt.y, ...)
+  static_pict(
+    make_dc_pict(fun (dc :~ draw.DC, dx, dy):
+                   dc.polygon([pt, ...], ~dx: dx, ~dy: dy),
+                 w, h, h, 0,
+                 line,
+                 line_width,
+                 fill),
+    [],
+    empty_instances
+  )
+
+fun triangle(~around: around :: maybe(Pict) = #false,
+             ~size: size :: AutoReal = #'auto,
+             ~width: width :: AutoReal = size,
+             ~height: height :: AutoReal = size,
+             ~fill: fill :: maybe(ColorMode) = #false,
+             ~line: line :: maybe(ColorMode) = !fill && #'inherit,
+             ~line_width: line_width :: LineWidth = #'inherit,
+             ~order: order :: OverlayOrder = #'front,
+             ~refocus: refocus :: maybe(Refocus) = #'around,
+             ~epoch: epoch :: EpochAlignment = #'center,
+             ~duration: duration :: DurationAlignment = #'sustain) :~ Pict:
+   do_around(~desc: "triangle",
+             ~around: around,
+             ~width: width,
+             ~height: height,
+             ~resize: fun (d, other): d,
+             ~order: order,
+             ~refocus: refocus,
+             ~epoch: epoch,
+             ~duration: duration,
+             ~make: fun (width, height):
+                      let pts = [[0, height], [width, height], [width/2, 0]]
+                      make_dc_pict(fun (dc :~ draw.DC, dx, dy):
+                                     dc.polygon(pts, ~dx: dx, ~dy: dy),
+                                   width, height, height, 0,
+                                   line,
+                                   line_width,
+                                   fill))
+
+fun bitmap(path_or_bitmap :: Path || String || draw.Bitmap) :~ Pict:
+  static_pict(rkt.bitmap(match path_or_bitmap
+                         | bm :: draw.Bitmap: bm.handle
+                         | path: path),
+              [],
+              empty_instances)
+
+fun dc(draw :: Function.of_arity(3) described_as (draw.DC, Real, Real) -> ~any,
+       ~desc: desc = "dc",
+       ~width: width :: Real,
+       ~height: height :: Real,
+       ~ascent: ascent :: Real = height,
+       ~descent: descent :: Real = 0,
+       ~fill: fill :: maybe(ColorMode) = #false,
+       ~line: line :: maybe(ColorMode) = !fill && #'inherit,
+       ~line_width: line_width :: LineWidth = #'inherit) :~ Pict:
+  static_pict(make_dc_pict(draw,
+                           width,
+                           height,
+                           ascent,
+                           descent,
+                           line,
+                           line_width,
+                           fill),
+              [],
+              empty_instances,
+              ~desc: desc)
+
+// ------------------------------------------------------------
+
+// shadowed in `Find`
+alias 'IN': 'in'
+
+class Find(private q :~ Pict, private find, private t_find_or_dt, private is_animated):
+  internal _Find
+
+  constructor(q :: Pict,
+              ~horiz: horiz :: HorizAlignment = #'center,
+              ~vert: vert :: VertAlignment = #'center,
+              ~dx: dx :: Real = 0,
+              ~dy: dy :: Real = 0,
+              ~dhoriz: dx_w :: Real = 0,
+              ~dvert: dy_h :: Real = 0,
+              ~dt: dt :: Int = 0):
+    _Find(q,
+          block:
+            let proc:
+              match horiz
+              | #'left:
+                  match vert
+                  | #'top: rkt.#{lt-find}
+                  | #'topline: rkt.#{ltl-find}
+                  | #'center: rkt.#{lc-find}
+                  | #'baseline: rkt.#{lbl-find}
+                  | #'bottom: rkt.#{lb-find}
+              | #'center:
+                  match vert
+                  | #'top: rkt.#{ct-find}
+                  | #'topline: rkt.#{ctl-find}
+                  | #'center: rkt.#{cc-find}
+                  | #'baseline: rkt.#{cbl-find}
+                  | #'bottom: rkt.#{cb-find}
+              | #'right:
+                  match vert
+                  | #'top: rkt.#{rt-find}
+                  | #'topline: rkt.#{rtl-find}
+                  | #'center: rkt.#{rc-find}
+                  | #'baseline: rkt.#{rbl-find}
+                  | #'bottom: rkt.#{rb-find}
+            offset(proc, dx, dy, dx_w, dy_h),
+          dt,
+          #false)
+
+  method translate(dx :: Real = 0, dy :: Real = 0):
+    _Find(q,
+          fun(p, q, epoch, n, nth):
+            def values(x, y) = find(p, q, epoch, n, nth)
+            values(x + dx, y + dy),
+          t_find_or_dt,
+          is_animated)
+
+  method in(p :: Pict, epoch :: Int = 0, n :: Real.in(0, 1) = 0,
+            ~nth: nth :: Nat || matching(#'unique) = #'unique) :~ values(Real, Real):
+    let (x, y) = find(p, q, epoch, n, nth)
+    if x
+    | values(x, y)
+    | error(~who: #'#{Find.in},
+            if y
+            | "pict location is ambigious"
+            | "cannot find pict",
+            error.val(~label: "pict", q),
+            error.val(~label: "in pict", p))
+
+  method maybe_in(p :: Pict, epoch :: Int = 0, n :: Real.in(0, 1) = 0,
+                  ~nth: nth :: Nat || matching(#'unique) = #'unique) :~ values(maybe(Real), maybe(Real)):
+    let (x, y) = find(p, q, epoch, n, nth)
+    if x
+    | values(x, y)
+    | values(#false, #false)
+
+  method start_in(p :: Pict) :~ Int:
+    fun loop (p :~ Pict, delta):
+      if p.identity == q.identity
+      | delta
+      | for any (c IN p.children,
+                 start IN (p :~ _Pict)._children_starts):
+          loop(c, start + delta)
+    match t_find_or_dt
+    | dt :: Int:
+        loop(p, dt) || error(~who: #'#{Find.start_in},
+                             "cannot find pict",
+                             error.val(~label: "pict", q),
+                             error.val(~label: "in pict", p))
+    | ~else:
+        let dt = t_find_or_dt(p)
+        unless dt is_a Int
+        | error(~who: #'#{Find.start_in},
+                ~exn: Exn.Fail.Annot,
+                "function did not produce an integer time box difference",
+                error.val(~label: "result", dt))
+        dt
+
+  method delay(dt :: Int) :~ Find:
+    if is_animated
+    | _Find(q,
+            fun (p, q, epoch, n, nth): find(p, q, epoch - dt, n, nth),
+            t_find_or_dt,
+            #true)
+    | this
+
+  private method _replace(pre_adjuster, adjuster, config_adjuster, subst :~ Map, as_rebuilt):
+    cond
+    | q:
+        let (new_q, subst) = _Pict._replace(q, pre_adjuster, adjuster, config_adjuster, subst, as_rebuilt)
+        if new_q === q
+        | values(this, subst)
+        | values(_Find(new_q, find, t_find_or_dt, is_animated),
+                 subst)
+    | ~else:
+        values(this, subst)
+
+  export:
+    abs
+    animate
+    interpolate
+    center
+    left
+    right
+    top
+    topline
+    baseline
+    bottom
+    left_top top_left
+    left_topline topline_left
+    left_center center_left
+    left_baseline baseline_left
+    left_bottom bottom_left
+    center_top top_center
+    center_topline topline_center
+    center_center
+    center_baseline baseline_center
+    center_bottom bottom_center
+    right_top top_right
+    right_topline topline_right
+    right_center center_right
+    right_baseline baseline_right
+    right_bottom bottom_right
+
+def nth_ok:
+  let (mask, req_kws, allow_kws) = Function.arity(rkt.#{lt-find})
+  !allow_kws || allow_kws!!.contains(#'~nth)
+
+fun offset(proc, dx, dy, dx_w, dy_h):
+  fun (p :~ Pict, q :~ Pict, epoch :~ Int, n :~ Real.in(0, 1), nth):
+    cond
+    | q == nothing:
+        values(#false, #false)
+    | ~else:
+        let p :~ StaticPict = (if p is_a StaticPict
+                               | p
+                               | p.snapshot(epoch, n))
+        fun size_shift(p_handle, q_handle):
+          if dx_w .= 0 && dy_h .= 0
+          | values(0, 0)
+          | let (l, t) = rkt.#{lt-find}(p_handle, q_handle)
+            let (r, b) = rkt.#{rb-find}(p_handle, q_handle)
+            values((r - l) * dx_w, (b - t) * dy_h)
+        fun fail(x :: Exn.Fail):
+          if x.message.contains("ambiguous")
+          | values(#false, #'ambigious)
+          | values(#false, #false)
+        match q
+        | q :: StaticPict:
+            try:
+              let q_handle = find_instance(p, q) || q.handle
+              let (x, y):
+                if nth_ok
+                | proc(p.handle, q_handle, ~nth: nth)
+                | proc(p.handle, q_handle)
+              let (dx_w, dy_h) = size_shift(p.handle, q_handle)
+              values(x + dx + dx_w, y + dy + dy_h)
+              ~catch x :: Exn.Fail:
+                fail(x)
+        | ~else:
+            let q_handle = find_instance(p, q)
+            if q_handle
+            | try:
+                let (x, y):
+                  if nth_ok
+                  | proc(p.handle, q_handle, ~nth: nth)
+                  | proc(p.handle, q_handle)
+                let (dx_w, dy_h) = size_shift(p.handle, q_handle)
+                values(x + dx + dx_w, y + dy + dy_h)
+                ~catch x :: Exn.Fail:
+                  fail(x)
+            | values(#false, #false)
+
+fun abs(dx :: Real, dy :: Real, ~dt: dt :: Int = 0) :: Find:
+  fun find (p, q, epoch, n, nth):
+    if nth == 0 || nth == #'unique
+    | values(dx, dy)
+    | values(#false, #false)
+  _Find(#false, find, dt, #false)
+
+fun animate(xy_proc :: Function.of_arity(2) || Function.of_arity(3),
+            ~time_box: t_proc :: Function.of_arity(1) = fun (p): 0) :: Find:
+  _Find(#false,
+        fun (p, q, epoch, n, nth):
+          call_with_values(
+            fun ():
+              match xy_proc
+              | xy_proc :: Function.of_arity(3):
+                  xy_proc(p, epoch, n)
+              | xy_proc :: Function.of_arity(2):
+                  xy_proc(p, cond
+                             | epoch < 0: 0
+                             | epoch > 0: 1
+                             | ~else: n),
+            fun
+            | (dx :: Real, dy :: Real):
+                values(dx, dy)
+            | (_ :: False, _ :: False):
+                values(#false, #false)
+            | (arg, ...):
+                error(~who: #'#{Find.animate},
+                      ~exn: Exn.Fail.Annot,
+                      "invalid result from animation function",
+                      error.val(~label: "function", xy_proc),
+                      error.val(~label: "result", arg, ...))
+          ),
+        t_proc,
+        #true)
+
+fun interpolate(from :: Find,
+                to :: Find,
+                ~bend: bend :: Real.in(0, 1) -> Real.in(0, 1) = rkt.#{fast-middle}) :: Find:
+  _Find(#false,
+        fun (p, q, epoch, n, nth):
+          let i_n:
+            cond
+            | epoch < 0: 0
+            | epoch >= 1: 1
+            | ~else: bend(n)
+          cond
+          | i_n .= 0: from.in(p, epoch, n, ~nth: nth)
+          | i_n .= 1: to.in(p, epoch, n, ~nth: nth)
+          | ~else:
+              let (from_x, from_y) = from.maybe_in(p, epoch, n, ~nth: nth)
+              let (to_x, to_y) = to.maybe_in(p, epoch, n, ~nth: nth)
+              if from_x && to_x
+              | values(from_x * (1 - i_n) + to_x * i_n,
+                       from_y * (1 - i_n) + to_y * i_n)
+              | values(#false, from_y || to_y),
+        fun (p):
+          from.start_in(p),
+        #true)
+
+defn.macro 'def_find $name: $rkt':
+  'fun $name(q :: Pict,
+             ~dx: dx :: Real = 0,
+             ~dy: dy :: Real = 0,
+             ~dhoriz: dx_w :: Real = 0,
+             ~dvert: dy_h :: Real = 0,
+             ~dt: dt :: Int = 0) :~ Find:
+     _Find(q, offset(rkt . $rkt, dx, dy, dx_w, dy_h), dt, #false)'
+
+def_find center: #{cc-find}
+def_find left: #{lc-find}
+def_find right: #{rc-find}
+def_find top: #{ct-find}
+def_find topline: #{ct-find}
+def_find baseline: #{cb-find}
+def_find bottom: #{cb-find}
+
+def_find left_top: #{lt-find}
+def_find top_left: #{lt-find}
+def_find left_topline: #{ltl-find}
+def_find topline_left: #{ltl-find}
+def_find left_center: #{lc-find}
+def_find center_left: #{lc-find}
+def_find left_baseline: #{lbl-find}
+def_find baseline_left: #{lbl-find}
+def_find left_bottom: #{lb-find}
+def_find bottom_left: #{lb-find}
+
+def_find center_top: #{ct-find}
+def_find top_center: #{ct-find}
+def_find center_topline: #{ctl-find}
+def_find topline_center: #{ctl-find}
+def_find center_center: #{cc-find}
+def_find center_baseline: #{cbl-find}
+def_find baseline_center: #{cbl-find}
+def_find center_bottom: #{cb-find}
+def_find bottom_center: #{cb-find}
+
+def_find right_top: #{rt-find}
+def_find top_right: #{rt-find}
+def_find right_topline: #{rtl-find}
+def_find topline_right: #{rtl-find}
+def_find right_center: #{rc-find}
+def_find center_right: #{rc-find}
+def_find right_baseline: #{rbl-find}
+def_find baseline_right: #{rbl-find}
+def_find right_bottom: #{rb-find}
+def_find bottom_right: #{rb-find}
+
+// ------------------------------------------------------------
+
+fun connect(~on: p :: Pict,
+            from :: Find,
+            to :: Find,
+            ~find: find_mode :: FindMode = #'always,
+            ~style: style :: ConnectStyle = #'line,
+            ~line: color :: ColorMode = #'inherit,
+            ~line_width: width :: LineWidth = #'inherit,
+            ~line_style: line_style :: ConnectLineStyle = #'solid,
+            ~order: order :: OverlayOrder = #'front,
+            ~arrow_size: arrow_size :: Real = 16,
+            ~arrow_solid: solid = #true,
+            ~arrow_hidden: hidden = #false,
+            ~start_angle: start_angle :: maybe(Real) = #false,
+            ~start_pull: start_pull :: maybe(Real) = #false,
+            ~end_angle: end_angle :: maybe(Real) = #false,
+            ~end_pull: end_pull :: maybe(Real) = #false,
+            ~label: label :: maybe(Pict) = #false,
+            ~label_dx: label_dx :: Real = 0,
+            ~label_dy: label_dy :: Real = 0,
+            ~epoch: epoch :: EpochAlignment = #'center,
+            ~duration: duration :: DurationAlignment = #'sustain) :~ Pict:
+  let p:
+    if p is_a _StaticPict
+      && !(p is_a NothingPict)
+      && (_Find.is_animated(from) || _Find.is_animated(to))
+    | pict_animate(fun (n, ~deps: [p]): p, [p], 0 /* extent */)
+    | p
+  recur retry(p :~ Pict = p, label = label, from :~ Find = from, to :~ Find = to, dt = 0, n = 0):
+    let label = (label != nothing) && label
+    let children = [p] ++ if label | [label] | []
+    let dependencies = children ++ [from, to]
+    let rebuild:
+      if label
+      | fun ([p, label, from, to]): retry(p, label, from, to, dt, n)
+      | fun ([p, from, to]): retry(p, #false, from, to, dt, n)
+    let desc = p.identity
+    match values(p, label)
+    | (_ :: NothingPict, _):
+        nothing
+    | (p :: _StaticPict, _ :: maybe(_StaticPict)):
+        let (from_x, from_y) = from.maybe_in(p, dt, n)
+        let (to_x, to_y) = to.maybe_in(p, dt, n)
+        cond
+        | from_x && to_x:
+            let (proc, [pre, ...], kw_args):
+              match style
+              | #'line: values(rkt.#{pin-line}, [], {})
+              | #'arrow: values(rkt.#{pin-arrow-line},
+                                [arrow_size],
+                                { #'~#{solid?}: solid, #'~#{hide-arrowhead?}: hidden })
+              | #'arrows: values(rkt.#{pin-arrows-line},
+                                 [arrow_size],
+                                 { #'~#{solid?}: solid, #'~#{hide-arrowhead?}: hidden })
+            let label_handle = label && StaticPict.handle(label)
+            fun build(handles):
+              let (handle, label_handle):
+                match handles
+                | [handle, label_handle]: values(handle, label_handle)
+                | handle: values(handle, #false)
+              proc(pre, ...,
+                   handle,
+                   handle, fun (p, q): values(from_x, from_y),
+                   handle, fun (p, q): values(to_x, to_y),
+                   ~#{start-angle}: start_angle,
+                   ~#{start-pull}: start_pull,
+                   ~#{end-angle}: end_angle,
+                   ~#{end-pull}: end_pull,
+                   ~#{line-width}: as_width(width),
+                   ~style: match line_style
+                           | #'solid: #'solid
+                           | #'long_dash: #'#{long-dash}
+                           | #'short_dash: #'#{short-dash}
+                           | #'dot: #'dot
+                           | #'dot_dash: #'#{dot-dash},
+                   ~color: as_color(color),
+                   ~#{under?}: order == #'back,
+                   ~label: label_handle,
+                   ~#{x-adjust-label}: label_dx,
+                   ~#{y-adjust-label}: label_dy,
+                   ~& kw_args)
+            static_pict(build(if label_handle | [p.handle, label_handle] | p.handle),
+                        children,
+                        p._instances ++ (if label_handle | _StaticPict._instances(label) | []),
+                        ~dependencies: dependencies,
+                        rebuild,
+                        ~desc: desc)
+        | ~else:
+            if find_mode == #'maybe
+            | p
+            | error(~who: #'connect,
+                    if from_x
+                    | let (to_x, to_y) = to.maybe_in(p, dt, n, ~nth: 0)
+                      if to_x
+                      | "ambigious \"to\" pict"
+                      | "cannot find \"to\" pict"
+                    | let (from_x, from_y) = from.maybe_in(p, dt, n, ~nth: 0)
+                      if from_x
+                      | "ambigious \"from\" pict"
+                      | "cannot find \"from\" pict",
+                    error.val(~label: "finder", if from_x | from | to),
+                    error.val(~label: "in pict", p))
+    | ~else:
+        convert(children, #'center, #'sustain,
+                fun (ps :~ List, dt, n): retry(ps[0], label && ps[1], from, to, 0, 0),
+                fun (ps :~ List, dt, n): ps[0],
+                ~dependencies: dependencies,
+                ~rebuild: rebuild,
+                ~desc: desc)
+
+def mutable switch = #false
+fun set_switch(proc):
+  switch := proc
+
+fun pin(q :: Pict,
+        ~on: p :: Pict,
+        ~at: at :: Find,
+        ~find: find_mode :: FindMode = #'always,
+        ~pinhole: using :: Find = Find.left_top(q),
+        ~order: order :: OverlayOrder = #'front,
+        ~epoch: epoch :: EpochAlignment = #'center,
+        ~duration: duration :: DurationAlignment = #'sustain,
+        ~time: time :: TimeAlignment = #'start) :~ Pict:
+  let p:
+    if p is_a _StaticPict
+      && !(p is_a NothingPict)
+      && q is_a _StaticPict
+      && (_Find.is_animated(at) || _Find.is_animated(using))
+    | pict_animate(fun (n, ~deps: [p]): p, [p], 0 /* extent */)
+    | p
+  recur pin_on(p :~ Pict = p, q :~ Pict = q,
+               at :~ Find = at, using :~ Find = using,
+               time = time, on_dt = 0):
+    match time
+    | dt :: Int:
+        let new_q = q.time_pad(~before: dt)
+        pin_on(p, new_q, at.delay(dt), using.delay(dt), #'start, on_dt)
+    | #'insert:
+        cond
+        | p is_a NothingPict:
+            nothing
+        | q is_a NothingPict:
+            p
+        | ~else:
+            let dt = at.start_in(p)
+            let dur = q.duration
+            let pre = p.time_pad(~after: dt - p.duration)
+            let post = p.time_pad(~before: -dt)
+            let mid = p.snapshot(dt, 0).sustain(dur-1)
+            let new_p = switch(pre, mid, post)
+            let q_dt = dt + 1
+            let new_q = q.time_pad(~before: q_dt)
+            pin_on(new_p, new_q, at.delay(q_dt), using.delay(q_dt), #'start, on_dt)
+    | #'sync:
+        let dt = at.start_in(p)
+        let new_q = q.time_pad(~before: dt)
+        pin_on(p, new_q, at.delay(dt), using.delay(dt), #'start, on_dt)
+    | #'end:
+        let dt = p.duration
+        let new_q = q.time_pad(~before: dt)
+        pin_on(p, new_q, at.delay(dt), using.delay(dt), #'start, on_dt)
+    | ~else:
+        recur retry(ps = [p, q], dt = 0, n = 0):
+          let dt = dt + on_dt
+          match ps
+          | [_ :: NothingPict, _]:
+              nothing
+          | [p, _ :: NothingPict]:
+              p
+          | [p :: _StaticPict, q :: _StaticPict]:
+              let desc = ["pin", p.identity, q.identity]
+              let (at_x, at_y): at.maybe_in(p, dt, n)
+              when !at_x && (at_y || find_mode == #'always)
+              | error(~who: #'pin,
+                      if at_y
+                      | "pict location is ambigious"
+                      | "cannot find pict",
+                      error.val(~label: "finder", at),
+                      error.val(~label: "in pict", p))
+              let (dx, dy) = using.in(q, dt, n)
+              if at_x
+              | let new_handle:
+                  (if order == #'front
+                   | rkt.#{pin-over}
+                   | rkt.#{pin-under})(p.handle,
+                                       at_x - dx, at_y - dy,
+                                       q.handle)
+                static_pict(new_handle,
+                            [p, q],
+                            [p._instances, q._instances],
+                            ~dependencies: [p, q, at, using],
+                            fun ([p, q, at, using]): pin_on(p, q, at, using, time, dt),
+                            ~desc: desc)
+              | p
+          | [p :~ Pict, q :~ Pict]:
+              let desc = ["pin", p.identity, q.identity]
+              convert([p, q], epoch, duration,
+                      retry,
+                      ~dependencies: [p, q, at, using],
+                      ~rebuild: fun ([p, q, at, using]):
+                                  pin_on(p, q, at, using, time, dt),
+                      ~desc: desc)
+
+// ------------------------------------------------------------
+
+fun table(rows :: List.of(List.of(Pict)),
+          ~horiz: horiz :: HorizAlignment || List.of(HorizAlignment) = #'left,
+          ~vert: vert :: VertAlignment || List.of(VertAlignment) = #'topline,
+          ~hsep: hsep :: Real || List.of(Real) = 32,
+          ~vsep: vsep :: Real || List.of(Real) = 1,
+          ~pad: ins :: matching((_ :: Real) || [_ :: Real, _ :: Real] || [_ :: Real, _ :: Real, _ :: Real, _ :: Real]) = 0,
+          ~line: line_c :: maybe(ColorMode) = #false,
+          ~line_width: line_width :: LineWidth = #'inherit,
+          ~order: order :: OverlayOrder = #'front,
+          ~hline: hline :: maybe(ColorMode) || List.of(maybe(ColorMode)) = line_c,
+          ~hline_width: hline_width :: LineWidth || List.of(LineWidth) = line_width,
+          ~vline: vline :: maybe(ColorMode) || List.of(maybe(ColorMode)) = line_c,
+          ~vline_width: vline_width :: LineWidth || List.of(LineWidth) = line_width,
+          ~epoch: epoch :: EpochAlignment = #'center,
+          ~duration: duration :: DurationAlignment = #'sustain) :~ Pict:
+  recur retry (rows :~ List.of(List.of(Pict)) = rows):
+    match rows
+    | [[elem :: _StaticPict, ...], ...]:
+        fun
+        | improper([]): rkt.#{cc-superimpose}
+        | improper([e]): e
+        | improper([a, &l]): Pair.cons(a, improper(l))
+        fun to_align(align):
+          match align
+          | [align, ...]:
+              improper([to_align(align), ...])
+          | #'left:
+              rkt.#{lc-superimpose}
+          | #'right:
+              rkt.#{rc-superimpose}
+          | #'center:
+              rkt.#{cc-superimpose}
+          | #'top:
+              rkt.#{ct-superimpose}
+          | #'topline:
+              rkt.#{ctl-superimpose}
+          | #'baseline:
+              rkt.#{cbl-superimpose}
+          | #'bottom:
+              rkt.#{cb-superimpose}
+        let picts = [elem._handle, ..., ...]
+        let row_length = rows[0].length()
+        let h_align = to_align(horiz)
+        let v_align = to_align(vert)
+        fun build([handle, ...]):
+          let picts = PairList[handle, ...]
+          rkt.table(row_length,
+                    picts,
+                    h_align,
+                    v_align,
+                    match hsep
+                    | []: 0
+                    | [h, ...]: PairList[h, ...]
+                    | ~else: hsep,
+                    match vsep
+                    | []: 0
+                    | [v, ...]: PairList[v, ...]
+                    | ~else: vsep)
+        let r = build(picts)
+        if !hline && !vline && !line_c
+        | let r:
+            match ins
+            | [h, v]: rkt.inset(r, h, v, h, v)
+            | [l, t, r, b]: rkt.inset(r, l, t, r, b)
+            | ~else: rkt.inset(r, ins, ins, ins, ins)
+          static_pict(r, [elem, ..., ...], [elem._instances, ..., ...],
+                      fun (elems): retry(group_by(elems, row_length)))
+        | let picts = [& picts]
+          let col_length = rows.length()
+          let ws:
+            for List (i in 0 .. row_length):
+              let [p, ...]: for List (r in 0 .. col_length):
+                              picts[i + r * row_length]
+              math.max(rkt.#{pict-width}(p), ...)
+          let hs:
+            for List (i in 0 .. col_length):
+              let [p, ...]: for List (r in 0 .. row_length):
+                              picts[r + i * row_length]
+              math.max(rkt.#{pict-height}(p), ...)
+          let r: rkt.inset(r, & if ins is_a List | ins | [ins])
+          let (left_ins, top_ins): match ins
+                                   | [l, t, _, _]: values(l, t)
+                                   | [h, v]: values(h, v)
+                                   | a: values(a, a)
+          let pin: if order == #'front
+                   | rkt.#{pin-under}
+                   | rkt.#{pin-over}
+          fun sel(v, i):
+            match v
+            | []: #false
+            | v :: List: if i >= v.length()
+                         | v.last
+                         | v[i]
+            | ~else: v
+          let r:
+            if !vline
+            | r
+            | recur loop(r = r, i = 1, dx = left_ins):
+                if i == row_length
+                | r
+                |  let dx = dx + ws[i-1]
+                   let sep:
+                     match hsep:
+                     | []: 0
+                     | hsep :: List: if hsep.length() > i-1
+                                     | hsep[i-1]
+                                     | hsep.last
+                     | else: hsep
+                   let vline = sel(vline, i-1)
+                   let vline_width = sel(vline_width, i-1)
+                   loop(if vline
+                        | pin(r,
+                              dx + sep / 2, 0,
+                              line(~dy: rkt.#{pict-height}(r),
+                                   ~line: vline,
+                                   ~line_width: vline_width).snapshot().handle)
+                        | r,
+                        i + 1,
+                        dx + sep)
+          fun add_lines(r):
+            if !hline
+            | r
+            | recur loop(r = r, i = 1, dy = top_ins):
+                if i == col_length
+                | r
+                |  let dy = dy + hs[i-1]
+                   let sep:
+                     match vsep:
+                     | vsep :: List: if vsep.length() > i-1
+                                     | vsep[i-1]
+                                     | vsep[vsep.length() - 1]
+                     | else: vsep
+                   let hline = sel(hline, i-1)
+                   let hline_width = sel(hline_width, i-1)
+                   loop(if hline
+                        | pin(r,
+                              0, dy + sep / 2,
+                              line(~dx: rkt.#{pict-width}(r),
+                                   ~line: hline,
+                                   ~line_width: hline_width).snapshot().handle)
+                        | r,
+                        i + 1,
+                        dy + sep)
+          let r = add_lines(r)
+          let r:
+            if line_c
+            | let rect:
+                rectangle(~width: rkt.#{pict-width}(r),
+                          ~height: rkt.#{pict-height}(r),
+                          ~line: line_c,
+                          ~line_width: line_width)
+                  .snapshot(0).handle
+              if order == #'front
+              | rkt.#{cc-superimpose}(rect, r)
+              | rkt.#{cc-superimpose}(r, rect)
+            | r
+          static_pict(r, [elem, ..., ...], [elem._instances, ..., ...],
+                      fun (elems): retry(group_by(elems, row_length)))
+    | [[elem, ...], ...]:
+        let len = rows[0].length()
+        convert([elem, ..., ...], epoch, duration,
+                fun (elems, dt, n): retry(group_by(elems, len)))
+
+fun group_by(elems, n):
+  recur loop(elems :~ List = elems, i = 0):
+    cond
+    | elems == []:
+        [[]]
+    | i == n:
+        [[], & loop(elems, 0)]
+    | ~else:
+        let [l0, & ls] = loop(elems.rest, i + 1)
+        [[elems.first] ++ l0, & ls]
+
+// ----------------------------------------
+
+fun explain_bbox(p :: Pict,
+                 ~line: line :: maybe(ColorMode) = "firebrick",
+                 ~baseline: baseline :: maybe(ColorMode) = "royalblue",
+                 ~topline: ascent :: maybe(ColorMode) = "seagreen",
+                 ~scale: scale :: Real = 3,
+                 ~line_width: line_width :: LineWidth = 1,
+                 ~epoch: epoch :: EpochAlignment = #'center,
+                 ~duration: duration :: DurationAlignment = #'sustain)
+  :~ Pict:
+    recur retry(p = p):
+      match p
+      | _ :: NothingPict:
+          nothing
+      | p :: _StaticPict:
+          fun inherit(): "black"
+          static_pict(rkt.explain(p.handle,
+                                  ~border: line && (as_color(line) || inherit()),
+                                  ~ascent: ascent && (as_color(ascent) || inherit()),
+                                  ~baseline: baseline && (as_color(baseline) || inherit()),
+                                  ~scale: scale,
+                                  ~#{line-width}: line_width),
+                      [p], [p._instances],
+                      fun ([p]): retry(p))
+      | ~else:
+          convert([p], epoch, duration, fun([p], dt, n): retry(p))
+// ----------------------------------------
+
+fun rkt_adjust_ascent_descent(hand, d_ascent, d_descent):
+  let b_hand = rkt.blank(rkt.#{pict-width}(hand),
+                         rkt.#{pict-height}(hand),
+                         rkt.#{pict-ascent}(hand) + d_ascent,
+                         rkt.#{pict-descent}(hand) + d_descent)
+  rkt.refocus(rkt.#{pin-over}(hand, 0, 0, b_hand), b_hand)
+
+// ----------------------------------------
+
+def mutable pict_animate = #false
+fun set_animate(proc):
+  pict_animate := proc

@@ -1,0 +1,15 @@
+import {
+  "marianoguerra/shrubbery/basic",
+  "marianoguerra/shrubbery/column",
+  "marianoguerra/shrubbery/error" @err,
+  "marianoguerra/shrubbery/sexp",
+  "marianoguerra/shrubbery/unicode",
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/string",
+  "moonbitlang/core/double",
+}
+
+import {
+  "marianoguerra/shrubbery/lexer",
+  "moonbitlang/core/test",
+} for "test"

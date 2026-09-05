@@ -1,0 +1,49 @@
+whitespace	1	0	"\u{a}"	-
+literal	2	0	"1"	1
+whitespace	2	1	" "	-
+comment	2	2	"// comment on same line"	-
+whitespace	2	25	"\u{a}"	-
+whitespace	3	0	"\u{a}"	-
+literal	4	0	"2"	2
+whitespace	4	1	"\u{a}"	-
+whitespace	5	0	"  "	-
+comment	5	2	"/* comment weidly indented */"	-
+whitespace	5	31	"\u{a}"	-
+whitespace	6	0	"\u{a}"	-
+identifier	7	0	"begin"	-
+block-operator	7	5	":"	-
+whitespace	7	6	"\u{a}"	-
+whitespace	8	0	" "	-
+literal	8	1	"1"	1
+operator	8	2	"+"	-
+literal	8	3	"2"	2
+whitespace	8	4	"\u{a}"	-
+whitespace	9	0	" "	-
+comment	9	1	"// comment sticks with block"	-
+whitespace	9	29	"\u{a}"	-
+whitespace	10	0	" "	-
+comment	10	1	"// and this one, too"	-
+whitespace	10	21	"\u{a}"	-
+whitespace	11	0	"\u{a}"	-
+whitespace	12	0	" "	-
+comment	12	1	"// and even this one"	-
+whitespace	12	21	"\u{a}"	-
+whitespace	13	0	"\u{a}"	-
+opener	14	0	"("	-
+identifier	14	1	"begin"	-
+block-operator	14	6	":"	-
+whitespace	14	7	"\u{a}"	-
+whitespace	15	0	"   "	-
+identifier	15	3	"x"	-
+whitespace	15	4	"\u{a}"	-
+whitespace	16	0	"   "	-
+comment	16	3	"// block"	-
+whitespace	16	11	"\u{a}"	-
+whitespace	17	0	" "	-
+comment	17	1	"// inner comment"	-
+whitespace	17	17	"\u{a}"	-
+whitespace	18	0	" "	-
+closer	18	1	")"	-
+whitespace	18	2	" "	-
+comment	18	3	"// after comment"	-
+whitespace	18	19	"\u{a}"	-

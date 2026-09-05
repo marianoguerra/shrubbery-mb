@@ -1,0 +1,119 @@
+
+namespace n:
+  export: exint
+  def exint = 10
+  bind.macro 'exint': '(_ :: Int)'
+  annot.macro 'exint': 'Int'
+
+check:
+  ~eval
+  block:
+    namespace n:
+      export: exint
+      def exint = 10
+    import: .n.exint meta
+    #void
+  ~throws "cannot shift phase of namespace content"
+
+check:
+  ~eval
+  block:
+    namespace n:
+      export: exint
+      def exint = 10
+    import: .n.exint:
+              except: exint
+    #void
+  ~throws "identifier to exclude is not nested within the imported name"
+
+check:
+  import: .n.exint
+  def exint = 10
+  10 :: exint
+  exint
+  ~is 10
+
+check:
+  import: lib("rhombus/tests/example-c.rhm").exint
+  def exint = 10
+  10 :: exint
+  exint
+  ~is 10
+
+check:
+  import: .n.exint
+  def exint = "10"
+  #void
+  ~throws "value does not satisfy annotation"
+
+check:
+  import: .n.exint
+  "10" :: exint
+  ~throws "value does not satisfy annotation"
+
+check:
+  import: .n:
+            expose exint
+            rename exint as ex_int
+  def ex_int = 10
+  10 :: ex_int
+  ex_int
+  ~is 10
+
+check:
+  import: .n.exint as ex_int
+  def ex_int = 10
+  10 :: ex_int
+  ex_int
+  ~is 10
+
+check:
+  import:
+    .n.exint:
+      only_space: expr
+  exint
+  ~is 10
+
+check:
+  import:
+    .n.exint as ex_int:
+      only_space: expr
+  ex_int
+  ~is 10
+
+check:
+  ~eval
+  block:
+    import rhombus/meta open
+    namespace n:
+      export: exint
+      def exint = 10
+      bind.macro 'exint': '(_ :: Int)'
+      annot.macro 'exint': 'Int'
+    import:
+      .n.exint:
+        only_space: expr
+    10 :: exint
+  ~throws "not bound as an annotation"
+
+check:
+  import:
+    .n.exint:
+      only_space: annot
+  def exint = 11
+  exint
+  ~is 11
+
+check:
+  import:
+    .n.exint:
+      only_space: annot
+  11 :: exint
+  ~is 11
+
+check:
+  import:
+    .n.exint as ex_int:
+      only_space: annot
+  11 :: ex_int
+  ~is 11

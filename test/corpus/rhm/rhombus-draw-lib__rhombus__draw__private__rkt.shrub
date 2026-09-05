@@ -1,0 +1,29 @@
+import:
+  rhombus/rkt_obj
+  lib("racket/draw.rkt")
+
+export:
+  rkt_obj.make_object
+  rkt_obj.send
+  rkt_obj.is_a
+  draw.#{bitmap%}
+  draw.#{color%} draw.#{the-color-database} draw.#{make-color}
+  draw.#{pen%} draw.#{the-pen-list}
+  draw.#{brush%} draw.#{the-brush-list}
+  draw.#{font%}
+  draw.#{region%}
+  draw.#{dc-path%}
+  draw.#{linear-gradient%}
+  draw.#{radial-gradient%}
+  draw.#{dc<%>}
+  draw.#{svg-dc%}
+  draw.#{pdf-dc%}
+  draw.#{post-script-dc%}
+  draw.#{record-dc%}
+  draw.#{ps-setup%}
+  draw.#{current-ps-setup}
+  draw.#{read-bitmap}
+  draw.#{make-platform-bitmap}
+  draw.#{get-face-list}
+  draw.#{get-family-builtin-face}
+  draw.#{recorded-datum->procedure}

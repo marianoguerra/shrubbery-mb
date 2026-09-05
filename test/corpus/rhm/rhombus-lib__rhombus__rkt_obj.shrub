@@ -1,0 +1,38 @@
+import:
+  lib("racket/class.rkt"):
+    expose:
+      send as rkt_send
+      new as rkt_new
+      #{is-a?} as rkt_is_a
+
+export:
+  rename:
+    class.#{make-object} as make_object
+  new
+  send
+  is_a
+
+expr.macro 'new $target ... ($(kw :: Keyword): $kw_arg, ...)':
+  expr_meta.pack_s_exp(['rkt_new',
+                        expr_meta.pack_expr('$target ...'),
+                        [Syntax.make(Symbol.from_string(to_string(kw.unwrap()))),
+                         expr_meta.pack_expr('block: $kw_arg')],
+                        ...])
+
+meta:
+  syntax_class Arg:
+    kind: ~group
+  | '$(kw :: Keyword): $arg':
+      field kws = [kw]
+  | '$arg':
+      field kws = []
+
+expr.macro 'send $target ... . $(method :: Identifier)($(arg :: Arg), ...)':
+  expr_meta.pack_s_exp(['rkt_send',
+                        expr_meta.pack_expr('$target ...'),
+                        method,
+                        & List.append([& arg.kws, expr_meta.pack_expr(arg.arg)],
+                                      ...)])
+
+expr.macro '$obj is_a $class':
+  expr_meta.pack_s_exp(['rkt_is_a', obj, class])

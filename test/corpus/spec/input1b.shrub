@@ -1,0 +1,114 @@
+a:
+  option
+| case 1
+| case 2
+
+b: option
+| case 1
+
+c:
+| case 1
+| case 2
+
+d:
+| case 1
+
+nested
+| a:
+    option
+  | case 1
+  | case 2
+
+nested:
+| a:
+    option
+  | case 1
+  | case 2
+
+one line:«option; also» | case 1 | case 2
+
+many lines:«option; also»
+| case 1
+| case 2
+
+a | b: «c» | d
+
+a |«b: «c»»| d
+
+a:«b | c: d  | e »
+
+a:«b | c:«d» | e »
+
+a:«b |«c:«d»»|«e»»
+
+a:«»
+| b
+
+a:«» | b
+
+a:
+  b; c
+| d
+
+a:
+  b;« c »
+| d
+
+a:
+  b; (c)
+| d
+
+a: b; cc
+| d
+
+a: b;« cc »
+| d
+
+a: b; (cc)
+| d
+
+a:
+  b
+#//
+| c
+
+a:
+  b
+#//
+| c
+| d
+
+a:«»
+#//
+| c
+
+a:«»
+#//
+| c
+| d
+
+a:
+  b
+  #//
+  | c
+
+a:
+  b
+  #//
+  | c
+| d
+
+a:
+  #//
+  b
+| c
+| d
+
+#//
+a:
+  b
+| c
+| d
+
+a; #//b
+c

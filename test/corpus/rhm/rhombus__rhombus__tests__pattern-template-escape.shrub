@@ -1,0 +1,102 @@
+
+// Try patterns and templates that involve literal
+// `$` operators, including defining `$`
+
+check:
+  '$'
+  ~matches '$'
+
+check:
+  '$('$')'
+  ~matches '$'
+
+check:
+  '$('...')'
+  ~matches '...'
+
+check:
+  match '$('$') 1 + 2'
+  | '$x 1 + 2': x
+  ~matches '$'
+
+check:
+  match '$('$') 1 + 2'
+  | '$('$') $x + 2': x
+  ~matches '1'
+
+check:
+  match '($('$')) 10 + 2'
+  | '($'$') $x + 2': x
+  ~matches '10'
+
+check:
+  match ': $('$')'
+  | ': $('$')': "block"
+  ~is "block"
+
+check:
+  match '($('$'))'
+  | '($'$')': "ok"
+  ~is "ok"
+
+check:
+  match '($('...'))'
+  | '($'...')': "dots"
+  ~is "dots"
+
+check:
+  match '$('...') $('...') $('...')'
+  | '$('...') ...': "dotss"
+  ~is "dotss"
+
+check:
+  // parentheses to define `$` as a prefix operator
+  expr.macro '($) $x': '1 + $x'
+  $10
+  ~is 11
+
+check:
+  // parentheses to `$` as an infix operator
+  expr.macro '$x ($) $y': '[$x, $y]'
+  1 $ 2
+  ~is [1, 2]
+
+check:
+  ~eval
+  import: rhombus/meta open
+  expr.macro '$1 + $2': '0'
+  ~throws " expected macro identifier or operator"
+
+check:
+  ~eval
+  import: rhombus/meta open
+  expr.macro '$x $ $x': '0'
+  ~throws "expected macro identifier or operator"
+
+check:
+  //  macro that acts as a template form
+  expr.macro '$x =+= $y': '('$('$')$x + $('$')$y')'
+  def a = '3'
+  def b = '4'
+  a =+= b
+  ~matches '3 + 4'
+
+check:
+  // phase-0 binding of `$` does not affect `macro` use
+  operator ($ b): b
+  macro '$x + $y': '[$x, $y]'
+  (1+2)
+  ~is [1, 2]
+
+check:
+  ~eval
+  import:
+    rhombus/meta open
+    meta: rhombus/meta open
+  // phase-1 bindings of `$` makes `macro` bind `$`
+  meta:
+    operator ($ b): b
+    bind.macro '($)': 'no'
+  macro '$x + $y': '[$x, $y]'
+  (1+2)
+  ~is 3

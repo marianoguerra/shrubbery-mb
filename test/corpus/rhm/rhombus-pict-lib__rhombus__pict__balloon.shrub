@@ -1,0 +1,195 @@
+
+import:
+  pict:
+    expose:
+      Pict
+      Find
+      Color
+      ColorMode
+      LineWidth
+      EpochAlignment
+      DurationAlignment
+      TimeAlignment
+      FindMode
+      nothing
+      animate_map
+  lib("pict/balloon2.rkt") as bln
+
+export:
+  pin
+  note
+  current_color
+  current_horiz_margin
+  current_vert_margin
+  spike_to_dx
+  spike_to_dy
+  CompassDirection
+
+Parameter.def current_color :: Color || String:
+  let c = bln.#{current-balloon-color}()
+  if c is_a String
+  | c
+  | Color.from_handle(c)
+Parameter.def current_horiz_margin :: Real:
+  bln.#{current-balloon-x-margin}()
+Parameter.def current_vert_margin :: Real:
+  bln.#{current-balloon-y-margin}()
+
+annot.macro 'CompassDirection':
+  'matching(#'n || #'ne || #'e || #'se || #'s || #'sw || #'w || #'nw)'
+
+fun pin(content :: Pict,
+        ~on: p :: Pict,
+        ~at: at :: Find,
+        ~find: find_mode :: FindMode = #'always,
+        ~spike: spike :: CompassDirection,
+        ~margin: margin :: maybe(Real) = #false,
+        ~horiz_margin: hmargin :: Real = margin || current_horiz_margin(),
+        ~vert_margin: vmargin :: Real = margin || current_vert_margin(),
+        ~corner_radius: corner_radius :: Real = 10,
+        ~spike_radius: spike_radius :: Real = corner_radius,
+        ~dx: dx :: Real = bln.#{spike->dx}(spike),
+        ~dy: dy :: Real = bln.#{spike->dy}(spike),
+        ~sprout: sprout :: Real = 0.5,
+        ~thought: thought = #false,
+        ~fill: color :: maybe(ColorMode) = current_color(),
+        ~line: line_color :: maybe(ColorMode) = #false,
+        ~line_width: line_width :: LineWidth = #'inherit,
+        ~epoch: epoch_a :: EpochAlignment = #'center,
+        ~duration: duration :: DurationAlignment = #'sustain,
+        ~time: time :: TimeAlignment = #'start) :~ Pict:
+  recur retry_balloon(ps = [p, content], at :~ Find = at, epoch = 0, n = 0):
+    match ps:
+    | [_ :: pict.NothingPict, _]:
+        nothing
+    | [p, _ :: pict.NothingPict]:
+        p
+    | [p :: pict.StaticPict, content :: pict.StaticPict]:
+        let (at_x, at_y) = at.maybe_in(p, epoch, n)
+        cond
+        | !at_x:
+            if find_mode == #'always
+            | let (x0, y0) = at.maybe_in(p, epoch, n, ~nth: 0)
+              error(~who: #'#{balloon.pin},
+                    if x0 | "pict location is ambgiuous" | "cannot find pict",
+                    error.val(~label: "finder", at),
+                    error.val(~label: "within pict", p))
+            | p
+        | ~else:
+            let fill_color = (color && as_color(color)) || Color(0, 0, 0, 0.0).handle
+            let outline_color = (line_color && as_color(line_color)) || Color(0, 0, 0, 0.0).handle
+            let outline_width: if line_color
+                               | if line_width == #'inherit
+                                 | 1
+                                 | line_width
+                               | 0
+            fun build([handle, content_handle]):
+              bln.#{pin-balloon}(handle,
+                                 handle, fun (p, q): values(at_x, at_y),
+                                 content_handle,
+                                 ~spike: spike,
+                                 ~#{x-margin}: hmargin,
+                                 ~#{y-margin}: vmargin,
+                                 ~#{corner-radius}: corner_radius,
+                                 ~#{spike-radius}: spike_radius,
+                                 ~dx: dx,
+                                 ~dy: dy,
+                                 ~sprout: sprout,
+                                 ~#{thought?}: thought,
+                                 ~color: fill_color,
+                                 ~#{line-color}: outline_color,
+                                 ~#{line-width}: outline_width)
+            Pict.from_handle(build([p.handle, content.handle]),
+                             [p, content],
+                             fun ([p, content]):
+                               retry_balloon([p, content], at, epoch, n))
+    | [p :~ Pict, content :~ Pict]:
+        let (p, content, at):
+          match time
+          | dt :: Int:
+              let content = content.time_pad(~before: dt+1)
+              values(p, content, at.delay(dt))
+          | #'insert:
+              let dt = at.start_in(p)
+              let content = content.time_pad(~before: dt+1)
+              values(p.time_insert(dt, 1), content, at.delay(dt+1))
+          | #'sync:
+              let dt = at.start_in(p)
+              let content = content.time_pad(~before: dt)
+              values(p, content, at.delay(dt))
+          | #'end:
+              let dt = p.duration
+              let content = content.time_pad(~before: dt)
+              values(p, content, at.delay(dt))
+          | ~else: values(p, content, at)
+        animate_map(~deps: [p, content],
+                    ~epoch: epoch_a,
+                    ~duration: duration,
+                    fun (~deps: [p :: Pict, ...], epoch, n):
+                      retry_balloon([p, ...], at, epoch, n),
+                    ~non_sustain_combine:
+                      // padding (as opposed to sustain) drops the balloon
+                      // image, but keeps the content intact/findable; the
+                      // content takes care of its own pad vs. sustain
+                      fun (~deps: [p :~ Pict, content :~ Pict], epoch, n):
+                        if content == nothing
+                        | p
+                        | let pg = p.ghost()
+                          let cg = content.ghost()
+                          let b :~ Pict = retry_balloon([pg, cg], at, epoch, n)
+                          let b = b.ghost()
+                          pict.pin(~on: pict.pin(~on: b, ~at: Find.left_top(pg), p),
+                                   ~at: Find.left_top(cg),
+                                   content))
+
+fun note(content :: Pict,
+         ~margin: margin :: maybe(Real) = #false,
+         ~hmargin: hmargin :: Real = margin || current_horiz_margin(),
+         ~vmargin: vmargin :: Real = margin || current_vert_margin(),
+         ~corner_radius: corner_radius :: Real = 10,
+         ~thought: thought = #false,
+         ~fill: color :: maybe(Color || String) = #false,
+         ~line: line_color :: maybe(Color || String) = #false,
+         ~line_width: line_width :: Real = 0,
+         ~epoch: epoch_a :: EpochAlignment = #'center,
+         ~duration: duration :: DurationAlignment = #'sustain) :~ Pict:
+  recur retry(contents = [content], epoch = 0, n = 0):
+    match contents:
+    | [_ :: pict.NothingPict]:
+        nothing
+    | [content :: pict.StaticPict]:
+        let color = as_color(color || current_color())
+        fun build([content_handle]):
+          bln.#{balloon-note}(content.handle,
+                              ~#{x-margin}: hmargin,
+                              ~#{y-margin}: vmargin,
+                              ~#{corner-radius}: corner_radius,
+                              ~#{thought?}: thought,
+                              ~color: color,
+                              ~#{line-color}: line_color && as_color(line_color),
+                              ~#{line-width}: line_width)
+        Pict.from_handle(build([content.handle]), [content], build)
+    | ~else:
+        animate_map(~deps: contents,
+                    ~epoch: epoch_a,
+                    ~duration: duration,
+                    fun (~deps: contents, epoch, n):
+                      retry(contents, epoch, n),
+                    ~non_sustain_combine:
+                      fun (~deps: [content :~ Pict], epoch, n):
+                        let cg = content.ghost()
+                        let b :~ Pict = retry([cg], epoch, n)
+                        let b = b.ghost()
+                        pict.pin(~on: b, ~at: Find.left_top(cg), content))
+
+fun as_color(color):
+  match color
+  | #'inherit: #false
+  | s :: String: s
+  | c :: Color: c.handle
+
+fun spike_to_dx(spike :: CompassDirection):
+  bln.#{spike->dx}(spike)
+
+fun spike_to_dy(spike :: CompassDirection):
+  bln.#{spike->dy}(spike)

@@ -1,0 +1,367 @@
+
+block:
+  check:
+    match '1 exact 2'
+    |  '1 $('exact') 2': "yes"
+    ~is "yes"
+
+block:
+  check:
+    match '1 exact 2'
+    |  '1 $('exact') 2': "yes"
+    ~is "yes"
+
+check:
+  def '($('1 2 3'))' = '(1 2 3)'
+  ~completes
+
+check:
+  def ': ($('1 2 3'))' = ': (1 2 3)'
+  ~completes
+
+check:
+  def '$(b && '1')' = '1'
+  b
+  ~matches '1'
+
+check:
+  def '$('($b)' && '(1)')' = '(1)'
+  b
+  ~matches '1'
+
+check:
+  def '$('(1)' && '($b)')' = '(1)'
+  b
+  ~matches '1'
+
+check:
+  def '($(a && '1 2 3'))' = '(1 2 3)'
+  a
+  ~matches '1 2 3'
+
+check:
+  def '$('1' || '2')' = '1' ~completes
+  def '$('1' || '2')' = '2' ~completes
+  def '$('1' || '2') ...' = '1 2 1' ~completes
+
+check:
+  def '$('1' || '2') ...' = '1 2 1 3'
+  #void
+  ~throws "does not satisfy annotation"
+
+check:
+  match '1 2'
+  | '1 $(! '3')': "yes"
+  ~is "yes"
+
+check:
+  match '1 2'
+  | '1 $match.cut 2': "yes"
+  | ~else: "no"
+  ~is "yes"
+
+check:
+  match '1 2'
+  | '1 $match.cut 3': "yes"
+  | ~else: "no"
+  ~throws "expected the literal 3"
+
+check:
+  match '1 2'
+  | '1 $((match.cut)) 3': "yes"
+  | ~else: "no"
+  ~throws "expected the literal 3"
+
+check:
+  match '1 2'
+  | '$(match.delimit '1 $match.cut 3')': "yes"
+  | ~else: "no"
+  ~is "no"
+
+check:
+  match '1 3'
+  | '$(match.delimit '1 $match.cut 3')': "yes"
+  | ~else: "no"
+  ~is "yes"
+
+check:
+  match '1 3'
+  | '$(match.delimit '1 3')': "yes"
+  | ~else: "no"
+  ~is "yes"
+
+check:
+  match '1 (2 3)'
+  | '1 $(! '(2 $match.cut 3)')': "yes"
+  | ~else: "no"
+  ~is "no"
+
+check:
+  match '1 (2 4)'
+  | '1 $(! '(2 $match.cut 3)')': "yes"
+  | ~else: "no"
+  ~is "yes"
+
+check:
+  match '1 1'
+  | '$(match.commit '1 ...') 1': "yes"
+  | ~else: "no"
+  ~is "no"
+
+check:
+  match '1 2'
+  | '$(match.commit '1 ...') 2': "yes"
+  | ~else: "no"
+  ~is "yes"
+
+block:
+  def a = "top a"
+  check:
+    match '1'
+    | '$('1' && a)': a
+    ~matches '1'
+  check:
+    match '2'
+    | '$('1' || a)': a
+    ~is "top a"
+  check:
+    match '2'
+    | '$(a || '1')': a
+    ~is "top a"
+
+check:
+  unquote_bind.macro 'g $(x :: Term)':
+    '$x :: Group'
+  match 'x: 2 3'
+  |  '$_: $(g v)': v
+  ~matches '2 3'
+
+check:
+  unquote_bind.macro 'g $(x :: Term)':
+    '$x'
+  match 'x: 2 3'
+  |  '$_: $(g v)': v
+  ~matches '2 3'
+
+block:
+  unquote_bind.macro 'g':
+    '('?')'
+  check:
+    match '1 ? 2'
+    |  '1 $g 2': "yes"
+    ~is "yes"
+  check:
+    match '1 ! 2'
+    |  '1 $g 2': "yes"
+    | ~else: "no"
+    ~is "no"
+
+block:
+  unquote_bind.macro 'g':
+    '('exact')'
+  check:
+    match '1 exact 2'
+    |  '1 $g 2': "yes"
+    ~is "yes"
+
+block:
+  unquote_bind.macro 'sames[$(g :: Group)]':
+    ~kind: kind
+    let '$(uq :: unquote_bind_meta.Parsed(kind))' = g
+    uq
+  check:
+    match '1 2 3'
+    |  '1 $(sames['2 3'])': "yes"
+    ~is "yes"
+
+block:
+  unquote_bind.macro 'same_term[$(g :: Group)]':
+    ~kind: kind
+    if kind == #'term
+    | let '$(uq :: unquote_bind_meta.Parsed(#'term))' = g
+      uq
+    | unquote_bind_meta.pack_invalid()
+  check:
+    match '1 2'
+    |  '1 $(same_term['2'])': "yes"
+    ~is "yes"
+
+check:
+  ~eval
+  import rhombus/meta open
+  unquote_bind.macro 'same_term[$(g :: Group)]':
+    ~kind: kind
+    check kind ~is #'grouplet
+    let '$(uq :: unquote_bind_meta.Parsed(#'term))' = g
+    uq
+  match '1 2'
+  |  '1 $(same_term['2'])': "yes"
+  ~throws "expected: single-group syntax object for unquote binding `grouplet` context"
+
+check:
+  ~eval
+  import rhombus/meta open
+  unquote_bind.macro 'broken':
+    ~kind: kind
+    let '$(uq1 :: unquote_bind_meta.Parsed(#'term))' = '('1')'
+    let '$(uq2 :: unquote_bind_meta.Parsed(#'grouplet))' = '('1 2')'
+    '$uq1 && $uq2'
+  match '1 2'
+  |  '$broken': "yes"
+  ~throws "&&: mismatched kinds of unquote bindings"
+
+check:
+  ~eval
+  import rhombus/meta open
+  unquote_bind.macro 'broken':
+    ~kind: kind
+    let '$(uq1 :: unquote_bind_meta.Parsed(#'term))' = '('1')'
+    let '$(uq2 :: unquote_bind_meta.Parsed(#'grouplet))' = '('1 2')'
+    '$uq1 || $uq2'
+  match '1 2'
+  |  '$broken': "yes"
+  ~throws "||: mismatched kinds of unquote bindings"
+
+block:
+  unquote_bind.macro 'dots':
+    '«'$('...')'»'
+  check:
+    match Syntax.make_group(['...', '...', '...'])
+    | '$dots ...': "all dots"
+    ~is "all dots"
+  check:
+    match Syntax.make_group(['!', '...', '...'])
+    | '$dots ...': "all dots"
+    | ~else: "not all dots"
+    ~is "not all dots"
+
+check:
+  syntax_class Wrapped
+  | '($content)'
+  | '[$content]'
+  | '{$content}'
+  unquote_bind.macro 'wrapped $(id :: Identifier)':
+    '_ :: Wrapped: content as $id'
+  match '{x} [y] (z)'
+  | '$(wrapped a) ...': [a, ...]
+  ~matches ['x', 'y', 'z']
+
+block:
+  unquote_bind.macro 'the $right':
+    right
+  check '1 2' matches '$(the '1 2')' ~is #true
+  check '1 2' matches '$(the '$_ ...')' ~is #true
+
+check:
+  ~eval
+  import rhombus/meta open
+  unquote_bind.macro 'invalid':
+    unquote_bind_meta.pack_invalid()
+  unquote_bind.macro 'the $right':
+    right
+  '1 2' matches '$(the invalid)'
+  ~throws "incompatible with this context"
+
+block:
+  unquote_bind.macro 'the($right_in)':
+    ~kind: kind
+    let '$(right :: unquote_bind_meta.Parsed(kind))' = right_in
+    right
+  check '1 2' matches '$(the('1 2'))' ~is #true
+  check '1 2' matches '$(the('$_ ...'))' ~is #true
+
+check:
+  ~eval
+  import rhombus/meta open
+  unquote_bind.macro 'invalid':
+    unquote_bind_meta.pack_invalid()
+  unquote_bind.macro 'the($right_in)':
+    ~kind: kind
+    let '$(right :: unquote_bind_meta.Parsed(kind))' = right_in
+    right
+  '1 2' matches '$(the(invalid))'
+  ~throws "incompatible with this context"
+
+block:
+  unquote_bind.macro '$left and $right':
+    '$left && $right'
+  check '1 2' matches '$('1 2' and (_ :: Group))' ~is #true
+  check '1 2' matches '$('$_ ...' and (_ :: Group))' ~is #true
+
+check:
+  ~eval
+  import rhombus/meta open
+  unquote_bind.macro 'invalid':
+    unquote_bind_meta.pack_invalid()
+  unquote_bind.macro '$left and $right':
+    '$left && $right'
+  '1 2' matches '$(invalid and invalid)'
+  ~throws "incompatible with this context"
+
+block:
+  unquote_bind.macro '$left and($right_in)':
+    ~kind: kind
+    let '$(right :: unquote_bind_meta.Parsed(kind))' = right_in
+    '$left && $right'
+  check '1 2' matches '$('1 2' and(_ :: Group))' ~is #true
+  check '1 2' matches '$('$_ ...' and(_ :: Group))' ~is #true
+
+check:
+  ~eval
+  import rhombus/meta open
+  unquote_bind.macro 'invalid':
+    unquote_bind_meta.pack_invalid()
+  unquote_bind.macro '$left and($right_in)':
+    ~kind: kind
+    let '$(right :: unquote_bind_meta.Parsed(kind))' = right_in
+    '$left && $right'
+  '1 2' matches '$(invalid and(invalid))'
+  ~throws "incompatible with this context"
+
+block:
+  fun get_area_code('$('+ 1' || '') ($code) $_ - $_'):
+    code
+  check:
+    get_area_code('+ 1 (801) 555 - 1212')
+    ~matches '801'
+  check:
+    get_area_code('(801) 555 - 1212')
+    ~matches '801'
+  check:
+    get_area_code('+ 65 (801) 555 - 1212')
+    ~throws "argument does not satisfy annotation"
+
+check:
+  expr.macro 'm':
+    match 'List'
+    | '$(name && bound_as expr_meta.space: 'List')':
+        name
+  m
+  ~is List
+
+check:
+  match 'foo.bar.baz'
+  | '$('$_ .') ... $(who :: Term)': who
+  ~matches 'baz'
+
+check:
+  match '(1 0)'
+  | '($((a :: Sequence) && '1' && '1') 0)': a
+  ~matches '1'
+
+check:
+  match '1 1 baz'
+  | '$((a :: Sequence) && '1' && '1') ... $(who :: Term)': who
+  ~matches 'baz'
+
+// group pattern in a block context
+check:
+  match ': one two three four'
+  | ': $('one two $(tail :: Group)')':
+      tail
+  ~matches 'three four'
+
+// check precedence of boolean operators
+check:
+  '1' matches '$('1' || !'2' && '"1"')' ~is #true
+  '"1"' matches '$('1' || !'2' && '"1"')' ~is #true

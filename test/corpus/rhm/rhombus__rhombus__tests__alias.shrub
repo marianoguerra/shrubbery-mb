@@ -1,0 +1,329 @@
+
+check:
+  ~eval
+  alias Roster: List
+  ~throws "bad syntax"
+
+check:
+  ~eval
+  alias 'Roster x': 'List'
+  ~throws "unexpected term"
+
+alias 'Roster': 'List'
+
+check Roster[1, 2, 3] ~is [1, 2, 3]
+check [1, 2, 3] is_a Roster ~is #true
+check Roster.cons(1, [2, 3]) ~is [1, 2, 3]
+
+alias 'MakeRoster':
+  ~only_space expr
+  'List'
+check MakeRoster(1, 2, 3) ~is [1, 2, 3]
+
+check:
+  ~eval
+  import rhombus/meta.expr
+  alias 'MakeRoster':
+    ~only_space expr
+    'List'
+  [1, 2, 3] is_a MakeRoster
+  ~throws values("MakeRoster",
+                 "not bound as an annotation")
+
+check:
+  ~eval
+  import rhombus/meta.annot
+  alias 'MakeRoster':
+    ~only_space annot
+    'List.cons'
+  ~throws "no binding found for aliased name"
+
+block:
+  def Rosterette = 5
+  alias 'Rosterette':
+    ~except_space:
+      expr
+      statinfo
+    'List'
+
+  check [1, 2, 3] is_a Rosterette ~is #true
+  check Rosterette.cons(1, [2, 3]) ~is [1, 2, 3]
+  check Rosterette ~is 5
+
+alias 'build': 'List.cons'
+check build(1, [2, 3]) ~is [1, 2, 3]
+block:
+  use_static
+  check build(1, [2, 3]).length() ~is 3
+
+namespace ns:
+  export def x = "x"
+
+check ns.x ~is "x"
+alias 'ns.Inventory': 'List'
+check ns.Inventory[1, 2, 3] ~is [1, 2, 3]
+check [1, 2, 3] is_a ns.Inventory ~is #true
+
+alias '++++': '++'
+check [1, 2, 3] ++++ [4, 5] ~is [1, 2, 3, 4, 5]
+
+block:
+  namespace Foo
+  namespace Bar
+  def Bar.baz = 42
+  alias 'Foo.Bar': 'Bar'
+  check Foo.Bar.baz ~is 42
+
+block:
+  namespace Foo
+  namespace Foo.Bar
+  def Foo.Bar.baz = 42
+  alias 'Bear': 'Foo.Bar'
+  check Bear.baz ~is 42
+
+block:
+  namespace m:
+    namespace ns:
+      export:
+        Foo
+        x
+      namespace Foo:
+        export def z = 6
+      namespace Foo.Bar:
+        export def y = 10
+      class Foo.Bar.X():
+        export i
+        def i = 0
+      def x = 5
+    export:
+      ns.Foo
+      ns.x
+
+  alias 'f': 'm.Foo'
+
+  check f.z ~is 6
+  check f.Bar.y ~is 10
+  check f.Bar.X.i ~is 0
+  check f.Bar.X() ~is_a m.Foo.Bar.X
+
+module ~early A ~lang rhombus:
+  export namespace X
+  def X.foo = 42
+
+module ~early B ~lang rhombus:
+  import parent!A open
+  export get
+  alias 'Y': 'X'
+  fun get(): Y.foo
+
+import self!B
+check B.get() ~is 42
+
+module ~early more_alias ~lang rhombus:
+  module ~early A ~lang rhombus:
+    export namespace X
+    def X.foo = 42
+
+  module ~early B ~lang rhombus:
+    import parent!A open
+    export namespace Y
+    alias 'Y.Z': 'X'
+
+  module ~early C ~lang rhombus:
+    import parent!B open
+    export def out = Y.Z.foo
+
+  check:
+    import self!C.out
+    out
+    ~is 42
+
+  module ~early D ~lang rhombus:
+    import parent!B open
+    export W
+    alias 'W': 'Y.Z'
+    def W.bar = 50
+    module check:
+      export def out1 = W.foo
+      export def out2 = W.bar
+
+  check:
+    import self!D!check
+    [check.out1, check.out2]
+    ~is [42, 50]
+
+  module ~early E ~lang rhombus:
+    import parent!D open
+    export def out1 = W.foo
+    export def out2 = W.bar
+
+  check:
+    import self!E
+    [E.out1, E.out2]
+    ~is [42, 50]
+
+  module ~early F ~lang rhombus:
+    import parent!B open
+    export Q
+    alias 'Q': 'Y'
+    export def out1 = Y.Z.foo
+    export def out2 = Q.Z.foo
+
+  check:
+    import self!F
+    [F.out1, F.out2]
+    ~is [42, 42]
+
+  module ~early G ~lang rhombus:
+    import parent!F open
+    export def out = Q.Z.foo
+
+  check:
+    import self!G
+    G.out
+    ~is 42
+
+import self!more_alias
+
+module ~early more_namespace_alias ~lang rhombus:
+  namespace A:
+    export namespace X
+    def X.foo = 42
+
+  namespace B:
+    import .A open
+    export namespace Y
+    alias 'Y.Z': 'X'
+
+  namespace C:
+    import .B open
+    export def out = Y.Z.foo
+
+  check:
+    import .C.out
+    out
+    ~is 42
+
+  namespace D:
+    import .B open
+    export W
+    alias 'W': 'Y.Z'
+    def W.bar = 50
+    export def cout1 = W.foo
+    export def cout2 = W.bar
+
+  check:
+    import .D open
+    [cout1, cout2]
+    ~is [42, 50]
+
+  namespace E:
+    import .D open
+    export def out1 = W.foo
+    export def out2 = W.bar
+
+  check:
+    import .E
+    [E.out1, E.out2]
+    ~is [42, 50]
+
+  namespace F:
+    import .B open
+    export Q
+    alias 'Q': 'Y'
+    export def out1 = Y.Z.foo
+    export def out2 = Q.Z.foo
+
+  check:
+    import .F
+    [F.out1, F.out2]
+    ~is [42, 42]
+
+  namespace G:
+    import .F open
+    export def out = Q.Z.foo
+
+  check:
+    import .G
+    G.out
+    ~is 42
+
+import self!more_namespace_alias
+
+module ~early module_alias_export ~lang rhombus:
+  module ~early A ~lang rhombus:
+    export namespace a
+    def a.favorite_number = 1
+
+  module ~early B ~lang rhombus:
+    export namespace b
+    def b.favorite_number = 2
+
+  module ~early C ~lang rhombus:
+    import:
+      parent!A open
+      parent!B open
+
+    export alias 'a2': 'a'
+    export alias 'b2': 'b'
+
+    check a2.favorite_number ~is 1
+    check b2.favorite_number ~is 2
+
+  import self!C
+
+  check C.a2.favorite_number ~is 1
+  check C.b2.favorite_number ~is 2
+
+import self!module_alias_export
+
+module ~early namespace_alias_export ~lang rhombus:
+  namespace A:
+    export namespace a
+    def a.favorite_number = 1
+
+  namespace B:
+    export namespace b
+    def b.favorite_number = 2
+
+  namespace C:
+    import:
+      .A open
+      .B open
+
+    export alias 'a2': 'a'
+    export alias 'b2': 'b'
+
+    check a2.favorite_number ~is 1
+    check b2.favorite_number ~is 2
+
+  check C.a2.favorite_number ~is 1
+  check C.b2.favorite_number ~is 2
+
+import self!namespace_alias_export
+
+check:
+  namespace a
+  let x = "x"
+  let y = "y"
+  defn.macro 'do $name ...':
+    let b = Syntax.make_temp_id("b", ~keep_name: #true)
+    '«
+       alias '$name ...': 'x'
+       alias 'a . $b': 'y'
+       a . $b
+     »'
+  do a.b
+  ~is "y"
+
+check:
+  namespace a
+  let y = "y"
+  defn.macro 'do':
+    let b = Syntax.make_temp_id("b", ~keep_name: #true)
+    '«
+       alias 'a . $b': 'y'
+       a . $b
+     »'
+  do
+  ~is "y"

@@ -1,0 +1,9 @@
+export:
+  meta:
+    Escape
+
+meta:
+  syntax_class Escape(esc):
+    kind ~sequence
+  | '$(who :: Operator) ($(_ :: Group))':
+      match_when who.unwrap_op() === (esc :~ Syntax).unwrap_op()

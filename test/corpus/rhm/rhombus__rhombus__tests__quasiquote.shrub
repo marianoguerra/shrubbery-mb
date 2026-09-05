@@ -1,0 +1,777 @@
+
+// different repetition depths at same template depth
+block:
+  def [[x, ...], ...] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+  def [y, ...] = ["a", "b", "c"]
+  def one = 1
+
+  check:
+    '([$x, $y] ... $0) ...
+     {$y, $one} ...'
+    ~matches '([1, "a"] [2, "b"] [3, "c"] 0) ([4, "a"] [5, "b"] [6, "c"] 0) ([7, "a"] [8, "b"] [9, "c"] 0)
+              {"a", 1} {"b", 1} {"c", 1}'
+  check:
+    ['$y', ...]
+    ~matches ['"a"', '"b"', '"c"']
+  check:
+    ['x: $x; ...', ...]
+    ~matches ['x: 1; 2; 3', 'x: 4; 5; 6', 'x: 7; 8; 9']
+
+block:
+  check:
+    '$[1, 2] 3'
+    ~matches '1 2 3'
+  check:
+    '$('1 2') 3'
+    ~matches '1 2 3'
+  check:
+    '$('1') 3'
+    ~matches '1 3'
+  check:
+    '0 $[1, 2]'
+    ~matches '0 1 2'
+  check:
+    '0 $[1, 2] 3'
+    ~matches '0 1 2 3'
+
+  def [x, ...] = [1, 2, 3]
+  check:
+    '0 $[x, ...]'
+    ~matches '0 1 2 3'
+  check:
+    '0 $['+', x] ...'
+    ~matches '0 + 1 + 2 + 3'
+  check:
+    '0 $('+ $x') ...'
+    ~matches '0 + 1 + 2 + 3'
+
+  def [[z, ...], ...] = [[1, 2, 3], [4, 5]]
+  check:
+    '0 $[z, ...] ...'
+    ~matches '0 1 2 3 4 5'
+
+check:
+  def '...': '...'
+  ~completes
+
+check:
+  def '$('...')': '...'
+  ~completes
+
+check:
+  def '$x ... ~nonempty': '1 2 3'
+  [x, ...]
+  ~matches ['1', '2', '3']
+
+check:
+  def '1 $x ... ~nonempty': '1'
+  "oops"
+  ~throws error.annot_msg()
+
+check:
+  def '[1, $x, ... ~nonempty]': '[1, 2]'
+  [x, ...]
+  ~matches ['2']
+
+check:
+  def '[1, $x, ... ~nonempty]': '[1]'
+  "oops"
+  ~throws error.annot_msg()
+
+check:
+  def 'b: 1; $x; ... ~nonempty': 'b: 1; 2 3; 4 5 6'
+  [x, ...]
+  ~matches ['2 3', '4 5 6']
+
+check:
+  def 'b: 1; $x; ... ~nonempty': 'b: 1'
+  "oops"
+  ~throws error.annot_msg()
+
+
+check:
+  def '$x ... ~once': '1'
+  [x, ...]
+  ~matches ['1']
+
+check:
+  def '$x ... ~once': ''
+  [x, ...]
+  ~matches []
+
+check:
+  def '1 $x ... ~once 3': '1 3'
+  [x, ...]
+  ~is []
+
+check:
+  def '$x ... ~once 3': '1 3'
+  [x, ...]
+  ~matches ['1']
+
+check:
+  def '1 $x ... ~once 3': '1 2 3'
+  [x, ...]
+  ~matches ['2']
+
+check:
+  def '[1, $x, ... ~once]': '[1, 2]'
+  [x, ...]
+  ~matches ['2']
+
+check:
+  def '[1, $x, ... ~once]': '[1]'
+  [x, ...]
+  ~matches []
+
+check:
+  def '[1, $x, ... ~once]': '[1, 2, 3]'
+  "oops"
+  ~throws error.annot_msg()
+
+check:
+  def 'b: 1; $x; ... ~once': 'b: 1; 2 3'
+  [x, ...]
+  ~matches ['2 3']
+
+check:
+  def 'b: 1; $x; ... ~once': 'b: 1'
+  [x, ...]
+  ~is []
+
+check:
+  def 'b: 1; $x; ... ~once': 'b: 1; 2 3; 4 5 6'
+  "oops"
+  ~throws error.annot_msg()
+
+check:
+  def '1 $x 3' = '1 2 3'
+  x
+  ~matches '2'
+
+check:
+  def '1 $('$x') 3' = '1 2 3'
+  x
+  ~matches '2'
+
+check:
+  def '1 $('$x 3') 4' = '1 2 3 4'
+  x
+  ~matches '2'
+
+check:
+  def '1 $('$x ...') 4' = '1 2 3 4'
+  [x, ...]
+  ~matches ['2', '3']
+
+check:
+  def '$('a b $x')' = 'a b c'
+  x
+  ~matches 'c'
+
+check:
+  def '$('a b $x'); ...' = 'a b c; a b d'
+  [x, ...]
+  ~matches ['c', 'd']
+
+check:
+  ~eval
+  'x $'
+  ~throws "misplaced escape"
+
+check:
+  ~eval
+  'x
+   $'
+  ~throws "misplaced escape"
+
+check:
+  ~eval
+  '... x'
+  ~throws "misplaced repetition"
+
+check:
+  ~eval
+  '...
+   x'
+  ~throws "misplaced repetition"
+
+check:
+  ~eval
+  def '0 $('1; 2') 3' = '0 1; 2'
+  ~throws "multi-group pattern incompatible with group context"
+
+check:
+  ~eval
+  def '0 $('1; 2')' = '0 1; 2'
+  ~throws "multi-group pattern incompatible with group context"
+
+check:
+  def '(0, $('1; 2'))' = '(0, 1, 2)'
+  #void
+  ~completes
+
+check:
+  ~eval
+  def '(0, $('1; 2') 3)' = '(0, 1, 2)'
+  ~throws "multi-group pattern incompatible with group context"
+
+check:
+  '1 $('')'
+  ~matches '1'
+
+check:
+  def g = ''
+  '3 + (1, $g $g)'
+  ~throws "generated an empty group"
+
+check:
+  def ['(($b_var_id), ...)', ...]: ['((1), (2 2), (3))', '((4))']
+  [b_var_id, ..., ...]
+  ~matches ['1', '2 2', '3', '4']
+
+block:
+  // check that pattern bindings work with `let`
+  check:
+    let x = "no"
+    fun f(): x
+    let '$x' = '6'
+    [x, f()]
+    ~matches ['6', "no"]
+  check:
+    let [x, ...] = ["yes", "no"]
+    fun f(): [x, ...]
+    let '$x ...' = '6 7 8'
+    [[x, ...], f()]
+    ~matches [['6', '7', '8'], ["yes", "no"]]
+
+check:
+  match '#void'
+  | '#void': "ok"
+  ~is "ok"
+
+check:
+  '#void'.unwrap() ~is #void
+
+check:
+  '$error'
+  ~throws "cannot coerce value to syntax"
+
+block:
+  class Posn(x, y)
+  check: '$(Posn(1, 2))'
+         ~throws "cannot coerce value to syntax"
+  check: Syntax.make(Posn(1, 2))
+         ~throws "cannot coerce value to term syntax"
+  check: Syntax.inject(Posn(1, 2)).unwrap()
+         ~is Posn(1, 2)
+  check: Syntax.inject([1, 2]).unwrap()
+         ~is [1, 2]
+  check: Syntax.inject([]).unwrap()
+         ~is []
+  check: Syntax.make(Pair(1, 2))
+         ~throws "cannot coerce value to term syntax"
+  check: Syntax.make(PairList.empty)
+         ~throws "cannot coerce value to term syntax"
+  check: Syntax.inject(Pair(1, 1)).unwrap()
+         ~is Pair(1, 1)
+  check: Syntax.inject(PairList.empty).unwrap()
+         ~is PairList.empty
+  check: Syntax.inject({#'a: #'A, #'b: #'B}).unwrap()
+         ~is {#'a: #'A, #'b: #'B}
+  check: Syntax.inject(Array(1, 2, 3, #'z)).unwrap()
+         ~is_now Array(1, 2, 3, #'z)
+  check: Syntax.inject(Box(#'x)).unwrap()
+         ~is_now Box(#'x)
+  class PrePosn(x, y):
+    prefab
+  check: Syntax.inject(PrePosn(#'x, #'y)).unwrap()
+         ~is PrePosn(#'x, #'y)
+  check: 'a: b [$(Syntax.inject(Pair(1, 2)))]'.unwrap_all()
+         ~is [#'group, #'a, [#'block, [#'group, #'b, [#'brackets, [#'group, Pair(1, 2)]]]]]
+  check: 'a
+          $(Syntax.inject(Pair(1, 2)))
+          b'.unwrap_all()
+         ~is [#'multi, [#'group, #'a], [#'group, Pair(1, 2)], [#'group, #'b]]
+
+// prevent construction of ill-formed groups
+block:
+  def a = '| 12 | 13'
+  def b = ': 1'
+  let [ts, ...] = [b, b]
+  check:
+    '$b $a' ~matches ':« 1 » | 12 | 13'
+    'head $b $a' ~matches 'head:« 1 » | 12 | 13'
+    'apple $[a, '8']' ~throws "alternatives not allowed in non-tail position of a group"
+    'apple $[b, '8']' ~throws "block not allowed in non-tail position of a group"
+    '$b $b' ~throws "block not allowed in non-tail position of a group"
+    'head $b $b' ~throws "block not allowed in non-tail position of a group"
+    '$a $a' ~throws "alternatives not allowed in non-tail position of a group"
+    'head $a $a' ~throws "alternatives not allowed in non-tail position of a group"
+    '$[b, b]' ~throws "block not allowed in non-tail"
+    'head $[b, b]' ~throws "block not allowed in non-tail"
+    'head $[a, a]' ~throws "alternatives not allowed in non-tail position of a group"
+    '$ts ...' ~throws "block not allowed in non-tail position of a group"
+    'head $ts ...' ~throws "block not allowed in non-tail position of a group"
+    '$[ts] ...' ~throws "block not allowed in non-tail position of a group"
+
+
+check:
+  match '1 2: a b'
+  | '$_ ...: a': "ok"
+  ~throws "unexpected term" // not "expected more terms"
+check:
+  match '1 2: a b'
+  | '$_ ... $_ ...: a': "ok"
+  ~throws "unexpected term" // not "expected more terms"
+check:
+  match '1 2: a b'
+  | '$_ ... 1 ...: a': "ok"
+  ~throws "unexpected term" // not "expected more terms"
+check:
+  match '1 2: a b'
+  | '$_ ... | a': "ok"
+  ~throws "expected more terms" // block can be followed by alts
+check:
+  match '1 2 | a b'
+  | '$_ ... | a': "ok"
+  ~throws "unexpected term" // not "expected more terms"
+check:
+  match '1 2 | a b'
+  | '$_ ... $_ ... | a': "ok"
+  ~throws "unexpected term" // not "expected more terms"
+check:
+  match '1 2 | a b'
+  | '$_ ... 1 ... | a': "ok"
+  ~throws "unexpected term" // not "expected more terms"
+check:
+  match '1 2 | a b'
+  | '$_ ...: a': "ok"
+  ~throws "expected a `:` block"
+
+check:
+  match '(1)':
+  | '(1 $(y :: Sequence))':
+      match y
+      | '': "ok"
+  ~is "ok"
+
+check:
+  match '(1)':
+  | '(1 $y)': "oops"
+  | ~else : "no"
+  ~is "no"
+
+check:
+  match '(1)':
+  | '(1 $(y :: Group))': "oops"
+  | ~else : "no"
+  ~is "no"
+
+// Make sure multi-element syntax can be replicated for a repetition
+check:
+  def [x, ...] = [1, 2, 3]
+  def body = '1 2'
+  '$x: $body
+   ...'
+  ~prints_like '1: 1 2
+                2: 1 2
+                3: 1 2'
+
+// regression check for an error message
+check:
+  match 'hi 1'
+  | 'hi $('$')': "ok"
+  ~throws "expected the operator `$`"
+
+// check group-sequence splicing
+block:
+  // tail
+  check:
+    match 'a 1 b 2 c 3 d 4'
+    | '$('$a $something_a $b $something_b') ...':
+        'block:
+           $('let $a = $something_a
+              let $b = $something_b')
+           ...'
+    ~matches 'block:
+                let a = 1
+                let b = 2
+                let c = 3
+                let d = 4'
+  // non-tail
+  check:
+    match 'a 1 b 2 c 3 d 4'
+    | '$('$a $something_a $b $something_b') ...':
+        'block:
+           $('let $a = $something_a
+              let $b = $something_b')
+           ...
+           done'
+    ~matches 'block:
+                let a = 1
+                let b = 2
+                let c = 3
+                let d = 4
+                done'
+  // non-tail, empty sequence after
+  check:
+    match 'a 1 b 2 c 3 d 4'
+    | '$('$a $something_a $b $something_b') ...':
+        'block:
+           $('let $a = $something_a
+              let $b = $something_b')
+           ...
+           $('')'
+    ~matches 'block:
+                let a = 1
+                let b = 2
+                let c = 3
+                let d = 4'
+
+block:
+  check:
+    match ': first
+             second'
+    | ': $('first
+            second')':
+        "ok"
+    ~is "ok"
+
+  check:
+    match '| first
+             second'
+    | '| $('first
+            second')':
+        "ok"
+    ~is "ok"
+
+  check:
+    match '(first,
+            second)'
+    | '($('first
+           second'))':
+        "ok"
+    ~is "ok"
+
+  check:
+    match '[first,
+            second]'
+    | '[$('first
+           second')]':
+        "ok"
+    ~is "ok"
+
+  check:
+    match '{first,
+            second}'
+    | '{$('first
+           second')}':
+        "ok"
+    ~is "ok"
+
+  check:
+    match '(first,
+            second)'
+    | ': $('first
+            second')':
+        "ok"
+    ~throws "expected a `:` block"
+
+  check:
+    match ': first
+             second'
+    | '($('first
+           second'))':
+        "ok"
+    ~throws "expected parentheses"
+
+check:
+  match '1; 2; 3'
+  | '1; $((_ :: Multi) && ''); 2;  3': "ok"
+  ~is "ok"
+
+check:
+  match '1; 2; 3'
+  | '1; $(''); 2;  3': "ok"
+  ~is "ok"
+
+check:
+  match '1; 2; 3'
+  | '1; $s; 2;  3': s
+  | ~else: "no"
+  ~is "no"
+
+check:
+  match '1; 5; 6; 2; 3'
+  | '1; $s; 2;  3': s
+  | ~else: "no"
+  ~is "no"
+
+check:
+  match '1; 2; 3'
+  | '1; $(s :: Multi); 2;  3': s
+  ~matches ''
+
+check:
+  match '1; 5; 6; 2; 3'
+  | '1; $(s :: Multi); 2;  3': s
+  ~matches '5; 6'
+
+check:
+  match '1; 2; 3'
+  | '1; $(s :: Group); 2;  3': s
+  | ~else: "no"
+  ~is "no"
+
+check:
+  match ': 1; 2':
+  | ': $x': x
+  ~matches '1; 2'
+
+check:
+  match '(1, 2)':
+  | '($x)': x
+  | ~else: "no"
+  ~is "no"
+
+check:
+  match '(1, 2, 3)'
+  | '($(a :: Multi), $(b :: Multi))':
+      [a, b]
+  ~matches ['1; 2; 3', '']
+
+check:
+  match '(1, 2, 2, 3)'
+  | '($(a :: Multi), 2, $(b :: Multi))':
+      [a, b]
+  ~matches ['1; 2', '3']
+
+check:
+  let '$alt; ...' = ''
+  'foo:
+     bar
+   | $alt
+   | ...'
+  ~matches 'foo: bar'
+
+
+check:
+  let [[x, ...], ...] = [[1, 2], [3]]
+  'x
+   | y
+     | $x
+     | ...
+   | ...'
+  ~matches 'x
+            | y
+              | 1
+              | 2
+            | y
+              | 3'
+
+check:
+  let [[y, ...], ...] = [[], [3]]
+  'x
+   | y
+     | $y
+     | ...
+   | ...'
+  ~matches 'x
+            | y:«»
+            | y
+              | 3'
+
+// make sure `$id ...` shortcut doesn't skip a test
+check:
+  ~eval
+  def name = 'x'
+  '$name ...'
+  ~throws "name: not a repetition"
+
+check:
+  ~eval
+  def [[name, ...], ...] = [['x']]
+  '$name ...'
+  ~throws "name: used with wrong repetition depth"
+
+check:
+  match '1' | '1 $()': "yes"
+  ~is "yes"
+
+block:
+  fun m(stx):
+    match stx
+    | '1 $(g :: Group) $()': g
+    | ~else: "no"
+  check m('') ~is "no"
+  check m('1') ~is "no"
+  check m('1 2') ~matches '2'
+  check m('1 2 3') ~matches '2 3'
+  check m('1; 2') ~is "no"
+
+block:
+  fun m(stx):
+    match stx
+    | '1 $(g :: Group) 10 $()': g
+    | ~else: "no"
+  check m('') ~is "no"
+  check m('1') ~is "no"
+  check m('1 10') ~is "no"
+  check m('1 2 10') ~matches '2'
+  check m('1 2 3 10') ~matches '2 3'
+  check m('1 2 10; 1 2 10') ~is "no"
+
+check:
+  ~eval
+  def '$() $()' = 1
+  ~throws "incompatible with this context"
+
+// repetition constraint should be conservative
+block:
+  check:
+    match 'a: b'
+    | '$t ... $(b && ': $_')':
+        values('$t ...', b)
+    ~matches values('a', ': b')
+
+  check:
+    match 'a | c'
+    | '$t ... $(a && '| $_')':
+        values('$t ...', a)
+    ~matches values('a', '| c')
+
+  check:
+    match 'a:« b » | c'
+    | '$t ...  $(b && ': $_') $(a && '| $_')':
+        values('$t ...', b, a)
+    ~matches values('a', ': b', '| c')
+
+  check:
+    match 'a:« b » | c'
+    | '$t ... $(a && '| $_')':
+        values('$t ...', a)
+    ~matches values('a: b', '| c')
+
+  check:
+    match 'a: b'
+    | '$t ... $('$b ...'
+                  && (pattern
+                      | ': $_'
+                      | ''))':
+        values('$t ...', '$b ...')
+    ~matches values('a: b', '')
+
+  check:
+    match 'a | c'
+    | '$t ... $('$a ...'
+                  && (pattern
+                      | '| $_'
+                      | ''))':
+        values('$t ...', '$a ...')
+    ~matches values('a | c', '')
+
+  check:
+    match 'a:« b » | c'
+    | '$t ...
+         $('$b ...' && (pattern
+                        | ': $_'
+                        | ''))
+         $('$a ...' && (pattern
+                        | '| $_'
+                        | ''))':
+        values('$t ...', '$b ...', '$a ...')
+    ~matches values('a:« b » | c', '', '')
+
+  check:
+    match 'a:« b » | c'
+    | '$t ... $('$a ...'
+                  && (pattern
+                      | '| $_'
+                      | ''))':
+        values('$t ...', '$a ...')
+    ~matches values('a:« b » | c', '')
+
+// check annotation string of pattern binding
+check:
+  def '1' = '2'
+  #void
+  ~throws "matching('1')"
+
+check:
+  def '1 2 3' = '2 3 4'
+  #void
+  ~throws "matching('1 2 3')"
+
+check:
+  def '1 2 3; 4 5 6' = '2 3 4; 5 6 7'
+  #void
+  ~throws "matching('1 2 3; 4 5 6')"
+
+check:
+  def '$' = 'oops'
+  #void
+  ~throws "matching('$')"
+
+// check special cases of `_`
+check:
+  ~eval
+  import:
+    rhombus/meta.unquote_bind
+    rhombus only_space unquote_bind:
+      expose:
+        _ as wildcard
+  match '1 2 3'
+  | '$wildcard $wildcard ...':
+      '$wildcard ...'
+  ~throws "wildcard: not a repetition"
+
+check:
+  ~eval
+  import:
+    rhombus/meta.unquote_bind
+    rhombus only_space unquote_bind:
+      expose:
+        _ as wildcard
+  match ': 1; 2; 3'
+  | ': $wildcard; $wildcard; ...':
+      '$wildcard; ...'
+  ~throws "wildcard: not a repetition"
+
+// check error reporting with `$`
+block:
+  class Oops()
+  block:
+    let x = Oops()
+    check:
+      '$x' ~throws "$: cannot coerce value to syntax"
+      ': $x' ~throws "$: cannot coerce value to syntax"
+      '| $x' ~throws "$: cannot coerce value to syntax"
+      '($x)' ~throws "$: cannot coerce value to syntax"
+      '[$x]' ~throws "$: cannot coerce value to syntax"
+      '{ $x }' ~throws "$: cannot coerce value to syntax"
+    check:
+      '1 $x' ~throws "$: cannot coerce value to syntax"
+      ': 1 2; $x' ~throws "$: cannot coerce value to syntax"
+      '| 1 2 | $x' ~throws "$: cannot coerce value to syntax"
+      '(1 2, $x)' ~throws "$: cannot coerce value to syntax"
+      '[1 2, $x]' ~throws "$: cannot coerce value to syntax"
+      '{ 1 2, $x }' ~throws "$: cannot coerce value to syntax"
+  block:
+    let [x, ...] = [Oops(), Oops(), Oops()]
+    check:
+      '$x ...' ~throws "$: cannot coerce value to syntax"
+      '$x; ...' ~throws "$: cannot coerce value to syntax"
+      ': $x; ...' ~throws "$: cannot coerce value to syntax"
+      '| $x | ...' ~throws "$: cannot coerce value to syntax"
+      '($x, ...)' ~throws "$: cannot coerce value to syntax"
+      '[$x, ...]' ~throws "$: cannot coerce value to syntax"
+      '{ $x, ... }' ~throws "$: cannot coerce value to syntax"
+    check:
+      '1 $x ...' ~throws "$: cannot coerce value to syntax"
+      '1 2; $x; ...' ~throws "$: cannot coerce value to syntax"
+      ': 1 2; $x; ...' ~throws "$: cannot coerce value to syntax"
+      '| 1 2 | $x | ...' ~throws "$: cannot coerce value to syntax"
+      '(1 2, $x, ...)' ~throws "$: cannot coerce value to syntax"
+      '[1 2, $x, ...]' ~throws "$: cannot coerce value to syntax"
+      '{ 1 2, $x, ... }' ~throws "$: cannot coerce value to syntax"

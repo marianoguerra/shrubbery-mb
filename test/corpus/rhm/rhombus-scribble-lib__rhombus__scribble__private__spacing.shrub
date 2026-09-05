@@ -1,0 +1,34 @@
+
+import:
+  "util.rhm" open
+  lib("scribble/base.rkt")
+
+export:
+  linebreak
+  nonbreaking
+  hspace
+  #{~}
+  #{~-~}
+  #{?-}
+  #{._}
+  #{.__}
+
+fun linebreak() :: Element:
+  ~doc
+  base.linebreak()
+
+fun nonbreaking(pre_content :: PreContent) :: Element:
+  ~doc
+  base.nonbreaking(pre_content)
+
+fun hspace(n :: Nat) :: Element:
+  ~doc
+  base.hspace(n)
+
+def #{~}: base.#{~}
+def #{~-~}: base.#{-~-}
+
+def #{?-}: base.#{?-}
+
+def #{._}: base.#{._}
+def #{.__}: base.#{.__}

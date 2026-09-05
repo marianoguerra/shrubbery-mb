@@ -1,0 +1,149 @@
+import:
+  rhombus/wrapper
+  "rkt.rhm"
+  "symbol_map.rhm".symbol_map_annot
+  lib("racket/base.rkt") as racket
+
+export:
+  Font
+
+module private:
+  export:
+    _Font
+
+class Font(private _handle):
+  internal _Font
+  property handle: _handle
+
+  constructor (~kind: kind :: Font.Kind = #'default,
+               ~name: name :: maybe(String) = #false,
+               ~size: size :: Real.in(0.0, 1024.0) = 12.0,
+               ~in_pixels: in_pixels :: Any.to_boolean = #false,
+               ~style: style :: Font.Style = #'normal,
+               ~weight: weight :: Font.Weight = #'normal,
+               ~has_underline: has_underline :: Any.to_boolean = #false,
+               ~smoothing: smoothing :: Font.Smoothing = #'default,
+               ~hinting: hinting :: Font.Hinting = #'aligned,
+               ~features: features :: Map.of(Font.FeatureString, Nat) = {}):
+    let hand:
+      if name
+      | rkt.make_object(rkt.#{font%}, size, name, kind, style, weight, has_underline,
+                        convert_smoothing(smoothing), in_pixels, hinting, Map.by(is_now){& features})
+      | rkt.make_object(rkt.#{font%}, size, kind, style, weight, has_underline,
+                        convert_smoothing(smoothing), in_pixels, hinting, Map.by(is_now){& features})
+    super(hand)
+
+  property name: rkt.send handle.#{get-face}()
+  property kind: rkt.send handle.#{get-family}()
+  property size: rkt.send handle.#{get-size}()
+  property in_pixels: rkt.send handle.#{get-size-in-pixels}()
+  property style: rkt.send handle.#{get-style}()
+  property weight: rkt.send handle.#{get-weight}()
+  property has_underline: rkt.send handle.#{get-underlined}()
+  property smoothing: unconvert_smoothing(rkt.send handle.#{get-smoothing}())
+  property hinting: rkt.send handle.#{get-hinting}()
+  property features: rkt.send handle.#{get-feature-settings}()
+
+  reconstructor_fields:
+    name: this.name
+    kind: this.kind
+    size: this.size
+    in_pixels: this.in_pixels
+    style: this.style
+    weight: this.weight
+    has_underline: this.has_underline
+    smoothing: this.smoothing
+    hinting: this.hinting
+    features: this.features
+  reconstructor (name, kind, size, in_pixels, style, weight, has_underline, smoothing,
+                 hinting, features):
+    Font(~name: name, ~kind: kind, ~size: size, ~in_pixels: in_pixels, ~style: style, ~weight: weight,
+         ~has_underline: has_underline, ~smoothing: smoothing,
+         ~hinting: hinting, ~features: features)
+
+  export:
+    Kind
+    Style
+    Weight
+    Smoothing
+    Hinting
+    FeatureString
+    NameListKind
+    NameListDetail
+    get_names
+    kind_to_name
+    from_handle
+
+  enum Kind
+  | default
+  | decorative
+  | roman
+  | script
+  | swiss
+  | modern
+  | symbol
+  | system
+
+  enum Style
+  | normal
+  | italic
+  | slant
+
+  enum Weight
+  | ~is_a Int.in(100 ..= 1000)
+  | thin
+  | ultralight
+  | light
+  | semilight
+  | book
+  | normal
+  | medium
+  | semibold
+  | bold
+  | ultrabold
+  | heavy
+  | ultraheavy
+
+  symbol_map_annot Smoothing convert_smoothing unconvert_smoothing
+  | default
+  | partly_smoothed = #{partly-smoothed}
+  | smoothed
+  | unsmoothed
+
+  enum Hinting
+  | aligned
+  | unaligned
+
+  enum NameListKind:
+  | all
+  | mono
+
+  enum  NameListDetail
+  | face
+  | font
+
+  annot.macro 'FeatureString':
+    annot_meta.pack_predicate('is_feature_string',
+                              '()')
+
+  fun
+  | is_feature_string(v :: String):
+      fun ok(c :~ Char):
+         c matches (Char" " || Char"!")
+           || (c >= Char"#" && c <= Char"~")
+      v.length() == 4 && ok(v[0]) && ok(v[1]) && ok(v[2]) && ok(v[3])
+  | is_feature_string(_):
+      #false
+
+  fun get_names(~kind: kind :: Font.NameListKind = #'all,
+                ~detail: detail :: Font.NameListDetail = #'face) :~ List.of(String):
+    [& rkt.#{get-face-list}(kind, ~#{all-variants?}: detail == #'font)].map(to_string)
+
+  fun kind_to_name(kind :: Font.Kind):
+    to_string(rkt.#{get-family-builtin-face}(kind))
+
+  fun from_handle(handle) :~ Font:
+    ~who: who
+    unless handle rkt.is_a rkt.#{font%}
+    | wrapper.error(~who: who, ~what: "font", handle)
+    _Font(handle)

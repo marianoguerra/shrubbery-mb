@@ -1,0 +1,52 @@
+import:
+  rhombus/scribble/manual
+  meta_label:
+    rhombus open
+
+export:
+  expr
+  repet
+  entry_point
+  immediate_callee
+  bind
+  values_bind
+  annot
+  reducer
+  body
+  nestable_body
+  defn
+  decl
+  id
+  op
+  id_or_op
+  id_name
+  op_name
+  id_or_op_name
+  keyword
+  pattern
+  template
+  key_comp
+
+manual.nonterminal:
+  expr: block
+  repet: block
+  entry_point: block
+  immediate_callee: block
+  bind: def ~defn
+  values_bind: def ~defn
+  annot: ::
+  reducer: for
+  body: block
+  nestable_body: block
+  defn: block
+  decl: block
+  id: block
+  op: block
+  id_or_op: block
+  id_name: namespace ~defn
+  op_name: namespace ~defn
+  id_or_op_name: namespace ~defn
+  keyword: block
+  pattern: #%quotes
+  template: #%quotes
+  key_comp: block

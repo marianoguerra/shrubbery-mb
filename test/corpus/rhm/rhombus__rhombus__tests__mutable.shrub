@@ -1,0 +1,72 @@
+
+check:
+  def mutable x = 0
+  [x := 1, x]
+  ~is [#void, 1]
+
+check:
+  let x = 0
+  fun f(): x
+  let x = 2
+  [x, f()]
+  ~is [2, 0]
+
+check:
+  let x = 0
+  fun f(): x
+  let mutable x = 2
+  x := 3
+  [x, f()]
+  ~is [3, 0]
+
+check:
+  let mutable x = 0
+  fun f(): x
+  fun g(n): x := n
+  let mutable x = 2
+  g(3)
+  [x, f()]
+  ~is [2, 3]
+
+block:
+  use_static
+  class Posn(x, y)
+  def mutable p :: Posn = Posn(1, 2)
+  check:
+    p.x ~is 1
+    p := 100 ~throws "value does not satisfy annotation"
+    p.x ~is 1
+    p := Posn(4, 5) ~completes
+    p.x ~is 4
+
+block:
+  use_static
+  class Posn(x, y)
+  def mutable p :~ Posn = Posn(1, 2)
+  check:
+    p.x ~is 1
+    p := 100 ~completes
+    p ~is 100
+    p.x ~throws "contract violation"
+
+block:
+  def mutable i :: Int = 10
+  check:
+    i := "no" ~throws "value does not satisfy annotation"
+    i ~is 10
+    i := 11 ~completes
+    i ~is 11
+
+block:
+  def mutable str :: ReadableString.to_string = "apple"
+  check:
+    str := 10 ~throws "value does not satisfy annotation"
+    str ~is "apple"
+    str := "banana".copy() ~completes
+    str ~is "banana"
+
+block:
+  def mutable x = 0
+  macro 'y': 'x'
+  y := 1
+  check x ~is 1

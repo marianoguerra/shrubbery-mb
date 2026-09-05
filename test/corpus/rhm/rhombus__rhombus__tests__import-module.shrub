@@ -1,0 +1,223 @@
+
+// The "example-c.rhm" module exports `exint`
+// as a variable, a binding form (matches any integer)
+// and an annotation (matches any integer)
+
+check:
+  import: lib("rhombus/tests/example-c.rhm") as ex_c
+  def ex_c.exint = 10
+  10 :: ex_c.exint
+  ex_c.exint
+  ~is 10
+
+check:
+  ~eval
+  block:
+    import: lib("rhombus/tests/example-c.rhm") as ex_c
+    def ex_c.exint = 10
+    10 :: ex_c.exint
+    ex_c.exint
+  ~is 10
+
+check:
+  import: lib("rhombus/tests/example-c.rhm") as ex_c
+  def ex_c.exint = "10"
+  #void
+  ~throws "value does not satisfy annotation"
+
+check:
+  import: lib("rhombus/tests/example-c.rhm") as ex_c
+  "10" :: ex_c.exint
+  ~throws "value does not satisfy annotation"
+
+check:
+  import: lib("rhombus/tests/example-c.rhm") open
+  def exint = 10
+  10 :: exint
+  exint
+  ~is 10
+
+check:
+  defn.macro 'open_c':
+    ~op_stx self
+    'import: lib("rhombus/tests/example-c.rhm") open ~scope_like $self'
+  open_c
+  def exint = 10
+  10 :: exint
+  exint
+  ~is 10
+
+check:
+  defn.macro 'open_c':
+    ~op_stx self
+    'import: lib("rhombus/tests/example-c.rhm"):
+               expose: $(Syntax.make(#'exint, self))'
+  open_c
+  def exint = 10
+  10 :: exint
+  exint
+  ~is 10
+
+check:
+  import:
+    lib("rhombus/tests/example-c.rhm"):
+      open
+      rename: exint as ex_int
+  def ex_int = 10
+  10 :: ex_int
+  ex_int
+  ~is 10
+
+check:
+  import:
+    lib("rhombus/tests/example-c.rhm") as ex_c:
+      rename: exint as ex_int
+  def ex_c.ex_int = 10
+  10 :: ex_c.ex_int
+  ex_c.ex_int
+  ~is 10
+
+check:
+  import:
+    lib("rhombus/tests/example-c.rhm") as ex_c:
+      expose: exint
+      rename: exint as ex_int
+  def ex_int = 10
+  10 :: ex_int
+  ex_int
+  ~is 10
+
+check:
+  import:
+    lib("rhombus/tests/example-c.rhm") as ex_c:
+      expose: exint as ex_int
+  def ex_int = 10
+  10 :: ex_int
+  ex_int
+  ~is 10
+
+check:
+  import:
+    lib("rhombus/tests/example-c.rhm"):
+      open
+      only_space: expr
+  exint
+  ~is 10
+
+check:
+  import:
+    lib("rhombus/tests/example-c.rhm") as ex_c:
+      only_space: expr
+  ex_c.exint
+  ~is 10
+
+check:
+  ~eval
+  import rhombus/meta: expose: expr
+  block:
+    import:
+      lib("rhombus/tests/example-c.rhm"):
+        open
+        only_space: expr
+    10 :: exint
+  ~throws "not bound as an annotation"
+
+check:
+  ~eval
+  import rhombus/meta: expose: expr
+  block:
+    import:
+      lib("rhombus/tests/example-c.rhm") as ex_c:
+        only_space: expr
+    10 :: ex_c.exint
+  ~throws "not bound as an annotation"
+
+check:
+  import:
+    lib("rhombus/tests/example-c.rhm"):
+      open
+      only_space: annot
+  def exint = 11
+  exint
+  ~is 11
+
+check:
+  import:
+    lib("rhombus/tests/example-c.rhm"):
+      open
+      only_space: annot
+  11 :: exint
+  ~is 11
+
+check:
+  import:
+    lib("rhombus/tests/example-c.rhm") as ex_c:
+      only_space: annot
+  11 :: ex_c.exint
+  ~is 11
+
+check:
+  import: lib("rhombus/tests/example-c.rhm") as ~none:
+            expose: exint
+  def exint = 10
+  10 :: exint
+  exint
+  ~is 10
+
+check:
+  import lib("rhombus/tests/example-b.rhm"):
+    expose ex_a
+  ex_a.alpha
+  ~is "alpha"
+
+check:
+  import lib("rhombus/tests/example-b.rhm") as ~none:
+    expose ex_a
+  ex_a.alpha
+  ~is "alpha"
+
+check:
+  import:
+    meta: lib("rhombus/tests/example-a.rhm").alpha
+  expr.macro 'get_alpha':
+    '$alpha'
+  get_alpha
+  ~is "alpha"
+
+// `import .<id> open` and shadowing
+module ~early n ~lang rhombus:
+  export str
+  def str = "a string"
+import self!n
+block:
+  import .n open
+  check str ~is "a string"
+
+module ~early many_m ~lang rhombus/and_meta:  
+  namespace ns:
+    export:
+      Foo
+      x
+    namespace Foo:
+      export def z = 6
+    namespace Foo.Bar:
+      export def y = 10
+    class Foo.Bar.X()
+    def x = 5
+  export:
+    ns.Foo
+    ns.x
+
+block:
+  import self!many_m:
+    expose:
+      Foo
+      x
+  check Foo.z ~is 6
+  check Foo.Bar.y ~is 10
+  check Foo.Bar.X() ~is_a Foo.Bar.X
+  check x ~is 5
+  check many_m.Foo.z ~is 6
+  check many_m.Foo.Bar.y ~is 10
+  check many_m.Foo.Bar.X() ~is_a Foo.Bar.X
+  check many_m.x ~is 5

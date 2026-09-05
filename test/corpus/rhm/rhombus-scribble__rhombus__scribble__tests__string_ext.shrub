@@ -1,0 +1,7 @@
+
+export:
+  String
+
+def String.more = "more"
+
+annot.macro 'String.more': 'Int'

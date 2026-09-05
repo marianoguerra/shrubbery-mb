@@ -1,0 +1,110 @@
+
+block:
+  use_static
+  check:
+    fun print_all_rst(& rst):
+      for (v in rst):
+        println(v)
+    fun print_all_lst(lst):
+      let [& rst] && all = lst
+      for (v in all):
+        println(v)
+      for (v in rst):
+        println(v)
+    fun print_all_set(set):
+      let Set{& rst} && all = set
+      for (v in all):
+        println(v)
+      for (v in rst):
+        println(v)
+    fun print_all_map(map):
+      let Map{& rst} && all = map
+      for ((k, v) in all):
+        println(k +& ": " +& v)
+      for ((k, v) in rst):
+        println(k +& ": " +& v)
+    fun print_all_cons_lst(lst):
+      let List.cons(_, rst) && all = lst
+      for (v in all):
+        println(v)
+      for (v in rst):
+        println(v)
+    ~completes
+
+  check:
+    def [& xs] = (["a", "b", "cd"] :: List.of(String))
+    for List (x in xs):
+      x.length()
+    ~is [1, 1, 2]
+
+  check:
+    def [x, ...] = (["a", "b", "cd"] :: List.of(String))
+    [x.length(), ...]
+    ~is [1, 1, 2]
+
+  check:
+    def [& xs :: List.of(String)] = ["a", "b", "cd"]
+    for List (x in xs):
+      x.length()
+    ~is [1, 1, 2]
+
+  check:
+    def [x :: String, ...] && xs = ["a", "b", "cd"]
+    [x.length(), ...] == (for List (x in xs):
+                            x.length())
+    ~is #true
+
+  check:
+    def List.cons(_, lst) = (["a", "b", "cd"] :: List.of(String))
+    lst[0].length()
+    ~is 1
+
+  check:
+    def {& map}:
+      ({Box(1): "a", Box(2): "b", Box(3): "cd"} :: Map.of(Box, String))
+    for Set ((key, val) in map):
+      key.value + val.length()
+    ~is {2, 3, 5}
+
+  check:
+    def {key: val, ...}:
+      ({Box(1): "a", Box(2): "b", Box(3): "cd"} :: Map.of(Box, String))
+    {key.value + val.length(), ...}
+    ~is {2, 3, 5}
+
+  check:
+    def {& map :: Map.of(Box, String)}:
+      {Box(1): "a", Box(2): "b", Box(3): "cd"}
+    for Set ((key, val) in map):
+      key.value + val.length()
+    ~is {2, 3, 5}
+
+  check:
+    def {key :: Box: val :: String, ...} && map:
+      {Box(1): "a", Box(2): "b", Box(3): "cd"}
+    {key.value + val.length(), ...} == (for Set ((key, val) in map):
+                                          key.value + val.length())
+    ~is #true
+
+  check:
+    def Set{& set} = ({"a", "b", "cd"} :: Set.of(String))
+    for Set (val in set):
+      val.length()
+    ~is {1, 2}
+
+  check:
+    def {val, ...} = ({"a", "b", "cd"} :: Set.of(String))
+    {val.length(), ...}
+    ~is {1, 2}
+
+  check:
+    def Set{& set :: Set.of(String)} = {"a", "b", "cd"}
+    for Set (val in set):
+      val.length()
+    ~is {1, 2}
+
+  check:
+    def {val :: String, ...} && set = {"a", "b", "cd"}
+    {val.length(), ...} == (for Set (val in set):
+                              val.length())
+    ~is #true

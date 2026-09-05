@@ -1,0 +1,53 @@
+import:
+  lib("racket/gui/easy.rkt")
+  "window-child-help.rkt".mix_window_child_callbacks
+  "window-callback.rhm".WindowCallbacks
+  "view.rhm".View
+  "view.rhm"!private.BaseWindowView
+  "view-help.rkt"
+  "obs.rhm":
+    expose:
+      Obs
+      ObsOrValue
+
+export:
+  Checkbox
+
+class Checkbox(private _at_checked :: Obs):
+  extends BaseWindowView
+
+  constructor (label :: ObsOrValue.of(View.LabelString),
+               ~action: action :: Boolean -> ~any = values,
+               ~checked: checked :: ObsOrValue.of(Boolean) = #false,
+               ~enable: enable :: ObsOrValue.of(Boolean) = #true,
+               ~style: style :: List.of(Checkbox.Style) = [],
+               ~margin: margin :: ObsOrValue.of(View.Margin) = [2, 2],
+               ~min_size: min_size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~stretch: stretch :: ObsOrValue.of(View.Stretch) = [#false, #false],
+               ~window_callbacks: wcb :: maybe(WindowCallbacks) = #false):
+    let at_checked = obs.reflect_obs(checked, "at_checked")
+    let action = (fun (on):
+                    at_checked.value := on
+                    action(on)
+                    #void)
+    #{view-help}.#{mix-wrap}(
+      fun (mixin):
+        let mixin = mix_window_child_callbacks(mixin, wcb)
+        super(easy.checkbox(action,
+                            ~label: obs.unwrap(label),
+                            ~#{enabled?}: obs.unwrap(enable),
+                            ~#{checked?}: obs.unwrap(at_checked),
+                            ~margin: obs.unwrap_list(margin, values),
+                            ~#{min-size}: obs.unwrap_list(min_size, values),
+                            ~stretch: obs.unwrap_list(stretch, values),
+                            ~mixin: mixin))
+          <| (at_checked)
+    )
+
+  property at_checked :: Obs:
+    _at_checked.map(values)
+
+  export:
+    Style
+
+  enum Style

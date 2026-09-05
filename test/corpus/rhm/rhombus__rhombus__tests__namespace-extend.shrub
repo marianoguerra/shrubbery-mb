@@ -1,0 +1,407 @@
+
+namespace root:
+  namespace trunk:
+    def name = "trunk"
+    export: name
+  def name = "root"
+  def trunk.side = "left"
+  export: trunk name
+  check:
+    trunk.side
+    ~is "left"
+
+check:
+  root.name
+  ~is "root"
+
+check:
+  root.trunk.name
+  ~is "trunk"
+
+check:
+  root.trunk.side
+  ~is "left"
+
+check:
+  namespace root.trunk.branch:
+    def name = "branch"
+    export: name
+  root.trunk.branch.name
+  ~is "branch"
+
+fun root.f(x):
+  "root" ++ x
+fun root.trunk.f(x):
+  "trunk" ++ x
+
+check:
+  root.f(" hi")
+  ~is "root hi"
+
+check:
+  root.trunk.f(" hi")
+  ~is "trunk hi"
+
+def root.ten = 10
+def root.trunk.seven = 7
+
+check:
+  root.ten
+  ~is 10
+
+check:
+  root.trunk.seven
+  ~is 7
+
+class root.Posn(x, y)
+
+check:
+  namespace inner
+  operator ((x :: Int) inner.(+) (y :: Int)):
+    ~weaker_than: *
+    [x, y]
+  1 inner.(+) 2*8
+  ~is [1, 16]
+
+check:
+  use_static
+  root.Posn(1, 2).x
+  ~is 1
+
+check:
+  match root.Posn(1, 2)
+  | root.Posn(x, y): [y, x]
+  ~is [2, 1]
+
+macro '$left (root.(^^^)) $right':
+  '[[$left, $right]]'
+expr.macro '$left (root.(^^^^)) $right':
+  '[[$left, $right]]'
+
+check:
+  1 root.(^^^) 2
+  ~is [[1, 2]]
+
+check:
+  1 root.(^^^^) 2
+  ~is [[1, 2]]
+
+check:
+  def root.name = "ROOT"
+  root.name
+  ~is "ROOT"
+
+check:
+  def root.trunk.name = "TRUNK"
+  [root.name, root.trunk.name]
+  ~is ["root", "TRUNK"]
+
+check:
+  fun root.f(x): "ROOT" ++ x
+  root.f(" hi")
+  ~is "ROOT hi"
+
+namespace route:
+  export: trunc
+  namespace trunc
+  def trunc.name = "trunc"
+
+check:
+  route.trunc.name
+  ~is "trunc"
+
+check:
+  import: .root open
+  trunk.name
+  ~is "trunk"
+
+check:
+  import: .root.trunk
+  trunk.name
+  ~is "trunk"
+
+check:
+  import: .root.trunk
+  trunk.side
+  ~is "left"
+
+check:
+  import: .root:
+            expose trunk
+  trunk.side
+  ~is "left"
+
+check:
+  namespace math
+  namespace ext1:
+    def math.e = 2.71
+    export: math
+  namespace ext2:
+    def math.d = "d"
+    export: math
+  [ext1.math.e, ext2.math.d]
+  ~is [2.71, "d"]
+
+check:
+  import: .root open
+  f(" hello")
+  ~is "root hello"
+
+check:
+  import: .root open
+  trunk.f(" hi")
+  ~is "trunk hi"
+
+check:
+  import: .root open
+  trunk.side
+  ~is "left"
+
+check:
+  import:
+    lib("rhombus/tests/example-extend-a.rhm") open
+    lib("rhombus/tests/example-extend-b.rhm") open
+  List(List.a, List.b, ExList.a)
+  ~is ["a", "b", "a"]
+
+check:
+  ~eval
+  namespace toplevel: "ok"
+  def toplevel.greeting = "hi"
+  toplevel.greeting
+  ~is "hi"
+
+// Make sure extension of a namespace doesn't get
+// treated as extension of a shadowing namespace
+check:
+  ~eval
+  namespace N
+  def N.y = 10
+  block:
+    namespace N
+    import: .N as n
+    n.y
+  ~throws "identifier not provided"
+
+// Same, for macro
+check:
+  ~eval
+  import rhombus/meta open
+  namespace N
+  expr.rule 'N.z 0': '1'
+  block:
+    namespace N
+    import: .N as n
+    n.z 0
+  ~throws "identifier not provided"
+
+// No shadowing => extension is visible
+check:
+  ~eval
+  import rhombus/meta open
+  namespace N
+  def N.y = 10
+  expr.macro 'N.z 0': '1'
+  block:
+    import: .N as n
+    [n.y, n.z 0]
+  ~is [10, 1]
+
+// make sure `def` uses right context for binding
+block:
+  namespace my_ns
+  defn.macro 'def_on_my_ns $(name :: Identifier) $rhs ...':
+    'def my_ns . $name $rhs ...'
+  def_on_my_ns foo = 42
+  check my_ns.foo ~is 42
+
+// make sure `class` uses right context for binding
+block:
+  namespace my_ns
+  defn.macro 'def_foo $(ns_name :: Identifier) $rhs ...':
+    'class $(ns_name).foo (v $rhs ...)'
+  def_foo my_ns = 42
+  check my_ns.foo().v ~is 42
+
+// make sure namespace as extension can be extended
+block:
+  namespace Foo
+  namespace Foo.Bar
+  class Foo.Bar.X(x)
+  check: Foo.Bar.X(1).x
+         ~is 1
+
+// check that `all_from` exports extensions
+block:
+  namespace ns
+  def ns.x = 1
+  def ns.y = 2
+
+  namespace ns.sub
+  def ns.sub.z = 3
+
+  namespace ns.sub2:
+    export def w = 4
+
+  namespace ns2:
+    export:
+      all_from(.ns)
+
+  check ns2.x ~is 1
+  check ns2.y ~is 2
+  check ns2.sub.z ~is 3
+  check ns2.sub2.w ~is 4
+
+check:
+  namespace a:
+    export namespace b
+  // extension of extension of namespace
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.d.x = 1
+  a.b.c.d.x
+  ~is 1
+
+check:
+  namespace a:
+    export namespace b:
+      export def z = 5
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.y = "y"
+  def a.b.c.d.x = "x"
+  import:
+    .a.b.c open
+  [y, d.x]
+  ~is ["y", "x"]
+
+check:
+  namespace a:
+    export namespace b:
+      export def z = 5
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.y = "y"
+  def a.b.c.d.x = "x"
+  import:
+    .a.b.c.d
+  d.x
+  ~is "x"
+
+check:
+  namespace a:
+    export namespace b:
+      export def z = 5
+  // extension of extension of namespace
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.y = "y"
+  def a.b.c.d.x = "x"
+  import:
+    .a as aa
+  import:
+    .aa.b.c open
+  [y, d.x]
+  ~is ["y", "x"]
+
+check:
+  namespace a:
+    export namespace b:
+      export def z = 5
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.y = "y"
+  def a.b.c.d.x = "x"
+  import:
+    .a as aa
+  import:
+    .aa.b.c.d
+  [d.x, a.b.z, aa.b.c.y]
+  ~is ["x", 5, "y"]
+
+check:
+  namespace a:
+    export namespace b:
+      export def z = 5
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.y = "y"
+  def a.b.c.d.x = "x"
+  import:
+    .a.b.c
+  [c.y, c.d.x]
+  ~is ["y", "x"]
+
+check:
+  namespace a:
+    export namespace b:
+      export def z = 5
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.y = "y"
+  def a.b.c.d.x = "x"
+  import:
+    .a as aa
+  import:
+    .aa.b.c
+  [c.y, c.d.x]
+  ~is ["y", "x"]
+
+check:
+  namespace a:
+    export namespace b:
+      export def z = 5
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.y = "y"
+  def a.b.c.d.x = "x"
+  import:
+    .a.b
+  [b.z, b.c.y, b.c.d.x]
+  ~is [5, "y", "x"]
+
+check:
+  namespace a:
+    export namespace b:
+      export def z = 5
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.y = "y"
+  def a.b.c.d.x = "x"
+  import:
+    .a.b as bbb
+  [bbb.z, bbb.c.y, bbb.c.d.x]
+  ~is [5, "y", "x"]
+
+check:
+  namespace a:
+    export namespace b:
+      export def z = 5
+  namespace a.b.c
+  namespace a.b.c.d
+  def a.b.c.y = "y"
+  def a.b.c.d.x = "x"
+  import:
+    .a as also_a:
+      expose b
+  [b.z, b.c.y, b.c.d.x]
+  ~is [5, "y", "x"]
+
+check:
+  ~eval
+  module m ~lang rhombus:
+    module A ~lang rhombus/and_meta:
+      meta export namespace meta_ns
+    module B ~lang rhombus/and_meta:
+      import:
+        parent!A open
+      export:
+        meta:
+          meta_ns
+      meta def meta_ns.answer = 42
+    module C ~lang rhombus/and_meta:
+      import:
+        parent!B open
+      meta:
+        meta_ns.answer
+  ~completes

@@ -47,3 +47,10 @@ jobs:
       # `error-report` is meant to leave this repository unchanged.
       - name: error-report is still self-contained
         run: tools/boundary-check.sh
+
+      # The real correctness gate. Hermetic: the corpus and the goldens are
+      # committed, so this needs neither Racket nor the reference checkout.
+      - name: Differential suite
+        run: |
+          moon build --target native
+          tools/shrubdiff.py tokens --show 0

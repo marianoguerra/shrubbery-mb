@@ -1,0 +1,71 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/lexer"
+
+import {
+  "marianoguerra/shrubbery/basic",
+  "marianoguerra/shrubbery/column",
+  "marianoguerra/shrubbery/error",
+  "marianoguerra/shrubbery/sexp",
+}
+
+// Values
+pub let default_variant : Variant
+
+pub fn lex_all(String, variant? : Variant, start_column? : @column.Column) -> Array[Token]
+
+pub fn rewrite_quotes(Array[Token]) -> Array[Token]
+
+// Errors
+
+// Types and methods
+pub(all) enum LexMode {
+  Initial
+  Continuing
+} derive(Eq)
+
+pub(all) struct Token {
+  kind : TokenKind
+  text : String
+  span : @basic.Span
+  partner : String?
+}
+pub fn Token::column(Self) -> @column.Column
+pub fn Token::end_line(Self) -> Int
+pub fn Token::is_trivia(Self) -> Bool
+pub fn Token::line(Self) -> Int
+
+pub(all) enum TokenKind {
+  Identifier
+  Keyword
+  Literal(@sexp.Datum)
+  Operator
+  BlockOperator
+  ContinueOperator
+  BarOperator
+  Opener
+  Closer
+  CommaOperator
+  SemicolonOperator
+  Comment
+  Whitespace
+  GroupComment
+  SExp(@sexp.Datum)
+  At
+  AtOpener
+  AtContent
+  AtCloser
+  AtComment
+  SQuote
+  EndOfInput
+  Fail(@error.ErrorKind)
+} derive(Eq)
+pub fn TokenKind::kind_name(Self) -> String
+
+pub(all) struct Variant {
+  allow_operator : (String) -> Bool
+  indented_operator_continue : (String) -> Bool
+}
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,17 @@
+import:
+  "catalog.rhm"
+  "installer.rhm"
+  "doc.rhm"
+  "archive.rhm"
+  "site.rhm"
+
+fun build(racket_version, rhombus_version, config):
+  catalog.build_catalog(racket_version, rhombus_version, config)
+  installer.build_installer(racket_version, rhombus_version, config)
+  doc.build_docs(racket_version, rhombus_version, config)
+  archive.build_archive(racket_version, rhombus_version, config)
+  site.build_site(racket_version, rhombus_version, config)
+
+module main:
+  import "cmdline.rhm"
+  cmdline.parse(build)

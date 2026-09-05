@@ -1,0 +1,65 @@
+import:
+  lib("racket/gui/easy.rkt")
+  rhombus/draw/private/symbol_map.symbol_map_annot
+  rhombus/draw
+  "window-child-help.rkt".mix_window_child_callbacks
+  "window-callback.rhm".WindowCallbacks
+  "view.rhm".View
+  "view.rhm"!private.BaseWindowView
+  "view-help.rkt"
+  "obs.rhm":
+    expose:
+      ObsOrValue
+
+export:
+  Button
+
+class Button():
+  extends BaseWindowView
+
+  constructor (label :: ObsOrValue.of(View.LabelString
+                                        || draw.Bitmap
+                                        || [draw.Bitmap,
+                                            View.LabelString,
+                                            Button.LabelPosition]),
+               ~action: action :: () -> ~any = values,
+               ~enable: enable :: ObsOrValue.of(Boolean) = #true,
+               ~style: style :: List.of(Button.Style) = [],
+               ~font : font :: draw.Font = View.normal_control_font,
+               ~margin: margin :: ObsOrValue.of(View.Margin) = [2, 2],
+               ~min_size: min_size :: ObsOrValue.of(View.Size) = [#false, #false],
+               ~stretch: stretch :: ObsOrValue.of(View.Stretch) = [#false, #false],
+               ~window_callbacks: wcb :: maybe(WindowCallbacks) = #false):
+    #{view-help}.#{mix-wrap}(
+      fun (mixin):
+        let mixin = mix_window_child_callbacks(mixin, wcb)
+        super(easy.button(obs.unwrap_convert(label, unwrap_bitmap),
+                          action,
+                          ~#{enabled?}: obs.unwrap(enable),
+                          ~style: obs.unwrap_list(style, convert_style),
+                          ~font: font.handle,
+                          ~margin: obs.unwrap_list(margin, values),
+                          ~#{min-size}: obs.unwrap_list(min_size, values),
+                          ~stretch: obs.unwrap_list(stretch, values),
+                          ~mixin: mixin))
+          <| ()
+    )
+
+  export:
+    Style
+    LabelPosition
+
+  symbol_map_annot Style convert_style
+  | default = border
+  | multi_line = #{multi-line}
+
+  symbol_map_annot LabelPosition convert_label_pos
+  | left
+  | top
+  | right
+  | bottom
+
+fun
+| unwrap_bitmap(b :: draw.Bitmap): b.handle
+| unwrap_bitmap([b :: draw.Bitmap, l, pos]): [b.handle, l, pos]
+| unwrap_bitmap(v): v

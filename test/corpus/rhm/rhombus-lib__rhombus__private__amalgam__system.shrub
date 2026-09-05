@@ -1,0 +1,114 @@
+import:
+  "core-meta.rkt" open
+  lib("racket/base.rkt") as rkt
+  "error.rhm" open
+  "version.rkt" as rhombus_version
+  "enum.rhm" open
+
+export:
+  system
+
+namespace system:
+  export:
+    type
+    os
+    arch
+    host
+    word
+    so_suffix
+    target_machine
+    version
+    racket_version
+    locale_string_encoding
+    language_and_country
+    path
+    seconds
+    milliseconds
+    exit
+    TargetMachineSymbol
+    PathSymbol
+
+  fun type() :~ Symbol:
+    rkt.#{system-type}()
+
+  fun os() :~ Symbol:
+    rkt.#{system-type}(#'#{os*})
+
+  fun arch() :~ Symbol:
+    rkt.#{system-type}(#'#{arch})
+
+  fun host() :~ String:
+    String.snapshot(rkt.#{system-type}(#'#{machine}))
+
+  fun word() :~ Int:
+    rkt.#{system-type}(#'#{word})
+
+  fun so_suffix() :~ Bytes:
+    rkt.#{system-type}(#'#{so-suffix})
+
+  annot.macro 'TargetMachineSymbol':
+    ~op_stx: self
+    let '$(sym :: annot_meta.Parsed)' = 'Symbol'
+    let (_, si) = annot_meta.unpack_predicate(sym)
+    annot_meta.pack_predicate('fun (x): rkt.#{symbol?}(x) && rkt.#{compile-target-machine?}(x)', si).relocate_span([self])
+
+  fun target_machine() :~ TargetMachineSymbol:
+    rkt.#{system-type}(#'#{target-machine}) || #'racket
+
+  fun version() :~ String:
+    rhombus_version.version
+
+  fun racket_version() :~ String:
+    String.snapshot(rkt.#{version}())
+
+  fun locale_string_encoding() :~ String:
+    to_string(rkt.#{locale-string-encoding}())
+
+  fun language_and_country() :~ String:
+    to_string(rkt.#{system-language+country}())
+
+  namespace system:
+    export PathSymbol
+    enum PathSymbol
+    | home_dir
+    | temp_dir
+    | pref_dir
+    | pref_file
+    | addon_dir
+    | host_addon_dir
+    | cache_dir
+    | doc_dir
+    | desk_dir
+    | sys_dir
+    | exec_file
+    | run_file
+    | orig_dir
+  import .system.PathSymbol
+
+  def path_symbols:
+    { #'home_dir: #'#{home-dir},
+      #'temp_dir: #'#{temp-dir},
+      #'pref_dir: #'#{pref-dir},
+      #'pref_file: #'#{pref-file},
+      #'addon_dir: #'#{addon-dir},
+      #'host_addon_dir: #'#{host-addon-dir},
+      #'cache_dir: #'#{cache-dir},
+      #'doc_dir: #'#{doc-dir},
+      #'desk_dir: #'#{desk-dir},
+      #'sys_dir: #'#{sys-dir},
+      #'exec_file: #'#{exec-file},
+      #'run_file: #'#{run-file},
+      #'orig_dir: #'#{orig-dir} }
+
+  fun path(which :: system.PathSymbol):
+    ~who: who          
+    rkt.#{find-system-path}(path_symbols[which])
+
+  fun seconds() :~ Int:
+    rkt.#{current-seconds}()
+
+  fun milliseconds() :~ Flonum:
+    rkt.#{current-inexact-milliseconds}()
+
+  fun exit(v = #true):
+    rkt.exit(v)

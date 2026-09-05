@@ -1,0 +1,85 @@
+import:
+  rhombus/wrapper
+  "rkt.rhm"
+
+export:
+  Color
+
+module private:
+  export:
+    _Color
+    unwrap_color
+
+class Color(private _handle):
+  internal _Color
+  property handle: _handle
+
+  export: from_handle
+
+  constructor
+  | (name :: String):
+      super((rkt.send (rkt.#{the-color-database}).#{find-color}(name)) || rkt.make_object(rkt.#{color%}, 0, 0, 0, 1.0))
+  | (red :: Byte, green :: Byte, blue :: Byte):
+      super(rkt.make_object(rkt.#{color%}, red, green, blue, 1.0))
+  | (red :: Byte, green :: Byte, blue :: Byte, alpha :: Real.in(0.0, 1.0)):
+      super(rkt.make_object(rkt.#{color%}, red, green, blue, alpha))
+
+  property red :~ Int:
+    rkt.send handle.red()
+  property green :~ Int:
+    rkt.send handle.green()
+  property blue :~ Int:
+    rkt.send handle.blue()
+  property alpha :~ Real:
+    rkt.send handle.alpha()
+
+  reconstructor_fields:
+    red: this.red
+    green: this.green
+    blue: this.blue
+    alpha: this.alpha
+  reconstructor(red, green, blue, alpha):
+    Color(red, green, blue, alpha)
+
+  private implements Equatable
+  private override equals(other :~ Color, recur):
+    (handle == other.handle)
+      || (other.red == red && other.green == green && other.blue == blue && other.alpha == alpha)
+  private override hash_code(recur):
+    Equatable.hash_code_combine(12579, Equatable.hash(PairList[red, green, blue, alpha]))
+
+  method scale(factor :: NonnegReal) :~ Color:
+    if factor <= 1
+    | fun dim(v):
+        math.exact(math.floor(v * factor))
+      Color(dim(red), dim(green), dim(blue), alpha)
+    | fun bright(v):
+        255 - math.exact(math.floor((255 - v) / factor))
+      Color(bright(red), bright(green), bright(blue), alpha)
+
+  method blend(other :: Color) :~ Color:
+    fun mix(a, b):
+      math.exact(math.floor((a * alpha + b * other.alpha) / (alpha + other.alpha)))
+    Color(mix(red, other.red),
+          mix(green, other.green),
+          mix(blue, other.blue),
+          (alpha + other.alpha) / 2)
+
+  private implements Printable
+  private override describe(mode, recur):
+    PrintDesc.list("Color(",
+                   [recur(red),
+                    recur(green),
+                    recur(blue),
+                    recur(alpha)],
+                   ")")
+
+  fun from_handle(handle) :~ Color:
+    ~who: who
+    unless handle rkt.is_a rkt.#{color%}
+    | wrapper.error(~who: who, ~what: "color", handle)
+    _Color(handle)
+
+fun
+| unwrap_color(c :: Color): c.handle
+| unwrap_color(str): str

@@ -1,0 +1,104 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    ModulePath(s)
+    ModulePath.maybe(s)
+    ModulePath.s_exp(mod) ~method
+
+// syntax form
+check:
+  ModulePath 'm' +& "" ~is "ModulePath('lib (\"m/main.rhm\")')"
+  ModulePath 'm/n' +& "" ~is "ModulePath('lib (\"m/n.rhm\")')"
+  ModulePath '.m' +& "" ~is "ModulePath('. m')"
+  ModulePath '"m"' +& "" ~is "ModulePath('\"m\"')"
+  ModulePath '"m/n"' +& "" ~is "ModulePath('\"m/n\"')"
+  ModulePath 'file("m")' +& "" ~is "ModulePath('file (\"m\")')"
+  ModulePath 'file("/m")' +& "" ~is "ModulePath('file (\"/m\")')"
+  ModulePath 'lib("m")' +& "" ~is "ModulePath('lib (\"m/main.rhm\")')"
+  ModulePath 'lib("m/n.rkt")' +& "" ~is "ModulePath('lib (\"m/n.rkt\")')"
+  ModulePath 'lib("m/n.rkt")' +& "" ~is "ModulePath('lib (\"m/n.rkt\")')"
+  ModulePath 'lib("m/n.rkt")!x' +& "" ~is "ModulePath('lib (\"m/n.rkt\") ! x')"
+  ModulePath 'm!x' +& "" ~is "ModulePath('lib (\"m/main.rhm\") ! x')"
+  ModulePath 'm!x!y!z' +& "" ~is "ModulePath('lib (\"m/main.rhm\") ! x ! y ! z')"
+  ModulePath 'm/n!x' +& "" ~is "ModulePath('lib (\"m/n.rhm\") ! x')"
+  ModulePath '.m ! x' +& "" ~is "ModulePath('. m ! x')"
+  ModulePath 'self!x' +& "" ~is "ModulePath('self ! x')"
+  ModulePath 'parent' +& "" ~is "ModulePath('parent')"
+  ModulePath 'parent!x' +& "" ~is "ModulePath('parent ! x')"
+  ModulePath 'parent!x!y' +& "" ~is "ModulePath('parent ! x ! y')"
+
+// function form
+check:
+  ModulePath('m') ~is ModulePath 'lib ("m/main.rhm")'
+  ModulePath('m/n') ~is ModulePath 'lib ("m/n.rhm")'
+  ModulePath('.m') ~is ModulePath '. m'
+  ModulePath('"m"') ~is ModulePath '"m"'
+  ModulePath('"m/n"') ~is ModulePath '"m/n"'
+  ModulePath('file("m")') ~is ModulePath 'file ("m")'
+  ModulePath('file("/m")') ~is ModulePath 'file ("/m")'
+  ModulePath('lib("m")') ~is ModulePath 'lib ("m/main.rhm")'
+  ModulePath('lib("m/n.rkt")') ~is ModulePath 'lib ("m/n.rkt")'
+  ModulePath('lib("m/n.rkt")') ~is ModulePath 'lib ("m/n.rkt")'
+  ModulePath('lib("m/n.rkt")!x') ~is ModulePath 'lib ("m/n.rkt") ! x'
+  ModulePath('m!x') ~is ModulePath 'lib ("m/main.rhm") ! x'
+  ModulePath('m!x!y!z') ~is ModulePath 'lib ("m/main.rhm") ! x ! y ! z'
+  ModulePath('m/n!x') ~is ModulePath 'lib ("m/n.rhm") ! x'
+  ModulePath('.m ! x') ~is ModulePath '. m ! x'
+  ModulePath('self!x') ~is ModulePath 'self ! x'
+  ModulePath('parent') ~is ModulePath 'parent'
+  ModulePath('parent!x') ~is ModulePath 'parent ! x'
+  ModulePath('parent!x!y') ~is ModulePath 'parent ! x ! y'
+  ModulePath.maybe('lib("m")') ~is ModulePath 'lib("m/main.rhm")'
+  ModulePath.maybe('lib("m ?")') ~is #false
+
+// method
+block:
+  use_static
+  check:
+    (ModulePath 'm').s_exp() ~is (ModulePath 'm').s_exp()
+    (ModulePath 'm/n').s_exp() ~is (ModulePath 'lib ("m/n.rhm")').s_exp()
+    (ModulePath '.m').s_exp() ~is (ModulePath '. m').s_exp()
+    (ModulePath '"m"').s_exp() ~is (ModulePath '"m"').s_exp()
+    (ModulePath '"m/n"').s_exp() ~is (ModulePath '"m/n"').s_exp()
+    (ModulePath 'file("m")').s_exp() ~is (ModulePath 'file ("m")').s_exp()
+    (ModulePath 'file("/m")').s_exp() ~is (ModulePath 'file ("/m")').s_exp()
+    (ModulePath 'lib("m/n.rkt")').s_exp() ~is (ModulePath 'lib ("m/n.rkt")').s_exp()
+    (ModulePath 'lib("m/n.rkt")').s_exp() ~is (ModulePath 'lib ("m/n.rkt")').s_exp()
+    (ModulePath 'lib("m/n.rkt")!x').s_exp() ~is (ModulePath 'lib ("m/n.rkt") ! x').s_exp()
+    (ModulePath 'm!x').s_exp() ~is (ModulePath 'lib ("m/main.rhm") ! x').s_exp()
+    (ModulePath 'm!x!y!z').s_exp() ~is (ModulePath 'lib ("m/main.rhm") ! x ! y ! z').s_exp()
+    (ModulePath 'm/n!x').s_exp() ~is (ModulePath 'lib ("m/n.rhm") ! x').s_exp()
+    (ModulePath '.m ! x').s_exp() ~is (ModulePath '. m ! x').s_exp()
+    (ModulePath 'self!x').s_exp() ~is (ModulePath 'self ! x').s_exp()
+    (ModulePath 'parent').s_exp() ~is (ModulePath 'parent').s_exp()
+    (ModulePath 'parent!x').s_exp() ~is (ModulePath 'parent ! x').s_exp()
+    (ModulePath 'parent!x!y').s_exp() ~is (ModulePath 'parent ! x ! y').s_exp()
+    ModulePath('lib("m")').s_exp() ~is (ModulePath 'lib("m/main.rhm")').s_exp()
+    ModulePath.maybe('lib("m")')?.s_exp() ~is (ModulePath 'lib("m/main.rhm")').s_exp()
+    ModulePath.maybe('lib("m ?")')?.s_exp() ~is #false
+
+check:
+  dynamic(ModulePath 'm').s_exp() ~is dynamic(ModulePath 'm').s_exp()
+  dynamic(ModulePath 'm/n').s_exp() ~is dynamic(ModulePath 'lib ("m/n.rhm")').s_exp()
+  dynamic(ModulePath '.m').s_exp() ~is dynamic(ModulePath '. m').s_exp()
+  dynamic(ModulePath '"m"').s_exp() ~is dynamic(ModulePath '"m"').s_exp()
+  dynamic(ModulePath '"m/n"').s_exp() ~is dynamic(ModulePath '"m/n"').s_exp()
+  dynamic(ModulePath 'file("m")').s_exp() ~is dynamic(ModulePath 'file ("m")').s_exp()
+  dynamic(ModulePath 'file("/m")').s_exp() ~is dynamic(ModulePath 'file ("/m")').s_exp()
+  dynamic(ModulePath 'lib("m/n.rkt")').s_exp() ~is dynamic(ModulePath 'lib ("m/n.rkt")').s_exp()
+  dynamic(ModulePath 'lib("m/n.rkt")').s_exp() ~is dynamic(ModulePath 'lib ("m/n.rkt")').s_exp()
+  dynamic(ModulePath 'lib("m/n.rkt")!x').s_exp() ~is dynamic(ModulePath 'lib ("m/n.rkt") ! x').s_exp()
+  dynamic(ModulePath 'm!x').s_exp() ~is dynamic(ModulePath 'lib ("m/main.rhm") ! x').s_exp()
+  dynamic(ModulePath 'm!x!y!z').s_exp() ~is dynamic(ModulePath 'lib ("m/main.rhm") ! x ! y ! z').s_exp()
+  dynamic(ModulePath 'm/n!x').s_exp() ~is dynamic(ModulePath 'lib ("m/n.rhm") ! x').s_exp()
+  dynamic(ModulePath '.m ! x').s_exp() ~is dynamic(ModulePath '. m ! x').s_exp()
+  dynamic(ModulePath 'self!x').s_exp() ~is dynamic(ModulePath 'self ! x').s_exp()
+  dynamic(ModulePath 'parent').s_exp() ~is dynamic(ModulePath 'parent').s_exp()
+  dynamic(ModulePath 'parent!x').s_exp() ~is dynamic(ModulePath 'parent ! x').s_exp()
+  dynamic(ModulePath 'parent!x!y').s_exp() ~is dynamic(ModulePath 'parent ! x ! y').s_exp()
+
+check:
+  ModulePath('m').add(ModulePath('self!main')) ~is ModulePath('m!main')
+  ModulePath('m/x/y').add(ModulePath('"z.rhm"')) ~is ModulePath('m/x/z')
+  ModulePath('m/x/y').add(ModulePath('"../z.rhm"!main')) ~is ModulePath('m/z!main')

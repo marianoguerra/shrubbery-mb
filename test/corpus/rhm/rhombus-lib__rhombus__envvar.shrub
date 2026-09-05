@@ -1,0 +1,65 @@
+import:
+  lib("racket/base.rkt") as rkt
+  "private/parameter.rhm"
+
+export:
+  StringEnvVarName
+  BytesEnvVarName
+  getenv
+  putenv
+  EnvVars
+
+fun is_string_envvar_name(v):
+  v is_a String && rkt.#{string-environment-variable-name?}(v)
+
+annot.macro 'StringEnvVarName':
+  'satisfying(is_string_envvar_name) && assuming(String)'
+annot.macro 'BytesEnvVarName':
+  'satisfying(rkt.#{bytes-environment-variable-name?}) && assuming(Bytes)'
+
+fun getenv(name :: StringEnvVarName) :~ String:
+  let s = rkt.getenv(name)
+  s && to_string(s)
+
+fun putenv(name :: StringEnvVarName, value :: maybe(StringNoNull)):
+  rkt.putenv(name, value)
+
+class EnvVars(private _handle):
+  property handle: _handle
+  internal _EnvVars
+
+  constructor ({ name :: BytesEnvVarName: val :: BytesNoNull,
+                 ... }):
+    let [[a, ...], ...] = [[name, val], ...]
+    from_handle(rkt.#{make-environment-variables}(a, ..., ...))
+
+  method get(name :: BytesEnvVarName) :~ maybe(Bytes):
+    rkt.#{environment-variables-ref}(_handle, name)
+
+  fun throw_error():
+    error("envvar set failed")
+
+  method set(name :: BytesEnvVarName,
+             val :: maybe(BytesNoNull),
+             ~fail: fail :: Function.of_arity(0) = throw_error):
+    if fail === throw_error
+    | rkt.#{environment-variables-set!}(_handle, name, val)
+    | rkt.#{environment-variables-set!}(_handle, name, val, fail)
+
+  method names() :~ List.of(BytesEnvVarName):
+    [& rkt.#{environment-variables-names}(_handle)]
+
+  method copy() :~ EnvVars:
+    from_handle(rkt.#{environment-variables-copy}(_handle))
+
+  export:
+    current
+    from_handle
+
+parameter.def_from_racket current from_handle:
+  ~orig: rkt.#{current-environment-variables}
+  ~class: EnvVars
+  ~_class: _EnvVars
+  ~_handle: _handle
+  ~what: "an environment-variables"
+  ~predicate: rkt.#{environment-variables?}

@@ -1,0 +1,211 @@
+
+block:
+  import "static_arity.rhm"
+  static_arity.check ~meta:
+    statinfo_meta.pack(s)
+    statinfo_meta.unpack(s)
+    statinfo_meta.pack_group(s)
+    statinfo_meta.unpack_group(s)
+    statinfo_meta.wrap(form, info)
+    statinfo_meta.lookup(form, key)
+    statinfo_meta.find(s, key)
+    statinfo_meta.gather(form)
+    statinfo_meta.replace(form, s)
+    statinfo_meta.and(s, ...)
+    statinfo_meta.or(s, ...)
+    statinfo_meta.check_function_arity(arity, num, kws)
+    statinfo_meta.pack_call_result(infos)
+    statinfo_meta.unpack_call_result(s)
+    statinfo_meta.pack_dependent_result(id, data, [env])
+    statinfo_meta.unpack_dependent_result(s)
+    statinfo_meta.pack_index_result(s, infos)
+    statinfo_meta.unpack_index_result(s)
+    statinfo_meta.unpack_uniform_index_result(s)
+    statinfo_meta.unpack_index_result_at_index(s, key)
+
+namespace sub:
+  export x
+  statinfo.macro 'x':
+    '((anything, "yes"))'
+
+check:
+  expr.macro 'use_x':
+    statinfo_meta.lookup('sub.x', 'anything')
+  use_x
+  ~is "yes"
+
+check:
+  expr.macro 'also_use_x':
+    statinfo_meta.lookup('sub.x', Syntax.literal_group 'anything')
+  also_use_x
+  ~is "yes"
+
+expr.macro 'two $(expr :: expr_meta.Parsed) $()':
+  def si = statinfo_meta.lookup(expr, statinfo_meta.index_get_key)
+  let '$(list_expr :: expr_meta.Parsed)' = '[$expr, $expr]'
+  statinfo_meta.wrap(list_expr,
+                     '(($statinfo_meta.index_result_key,
+                        $(statinfo_meta.pack('(($statinfo_meta.index_get_key, $si))'))))')
+
+macro 'list_of_zero': '[0]'
+
+check:
+  use_static
+  ((two list_of_zero)[0])[0]
+  ~is 0
+
+block:
+  import:
+    meta -1: rhombus/meta open
+  check:
+    statinfo_meta.unpack(statinfo_meta.pack('((x, y))'))
+    ~matches '((x, y))'
+  check:
+    statinfo_meta.unpack(statinfo_meta.pack('((x, y), (z, w))'))
+    ~matches '((x, y), (z, w))'
+  check:
+    statinfo_meta.unpack_group(statinfo_meta.pack_group('((x, y))'))
+    ~matches '((x, y))'
+  check:
+    statinfo_meta.unpack_group(statinfo_meta.pack_group('((x, y)) ((z, w))'))
+    ~matches '((x, y)) ((z, w))'
+
+block:
+  import:
+    meta -1: rhombus/meta open
+  use_static
+  let [[a1, s1], [a2, s2]]:
+    [[1, '((x, y))'], [2, '((z, w))']]
+      |> statinfo_meta.pack_call_result(_)
+      |> statinfo_meta.unpack_call_result(_)
+  check:
+    a1 < dynamic(2) ~is #true
+    a2 < dynamic(2) ~is #false
+  check:
+    s1.unwrap() |> Syntax.make(_) ~matches '((x, y))'
+    s2.unwrap() |> Syntax.make(_) ~matches '((z, w))'
+
+block:
+  import:
+    meta -1: rhombus/meta open
+  use_static
+  let (id, data, env) = statinfo_meta.pack_dependent_result(
+    'bridge',
+    '(a, b, c)',
+    {'x': '((x, y))', 'z': '((z, w))', 'hello': "world"}
+  ) |> statinfo_meta.unpack_dependent_result(_)
+  check:
+    id.unwrap() ~is #'bridge
+  check:
+    data.unwrap() |> Syntax.make(_) ~matches '(a, b, c)'
+  check:
+    (for Set ((k, _) in env): k.unwrap()) ~is {#'x, #'z, #'hello}
+    env['x'] ~matches '((x, y))'
+    env['z'] ~matches '((z, w))'
+    env['hello'] ~is "world"
+
+block:
+  import:
+    meta -1: rhombus/meta open
+  use_static
+  let packed = statinfo_meta.pack_index_result(
+    '((a, b))',
+    [[1, '((x, y))'], [2, '((z, w))']]
+  )
+  let (maybe_s, [[1, s1], [2, s2]]) = statinfo_meta.unpack_index_result(packed)
+  check:
+    maybe_s!!.unwrap() |> Syntax.make(_) ~matches '((a, b))'
+    s1.unwrap() |> Syntax.make(_) ~matches '((x, y))'
+    s2.unwrap() |> Syntax.make(_) ~matches '((z, w))'
+  let uniform = statinfo_meta.unpack_uniform_index_result(packed)
+  check:
+    uniform.unwrap() |> Syntax.make(_) ~matches '()'
+  check:
+    statinfo_meta.unpack_index_result_at_index(packed, 1).unwrap()
+      |> Syntax.make(_) ~matches '((x, y))'
+    statinfo_meta.unpack_index_result_at_index(packed, 2).unwrap()
+      |> Syntax.make(_) ~matches '((z, w))'
+    statinfo_meta.unpack_index_result_at_index(packed, 3).unwrap()
+      |> Syntax.make(_) ~matches '((a, b))'
+
+block:
+  import:
+    meta -1: rhombus/meta open
+  let packed = statinfo_meta.pack_index_result(#false, [])
+  let (maybe_s, []) = statinfo_meta.unpack_index_result(packed)
+  check maybe_s ~is #false
+  let default_si = statinfo_meta.unpack_index_result_at_index(packed, "no")
+  check default_si ~matches '()'
+
+block:
+  import:
+    meta -1: rhombus/meta open
+  let packed = statinfo_meta.pack_index_result('((a, b))', [])
+  let (maybe_s, []) = statinfo_meta.unpack_index_result(packed)
+  check maybe_s ~matches '((a, b))'
+  let default_si = statinfo_meta.unpack_index_result_at_index(packed, "no")
+  check default_si ~matches '((a, b))'
+
+check:
+  import:
+    meta -1: rhombus/meta open
+  use_static
+  statinfo_meta.function_arity_key.unwrap()
+  statinfo_meta.call_result_key.unwrap()
+  statinfo_meta.dependent_result_key.unwrap()
+  statinfo_meta.index_result_key.unwrap()
+  statinfo_meta.index_get_key.unwrap()
+  statinfo_meta.index_set_key.unwrap()
+  statinfo_meta.append_key.unwrap()
+  statinfo_meta.contains_key.unwrap()
+  statinfo_meta.dot_provider_key.unwrap()
+  statinfo_meta.sequence_constructor_key.unwrap()
+  statinfo_meta.sequence_element_key.unwrap()
+  statinfo_meta.list_bounds_key.unwrap()
+  statinfo_meta.pairlist_bounds_key.unwrap()
+  statinfo_meta.maybe_key.unwrap()
+  statinfo_meta.flonum_key.unwrap()
+  statinfo_meta.fixnum_key.unwrap()
+  statinfo_meta.values_key.unwrap()
+  statinfo_meta.indirect_key.unwrap()
+  statinfo_meta.never_key.unwrap()
+  ~completes
+
+block:
+  import:
+    meta -1: rhombus/meta open
+  check:
+    statinfo_meta.and() ~matches '()'
+    statinfo_meta.or() ~matches '(($(statinfo_meta.never_key), #true))'
+
+block:
+  use_static
+  expr.macro 'either ($(a :: expr_meta.Parsed)) ($(b :: expr_meta.Parsed)): $c':
+    statinfo_meta.wrap(c, statinfo_meta.or(statinfo_meta.gather(a), statinfo_meta.gather(b)))
+  expr.macro 'both ($(a :: expr_meta.Parsed)) ($(b :: expr_meta.Parsed)): $c':
+    statinfo_meta.wrap(c, statinfo_meta.and(statinfo_meta.gather(a), statinfo_meta.gather(b)))
+  check (both ([]) ([]): [1])[0] ~is 1
+  check (either ([]) ([]): [1])[0] ~is 1
+  check (both ([]) ([]): "")[0] ~throws error.annot("List").msg
+
+check:
+  ~eval
+  use_static
+  import rhombus/meta open
+  expr.macro 'either ($(a :: expr_meta.Parsed)) ($(b :: expr_meta.Parsed)): $c':
+    statinfo_meta.wrap(c, statinfo_meta.or(statinfo_meta.gather(a), statinfo_meta.gather(b)))
+  (either ([]) (""): 0) ++ []
+  ~throws "specialization not known"
+
+namespace key:
+  statinfo.key demo_key:
+    ~and: statinfo_meta.and
+    ~or: statinfo_meta.or
+
+  expr.macro 'm':
+    let s1 = '((demo_key, (($(statinfo_meta.function_arity_key), 3))))'
+    let s2 = '((demo_key, (($(statinfo_meta.function_arity_key), 6))))'
+    '['$(statinfo_meta.or(s1, s2))',
+      '$(statinfo_meta.and(s1, s2))']'
+
+  check m ~matches ['((demo_key, (($_, 2))))', '((demo_key, (($_, 7))))']

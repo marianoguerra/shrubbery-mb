@@ -1,0 +1,6 @@
+import: "static.rkt"
+export: all_from(.static)
+
+module configure_expand ~lang rhombus:
+  import: "expand_config.rhm"
+  export: all_from(.expand_config)

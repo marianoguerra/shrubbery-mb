@@ -1,0 +1,9 @@
+
+export:
+  alpha
+  beta
+  rename:
+    List as ExList
+
+def alpha: "alpha"
+def beta: "beta"

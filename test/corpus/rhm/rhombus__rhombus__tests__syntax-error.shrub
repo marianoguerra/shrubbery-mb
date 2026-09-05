@@ -1,0 +1,237 @@
+import:
+  rhombus/rx open
+
+def expected_more = "expected more terms starting with any term"
+def expected_more_short = "expected more terms"
+
+// allow "at:", but not "in:":
+def not_end_of_group = rx'(any !lookahead("in: [end of group]"))*' 
+
+check:
+  ~eval
+  def x :: = 1
+  ~throws values(expected_more,
+                 not_end_of_group)
+
+check:
+  ~eval
+  def x = 1 ::
+  ~throws values(expected_more,
+                 not_end_of_group)
+
+check:
+  ~eval
+  import rhombus/meta open
+  expr.macro 'foo $(e :: expr_meta.Parsed) $()':
+    '"ok"'
+  foo
+  ~throws values(expected_more,
+                 not_end_of_group)
+
+check:
+  ~eval
+  import rhombus/meta open
+  expr.macro 'foo':
+    match '1'
+    | '1 $(e :: expr_meta.Parsed)':
+        '"ok"'
+  foo
+  ~throws values(expected_more,
+                 not_end_of_group)
+
+check:
+  ~eval
+  fun f(x, & y ::) (&/~& rest with │ content)
+  ~throws: values(expected_more,
+                  not_end_of_group)
+
+check:
+  ~eval
+  fun f(x, &) (empty rest)
+  ~throws: values(expected_more_short,
+                  not_end_of_group)
+
+check:
+  ~eval
+  match … | [x, & y ::] (list & rest)
+  ~throws: values("expected `~else` clause or expected pattern clause",
+                  not_end_of_group)
+
+check:
+  ~eval
+  interface I:
+    method area() ::
+  ~throws: values(expected_more_short,
+                  not_end_of_group)
+
+check:
+  ~eval
+  interface I:
+    property p ::
+  ~throws: values(expected_more_short,
+                  not_end_of_group)
+
+// missing annotation in a `for` each binding
+check:
+  ~eval
+  for (x :: in [1, 2]):
+    x
+  ~throws: values(expected_more,
+                  not_end_of_group)
+
+// missing annotation on a constructor field
+check:
+  ~eval
+  class C(x ::)
+  ~throws: values(expected_more,
+                  not_end_of_group)
+
+// missing annotation on a class-clause field
+check:
+  ~eval
+  class C():
+    field x ::
+  ~throws: values(expected_more_short,
+                  not_end_of_group)
+
+// empty `&` rest in a list binding
+check:
+  ~eval
+  def [x, &] = [1, 2]
+  ~throws: values("misuse outside of a function formal argument or constructor pattern",
+                  not_end_of_group)
+
+// missing annotation after a list-binding rest
+check:
+  ~eval
+  def [x, & y ::] = [1, 2]
+  ~throws: values(expected_more,
+                  not_end_of_group)
+
+// empty `&` rest in a function call
+check:
+  ~eval
+  block:
+    fun g(x): x
+    g(1, &)
+  ~throws: values("misuse outside of a call or a constructor",
+                  not_end_of_group)
+
+// empty `~&` keyword rest in a function call
+check:
+  ~eval
+  block:
+    fun g(x): x
+    g(1, ~&)
+  ~throws: values("misuse outside of a call or a constructor",
+                  not_end_of_group)
+
+// missing annotation after a function-call rest
+check:
+  ~eval
+  block:
+    fun g(x): x
+    g(1, & [1] ::)
+  ~throws: values(expected_more,
+                  not_end_of_group)
+
+// empty `&` splice in a set
+check:
+  ~eval
+  { 1, & }
+  ~throws: values("misuse outside of a call or a constructor",
+                  not_end_of_group)
+
+check:
+  ~eval
+  syntax_class C
+  | 112233
+  ~throws values("expected a quoted pattern",
+                 "112233")
+
+check:
+  ~eval
+  class C(this :: Int):
+    extends 112233
+  ~throws values("extends: expected name",
+                 "112233")
+
+check:
+  ~eval
+  class C():
+    method m: 112233
+  ~throws: values("method:",
+                  "expected entry-point form",
+                  "112233")
+
+check:
+  ~eval
+  class C():
+    private method m: 112233
+  ~throws: values("private:",
+                  "expected entry-point form",
+                  "112233")
+
+check:
+  ~eval
+  class C(x):
+    annotation: 112233
+  ~throws values("annotation:",
+                 "expected entry-point form",
+                 "112233")
+
+check:
+  ~eval
+  class C(x):
+    reconstructor: 112233
+  ~throws values("reconstructor:",
+                 "expected entry-point form",
+                 "112233")
+
+check:
+  ~eval
+  class C(x):
+    serializable:
+      ~serialize: 112233
+      ~deserialize: fun (): 1
+      ~deserialize_shell: fun (): 2
+      ~deserialize_fill: fun (): 3
+  ~throws values("serializable",
+                 "expected entry-point form",
+                 "112233")
+
+check:
+  ~eval
+  class C(x):
+    serializable:
+      ~serialize: fun (): 0
+      ~deserialize: 112233
+      ~deserialize_shell: fun (): 2
+      ~deserialize_fill: fun (): 3
+  ~throws values("serializable",
+                 "expected entry-point form",
+                 "112233")
+
+check:
+  ~eval
+  class C(x):
+    serializable:
+      ~serialize: fun (): 0
+      ~deserialize: fun (): 1
+      ~deserialize_shell: 112233
+      ~deserialize_fill: fun (): 3
+  ~throws values("serializable",
+                 "expected entry-point form",
+                 "112233")
+
+check:
+  ~eval
+  class C(x):
+    serializable:
+      ~serialize: fun (): 0
+      ~deserialize: fun (): 1
+      ~deserialize_shell: fun (): 2
+      ~deserialize_fill: 112233
+  ~throws values("serializable",
+                 "expected entry-point form",
+                 "112233")

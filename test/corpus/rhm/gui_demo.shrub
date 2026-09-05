@@ -1,0 +1,354 @@
+import:
+  draw
+  gui:
+    expose:
+      <~
+      ~>
+
+// ----------------------------------------
+
+fun draw_face(dc :: draw.DC, config :: Map):
+  let draw.Size(w, h) = dc.size
+  let s = math.max(10, math.min(w, h) - 20)
+
+  let scale = config["scale"] / 50
+  let w = w / scale
+  let h = h / scale
+
+  let x = (w-s)/2
+  let y = (h-s)/2
+  let π = math.pi
+
+  dc.save_and_restore:
+
+    dc.scale(scale)
+    unless config["enabled"]
+    | dc.alpha := 0.3
+
+    let background:
+      match config["mood"]
+      | "Happy":
+          let center = [w/2, h/2]
+          draw.RadialGradient([center, s/2],
+                              [center, math.max(w, h)],
+                              [[0, draw.Color("white")],
+                               [1, draw.Color("yellow")]])
+      | "Sad":
+          draw.LinearGradient([0, 0],
+                              [0, h],
+                              [[0.5, draw.Color("white")],
+                               [1, draw.Color("darkblue")]])
+
+    // draw a gradient background
+    dc.pen := draw.Pen.none
+    dc.brush := draw.Brush(~gradient: background)
+    dc.rectangle([0, 0, w, h])
+
+    // draw keyed text
+    dc.font := dc.font with (size = dc.font.size * 2)
+    dc.text(config["keyed"])
+
+    // draw ghost dots (showing recent mouse movements)
+    when config["track mouse"]
+    | let dot_size = [4, 4]
+      for values(brush :~ draw.Brush:
+                   draw.Brush(~color: draw.Color(0, 0, 0, 0.25))):
+        each [x, y] in (config["ghosts"] :: List).reverse()
+        dc.brush := brush
+        let x = x/scale
+        let y = y/scale
+        dc.ellipse([[x-2, y-2], dot_size])
+        brush with (color = brush.color with (alpha = brush.color.alpha * 0.7))
+
+    // Rotated face:
+    dc.save_and_restore:
+      dc.translate(w/2, h/2)
+      dc.rotate(config["rotation"])
+      dc.translate(-w/2, -h/2)
+
+      // face shape
+      dc.brush := draw.Brush(~color: "orange")
+      let face_rect = [x, y, s, s]
+      match config["shape"]
+      | "Circle": dc.ellipse(face_rect)
+      | "Square": dc.rectangle(face_rect)
+      | "Rounded": dc.rounded_rectangle(face_rect)
+
+      // mouth
+      dc.pen := draw.Pen(~color: "Black")
+      dc.brush := draw.Brush.none
+      match config["mood"]
+      | "Happy":
+          dc.arc([x + 0.2*s, y + 0.2*s, 0.6*s, 0.6*s], π * -3/4, π * -1/4)
+      | "Sad":
+          dc.arc([x + 0.2*s, y + 0.7*s, 0.6*s, 0.6*s], π * 1/4, π * 3/4)
+
+      // eyes
+      when config["eyes"]
+      | dc.pen := draw.Pen.none
+        dc.brush := draw.Brush(~color: "black")
+        let eye_size = [0.1*s, 0.1*s]
+        dc.ellipse([[x+0.3*s, y+0.3*s], eye_size])
+        dc.ellipse([[x+0.6*s, y+0.3*s], eye_size])
+
+      // moustache
+      when config["moustache"]
+      | let p = draw.Path()
+        p.move_to([0, 0])
+        p.curve_to([20, -10], [80, -10], [100, 0])
+        p.curve_to([120, 10], [180, 0],  [200, -20])
+        p.curve_to([180, 20], [120, 40], [90, 30])
+        p.curve_to([60, 20],  [20, 20],  [0, 0])
+        p.close()
+        p.scale(s/500, s/500)
+        dc.pen := draw.Pen.none
+        dc.brush := draw.Brush(~color: "brown")
+        dc.path(p, ~dx: x+0.5*s, ~dy: y+0.6*s)
+        p.scale(-1, 1)
+        dc.path(p, ~dx: x+0.5*s, ~dy: y+0.6*s)
+
+    let name = config["name"]
+    let [h_pos, v_pos] = config["name pos"]
+    let (nw, nh, _, _) = dc.text_extent(name)
+    dc.text(name,
+            ~dx: match h_pos
+                 | "Left": 0
+                 | "Center": (w - nw) / 2
+                 | "Right": w - nw,
+            ~dy: match v_pos
+                 | "Top": 0
+                 | "Center": (h - nh) / 2
+                 | "Bottom": h - nh)
+
+// ----------------------------------------
+
+gui.Obs.def at_tab = "Happy"
+gui.Obs.def enabled = #true
+
+gui.Obs.def track_mouse = #true
+gui.Obs.def rotation = 0
+
+def menu_bar:
+  fun rotate_item(label, dir, shortcut):
+    gui.MenuItem("Rotate " ++ label,
+                 ~action:
+                   fun ():
+                     rotation <~ fun (rot): rot + dir * math.pi/8,
+                 ~shortcut: shortcut)
+  gui.MenuBar(
+    gui.Menu(
+      "Config",
+      gui.CheckableMenuItem("Enabled",
+                            ~checked: enabled.value,
+                            ~action:
+                              fun (on):
+                                enabled.value := on),
+      gui.CheckableMenuItem("Track Mouse",
+                            ~checked: track_mouse.value,
+                            ~action:
+                              fun (on):
+                                track_mouse.value := on),
+      gui.MenuItemSeparator(),
+      rotate_item("Clockwise", -1, Char"R"),
+      rotate_item("Counterclockwise", 1, gui.MenuItem.default_shortcut_prefix() ++ [#'shift, Char"R"])
+    )
+  )
+
+// ----------------------------------------
+
+gui.Obs.def name = "Smiley"
+
+def name_input:
+  gui.Input(name.value,
+            ~label: "Name:",
+            ~choices: ["Smiley", "Frowny"],
+            ~action: fun (action, str):
+                       name.value := str)
+
+def pos_button:
+  gui.Button("Position...",
+             ~action: fun ():
+                        gui.render(format_dialog,
+                                   renderer))
+
+def summary_button:
+  gui.Button("Summary",
+             ~action: fun ():
+                        gui.render(summary_win))
+
+def top_panel = gui.HPanel(name_input,
+                           gui.Progress(name ~> (fun (s :: String): math.min(10, s.length())),
+                                        ~max_value: 10,
+                                        ~min_size: [80, #false],
+                                        ~stretch: [#false, #false]),
+                           pos_button,
+                           summary_button,
+                           ~stretch: [#true, #false])
+
+// ----------------------------------------
+
+gui.Obs.def name_pos = ["Right", "Bottom"]
+gui.Obs.def next_name_pos = name_pos.value
+
+def name_pos_v = gui.RadioChoice(["Top", "Center", "Bottom"],
+                                 ~stretch: [#false, #false],
+                                 ~selection: name_pos ~> fun ([h, v]): v,
+                                 ~action: fun (v):
+                                            next_name_pos <~ fun ([h, _]): [h, v])
+
+def name_pos_h = gui.RadioChoice(["Left", "Center", "Right"],
+                                 ~style: [#'horizontal],
+                                 ~selection: name_pos ~> fun ([h, v]): h,
+                                 ~action: fun (h):
+                                            next_name_pos <~ fun ([_, v]): [h, v])
+
+def format_dialog = gui.Dialog(~title: "Position",
+                               gui.VPanel(
+                                 name_pos_v,
+                                 gui.Spacer(~min_size: [0, 20]),
+                                 name_pos_h
+                               ),
+                               gui.Spacer(~min_size: [0, 20]),
+                               gui.HPanel(
+                                 gui.Button("Ok",
+                                            ~action: fun ():
+                                                       name_pos.value := next_name_pos.value
+                                                       format_dialog.show(#false),
+                                            ~style: [#'default]),
+                                 gui.Button("Cancel",
+                                            ~action: fun ():
+                                                       next_name_pos.value := name_pos.value
+                                                       format_dialog.show(#false))
+                               ))
+
+// ----------------------------------------
+
+def (tabs, config):
+  let shape = gui.Choice(gui.Obs(["Circle", "Square", "Rounded"]),
+                         ~selection: "Circle")
+  let eyes = gui.Checkbox("Eyes", ~checked: #true)
+  let stache = gui.Checkbox("Moustache", ~checked: #false)
+  let scale = gui.Slider(~value: 50,
+                         ~min_value: 1,
+                         ~max_value: 100,
+                         // Could write `gui.Slider.Style.plain`,
+                         // etc., but we write symbols for convenience:
+                         ~style: [#'plain, #'horizontal])
+  let spacer = gui.Spacer()
+
+  let happy_sad_popup:
+    gui.PopupMenu(gui.MenuItem("Be Happy",
+                               ~action: fun ():
+                                          at_tab.value := "Happy"),
+                  gui.MenuItem("Too Sad",
+                               ~action: fun ():
+                                          at_tab.value := "Sad"))
+
+  gui.Obs.let ghosts = []
+  fun ghost_mouse(ev :: gui.MouseEvent, area):
+    ghosts <~ (fun (l :: List):
+                 let keep :~ List:
+                   if l.length() < 10 | l | l.rest
+                 keep ++ [[ev.x, ev.y]])
+    when ev.kind == gui.MouseEvent.Kind.right_down
+    | canvas.popup(happy_sad_popup,
+                   ev.x,
+                   ev.y)
+
+  gui.Obs.let keyed = ""
+  fun accum_key(ev :: gui.KeyEvent, area):
+    keyed <~ (fun (s :: String):
+                match ev.code
+                | Char"\r":
+                    name_input.focus()
+                    s
+                | Char"\b" || Char"\x7F" /* ASCII delete */:
+                    if s.length() == 0 | s | s.substring(0, s.length() - 1)
+                | c :: Char: s ++ to_string(c)
+                | ~else: s)
+
+  def config:
+    { "enabled": enabled,
+      "mood": at_tab,
+      "shape": shape.at_selection,
+      "eyes": eyes.at_checked,
+      "moustache": stache.at_checked,
+      "scale": scale.at_value,
+      "ghosts": ghosts,
+      "keyed": keyed,
+      "name": name,
+      "name pos": name_pos,
+      "track mouse": track_mouse,
+      "rotation": rotation }
+      |> gui.Obs.combine(_)
+      |> (_.rename("comfig"))
+
+  def canvas = gui.VPanel(config
+                            |> gui.Canvas(_,
+                                          draw_face,
+                                          ~mouse: ghost_mouse,
+                                          ~key: accum_key),
+                          gui.HPanel(shape, eyes, stache,
+                                     spacer,
+                                     gui.Label("-"), scale, gui.Label("+"),
+                                     ~stretch: [#true, #false]))
+
+  let happy_button = gui.Button("Be Happy",
+                                ~action: fun ():
+                                           at_tab.value := "Happy")
+
+  let happy_image:
+    let bm = draw.Bitmap([60, 60])
+    draw_face(bm.make_dc(), { "enabled": #true,
+                              "mood": "Happy",
+                              "shape": "Circle",
+                              "eyes": #true,
+                              "moustache": #false,
+                              "scale": 50,
+                              "ghosts": #false,
+                              "keyed": "",
+                              "name": "",
+                              "name pos": ["Center", "Center"],
+                              "track mouse": #false,
+                              "rotation": 0 })
+    bm
+
+  let img:
+    let img_src = gui.Obs(happy_image)
+    gui.Image(img_src,
+              ~margin: [10, 10],
+              ~window_callbacks:
+                gui.WindowCallbacks(~accepts_drop_file: #true,
+                                    ~drop_file: fun (path): img_src.value := path))
+
+  values(
+    gui.TabPanel(["Happy", "Sad"],
+                 ~selection: at_tab,
+                 ~action: fun (_, _, sel): at_tab.value := sel,
+                 at_tab ~> (match _
+                            | "Happy": canvas
+                            | "Sad": gui.HPanel(canvas,
+                                                gui.VPanel(~stretch: [#false, #true],
+                                                           happy_button,
+                                                           img)))),
+    config
+  )
+
+// ----------------------------------------
+
+def summary_win = gui.Window(
+  gui.Table(["Key", "Value"],
+            config ~> (fun (m :: Map):
+                         for Array (key in m.keys(#true)):
+                           Array(key, to_string(m[key]))),
+            ~min_size: [400, 300])
+)
+
+// ----------------------------------------
+
+def win = gui.Window(top_panel,
+                     tabs,
+                     ~enable: enabled,
+                     ~menu_bar: menu_bar,
+                     ~size: [800, 600])
+def renderer = win.render()

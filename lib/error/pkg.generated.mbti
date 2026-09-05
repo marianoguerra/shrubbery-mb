@@ -1,0 +1,71 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/error"
+
+import {
+  "marianoguerra/error-report",
+  "marianoguerra/shrubbery/basic",
+}
+
+// Values
+
+// Errors
+pub suberror ShrubberyError {
+  ShrubberyError(Diagnostic)
+}
+pub fn ShrubberyError::diagnostic(Self) -> Diagnostic
+
+// Types and methods
+pub(all) struct Diagnostic {
+  kind : ErrorKind
+  span : @basic.Span
+  severity : @error-report.Severity
+  related : Array[(@basic.Span, String)]
+}
+pub fn Diagnostic::new(ErrorKind, @basic.Span, severity? : @error-report.Severity, related? : Array[(@basic.Span, String)]) -> Self
+pub fn[T] Diagnostic::raise_(Self) -> T raise ShrubberyError
+pub fn Diagnostic::to_report(Self, @error-report.SourceId) -> @error-report.Report
+
+pub(all) enum ErrorKind {
+  ReadError
+  ExpectedSExp(keyword~ : Bool)
+  ExpectedSExpClose(keyword~ : Bool)
+  ExpectedSExpOnlyWhitespace(keyword~ : Bool)
+  SExpMustNotBePair
+  IncomparableIndentation
+  WrongIndentation(missing_colon_hint~ : Bool)
+  AltBeforeGroupColumn
+  DidNotFindMatching(expected~ : String)
+  UnexpectedCloser(found~ : String)
+  ExpectedCloser(expected~ : String, found~ : String)
+  ExpectedQuoteAfterGuillemet
+  ExpectedParenAfterGuillemet
+  ExpectedGuillemetClose
+  MisplacedComma(paren_immed~ : Bool)
+  MissingCommaBeforeGroup
+  MisplacedSemicolon
+  MultiGroupSpliceNotAllowed
+  EmptyBlock(after~ : String, could_empty_if_start~ : Bool)
+  NoTermsAfterGuillemet
+  UnnecessaryColonBeforeBar
+  MisplacedBar
+  MisplacedGuillemet
+  NotOnSameLine(preceding~ : String)
+  MisplacedGroupComment
+  NoGroupForTermComment
+  ContinuationFollowedByToken
+  MissingTermAfterAt
+  WhitespaceAfterAt
+  InvalidAfterAt
+  AtArgCannotStartBracket
+  MissingCloserForAtContent
+  AtCommentOutsideBody
+  EmptyGroupAfterAt
+  BlockAfterMidGroupAt
+  SecondGroupAfterAt
+} derive(Eq)
+pub fn ErrorKind::code(Self) -> String
+pub fn ErrorKind::reference_text(Self) -> String
+
+// Type aliases
+
+// Traits

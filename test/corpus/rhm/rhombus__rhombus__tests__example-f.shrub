@@ -1,0 +1,9 @@
+export:
+  prefix
+
+namespace prefix:
+  export original
+  def original = "orig"
+
+def prefix.added = "add"
+

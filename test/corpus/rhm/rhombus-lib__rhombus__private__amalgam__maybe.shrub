@@ -1,0 +1,192 @@
+import:
+  "core-meta.rkt" open
+  "pipeline.rhm".(|>)
+  "pipeline.rhm".pipeline
+  "pipeline.rhm"!for_maybe.parse_pipeline_expr
+
+use_static
+
+export:
+  maybe
+  !!
+  !!.
+  ?.
+  ?>
+
+annot.macro 'maybe($(ann :: Group))':
+  ~all_stx: stx
+  ~context: ctx
+  let '$(ann :: annot_meta.Parsed(ctx))' = ann
+  if annot_meta.is_predicate(ann)
+  | let (pred, statinfos) = annot_meta.unpack_predicate(ann)
+    annot_meta.pack_predicate('block:
+                                 let p = $pred
+                                 fun (v): !v || p(v)',
+                              '(($statinfo_meta.maybe_key,
+                                 $(statinfo_meta.pack(statinfos))))',
+                              ~track: [ann])
+  | let (_, _, statinfos) = annot_meta.unpack_converter(ann)
+    let '$(f_ann :: annot_meta.Parsed)' = 'False || $ann'
+    let (bind, body, _) = annot_meta.unpack_converter('$f_ann')
+    annot_meta.pack_converter(bind,
+                              body,
+                              '(($statinfo_meta.maybe_key,
+                                 $(statinfo_meta.pack(statinfos))))',
+                              ~track: [ann])
+
+meta:
+  fun demaybe_statinfos(statinfos):
+    let maybe_statinfos = statinfo_meta.find(statinfos, statinfo_meta.maybe_key)
+    if maybe_statinfos
+    | statinfo_meta.and(statinfos,
+                        statinfo_meta.unpack(maybe_statinfos))
+    | statinfos
+
+expr.macro '$e !!':
+  ~order: member_access
+  ~all_stx: stx
+  ~op_stx: self
+  let statinfos = statinfo_meta.gather(e)
+  statinfo_meta.replace('match $(statinfo_meta.replace(e, '()'))
+                         | #false: definitely_failed(#' $(Symbol.from_string(self.to_source_string())),
+                                                     $(stx.srcloc()))
+                         | v: v'.relocate_group_span([stx]),
+                        demaybe_statinfos(statinfos))
+
+expr.macro '$e !!. $tail ... ~nonempty':
+  ~order: member_access
+  ~op_stx: self
+  let dot = syntax_meta.dynamic_name('.', ~as_static: syntax_meta.is_static(self))
+  values('($e $('!!'.relocate(self)))', '$dot $tail ...')
+
+repet.macro '$e !!':
+  ~order: member_access
+  ~op_stx: self
+  ~all_stx: stx
+  let '($_, $expr, $depth, $use_depth, $statinfos)' = repet_meta.unpack_list(e)
+  repet_meta.pack_list('($stx,
+                         check_definitely_at_depth(#' $(Symbol.from_string(self.to_source_string())),
+                                                   $expr,
+                                                   $(depth.unwrap() - use_depth.unwrap()),
+                                                   $(stx.srcloc())),
+                         $depth,
+                         $use_depth,
+                         $(demaybe_statinfos(statinfos)))')
+
+repet.macro '$e !!. $tail ... ~nonempty':
+  ~order: member_access
+  ~op_stx: self
+  let dot = syntax_meta.dynamic_name('.', ~as_static: syntax_meta.is_static(self))
+  values('($e !!)', '$dot $tail ...')
+
+expr.macro '$e ?. $(id :: Identifier) $(args && '($_, ...)') ... ~once $tail ...':
+  ~order: member_access
+  ~op_stx: self
+  maybe_op(e, self,  '.', '$id $args ...',
+           fun (left, '$op $(id_and_args :: Sequence)', ~as_static: as_static):
+             let dot = syntax_meta.dynamic_name('.', ~as_static: syntax_meta.is_static(self))
+             let '$(v :: expr_meta.Parsed)' = '$left $dot $id_and_args'
+             values(v, '$tail ...'))
+
+expr.macro '$e ?> $tail ... ~nonempty':
+  ~order: pipeline
+  ~op_stx: self
+  maybe_op(e, self, '|>', '$tail ...', parse_pipeline_expr)
+
+meta:
+  fun maybe_op(e, self, op, '$tail ...', parse_expr):
+    let statinfos = statinfo_meta.gather(e)
+    let id = 'v'
+    let id_expr = statinfo_meta.replace(expr_meta.pack_s_exp(id), // packing can avoid an unbound-identifier error
+                                        demaybe_statinfos(statinfos))
+    let (v_finish, v_tail) = parse_expr(id_expr, '$op $tail ...', ~as_static: syntax_meta.is_static(self))
+    let finish_statinfos = statinfo_meta.gather(v_finish)
+    values(
+      statinfo_meta.replace(
+        'block:
+           def $id = $(statinfo_meta.replace(e, '()'))
+           if $id
+           | $v_finish
+           | #false',
+        '(($statinfo_meta.maybe_key, $(statinfo_meta.pack(finish_statinfos))))'
+        ),
+      v_tail
+    )
+
+repet.macro '$e ?. $(field_id :: Identifier) $(args && '($_, ...)') ... ~once $tail ...':
+  ~order: member_access
+  ~op_stx: self
+  let '($src, $binds, $body, $used_depth, $staticinfos)' = repet_meta.unpack_generator(e)
+  let de_staticinfos = demaybe_statinfos(staticinfos)
+  let id = 'v'
+  let id_expr = statinfo_meta.replace(expr_meta.pack_s_exp(id), // packing can avoid an unbound-identifier error
+                                      de_staticinfos)
+  let dot = syntax_meta.dynamic_name('.', ~as_static: syntax_meta.is_static(self))
+  let dot = dot.relocate(self)
+  let '$(v_finish :: expr_meta.Parsed)' = '$id_expr $dot $field_id $args ...'
+  let finish_staticinfos = statinfo_meta.gather(v_finish)
+  let new_body: 'block:
+                   let $id:
+                     $body
+                   if $id
+                   | $v_finish
+                   | #false'
+  let new_staticinfos = '(($statinfo_meta.maybe_key, $finish_staticinfos))'
+  values(repet_meta.pack_generator('($src, $binds, $new_body, $used_depth, $new_staticinfos)'),
+         '$tail ...')
+
+fun definitely_failed(who, srcloc):
+  throw Exn.Fail.Annot(who +& ": claimed not false, but actual value is false",
+                       Continuation.Marks.current(),
+                       if srcloc
+                       | PairList[srcloc]
+                       | PairList[])
+
+fun check_definitely_at_depth(who, v, depth, srcloc):
+  if depth == 0
+  | v || definitely_failed(who, srcloc)
+  | for (e in (v :~ List)):
+      check_definitely_at_depth(who, e, depth-1, srcloc)
+  v
+
+bind.macro '$b !!':
+  ~order: member_access
+  ~op_stx: self
+  bind_meta.pack('(definitely_infoer,
+                   $b)')
+
+bind.infoer 'definitely_infoer($statinfos, $b)':
+  let b_info = bind_meta.get_info(b, demaybe_statinfos(statinfos))
+  let '($b_ann, $b_name, $b_s_infos, $b_var_infos,
+        $b_oncer, $b_matcher, $b_evidence, $b_committer, $b_binder, $b_data)':
+    bind_meta.unpack_info(b_info)
+  let b_ann_str :~ String = b_ann.unwrap()
+  let ann:
+    if b_ann_str.starts_with("matching(") && b_ann_str.ends_with(")")
+    | "matching((" ++ b_ann_str.substring(9, b_ann_str.length() - 1) ++ ")!!)"
+    | "matching((_ :: " ++ b_ann_str ++ ") !!)"
+  '($ann,
+    $b_name,
+    $b_s_infos,
+    $b_var_infos,
+    definitely_oncer,
+    definitely_matcher,
+    $b_evidence,
+    definitely_committer,
+    definitely_binder,
+    ($b_oncer, $b_matcher, $b_committer, $b_binder, $b_data))'
+
+bind.oncer 'definitely_oncer(($b_oncer, $_, $_, $_, $b_data))':
+  '$b_oncer($b_data)'
+
+bind.matcher 'definitely_matcher($in_id, ($_, $b_matcher, $_, $_, $b_data),
+                                 $IF, $success, $failure)':
+  '$IF $in_id
+   | $b_matcher($in_id, $b_data, $IF, $success, $failure)
+   | $failure'
+
+bind.committer 'definitely_committer($in_id, $evidence, ($_, $_, $b_committer, $_, $b_data))':
+  '$b_committer($in_id, $evidence, $b_data)'
+
+bind.binder 'definitely_binder($in_id, $evidence, ($_, $_, $_, $b_binder, $b_data))':
+  '$b_binder($in_id, $evidence, $b_data)'

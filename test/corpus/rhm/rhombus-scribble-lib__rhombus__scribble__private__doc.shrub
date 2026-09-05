@@ -1,0 +1,24 @@
+
+import:
+  "typeset-doc.rkt" open
+
+export:
+  doc
+  nonterminal
+  nontermref
+
+expr.macro 'doc $(parens :: Term)':
+  ~op_stx: me
+  match parens
+  | '($_ ..., ..., [$_ ..., ...])':
+      expr_meta.pack_s_exp(['#{typeset-doc}', me, parens])
+  | ~else:
+      syntax_meta.error("expected forms and documentation content", '$me $parens')
+
+defn.macro 'nonterminal: $nts':
+  ~op_stx: me
+  defn_meta.pack_s_exp(['#{define-nonterminal}', me, ': $nts'])
+
+expr.macro 'nontermref($(id :: Identifier))':
+  ~op_stx: me
+  expr_meta.pack_s_exp(['#{typeset-nontermref}', me, id])

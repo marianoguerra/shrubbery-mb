@@ -1,0 +1,529 @@
+
+use_static
+
+// basic result annotation checks
+block:
+  class Posn(x, y):
+    nonfinal
+    method m() :: Int:
+      x+y
+    method n() :: String:
+      x+y
+    final method n_f() :: String:
+      x+y
+    // annotation not checked
+    method p() :~ String:
+      x+y
+  check:
+    Posn(1, 2).m()
+    ~is 3
+  check:
+    Posn(1, 2).n()
+    ~throws values(
+      "result does not satisfy annotation",
+      "String",
+    )
+  check:
+    Posn(1, 2).n_f()
+    ~throws values(
+      "result does not satisfy annotation",
+      "String",
+    )
+  check:
+    Posn(1, 2).p()
+    ~is 3
+
+  block:
+    class Posn3D(z):
+      extends Posn
+      override m():
+        "oops"
+      override n():
+        "ok"
+      override p():
+        0
+    check:
+      Posn3D(1, 2, 3).m()
+      ~throws values(
+        "result does not satisfy annotation",
+        "Int",
+      )
+    check:
+      Posn3D(1, 2, 3).p()
+      ~is 0
+    check:
+      Posn3D(1, 2, 3).n()
+      ~is "ok"
+
+// annotation obligations are inherited and compose
+block:
+  interface Red
+  interface Blue
+  interface Green
+  class Top():
+    nonfinal
+    method m(v) :: Red: v
+  class Middle():
+    nonfinal
+    extends Top
+    override m(v) :: Blue: v
+  class Bottom():
+    nonfinal
+    extends Middle
+    override m(v) :: Green: v
+
+  class White():
+    implements: Red Blue Green
+  class Magenta():
+    implements: Red Blue
+  class Cyan():
+    implements: Blue Green
+
+  check:
+    Top().m(White())
+    ~is White()
+  check:
+    Middle().m(White())
+    ~is White()
+  check:
+    Bottom().m(White())
+    ~is White()
+
+  check:
+    Top().m(Magenta())
+    ~is Magenta()
+  check:
+    Middle().m(Magenta())
+    ~is Magenta()
+  check:
+    Bottom().m(Magenta())
+    ~throws values(
+      "result does not satisfy annotation",
+      "Green",
+    )
+
+  check:
+    Top().m(Cyan())
+    ~throws values(
+      "result does not satisfy annotation",
+      "Red",
+    )
+  check:
+    Middle().m(Cyan())
+    ~throws values(
+      "result does not satisfy annotation",
+      "Blue",
+    )
+  check:
+    Bottom().m(Cyan())
+    ~throws values(
+      "result does not satisfy annotation",
+      "Green",
+    )
+
+// class self-reference
+block:
+  class Posn(x, y):
+    nonfinal
+    method zero() :: Posn:
+      Posn(0, 0)
+  check:
+    Posn(1, 2).zero().x
+    ~is 0
+
+// class self-reference, final method
+block:
+  class Posn(x, y):
+    final method zero() :: Posn:
+      Posn(0, 0)
+  check:
+    Posn(1, 2).zero().x
+    ~is 0
+
+// class self-reference, private method
+block:
+  class Posn(x, y):
+    nonfinal
+    internal _Posn
+    private method zero() :: Posn:
+      Posn(0, 0)
+  check:
+    _Posn(1, 2).zero().x
+    ~is 0
+  check:
+    (Posn(1, 2) :~ _Posn).zero().x
+    ~is 0
+
+// multi-case functions
+block:
+  class Posn(x, y):
+    method m :: String
+    | m():
+        to_string(x+y)
+    | m(z):
+        if z is_a Int | to_string(x+y+z) | #'no
+    method
+    | n() :: String:
+        to_string(x+y)
+    | n(z) :: String:
+        if z is_a Int | to_string(x+y+z) | #'no
+    method
+    | p() :: String:
+        to_string(x+y)
+    | p(z) :: Int:
+        if z is_a Int | x+y+z | #'no
+  check Posn(1, 2).m() ~is "3"
+  check Posn(1, 2).m(3) ~is "6"
+  check Posn(1, 2).m("bad") ~throws values(error.annot_msg("result"),
+                                           error.annot("String").msg)
+  check Posn(1, 2).n() ~is "3"
+  check Posn(1, 2).n(3) ~is "6"
+  check Posn(1, 2).n("bad") ~throws values(error.annot_msg("result"),
+                                           error.annot("String").msg)
+  check Posn(1, 2).p() ~is "3"
+  check Posn(1, 2).p(3) ~is 6
+  check Posn(1, 2).p("bad") ~throws values(error.annot_msg("result"),
+                                           error.annot("Int").msg)
+  check Posn(1, 2).m().length() ~is 1
+  check Posn(1, 2).n().length() ~is 1
+
+  check:
+    ~eval
+    use_static
+    class Posn(x, y):
+      method
+      | p() :: String:
+          to_string(x+y)
+      | p(z) :: Int:
+          if z is_a Int | x+y+z | #'no
+    Posn(1, 2).p().length()
+    ~throws values("length",
+                   "no such field or method",
+                   "based on static information")
+
+  check:
+    ~eval
+    use_static
+    class Posn(x, y):
+      nonfinal
+      method
+      | p() :: String:
+          to_string(x+y)
+      | p(z) :: String:
+          if z is_a Int | x+y+z | #'no
+    Posn(1, 2).p().length()
+    ~throws values("length",
+                   "no such field or method",
+                   "based on static information")
+
+block:
+  class Posn(x, y):
+    nonfinal
+    method m :: String
+    | m():
+        to_string(x+y)
+    | m(z):
+        if z is_a Int | to_string(x+y+z) | #'no
+    method
+    | n() :: String:
+        to_string(x+y)
+    | n(z) :: String:
+        if z is_a Int | to_string(x+y+z) | #'no
+  class CPosn(c):
+    extends Posn
+    override m(): 0
+    override n(): 0
+  check CPosn(1, 2, "c").m() ~throws values(error.annot_msg("result"),
+                                            error.annot("String").msg)
+  check CPosn(1, 2, "c").n() ~is 0
+
+// interface
+block:
+  interface Pointy:
+    method visible() :: Boolean
+    method invisible() :: Boolean:
+      "nope"
+    method really_invisible() :: Boolean:
+      "nope"
+  class Point(x, y):
+    implements Pointy
+    override visible(~as_text = #true):
+      if as_text | "yes" | #true
+    override really_invisible() :: Boolean:
+      #false
+  check:
+    Point(1, 2).visible(~as_text: #false)
+    ~is #true
+  check:
+    Point(1, 2).visible()
+    ~throws values(
+      "result does not satisfy annotation",
+      "Boolean",
+    )
+  check:
+    Point(1, 2).invisible()
+    ~throws values(
+      "result does not satisfy annotation",
+      "Boolean",
+    )
+  check:
+    Point(1, 2).really_invisible()
+    ~is #false
+
+// multiple interface inheritance
+block:
+  interface Red:
+    method example(x) :: Red:
+      this
+  interface Blue:
+    method example(x) :: Blue:
+      this
+
+  class Apple():
+    implements Red
+  class Sky():
+    implements Blue
+  class RacketLogo():
+    implements Red Blue
+    override example(x = this):
+      x
+
+  check:
+    Apple().example(#false)
+    ~is Apple()
+  check:
+    Sky().example(#false)
+    ~is Sky()
+  check:
+    RacketLogo().example()
+    ~is RacketLogo()
+  check:
+    RacketLogo().example(#false)
+    ~throws values(
+      "result does not satisfy annotation",
+      "Red", "Blue",
+    )
+
+// alternate method forms, internal versus external annotations
+block:
+  class Top():
+    nonfinal
+    method m:
+      fun (x) :: Int:
+        x
+    method m2 :: Int:
+      fun (x):
+        x
+  class Bottom():
+    extends Top
+    override m(x):
+      x
+    override m2(x):
+      x
+  check:
+    [Top().m(1), Top().m2(2)]
+    ~is [1, 2]
+  check:
+    Top().m("apple")
+    ~throws values(
+      "result does not satisfy annotation",
+      "Int",
+    )
+  check:
+    Bottom().m("apple")
+    ~is "apple"
+  check:
+    Bottom().m2("apple")
+    ~throws values(
+      "result does not satisfy annotation",
+      "Int",
+    )
+
+// abstract override
+block:
+  interface Left
+  interface Right
+  class Both():
+    implements: Left Right
+  class LeftC():
+    implements: Left
+  class RightC():
+    implements: Right
+
+  interface A:
+    method m() :: Left
+  interface B:
+    extends A
+    abstract override m() :: Right
+  interface B2:
+    extends A
+    override m() :: Right
+
+  class C(x):
+    implements: B B2
+    override m():
+      x
+
+  check:
+    C(Both()).m()
+    ~is Both()
+  check:
+    C(#false).m()
+    ~throws values(
+      "result does not satisfy annotation",
+      "Right",
+    )
+  check:
+    C(LeftC()).m()
+    ~throws values(
+      "result does not satisfy annotation",
+      "Right",
+    )
+  check:
+    C(RightC()).m()
+    ~throws values(
+      "result does not satisfy annotation",
+      "Right",
+    )
+
+// converter annotations
+block:
+  check:
+    ~eval
+    class A():
+      nonfinal
+      method m() :: converting(fun (_): #false):
+        #false
+    ~throws values(
+      "must be a predicate annotation",
+      "non-final",
+    )
+  check:
+    ~eval
+    interface A:
+      method m() :: converting(fun (_): #false)
+    ~throws values(
+      "must be a predicate annotation",
+      "non-final",
+    )
+  check:
+    class A():
+      method m() :: converting(fun (_): #true):
+        #false
+    A().m()
+    ~is #true
+
+// multiple-result annotations
+block:
+  check:
+    ~eval
+    class A():
+      nonfinal
+      method m() :: Any:
+        #false
+    class B():
+      extends A
+      override m() :: values(Any, Any):
+        values(#false, #false)
+    ~throws "incompatible result arities"
+  check:
+    ~eval
+    class A():
+      nonfinal
+      method m() :~ Any:
+        #false
+    class B():
+      extends A
+      override m() :~ values(Any, Any):
+        values(#false, #false)
+    ~throws "incompatible result arities"
+  check:
+    class A():
+      nonfinal
+      method m() :: (Real, Real):
+        values(1.0, 2.0)
+    class B():
+      extends A
+      override m() :: (Int, Int):
+        values(1, 2)
+    B().m()
+    ~is values(1, 2)
+  check:
+    class A():
+      nonfinal
+      method m() :: (Real, Int):
+        values(1.0, 2)
+    class B():
+      extends A
+      override m() :: (Int, Real):
+        values(1, 2.0)
+    B().m()
+    ~throws values(
+      "results do not satisfy annotation",
+      "(Int, Real)", "(Real, Int)",
+    )
+  check:
+    class A():
+      nonfinal
+      method m() :: (Any, String):
+        values(#false, "something")
+    class B():
+      extends A
+      override m() :: (String, String):
+        values("more", "really")
+    def (str1, str2) = B().m()
+    values(str1.length(), str2.length())
+    ~is values(4, 6)
+
+// Checked result annotations put the body in non-tail position,
+// but unchcked result annotations do not
+block:
+  class Posn(x, y):
+    method m(n) :~ maybe(String):
+      match n
+      | 0: Continuation.call_with_immediate_mark(#'depth,
+                                                 fun (d): d)
+      | ~else: m(n-1)
+    method checked_m(n) :: maybe(String):
+      match n
+      | 0: Continuation.call_with_immediate_mark(#'depth,
+                                                 fun (d): d)
+      | ~else: checked_m(n-1)
+
+  check:
+    Continuation.with_mark #'depth = "ok":
+      Posn(1, 2).m(3)
+    ~is "ok"
+  check:
+    Continuation.with_mark #'depth = "ok":
+      Posn(1, 2).checked_m(3)
+    ~is #false
+
+check:
+  interface I:
+    method m() :: Int
+  class C():
+    implements I
+    override m() :~ PosInt:
+      "oops"
+  C().m()
+  ~throws values(
+    "C.m: " ++ error.annot_msg("result"),
+    error.annot("Int").msg,
+    error.val(~label: "result", "oops").msg,
+  )
+
+check:
+  interface I:
+    method m() :: Int
+  class C():
+    implements I
+    override
+    | m() :: String:
+        "oops"
+  C().m()
+  ~throws values(
+    "C.m: " ++ error.annot_msg("result"),
+    error.annot("Int").msg,
+    error.val(~label: "result", "oops").msg,
+  )

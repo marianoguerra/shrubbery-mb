@@ -1,0 +1,1386 @@
+import:
+  rhombus/memory
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    Set(k, ...)
+    Set.length(st) ~method ReadableSet
+    Set.contains(st, val) ~method ReadableSet
+    Set.copy(st) ~method ReadableSet
+    Set.snapshot(st) ~method ReadableSet
+    Set.append(st0, st, ...) ~method
+    Set.union(st0, st, ...) ~method
+    Set.intersect(st0, st, ...) ~method
+    Set.subtract(st0, st, ...) ~method
+    Set.add(st, v) ~method
+    Set.remove(st, v) ~method
+    MutableSet.add(st, v) ~method
+    MutableSet.remove(st, v) ~method
+    Set.to_list(st, [try_sort]) ~method ReadableSet
+    Set.to_sequence(st) ~method ReadableSet
+    Set.by(==)(p, ...)
+    Set.by(===)(p, ...)
+    Set.by(is_now)(p, ...)
+    Set.by(is_same_number_or_object)(p, ...)
+
+check:
+  Set.length({10, 20})
+  ~is 2
+
+check:
+  Set.length([1, 2, 3])
+  ~throws values(
+    "Set.length: " ++ error.annot_msg(),
+    error.annot("ReadableSet").msg,
+    error.val([1, 2, 3]).msg,
+  )
+
+block:
+  use_static
+  check:
+    {1, 2}.length()
+    ~is 2
+  check:
+    "a" in {"a", "b"} ~is #true
+    "b" in {"a", "b"} ~is #true
+    "a" !in {"a", "b"} ~is #false
+    1 !in {"a", "b"} ~is #true
+  check:
+    {"a", "b"}.contains("a")
+    ~is #true
+  check:
+    {1, 2, 3} ++ {4, 5} ~is {1, 2, 3, 4, 5}
+    {1, 2, 3}.append({4, 5}) ~is {1, 2, 3, 4, 5}
+    {1, 2, 3} ++ "oops" ~throws values(
+      "Set.append: " ++ error.annot_msg(),
+      error.annot("Set").msg,
+      error.val("oops").msg,
+    )
+    {1, 2, 3} ++ MutableSet{4, 5} ~throws values(
+      "Set.append: " ++ error.annot_msg(),
+      error.annot("Set").msg,
+      error.val(MutableSet{4, 5}).msg,
+    )
+  check:
+    Set("a", "b").length()
+    ~is 2
+  check:
+    MutableSet("a", "b").length()
+    ~is 2
+  check:
+    def set = {1, 2}
+    set.length()
+    ~is 2
+  check:
+    def set :: Set = dynamic({"a", "b"})
+    set.length()
+    ~is 2
+  check:
+    def set :~ Set = dynamic({"a", "b"})
+    set.length()
+    ~is 2
+  check:
+    def set :: Set.of(String) = dynamic({"a", "b"})
+    set.length()
+    ~is 2
+
+block:
+  check:
+    1 :: Set
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: Set.of(Any)
+    ~throws "does not satisfy annotation"
+  check:
+    1 :: Set.of(converting(fun (_): #false))
+    ~throws "does not satisfy annotation"
+  check:
+    {1, 2, 3} :: Set.of(converting(fun (n :: Int): n+1))
+    ~is {2, 3, 4}
+
+block:
+  check:
+    dynamic({"a", "b"}).length()
+    ~is 2
+  check:
+    "a" in dynamic({"a", "b"}) ~is #true
+    "c" in dynamic({"a", "b"}) ~is #false
+    dynamic({"a", "b"}).contains("a") ~is #true
+  check:
+    dynamic({"a", "b"}).add("c") ~is {"a", "b", "c"}
+  check:
+    dynamic({1, 2, 3}) ++ {4, 5} ~is {1, 2, 3, 4, 5}
+    dynamic({1, 2, 3}).append({4, 5}) ~is {1, 2, 3, 4, 5}
+    dynamic({1, 2, 3}) ++ "oops" ~throws "cannot append an immutable set and other value"
+    dynamic({1, 2, 3}) ++ MutableSet{4, 5} ~throws "cannot append an immutable set and other value"
+
+// See also tests in "rest-args.rhm"
+block:
+  check:
+    {"a", "b", & {"c"}}
+    ~is {"a", "b", "c"}
+  check:
+    {"a", & {"b", "c"}}
+    ~is {"a", "b", "c"}
+  check:
+    {& {"b", "c"}, "a"}
+    ~is {"a", "b", "c"}
+  check:
+    {& {"b"}, "a", & {"c"}}
+    ~is {"a", "b", "c"}
+  check:
+    {"c", "b", & {"b"}, "a", & {"c"}}
+    ~is {"a", "b", "c"}
+  check:
+    {"b", & {"b"}, "c", "a", & {"c"}}
+    ~is {"a", "b", "c"}
+  check:
+    def mutable x = []
+    [{&(block: x := [1, x]; {"b"}), (block: x:= [2, x]; "a"), &(block: x:= [3, x]; {"c"})},
+     x]
+    ~is [{"a", "b", "c"},
+         [3, [2, [1, []]]]]
+  check:
+    Set{& "oops"}
+    ~throws "not a set"
+
+block:
+  def [x, ...] = [1, 2, 3]
+  check:
+    {x, ...}
+    ~is {1, 2, 3}
+  check:
+    {x, ..., 0}
+    ~is {0, 1, 2, 3}
+  check:
+    {0, x, ...}
+    ~is {0, 1, 2, 3}
+  check:
+    {& {10, 11}, x, ..., 0}
+    ~is {0, 1, 2, 3, 10, 11}
+  check:
+    [{x}, ...]
+    ~is [{1}, {2}, {3}]
+  def [[z, ...], ...] = [[1, 2, 3], [4, 5]]
+  check:
+    [{z, ...}, ...]
+    ~is [{1, 2, 3}, {4, 5}]
+
+block:
+  def [x, ...] = [1, 2, 3]
+  check:
+    Set(x, ...)
+    ~is {1, 2, 3}
+  check:
+    Set(x, ..., 0)
+    ~is {0, 1, 2, 3}
+  check:
+    Set(0, x, ...)
+    ~is {0, 1, 2, 3}
+  check:
+    Set(& [10, 11], x, ..., 0)
+    ~is {0, 1, 2, 3, 10, 11}
+  check:
+    [Set(x), ...]
+    ~is [{1}, {2}, {3}]
+  def [[z, ...], ...] = [[1, 2, 3], [4, 5]]
+  check:
+    [Set(z, ...), ...]
+    ~is [{1, 2, 3}, {4, 5}]
+
+check:
+  def {"x"}  = {"x"}
+  ~completes
+
+check:
+  def Set{"x"}  = {"x"}
+  ~completes
+
+check:
+  def Set("x")  = {"x"}
+  ~completes
+
+check:
+  def {"x"}  = {"x", "y"}
+  ~completes
+
+check:
+  def Set{"x"}  = {"x", "y"}
+  ~completes
+
+check:
+  def ex = "x"
+  def {ex +& "y"}  = {"xy"}
+  ~completes
+
+check:
+  def Set{"x", "y"}  = {"x", "y"}
+  ~completes
+
+check:
+  def Set{"x", "y"}  = {"x"}
+  "oops"
+  ~throws "matching(Set{\"x\", \"y\"})"
+
+check:
+  def {"x", key, ...} = {"x", "y", "z"}
+  {key, ...}
+  ~is {"y", "z"}
+
+check:
+  def {"x", key, ...} = {"y", "z"}
+  "oops"
+  ~throws "matching(Set{\"x\", _, ...})"
+
+check:
+  def {"x", & rst} = {"x", "y", "z"}
+  rst
+  ~is {"y", "z"}
+
+check:
+  def {"x", & rst} = {"y", "z"}
+  "oops"
+  ~throws "matching(Set{\"x\", & _})"
+
+check:
+  def Set{"x", key, ...} = {"x", "y", "z"}
+  {key, ...}
+  ~is {"y", "z"}
+
+check:
+  match Set{}
+  | Set.empty: "empty"
+  | ~else: "other"
+  ~is "empty"
+
+check:
+  match MutableSet{}
+  | Set.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  match Set{1}
+  | Set.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  match MutableSet{1}
+  | Set.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  match Set{}
+  | ReadableSet.empty: "empty"
+  | ~else: "other"
+  ~is "empty"
+
+check:
+  match MutableSet{}
+  | ReadableSet.empty: "empty"
+  | ~else: "other"
+  ~is "empty"
+
+check:
+  match Set{1}
+  | ReadableSet.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  match MutableSet{1}
+  | ReadableSet.empty: "empty"
+  | ~else: "other"
+  ~is "other"
+
+check:
+  Set.append({1}) ~is {1}
+  Set.append({1}, {2}) ~is {1, 2}
+  Set.append({1}, {2}, {1}) ~is {1, 2}
+  Set.append({1}, {2}, {1}, {2}) ~is {1, 2}
+  Set.append({1}, {3, 5}, {2, 4, 6}) ~is {1, 2, 3, 4, 5, 6}
+
+block:
+  use_static
+  check:
+    {1, 2, 3}.append({4}, {5, 6}).remove(2) ~is {1, 3, 4, 5, 6}
+    {1, 2, 3}.add(4).remove(2).append({5, 6}) ~is {1, 3, 4, 5, 6}
+    {1, 2, 3}.to_list().length() ~is 3
+    {1, 2, 3}.to_list(#true) ~is [1, 2, 3]
+    {1, 3}.intersect() ~is {1, 3}
+    {1, 3}.intersect(Set{}) ~is Set{}
+    {1, 3}.intersect({2, 3}) ~is {3}
+    {1, 3}.intersect({2, 3}, {3, 4}) ~is {3}
+    {1, 3}.subtract() ~is {1, 3}
+    {1, 3}.subtract(Set{}) ~is {1, 3}
+    {1, 3}.subtract({2, 3}) ~is {1}
+    {1, 3}.subtract({2, 3}, {3, 1, 0}) ~is Set{}
+    {1, 3}.union() ~is {1, 3}
+    {1, 3}.union({2, 3}) ~is {1, 2, 3}
+    {1, 3}.union({2, 3}, {3, 4}) ~is {1, 2, 3, 4}
+  block:
+    use_dynamic
+    check:
+      dynamic({1, 2, 3}).append({4}, {5, 6}).remove(2) ~is {1, 3, 4, 5, 6}
+      dynamic({1, 2, 3}).add(4).remove(2).append({5, 6}) ~is {1, 3, 4, 5, 6}
+      dynamic({1, 2, 3}).to_list().length() ~is 3
+      dynamic({1, 2, 3}).to_list(#true) ~is [1, 2, 3]
+      dynamic({1, 3}).intersect() ~is {1, 3}
+      dynamic({1, 3}).intersect({2, 3}) ~is {3}
+      dynamic({1, 3}).intersect({2, 3}, {3, 4}) ~is {3}
+      dynamic({1, 3}).subtract() ~is {1, 3}
+      dynamic({1, 3}).subtract(Set{}) ~is {1, 3}
+      dynamic({1, 3}).subtract({2, 3}) ~is {1}
+      dynamic({1, 3}).subtract({2, 3}, {3, 0}) ~is {1}
+      dynamic({1, 3}).union() ~is {1, 3}
+      dynamic({1, 3}).union({2, 3}) ~is {1, 2, 3}
+      dynamic({1, 3}).union({2, 3}, {3, 4}) ~is {1, 2, 3, 4}
+
+block:
+  check:
+    Set.append(MutableSet{1, 2, 3}, {4}, {5, 6})
+    ~throws values(
+      "Set.append: " ++ error.annot_msg(),
+      error.annot("Set").msg,
+      error.val(MutableSet{1, 2, 3}).msg,
+    )
+  check:
+    Set.intersect(MutableSet{1, 3}, {2, 3}, {3, 4})
+    ~throws values(
+      "Set.intersect: " ++ error.annot_msg(),
+      error.annot("Set").msg,
+      error.val(MutableSet{1, 3}).msg,
+    )
+  check:
+    Set.union(MutableSet{1, 3}, {2, 3}, {3, 4})
+    ~throws values(
+      "Set.union: " ++ error.annot_msg(),
+      error.annot("Set").msg,
+      error.val(MutableSet{1, 3}).msg,
+    )
+  check:
+    Set.subtract(MutableSet{1, 3}, {2, 3}, {3, 4})
+    ~throws values(
+      "Set.subtract: " ++ error.annot_msg(),
+      error.annot("Set").msg,
+      error.val(MutableSet{1, 3}).msg,
+    )
+  
+block:
+  use_static
+  check {1, 2}.remove(1) ~is {2}
+  check {1, 2}.remove(3) ~is {1, 2}
+  check 2 in {1, 2}.remove(1) ~is #true
+  check Set.remove({1, 2}, 1) ~is {2}
+  check Set.remove({1, 2}, 3) ~is {1, 2}
+  check 2 in Set.remove({1, 2}, 1) ~is #true
+  block:
+    use_dynamic
+    check dynamic({1, 2}).remove(1) ~is {2}
+    check dynamic({1, 2}).remove(3) ~is {1, 2}
+
+block:
+  use_static
+  check {1, 2}.add(1) ~is {1, 2}
+  check {1, 2}.add(3) ~is {1, 2, 3}
+  check 3 in {1, 2}.add(3) ~is #true
+  check Set.add({1, 2}, 1) ~is {1, 2}
+  check Set.add({1, 2}, 3) ~is {1, 2, 3}
+  check 3 in Set.add({1, 2}, 3) ~is #true
+  block:
+    use_dynamic
+    check dynamic({1, 2}).add(1) ~is {1, 2}
+    check dynamic({1, 2}).add(3) ~is {1, 2, 3}
+
+block:
+  use_static
+  let m = MutableSet{1, 2}
+  m.remove(1)
+  check m ~is_now MutableSet{2}
+  m.remove(3)
+  check m ~is_now MutableSet{2}
+  m.add(1)
+  check m ~is_now MutableSet{1, 2}
+  check MutableSet.remove(m, 1) ~is #void
+  check m ~is_now MutableSet{2}
+  check MutableSet.remove(m, 3) ~is #void
+  check m ~is_now MutableSet{2}
+  m.add(1)
+  check m ~is_now MutableSet{1, 2}
+  block:
+    use_dynamic
+    check dynamic(m).remove(1) ~is #void
+    check m ~is_now MutableSet{2}
+    check dynamic(m).add(1) ~is #void
+    check m ~is_now MutableSet{1, 2}
+    check dynamic(m).remove(1) ~is #void
+    check m ~is_now MutableSet{2}
+    check dynamic(m).add(1) ~is #void
+    check m ~is_now MutableSet{1, 2}
+
+block:
+  let m = MutableSet{1, 2}
+  let n = m.copy()
+  check m is_now n ~is #true
+  check m == n ~is #false
+  m.remove(2)
+  n.remove(1)
+  check m ~is_now MutableSet{1}
+  check n ~is_now MutableSet{2}
+
+block:
+  let m = {1, 2}
+  let n = m.snapshot()
+  check m === n ~is #true
+
+block:
+  let m = MutableSet{1, 2}
+  let n = m.snapshot()
+  check m == n ~is #false
+  check m.snapshot() == n ~is #true
+  check m.snapshot() === n ~is #false
+
+block:
+  use_static
+  def st = {"a", "b", "c"}
+  check:
+    for Set (x in st):
+      x
+    ~is {"a", "b", "c"}
+  check:
+    for Set (x in Set.to_sequence(st)):
+      x
+    ~is {"a", "b", "c"}
+  check:
+    for Set (x in st.to_sequence()):
+      x
+    ~is {"a", "b", "c"}
+
+block:
+  use_static
+  def st = MutableSet{"a", "b", "c"}
+  check:
+    for Set (x in st):
+      x
+    ~is {"a", "b", "c"}
+  check:
+    for Set (x in Set.to_sequence(st)):
+      x
+    ~is {"a", "b", "c"}
+  check:
+    for Set (x in st.to_sequence()):
+      x
+    ~is {"a", "b", "c"}
+
+block:
+  check:
+    Set.to_sequence("oops")
+    ~throws values(
+      "Set.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableSet").msg,
+      error.val("oops").msg,
+    )
+  check:
+    ("oops" :~ Set).to_sequence()
+    ~throws values(
+      "Set.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableSet").msg,
+      error.val("oops").msg,
+    )
+  check:
+    for Set (x in "oops" :~ Set):
+      x
+    ~throws values(
+      "Set.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableSet").msg,
+      error.val("oops").msg,
+    )
+  check:
+    for Set (x in Set.to_sequence("oops")):
+      x
+    ~throws values(
+      "Set.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableSet").msg,
+      error.val("oops").msg,
+    )
+  check:
+    for Set (x in ("oops" :~ Set).to_sequence()):
+      x
+    ~throws values(
+      "Set.to_sequence: " ++ error.annot_msg(),
+      error.annot("ReadableSet").msg,
+      error.val("oops").msg,
+    )
+
+check:
+  use_static
+  class Posn(x, y)
+  def set :: Set.of(Posn) = {Posn(1, 2), Posn(3, 4), Posn(4, 5)}
+  for Set (val in set):
+    val.x + val.y
+  ~is {3, 7, 9}
+
+check:
+  use_static
+  "no such thing" in Set.empty
+  ~is #false
+
+check:
+  use_static
+  def Set.empty && empty = dynamic(Set{})
+  "no such thing" in empty
+  ~is #false
+
+check:
+  use_static
+  Set.empty.remove("no such thing")
+  ~is Set{}
+
+check:
+  use_static
+  def Set.empty && empty = dynamic(Set{})
+  empty.remove("no such thing")
+  ~is Set{}
+
+check:
+  use_static
+  "no such thing" in ReadableSet.empty
+  ~is #false
+
+check:
+  use_static
+  def ReadableSet.empty && empty = dynamic(Set{})
+  "no such thing" in empty
+  ~is #false
+
+check:
+  ~eval
+  use_static
+  ReadableSet.empty.remove("no such thing")
+  ~throws "no such field or method (based on static information)"
+
+check:
+  ~eval
+  use_static
+  def ReadableSet.empty && empty = dynamic(Set{})
+  empty.remove("no such thing")
+  ~throws "no such field or method (based on static information)"
+
+check:
+  to_string(Set{}) ~is "Set{}"
+  to_string(Set{1, 2, 3}) ~is "{1, 2, 3}"
+  to_string(MutableSet{}) ~is "MutableSet{}"
+  to_string(MutableSet{1, 2, 3}) ~is "MutableSet{1, 2, 3}"
+  to_string(WeakMutableSet{}) ~is "WeakMutableSet{}"
+  to_string(WeakMutableSet{1, 2, 3}) ~is "WeakMutableSet{1, 2, 3}"
+
+check:
+  def s = MutableSet{}
+  s.add(s)
+  to_string(s)
+  ~is "#0=MutableSet{#0#}"
+
+block:
+  def orig = MutableSet{"x", 2}
+  check orig :: MutableSet.now_of(String) ~throws "value does not satisfy annotation"
+  check orig :: MutableSet.now_of(Any) ~is orig
+  check (orig :: MutableSet.now_of(Any)).add("y") ~is #void
+  check orig ~is_now MutableSet{"x", "y", 2}
+
+block:
+  def orig = MutableSet{"x", 2}
+  def m :: MutableSet.later_of(String) = orig
+  check "x" in m ~is #true
+  check 2 in m ~throws "element does not satisfy annotation"
+  check m.set(2) ~throws "element does not satisfy annotation"
+  check to_string(m) ~throws "element does not satisfy annotation"
+  check m.add("x") ~is #void
+  check m.add("y") ~is #void
+  check 2 in orig ~is #true
+  check "x" in orig ~is #true
+  check "y" in orig ~is #true
+  check "z" in orig ~is #false
+  check m.remove(2) ~throws "element does not satisfy annotation"
+  check m.remove("y") ~is #void
+  check orig.remove(2) ~is #void
+  check to_string(m) ~is "MutableSet{\"x\"}"
+
+block:
+  def m :: Set.later_of(String) = Set{"x", 2}
+  check "x" in m ~is #true
+  check 2 in m ~throws "element does not satisfy annotation"
+  check to_string(m) ~throws "element does not satisfy annotation"
+  check m.remove(2) ~throws "element does not satisfy annotation"
+  check m.remove("x") ~is_a Set
+  check to_string(m) ~throws "element does not satisfy annotation"
+
+block:
+  class Posn(x, y)
+  let a = Posn(1, 2)
+  let b = Posn(1, 2)
+  let ab = Box(1)
+  let bb = Box(1)
+  check a === b ~is #false
+  def s1 = Set.by(===){ a, b }
+  def s2 = Set.by(is_same_number_or_object){ a, b, 1 / 2, 2 / 4 }
+  def s3 = Set.by(is_now){ ab, bb }
+  check a in s1 ~is #true
+  check b in s1 ~is #true
+  check a in s2 ~is #true
+  check b in s2 ~is #true
+  check 1/2 in s2 ~is #true
+  check s2.length() ~is 3
+  check ab in s3 ~is #true
+  check s3.length() ~is 1
+  let str = to_string(s1)
+  check str ~is "Set.by(===){Posn(1, 2), Posn(1, 2)}"
+  check to_string(s2).substring(0, 33) ~is "Set.by(is_same_number_or_object){"
+  check to_string(s3).substring(0, 15) ~is "Set.by(is_now){"
+  check s1 is_a Set ~is #true
+  check s1 is_a Set.by(===) ~is #true
+  check s1 is_a Set.by(==) ~is #false
+  check Set{} is_a Set.by(==) ~is #true
+  check s2 is_a Set.by(===) ~is #false
+  check s2 is_a Set.by(is_same_number_or_object) ~is #true
+  check s3 is_a Set.by(===) ~is #false
+  check s3 is_a Set.by(is_now) ~is #true
+  check (for Set.by(===) (i in 0..1): i) ~is Set.by(===){ 0 }
+  check (for Set.by(is_now) (i in 0..1): i) ~is Set.by(is_now){ 0 }
+  check (for Set.by(is_same_number_or_object) (i in 0..1): i) ~is Set.by(is_same_number_or_object){ 0 }
+  let [x, ...] = [1, 2, 3]
+  check Set.by(===){ x, ... } ~is Set.by(===){ 1, 2, 3 }
+
+  import rhombus/meta open
+  expr.macro 'check_set_by $(key_comp :: Term)':
+    'block:
+       use_static
+       def is_equals = (match '$key_comp' | '==': #true | ~else: #false)
+       def is_is_now = (match '$key_comp' | 'is_now': #true | ~else: #false)
+       check Set.by($key_comp){} ~is Set.by($key_comp){}
+       check Set.by($key_comp){} ~is_a Set.by($key_comp)
+       check Set.by($key_comp)(1) ~is Set.by($key_comp){ 1 }
+       check Set.by($key_comp){} ~is_a Set.by($key_comp).of(String)
+       check Set.by($key_comp){} is_a Set.by(==) ~is is_equals
+       check Set.by($key_comp){} is_a Set.by(is_now) ~is is_is_now
+       check Set.by($key_comp){ "x"} == { "x" } ~is is_equals
+       check Set.by($key_comp){ "x" } == Set.by(is_now){ "x" } ~is is_is_now
+       check { "x" } == Set.by($key_comp){ "x" } ~is is_equals
+       check Set.by(is_now){ "x" }  == Set.by($key_comp){ "x" } ~is is_is_now
+       check Set.by($key_comp){ "x" } ~is_a Set.by($key_comp).of(String)
+       check Set.by($key_comp){ "x" } is_a Set.by($key_comp).of(String) ~is #true
+       check Set.by($key_comp){ "x" } is_a Set.by($key_comp).of(Number) ~is #false
+       check Set.by($key_comp){} ++ { 0 } ~is Set.by($key_comp){ 0 }
+       check Set.by($key_comp){} ++ { 0, 2 } ~is Set.by($key_comp){ 0, 2 }
+       check Set.by($key_comp){ x, $('...')} ~is Set.by($key_comp){ 1, 2, 3 }
+       check Set.by($key_comp){ x, $('...')}.length() ~is 3
+       check [Set.by($key_comp){ x }, $('...')] ~is [Set.by($key_comp){ 1 },
+                                                     Set.by($key_comp){ 2 },
+                                                     Set.by($key_comp){ 3 }]
+
+       block:
+         use_static
+         check Set.by($key_comp){}.length() ~is 0
+         check Set.by($key_comp)().length() ~is 0
+         check MutableSet.by($key_comp){}.length() ~is 0
+         check MutableSet.by($key_comp)().length() ~is 0
+         check WeakMutableSet.by($key_comp){}.length() ~is 0
+         check WeakMutableSet.by($key_comp)().length() ~is 0
+
+       check (for Set.by($key_comp) (i in 0..1): i) ~is Set.by($key_comp){ 0 }
+       block:
+         let Set.by($key_comp){ v, $('...') } = Set.by($key_comp){ "x" }
+         check [v, $('...')] ~is ["x"]
+       block:
+         let Set.by($key_comp){ 1, & rest } = Set.by($key_comp){ 1, 2 }
+         check rest ~is_a Set.by($key_comp)
+         check 2 in rest ~is #true
+       let m4 = MutableSet.by($key_comp){}
+       m4.add(0)
+       check 0 in m4 ~is #true
+       check m4 ~is_now MutableSet.by($key_comp){ 0 }
+       check m4 ~is_now MutableSet.by($key_comp)(0)
+       check m4 ~is_a MutableSet.by($key_comp)
+       check m4 is_a MutableSet.by(==) ~is is_equals
+       check m4 is_a MutableSet.by(is_now) ~is is_is_now
+       check MutableSet.by($key_comp){ "x" } is_now MutableSet{ "x" } ~is is_equals
+       check MutableSet.by($key_comp){ "x" } is_now MutableSet.by(is_now){ "x" } ~is is_is_now
+       check MutableSet{ "x" }is_now MutableSet.by($key_comp){ "x" } ~is is_equals
+       check MutableSet.by(is_now){ "x" } is_now MutableSet.by($key_comp){ "x" } ~is is_is_now
+       check [MutableSet.by($key_comp){ x }, $('...')] ~is_now [MutableSet.by($key_comp){ 1 },
+                                                                MutableSet.by($key_comp){ 2 },
+                                                                MutableSet.by($key_comp){ 3 }]
+       class Boson(v)
+       let m5 = WeakMutableSet.by($key_comp){}
+       let mutable boson = Boson("plus")
+       m5.add(boson)
+       check boson in m5 ~is #true
+       check m5 ~is_now WeakMutableSet.by($key_comp){ boson }
+       check m5 ~is_now WeakMutableSet.by($key_comp)(boson)
+       check m5 ~is_a WeakMutableSet.by($key_comp)
+       check m5 is_a WeakMutableSet.by(==) ~is is_equals
+       check m5 is_a WeakMutableSet.by(is_now) ~is is_is_now
+       check WeakMutableSet.by($key_comp){ boson } is_now WeakMutableSet{ boson } ~is is_equals
+       check WeakMutableSet.by($key_comp){ boson } is_now WeakMutableSet.by(is_now){ boson } ~is is_is_now
+       check WeakMutableSet{ boson }is_now WeakMutableSet.by($key_comp){ boson } ~is is_equals
+       check WeakMutableSet.by(is_now){ boson } is_now WeakMutableSet.by($key_comp){ boson } ~is is_is_now
+       check [WeakMutableSet.by($key_comp){ x }, $('...')] ~is_now [WeakMutableSet.by($key_comp){ 1 },
+                                                                    WeakMutableSet.by($key_comp){ 2 },
+                                                                    WeakMutableSet.by($key_comp){ 3 }]
+       // make sure the set is weak:
+       boson := #false
+       memory.gc()
+       check m5.length() ~is 0'
+  check_set_by ==
+  check_set_by ===
+  check_set_by is_now
+  check_set_by is_same_number_or_object
+
+  block:
+    key_comp.def 'is_anything':
+      ~equals: fun (a, b, recur): #true
+      ~hash_code: fun (a, recur): 1
+    let m = Set.by(is_anything){ 1, 3 }
+    check m.length() ~is 1
+    check "any value at all" in m ~is #true
+    check m.to_list() ~is [3]
+
+    key_comp.def 'both_42_or_both_other':
+      ~equals: fun (a, b, recur): if (a == 42) | (b == 42) | (b != 42)
+      ~hash_code: fun (a, recur): if (a == 42) | 42 | 1
+    let m2 = Set.by(both_42_or_both_other){ 1, 42, 3 }
+    check m2.length() ~is 2
+    check "any non-42 value" in m2 ~is #true
+    check 42 in m2 ~is #true
+    check m2.to_list().sort(math.less) ~is [3, 42]
+
+    key_comp.def 'equals':
+      ~equals: fun (a, b, recur): a == b
+      ~hash_code: fun (a, recur): Equatable.hash(a)
+    check_set_by equals
+
+  #void
+
+// splicing of repetitions
+block:
+  import rhombus/meta open
+  key_comp.def 'equals':
+    ~equals: fun (a, b, recur): a == b
+    ~hash_code: fun (a, recur): Equatable.hash(a)
+
+  def [x, ...] = [1, 2, 3]
+  check:
+    {x, ...}
+    ~is {1, 2, 3}
+  check:
+    Set.by(===){x, ...}
+    ~is Set.by(===){1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){x, ...}
+    ~is Set.by(is_same_number_or_object){1, 2, 3}
+  check:
+    Set.by(is_now){x, ...}
+    ~is Set.by(is_now){1, 2, 3}
+  check:
+    Set.by(equals){x, ...}
+    ~is Set.by(equals){1, 2, 3}
+
+// splicing of mixed-kind sets
+block:
+  import rhombus/meta open
+  key_comp.def 'equals':
+    ~equals: fun (a, b, recur): a == b
+    ~hash_code: fun (a, recur): Equatable.hash(a)
+
+  check:
+    Set{& {1, 2, 3}}
+    ~is {1, 2, 3}
+  check:
+    Set{& Set.by(===){1, 2, 3}}
+    ~is {1, 2, 3}
+  check:
+    Set{& Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is {1, 2, 3}
+  check:
+    Set{& Set.by(is_now){1, 2, 3}}
+    ~is {1, 2, 3}
+  check:
+    Set{& Set.by(equals){1, 2, 3}}
+    ~is {1, 2, 3}
+  check:
+    {0, & {1, 2, 3}}
+    ~is {0, 1, 2, 3}
+  check:
+    {0, & Set.by(===){1, 2, 3}}
+    ~is {0, 1, 2, 3}
+  check:
+    {0, & Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is {0, 1, 2, 3}
+  check:
+    {0, & Set.by(is_now){1, 2, 3}}
+    ~is {0, 1, 2, 3}
+  check:
+    {0, & Set.by(equals){1, 2, 3}}
+    ~is {0, 1, 2, 3}
+
+  check:
+    Set.by(===){& {1, 2, 3}}
+    ~is Set.by(===){1, 2, 3}
+  check:
+    Set.by(===){& Set.by(===){1, 2, 3}}
+    ~is Set.by(===){1, 2, 3}
+  check:
+    Set.by(===){& Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is Set.by(===){1, 2, 3}
+  check:
+    Set.by(===){& Set.by(is_now){1, 2, 3}}
+    ~is Set.by(===){1, 2, 3}
+  check:
+    Set.by(===){& Set.by(equals){1, 2, 3}}
+    ~is Set.by(===){1, 2, 3}
+  check:
+    Set.by(===){0, & {1, 2, 3}}
+    ~is Set.by(===){0, 1, 2, 3}
+  check:
+    Set.by(===){0, & Set.by(===){1, 2, 3}}
+    ~is Set.by(===){0, 1, 2, 3}
+  check:
+    Set.by(===){0, & Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is Set.by(===){0, 1, 2, 3}
+  check:
+    Set.by(===){0, & Set.by(is_now){1, 2, 3}}
+    ~is Set.by(===){0, 1, 2, 3}
+  check:
+    Set.by(===){0, & Set.by(equals){1, 2, 3}}
+    ~is Set.by(===){0, 1, 2, 3}
+
+  check:
+    Set.by(is_same_number_or_object){& {1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){& Set.by(===){1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){& Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){& Set.by(is_now){1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){& Set.by(equals){1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){0, & {1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){0, 1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){0, & Set.by(===){1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){0, 1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){0, & Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){0, 1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){0, & Set.by(is_now){1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){0, 1, 2, 3}
+  check:
+    Set.by(is_same_number_or_object){0, & Set.by(equals){1, 2, 3}}
+    ~is Set.by(is_same_number_or_object){0, 1, 2, 3}
+
+  check:
+    Set.by(is_now){& {1, 2, 3}}
+    ~is Set.by(is_now){1, 2, 3}
+  check:
+    Set.by(is_now){& Set.by(===){1, 2, 3}}
+    ~is Set.by(is_now){1, 2, 3}
+  check:
+    Set.by(is_now){& Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is Set.by(is_now){1, 2, 3}
+  check:
+    Set.by(is_now){& Set.by(is_now){1, 2, 3}}
+    ~is Set.by(is_now){1, 2, 3}
+  check:
+    Set.by(is_now){& Set.by(equals){1, 2, 3}}
+    ~is Set.by(is_now){1, 2, 3}
+  check:
+    Set.by(is_now){0, & {1, 2, 3}}
+    ~is Set.by(is_now){0, 1, 2, 3}
+  check:
+    Set.by(is_now){0, & Set.by(===){1, 2, 3}}
+    ~is Set.by(is_now){0, 1, 2, 3}
+  check:
+    Set.by(is_now){0, & Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is Set.by(is_now){0, 1, 2, 3}
+  check:
+    Set.by(is_now){0, & Set.by(is_now){1, 2, 3}}
+    ~is Set.by(is_now){0, 1, 2, 3}
+  check:
+    Set.by(is_now){0, & Set.by(equals){1, 2, 3}}
+    ~is Set.by(is_now){0, 1, 2, 3}
+
+  check:
+    Set.by(equals){& {1, 2, 3}}
+    ~is Set.by(equals){1, 2, 3}
+  check:
+    Set.by(equals){& Set.by(===){1, 2, 3}}
+    ~is Set.by(equals){1, 2, 3}
+  check:
+    Set.by(equals){& Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is Set.by(equals){1, 2, 3}
+  check:
+    Set.by(equals){& Set.by(is_now){1, 2, 3}}
+    ~is Set.by(equals){1, 2, 3}
+  check:
+    Set.by(equals){& Set.by(equals){1, 2, 3}}
+    ~is Set.by(equals){1, 2, 3}
+  check:
+    Set.by(equals){0, & {1, 2, 3}}
+    ~is Set.by(equals){0, 1, 2, 3}
+  check:
+    Set.by(equals){0, & Set.by(===){1, 2, 3}}
+    ~is Set.by(equals){0, 1, 2, 3}
+  check:
+    Set.by(equals){0, & Set.by(is_same_number_or_object){1, 2, 3}}
+    ~is Set.by(equals){0, 1, 2, 3}
+  check:
+    Set.by(equals){0, & Set.by(is_now){1, 2, 3}}
+    ~is Set.by(equals){0, 1, 2, 3}
+  check:
+    Set.by(equals){0, & Set.by(equals){1, 2, 3}}
+    ~is Set.by(equals){0, 1, 2, 3}
+
+// append, union and intersection of mixed-kind sets
+block:
+  import rhombus/meta open
+  key_comp.def 'equals':
+    ~equals: fun (a, b, recur): a == b
+    ~hash_code: fun (a, recur): Equatable.hash(a)
+
+  check:
+    Set{}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is {#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set{}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is {#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set{}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is {#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set{}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is {#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set{}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set{}
+  check:
+    Set{}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set{}
+  check:
+    Set{#'equal_always, #'eq, #'eqv, #'equal, #'custom}.subtract(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set{#'custom}
+  check:
+    Set{}.subtract(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set{}
+
+  check:
+    Set.by(===){}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(===){#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set.by(===){}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(===){#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set.by(===){}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(===){#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set.by(===){}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(===){#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set.by(===){#'equal_always, #'eq, #'eqv, #'equal, #'custom}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(===){}
+  check:
+    Set.by(===){}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(===){}
+  check:
+    Set.by(===){#'equal_always, #'eq, #'eqv, #'equal, #'custom}.subtract(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(===){#'custom}
+  check:
+    Set.by(===){}.subtract(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(===){}
+
+  check:
+    Set.by(is_same_number_or_object){}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(is_same_number_or_object){#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set.by(is_same_number_or_object){}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(is_same_number_or_object){#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set.by(is_same_number_or_object){}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(is_same_number_or_object){#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set.by(is_same_number_or_object){}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(is_same_number_or_object){#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set.by(is_same_number_or_object){}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(is_same_number_or_object){}
+  check:
+    Set.by(is_same_number_or_object){}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(is_same_number_or_object){}
+  check:
+    Set.by(is_same_number_or_object){#'equal_always, #'eq, #'eqv, #'equal, #'custom}.subtract(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(is_same_number_or_object){#'custom}
+  check:
+    Set.by(is_same_number_or_object){}.subtract(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(is_same_number_or_object){}
+
+  check:
+    Set.by(is_now){}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(is_now){#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set.by(is_now){}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(is_now){#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set.by(is_now){}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(is_now){#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set.by(is_now){}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(is_now){#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set.by(is_now){}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(is_now){}
+  check:
+    Set.by(is_now){}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(is_now){}
+  check:
+    Set.by(is_now){#'equal_always, #'eq, #'eqv, #'equal, #'custom}.subtract(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(is_now){#'custom}
+  check:
+    Set.by(is_now){}.subtract(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(is_now){}
+
+  check:
+    Set.by(equals){}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(equals){#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set.by(equals){}.append(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(equals){#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set.by(equals){}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(equals){#'equal_always, #'eq, #'eqv, #'equal}
+  check:
+    Set.by(equals){}.union(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(equals){#'equal_always, #'eq, #'eqv, #'equal, #'custom}
+  check:
+    Set.by(equals){}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(equals){}
+  check:
+    Set.by(equals){}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(equals){}
+  check:
+    Set.by(equals){#'equal_always, #'eq, #'eqv, #'equal, #'custom}.subtract(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+    ) ~is Set.by(equals){#'custom}
+  check:
+    Set.by(equals){}.intersect(
+      {#'equal_always},
+      Set.by(===){#'eq},
+      Set.by(is_same_number_or_object){#'eqv},
+      Set.by(is_now){#'equal},
+      Set.by(equals){#'custom},
+    ) ~is Set.by(equals){}
+
+check:
+  ("oops" :~ MutableSet).add(0)
+  ~throws values(
+    "MutableSet.add: " ++ error.annot_msg(),
+    error.annot("MutableSet").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  Set.append("oops") ~throws values(
+    "Set.append: " ++ error.annot_msg(),
+    error.annot("Set").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ Set).append() ~throws values(
+    "Set.append: " ++ error.annot_msg(),
+    error.annot("Set").msg,
+    error.val("oops").msg,
+  )
+  // this case is specially optimized
+  ("oops" :~ Set) ++ {1} ~throws values(
+    "Set.append: " ++ error.annot_msg(),
+    error.annot("Set").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ Set) ++ {1, 2} ~throws values(
+    "Set.append: " ++ error.annot_msg(),
+    error.annot("Set").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  0 in ("oops" :~ Set) ~throws values(
+    "Set.contains: " ++ error.annot_msg(),
+    error.annot("ReadableSet").msg,
+    error.val("oops").msg,
+  )
+  ("oops" :~ Set).contains(0) ~throws values(
+    "Set.contains: " ++ error.annot_msg(),
+    error.annot("ReadableSet").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  ~eval
+  Set{1: 2}
+  ~throws "misplaced" // as opposed to an error about `Set`
+
+
+block:
+  fun f(x :: Set.of(Any.of(block: println("now"); 1)),
+        ...):
+    #'ok
+  check f({1}) ~prints "now\n"
+  check f({1}) ~prints "now\n"
+  check f({1}, {1}) ~prints "now\n"
+
+block:
+  fun f(x :: MutableSet.now_of(Any.of(block: println("now"); 1)),
+        ...):
+    #'ok
+  check f(MutableSet{1}) ~prints "now\n"
+  check f(MutableSet{1}) ~prints "now\n"
+  check f(MutableSet{1}, MutableSet{1}) ~prints "now\n"
+
+block:
+  fun f(x :: MutableSet.later_of(Any.of(block: println("now"); 1)),
+        ...):
+    #'ok
+  check f(MutableSet{1}) ~prints "now\n"
+  check f(MutableSet{1}) ~prints "now\n"
+  check f(MutableSet{1}, MutableSet{1}) ~prints "now\n"
+
+block:
+  fun f(x :: Set.by(===).of(Any.of(block: println("now"); 1)),
+        ...):
+    #'ok
+  check f(Set.by(===){1}) ~prints "now\n"
+  check f(Set.by(===){1}) ~prints "now\n"
+  check f(Set.by(===){1}, Set.by(===){1}) ~prints "now\n"
+
+// dependent result annotations
+block:
+  use_static
+  def m = { "a" }
+  check: for List (k in m):
+           k.length()
+         ~is [1]
+  check: for List (k in m.to_sequence()):
+           k.length()
+         ~is [1]
+  check m.to_list()[0].length() ~is 1
+  check m.add("c").to_list()[0].length() ~is 1
+  check m.remove("c").to_list()[0].length() ~is 1
+  def mm :: MutableSet.later_of(String) = { "a" }.copy()
+  check mm.snapshot().to_list()[0].length() ~is 1
+  check m.snapshot().to_list()[0].length() ~is 1
+  def m2 = { "a", & { "c" } }
+  check m2.to_list()[0].length() ~is 1
+  let [str, ...] = ["x", "y"]
+  check { str, ...}.to_list()[0].length() ~is 1
+  check ({"a"} ++ {"b"}).to_list()[0].length() ~is 1
+  check ({"a", "d"} ++ {"b", "c"}).to_list()[0].length() ~is 1
+  check m.union({"b"}).to_list()[0].length() ~is 1
+  check m.intersect({#"b", "a"}).to_list()[0].length() ~is 1
+
+check:
+  ~eval
+  use_static
+  def m :: Set.of(String) = { "a" }
+  m.add(#"x").to_list()[0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")
+
+check:
+  ~eval
+  use_static
+  def m = Set{ "a", #"b" }
+  m.to_list()[0].length()
+  ~throws values("length",
+                 "no such field or method",
+                 "based on static information")

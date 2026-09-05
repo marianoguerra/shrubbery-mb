@@ -1,0 +1,16 @@
+
+export:
+  prefix
+
+namespace prefix
+
+def prefix.something = "yes"
+
+class prefix.Something(x):
+  nonfinal
+
+interface prefix.Stuff:
+  expression 'Stuff()':
+    '"Stuff"'
+  export nested
+  def nested = #true

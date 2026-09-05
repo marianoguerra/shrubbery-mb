@@ -1,0 +1,357 @@
+import:
+  rhombus/version_meta
+
+// see also "try.rhm"
+
+block:
+  import "static_arity.rhm"
+  static_arity.check:
+    Continuation.Marks.current()
+    Continuation.escape(val, ...)
+    Continuation.PromptTag.make([name])
+    Continuation.call_with_immediate_mark(key, fn)
+
+check:
+  Continuation.prompt:
+    2
+    ~catch (x): 10
+  ~is 2
+
+check:
+  Continuation.prompt:
+    2 + (Continuation.escape(100))
+    ~catch x: x+1
+  ~is 101
+
+check:
+  def outer = Continuation.PromptTag.make(#'outer)
+  Continuation.prompt outer:
+    Continuation.prompt:
+      2 + (Continuation.escape(~tag: outer, 100))
+      ~catch x: error("oops")
+    ~catch x: [x]
+  ~is [100]
+
+check:
+  Continuation.prompt:
+    2 + (Continuation.escape("there"))
+    ~catch
+    | x :: Int: x+1
+    | x :: String: "hi " ++ x
+  ~is "hi there"
+
+check:
+  Continuation.prompt:
+    2 + (Continuation.escape(1, 2))
+    ~catch
+    | x :: Int: x+1
+    | (x, y): [x, y]
+  ~is [1, 2]
+
+check:
+  Continuation.prompt:
+    2 + (Continuation.escape(0))
+    ~catch:
+      fun (x :: Int): x+1
+  ~is 1
+
+block:
+  def mutable saved = #false
+  check:
+    Continuation.prompt:
+      1 + (Continuation.capture k:
+             saved := k
+             0)
+    ~is 1
+  check:
+    saved ~is_a Continuation
+    saved ~is_a Function
+  check:
+    3 + saved(4)
+    ~is 8
+
+block:
+  def mutable saved = #false
+  def tag = Continuation.PromptTag.make(#'demo)
+  check:
+    Continuation.prompt tag:
+      1 + (Continuation.capture tag k:
+             saved := k
+             0)
+    ~is 1
+  check:
+    saved ~is_a Continuation
+    saved ~is_a Function
+  check:
+    3 + saved(4)
+    ~is 8
+
+check:
+  Continuation.with_mark #'check_me = 7:
+    Continuation.call_with_immediate_mark(
+      #'check_me,
+      fun (x): x
+    )
+  ~is 7
+
+check:
+  Continuation.with_mark #'check_me = 7:
+    [Continuation.call_with_immediate_mark(
+      #'check_me,
+      fun (x): x
+     )]
+  ~is [#false]
+
+check:
+  Continuation.with_mark #'check_me = 7:
+    [Continuation.call_with_immediate_mark(
+      #'check_me,
+      ~default: #'none,
+      fun (x): x
+     )]
+  ~is [#'none]
+
+block:
+  def cont:
+    Continuation.prompt:
+      1 + (Continuation.capture cont:
+             Continuation.escape(cont))
+      ~catch cont: cont
+  check:
+    cont ~is_a Continuation
+    cont ~is_a Function
+  check:
+    cont(2) ~is 3
+    (Continuation.in cont: 2) ~is 3
+
+block:
+  def mutable n = 0
+  def cont:
+    Continuation.prompt:
+      1 + (try:
+             ~initially:
+               n := n+1
+             Continuation.capture cont:
+                Continuation.escape(cont)
+             ~finally:
+               n := n+1)
+      ~catch cont: cont
+  check:
+    cont ~is_a Continuation
+    cont ~is_a Function
+  check:
+    n ~is 2
+    cont(n) ~is 3
+    n ~is 4
+    (Continuation.in cont: n) ~is 6
+    n ~is 6
+
+block:
+  Parameter.def current_position = "outer"
+  def cont:
+    Continuation.prompt:
+      parameterize { current_position: "inner" }:
+        Continuation.capture cont:
+          cont
+  check:
+    cont ~is_a Continuation
+    cont ~is_a Function
+  check:
+    current_position() ~is "outer"
+    cont(current_position()) ~is "outer"
+    (Continuation.in cont: current_position()) ~is "inner"
+
+block:
+  def cont:
+    Continuation.prompt:
+      Continuation.with_mark #'check_me = 7:
+        Continuation.capture cont:
+          cont
+  check:
+    cont ~is_a Continuation
+    cont ~is_a Function
+  check:
+    Continuation.in cont:
+      Continuation.call_with_immediate_mark(
+        #'check_me,
+        fun (x): x
+      )
+    ~is 7
+
+check:
+  Continuation.PromptTag.make() ~is_a Continuation.PromptTag
+  Continuation.PromptTag.make(#false) ~is_a Continuation.PromptTag
+  Continuation.PromptTag.make(#'a_tag) ~is_a Continuation.PromptTag
+  Continuation.PromptTag.make("a_tag") ~is_a Continuation.PromptTag
+  Continuation.PromptTag.default ~is_a Continuation.PromptTag
+
+check:
+  Continuation.Marks.current() ~is_a Continuation.Marks
+
+check:
+  Continuation.prompt "oops":
+    #void
+  ~throws values(
+    "Continuation.prompt: " ++ error.annot_msg(),
+    error.annot("Continuation.PromptTag").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  Continuation.capture "oops" cont:
+    #void
+  ~throws values(
+    "Continuation.capture: " ++ error.annot_msg(),
+    error.annot("Continuation.PromptTag").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  Continuation.in "oops":
+    #void
+  ~throws values(
+    "Continuation.in: " ++ error.annot_msg(),
+    error.annot("Continuation").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  Continuation.escape(
+    ~tag: "oops",
+  )
+  ~throws values(
+    "Continuation.escape: " ++ error.annot_msg(),
+    error.annot("Continuation.PromptTag").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  Continuation.escape(
+    ~tag: Continuation.PromptTag.make(),
+  )
+  ~throws values(
+    "Continuation.escape: no corresponding prompt in the continuation",
+  )
+
+check:
+  Continuation.call_with_immediate_mark(
+    #'key,
+    "oops",
+  )
+  ~throws values(
+    "Continuation.call_with_immediate_mark: " ++ error.annot_msg(),
+    error.annot("Function.of_arity(1)").msg,
+    error.val("oops").msg,
+  )
+
+check:
+  Continuation.call_with_immediate_mark(
+    #'key,
+    ~default: #'none,
+    "oops",
+  )
+  ~throws values(
+    "Continuation.call_with_immediate_mark: " ++ error.annot_msg(),
+    error.annot("Function.of_arity(1)").msg,
+    error.val("oops").msg,
+  )
+
+version_meta.when_racket_at_least "8.15.0.3":
+  check:
+    Continuation.barrier:
+      Continuation.capture k:
+        #void
+    ~throws values(
+      "Continuation.capture: cannot capture past continuation barrier",
+    )
+
+check:
+  repr(Continuation.capture k:
+         k)
+  ~is "#<continuation>"
+
+check:
+  repr(Continuation.PromptTag.default)
+  ~is "Continuation.PromptTag.default"
+
+check:
+  repr(Continuation.PromptTag.make())
+  ~is "Continuation.PromptTag.make()"
+
+check:
+  repr(Continuation.PromptTag.make(#'name))
+  ~is "Continuation.PromptTag.make(#'name)"
+
+check:
+  repr(Continuation.PromptTag.make("name"))
+  ~is "Continuation.PromptTag.make(#'name)"
+
+check:
+  repr(Continuation.PromptTag.make("weird name"))
+  ~is "Continuation.PromptTag.make(#'#{|weird name|})"
+
+check:
+  repr(Continuation.Marks.current())
+  ~is "#<continuation-marks>"
+
+check:
+  ~eval
+  use_static
+  def k :: Continuation:
+    Continuation.capture k:
+      k
+  k(~key: 1)
+  ~throws "keyword argument not recognized by called function (based on static information)"
+
+check:
+  ~eval
+  use_static
+  Continuation.prompt:
+    1 + (Continuation.capture k:
+           k(~key: 1))
+  ~throws "keyword argument not recognized by called function (based on static information)"
+
+check:
+  ~eval
+  use_static
+  def tag = Continuation.PromptTag.make()
+  Continuation.prompt tag:
+    1 + (Continuation.capture tag k:
+           k(~key: 1))
+  ~throws "keyword argument not recognized by called function (based on static information)"
+
+check:
+  use_static
+  def k :: Continuation:
+    Continuation.prompt:
+      1 + (Continuation.capture k:
+             Continuation.escape(k))
+      ~catch k: k
+  k.map([1, 2, 3, 4, 5])
+  ~is [2, 3, 4, 5, 6]
+
+check:
+  use_static
+  Continuation.prompt:
+    1 + (Continuation.capture k:
+           Continuation.escape(k.map([1, 2, 3, 4, 5])))
+    ~catch v: v
+  ~is [2, 3, 4, 5, 6]
+
+check:
+  use_static
+  def tag = Continuation.PromptTag.make()
+  Continuation.prompt tag:
+    1 + (Continuation.capture tag k:
+           Continuation.escape(~tag: tag, k.map([1, 2, 3, 4, 5])))
+    ~catch v: v
+  ~is [2, 3, 4, 5, 6]
+
+// regression test: 0-arity in `Continuation.escape`
+check:
+  use_static
+  def tag = Continuation.PromptTag.make()
+  Continuation.prompt tag:
+    Continuation.escape(~tag: tag)
+    ~catch (): 42
+  ~is 42

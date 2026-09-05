@@ -1,0 +1,123 @@
+
+check:
+  [1] is_now [1] ~is #true
+  [1] !is_now [1] ~is #false
+  [1] is_now [2] ~is #false
+  [1] !is_now [2] ~is #true
+
+check:
+  any() ~is #false
+  all() ~is #true
+
+check:
+  #false || !(#false || #false) ~is #true
+  #false && !(#false || #false) ~is #false
+  any(#false, 1) ~is 1
+  all(#false, 2) ~is #false
+
+check:
+  #true || !(#true || #true) ~is #true
+  #true && !(#true || #true) ~is #false
+  any(#true, 1) ~is #true
+  all(#true, 2) ~is 2
+
+check:
+  #true || print("reached") ~prints ""
+  #true && print("reached") ~prints "reached"
+  #false || print("reached") ~prints "reached"
+  #false && print("reached") ~prints ""
+  any(#true, print("reached")) ~prints ""
+  all(#true, print("reached")) ~prints "reached"
+  any(#false, print("reached")) ~prints "reached"
+  all(#false, print("reached")) ~prints ""
+
+check:
+  1 is_a Int && 2 is_a Int ~is #true
+  1 is_a Int || 2 is_a Int ~is #true
+  1 !is_a Int || 2 !is_a Int ~is #false
+  1 is_a String && 2 is_a Int ~is #false
+  1 is_a Int && 2 is_a String ~is #false
+  1 is_a String || 2 is_a Int ~is #true
+  1 is_a String || 2 is_a String ~is #false
+
+check:
+  [1, 2, 3] matches [_ :: Int, ...] && [2, 3, 4] matches [_, _, _] ~is #true
+  [1, 2, 3] matches [_ :: Int, ...] || [2, 3, 4] matches [_, _, _] ~is #true
+  [1, 2, 3] matches [_ :: Int, ...] && [2, 3, 4] !matches [_, _, _] ~is #false
+  [1, 2, 3] matches [_ :: Int, ...] || [2, 3, 4] !matches [_, _, _] ~is #true
+  [1, 2, 3] !matches [_ :: Int, ...] && [2, 3, 4] matches [_, _, _] ~is #false
+  [1, 2, 3] !matches [_ :: Int, ...] || [2, 3, 4] matches [_, _, _] ~is #true
+  [1, 2, 3] !matches [_ :: Int, ...] && [2, 3, 4] !matches [_, _, _] ~is #false
+  [1, 2, 3] !matches [_ :: Int, ...] || [2, 3, 4] !matches [_, _, _] ~is #false
+
+block:
+  def [x, ...] = [#true, #true, #false]
+  def [y, ...] = [#true, #false, #false]
+  check [x || y, ...] ~is [#true, #true, #false]
+  check [x && y, ...] ~is [#true, #false, #false]
+  check all(!x, ...) ~is #false
+  check any(!x, ...) ~is #true
+  check all(x || !y, ...) ~is #true
+  check any(!x && y, ...) ~is #false
+  check all(#true, x || !y, ...) ~is #true
+  check any(#false, !x && y, ...) ~is #false
+  check all(x, ..., print("end")) ~prints ""
+  check all(!y && error("oops"), ...) ~is #false
+
+block:
+  def [x, ...] = [#true, #true, #false]
+  check:
+    Function.pass(x && println("reached"), ...)
+    ~prints "reached\nreached\n"
+  check:
+    Function.pass(x || println("reached"), ...)
+    ~prints "reached\n"
+
+block:
+  def [x, ...] = [#true, #true, #false]
+  def [y, ...] = [1, 2, 3]
+  check:
+    Function.pass(x && println("reached: " +& y), ...)
+    ~prints "reached: 1\nreached: 2\n"
+  check:
+    Function.pass(x || println("reached: " +& y), ...)
+    ~prints "reached: 3\n"
+
+check:
+  ~eval
+  1 ! = 2
+  ~throws "expected a negatable operator"
+
+check:
+  use_static
+  fun f1(x :: maybe(String)):
+    (x || "a").length()
+  fun f2(x):
+    (x && "a")?.length()
+  ~completes
+
+check:
+  use_static
+  fun f1(x :: maybe(String), y :: maybe(String), ...):
+    any(x, "z").length()
+    any(y, ..., "z").length()
+    any(x, y, ..., "z").length()
+  fun f2(x, y, ...):
+    all(x, "z")?.length()
+    all(y, ..., "z")?.length()
+    all(x, y, ..., "z")?.length()
+  ~completes
+
+check:
+  ~eval
+  use_static
+  fun (x :: maybe(String)):
+    (x && "a").length()
+  ~throws "based on static information"
+
+check:
+  ~eval
+  use_static
+  fun (x :: maybe(String), y :: maybe(String), ...):
+    all(x, y, ..., "b").length()
+  ~throws "based on static information"

@@ -1,0 +1,130 @@
+
+use_static
+
+class.together:
+  class Foo(x :: List.of(Bar))
+  class Bar(x :: Foo)
+
+check:
+  Foo([])
+  ~is Foo([])
+
+check:
+  Bar(Foo([]))
+  ~is Bar(Foo([]))
+
+check:
+  Foo([Bar(Foo([]))])
+  ~is Foo([Bar(Foo([]))])
+
+check:
+  Foo([1])
+  ~throws "does not satisfy annotation"
+
+check:
+  Bar(1)
+  ~throws "does not satisfy annotation"
+
+check:
+  Foo([Foo([])])
+  ~throws "does not satisfy annotation"
+
+check:
+  class.together:
+    class Tree(x :: List.of(Node))
+    class Node(val, children :: Tree)
+
+  class.together:
+    class Base():
+      nonfinal
+    class Extend():
+      extends Base
+
+  class.together:
+    interface IBase
+    interface IExtend:
+      extends IBase
+
+  class.together:
+    interface Interface
+    class Class():
+      implements Interface
+
+  ~completes
+
+block:
+  class.together:
+    class Foo():
+      export: helper
+      fun helper() :: Foo:
+        Foo()
+  check:
+    Foo.helper()
+    ~is Foo()
+
+block:
+  class.together:
+    interface I:
+      method a() :: I.A:
+        I.A()
+      method b() :: I.B:
+        I.B()
+      method c() :: I.C:
+        I.C()
+    class I.A():
+      implements I
+    class I.B():
+      implements I
+    class I.C():
+      implements I
+  check:
+    I.A.b.name() ~is #'#{I.A.b}
+    I.B.c.name() ~is #'#{I.B.c}
+    I.C.a.name() ~is #'#{I.C.a}
+  check:
+    I.A().b() ~is I.B()
+    I.B().c() ~is I.C()
+    I.C().a() ~is I.A()
+
+block:
+  class.together:
+    class A():
+      method b() :: B:
+        "oops"
+    class B():
+      method c() :: C:
+        "oops"
+    class C():
+      method a() :: A:
+        "oops"
+  check:
+    A.b.name() ~is #'#{A.b}
+    B.c.name() ~is #'#{B.c}
+    C.a.name() ~is #'#{C.a}
+  check:
+    A().b() ~throws "A.b: " ++ error.annot_msg("result")
+    B().c() ~throws "B.c: " ++ error.annot_msg("result")
+    C().a() ~throws "C.a: " ++ error.annot_msg("result")
+
+class.together:
+  class A(s :~ String):
+    nonfinal
+
+    property t: "this is t"
+
+    method u():
+      "uuuu"
+
+    protected method u2(): "u2"
+    protected field s2 = "s2"
+
+  class B():
+    extends A
+
+    protected method u3(): "u3"
+    protected field s3 = "s3"
+
+    method foo():
+      [s, s2, s3, t, u(), u2(), u3()]
+
+check B("str").foo() ~is ["str", "s2", "s3", "this is t", "uuuu", "u2", "u3"]
