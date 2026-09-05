@@ -48,10 +48,26 @@ pub(all) enum TokenKind {
 pub(all) struct Token {
   kind : TokenKind
   text : String
+  /// What the reference calls the token's `raw`, when that is NOT the source
+  /// text. It differs in exactly one place: a `#{...}` escape's raw is the
+  /// datum RE-PRINTED, so `#{ foo }` has raw `#{foo}`. Keeping the two apart is
+  /// what lets `text` stay the exact source -- and the total-coverage invariant
+  /// stay true -- while raw-text metadata still reproduces what the reference
+  /// would have reproduced.
+  raw : String?
   span : @basic.Span
   /// For a paired at-opener like `|<<{`, the closer it demands: `}>>|`.
   /// Computed once here so the parser never re-derives the reverse-and-flip.
   partner : String?
+}
+
+///|
+/// The text the raw-text metadata should carry for this token.
+pub fn Token::raw_text(self : Token) -> String {
+  match self.raw {
+    Some(r) => r
+    None => self.text
+  }
 }
 
 ///|

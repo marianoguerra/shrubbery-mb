@@ -21,6 +21,12 @@ pub(all) enum Datum {
   Nil
   Pair(Datum, Datum)
   Vec(Array[Datum])
+  /// A regular expression: `#rx"..."` or `#px"..."`. The flag says which.
+  Rx(Bool, String)
+  /// A datum this reader knows how to keep but not how to interpret: a box, a
+  /// hash table, a complex number. Held as the text Racket would print for it,
+  /// so it round-trips, and opaque because nothing downstream inspects it.
+  Other(String)
 } derive(Eq)
 
 ///|
@@ -103,6 +109,20 @@ pub fn Datum::write_canonical(self : Datum, buf : StringBuilder) -> Unit {
       buf.write_string(" . ")
       b.write_canonical(buf)
       buf.write_char(')')
+    }
+    Rx(_, pattern) => {
+      // Racket's `object-name` of a regexp is its pattern string, which is what
+      // the oracle prints; the `#rx` / `#px` distinction is not part of it.
+      buf.write_string("#<rx:")
+      buf.write_char('"')
+      write_escaped(buf, pattern)
+      buf.write_char('"')
+      buf.write_char('>')
+    }
+    Other(text) => {
+      buf.write_string("#<other:")
+      write_escaped(buf, text)
+      buf.write_char('>')
     }
     Vec(xs) => {
       buf.write_string("#(")

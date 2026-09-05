@@ -24,6 +24,8 @@ pub(all) enum Datum {
   Nil
   Pair(Datum, Datum)
   Vec(Array[Datum])
+  Rx(Bool, String)
+  Other(String)
 } derive(Eq)
 pub fn Datum::canonical(Self) -> String
 pub fn Datum::of_int(Int) -> Self

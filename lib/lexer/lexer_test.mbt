@@ -339,3 +339,190 @@ test "columns count grapheme clusters and respect tabs" {
   let bar = @lexer.lex_all("  |")
   assert_eq(bar[1].column().to_display(), "2.5")
 }
+
+///|
+test "at-notation: command, arguments and text" {
+  inspect(
+    dump("@typeset(~style: bold){Write \"hello\"}"),
+    content=(
+      #|at "@"
+      #|identifier "typeset"
+      #|opener "("
+      #|keyword "~style"
+      #|block-operator ":"
+      #|whitespace " "
+      #|identifier "bold"
+      #|closer ")"
+      #|at-opener "{"
+      #|at-content "Write \"hello\""
+      #|at-closer "}"
+      #|
+    ),
+  )
+}
+
+///|
+test "at-notation: text is broken at newlines and escapes" {
+  inspect(
+    dump("@a{one @b{two}\nthree}"),
+    content=(
+      #|at "@"
+      #|identifier "a"
+      #|at-opener "{"
+      #|at-content "one "
+      #|at "@"
+      #|identifier "b"
+      #|at-opener "{"
+      #|at-content "two"
+      #|at-closer "}"
+      #|at-content "\n"
+      #|at-content "three"
+      #|at-closer "}"
+      #|
+    ),
+  )
+}
+
+///|
+test "at-notation: a longer opener carries its mirrored closer" {
+  // The point of `|<<{` is that the text can contain a plain `@` and `}`
+  // without either being taken for the escape or the closer.
+  inspect(
+    dump("@x|<<{literal @y and } here}>>|"),
+    content=(
+      #|at "@"
+      #|identifier "x"
+      #|at-opener "|<<{"
+      #|at-content "literal @y and } here"
+      #|at-closer "}>>|"
+      #|
+    ),
+  )
+}
+
+///|
+test "at-notation: balanced braces in text are literal" {
+  inspect(
+    dump("@a{x {y} z}"),
+    content=(
+      #|at "@"
+      #|identifier "a"
+      #|at-opener "{"
+      #|at-content "x {y} z"
+      #|at-closer "}"
+      #|
+    ),
+  )
+}
+
+///|
+test "at-notation: successive text arguments are one form" {
+  inspect(
+    dump("@url{a}{b}"),
+    content=(
+      #|at "@"
+      #|identifier "url"
+      #|at-opener "{"
+      #|at-content "a"
+      #|at-closer "}"
+      #|at-opener "{"
+      #|at-content "b"
+      #|at-closer "}"
+      #|
+    ),
+  )
+}
+
+///|
+test "at-notation: a dotted command needs no grouping" {
+  inspect(
+    dump("@a.b{x}"),
+    content=(
+      #|at "@"
+      #|identifier "a"
+      #|operator "."
+      #|identifier "b"
+      #|at-opener "{"
+      #|at-content "x"
+      #|at-closer "}"
+      #|
+    ),
+  )
+}
+
+///|
+test "s-expression escapes name what shrubbery cannot spell" {
+  inspect(
+    dump("#{treelist-ref} #{enabled?} ~#{name}"),
+    content=(
+      #|identifier "#{treelist-ref}"
+      #|whitespace " "
+      #|identifier "#{enabled?}"
+      #|whitespace " "
+      #|keyword "~#{name}"
+      #|
+    ),
+  )
+}
+
+///|
+test "an escape's raw text is the datum re-printed, not the source read" {
+  // `#{ foo }` has raw `#{foo}`, which is why `Token` keeps `raw` apart from
+  // `text` -- and why the total-coverage invariant still holds.
+  let toks = @lexer.lex_all("#{ foo }")
+  assert_eq(toks[0].text, "#{ foo }")
+  assert_eq(toks[0].raw_text(), "#{foo}")
+  // Racket escapes a bar inside a symbol rather than wrapping it in bars.
+  let bar = @lexer.lex_all("#{\\|>}")
+  assert_eq(bar[0].raw_text(), "#{\\|>}")
+  // And wraps in bars when the name would otherwise read as something else.
+  let num = @lexer.lex_all("#{|1|}")
+  assert_eq(num[0].raw_text(), "#{|1|}")
+}
+
+///|
+test "escapes carry literals too" {
+  inspect(
+    dump("#{#\\nul} #{#rx\"^$\"} #{#(let f)}"),
+    content=(
+      #|literal "#{#\\nul}" #\u{0}
+      #|whitespace " "
+      #|literal "#{#rx\"^$\"}" #<rx:"^$">
+      #|whitespace " "
+      #|literal "#{#(let f)}" #(|let| |f|)
+      #|
+    ),
+  )
+}
+
+///|
+test "a tilde is an operator character even though it is not an operator" {
+  inspect(
+    dump("~& x"),
+    content=(
+      #|operator "~&"
+      #|whitespace " "
+      #|identifier "x"
+      #|
+    ),
+  )
+  // Alone it is neither, and the reference calls that a read error.
+  inspect(
+    dump("~ x"),
+    content=(
+      #|fail "~"
+      #|whitespace " "
+      #|identifier "x"
+      #|
+    ),
+  )
+}
+
+///|
+test "at-notation still covers every code unit" {
+  assert_covers("@typeset{Write @bold{\"hello\"}}\n")
+  assert_covers("@x|<<{a @y }>>|\n")
+  assert_covers("@a{\n  b\n  @c{d}\n}\n")
+  assert_covers("#{ foo } ~#{bar}\n")
+  assert_covers("@//{commented}\n@// line\n  next\n")
+}

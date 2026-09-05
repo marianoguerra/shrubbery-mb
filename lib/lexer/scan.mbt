@@ -14,6 +14,10 @@ priv struct Scanner {
   mut line : Int
   mut col : @column.Column
   mut mode : LexMode
+  /// The `@` forms currently being scanned, innermost last. A stack rather than
+  /// the reference's threaded status record: nothing here needs to resume a
+  /// scan from the middle, which is the only reason that status exists.
+  at_stack : Array[AtFrame]
   variant : Variant
 }
 
@@ -74,6 +78,7 @@ fn Scanner::finish(
   end_idx : Int,
   kind : TokenKind,
   partner? : String? = None,
+  raw? : String? = None,
   mode? : LexMode = Initial,
 ) -> Token {
   let text = self.src.clamped_view(start=start.idx, end=end_idx).to_owned()
@@ -87,7 +92,7 @@ fn Scanner::finish(
     col_advance
   }
   self.mode = mode
-  { kind, text, span: { start, end: self.here(), }, partner, }
+  { kind, text, raw, span: { start, end: self.here(), }, partner, }
 }
 
 ///|
@@ -109,11 +114,19 @@ pub fn lex_all(
     line: 1,
     col: start_column,
     mode: Initial,
+    at_stack: [],
     variant,
   }
   let out = []
   while !s.at_end() {
-    out.push(s.next_token())
+    let t = s.next_token()
+    // The reference drops a zero-width `at-content`: a colouring lexer must
+    // never return a token of no extent, and the parser would have to skip
+    // them anyway. `@x{@y}` produces one between the opener and the escape.
+    if t.kind is AtContent && t.text == "" {
+      continue
+    }
+    out.push(t)
   }
   out.push(s.finish(s.here(), s.idx, EndOfInput))
   rewrite_quotes(out)
@@ -121,6 +134,25 @@ pub fn lex_all(
 
 ///|
 fn Scanner::next_token(self : Scanner) -> Token {
+  // Inside an `@` form, three of the modes read characters rather than tokens
+  // and take over completely; the rest read one ordinary token and then decide
+  // what the form does next.
+  match self.at_top() {
+    Some(frame) =>
+      match frame.mode {
+        Open => return self.at_open(frame)
+        Inside => return self.at_inside(frame)
+        Escape => return self.at_escape(frame)
+        Close => return self.at_close(frame)
+        _ => return self.after_at_token(frame, self.shrubbery_token())
+      }
+    None => ()
+  }
+  self.shrubbery_token()
+}
+
+///|
+fn Scanner::shrubbery_token(self : Scanner) -> Token {
   let start = self.here()
   let i = self.idx
   let c = match self.at(i) {
@@ -143,6 +175,7 @@ fn Scanner::next_token(self : Scanner) -> Token {
     '\\' => self.finish(start, self.step(i), ContinueOperator)
     '#' => self.scan_hash(start, i)
     '~' => self.scan_tilde(start, i)
+    '@' => self.scan_at(start, i)
     '/' =>
       if self.has(i, "//") {
         self.finish(start, self.scan_line_comment(i), Comment)
@@ -222,10 +255,18 @@ fn Scanner::scan_block_comment(
 }
 
 ///|
-/// `~name` is a keyword; a bare `~` is a failure, not an operator.
+/// `~name` is a keyword and `~#{name}` is one written in Racket's notation.
+///
+/// Anything else falls through to the ordinary path, because `~` is an operator
+/// CHARACTER even though it is not an operator by itself: `~&` is one, and
+/// stopping here would split it. Only a lone `~` is a failure, and
+/// `scan_operator` is what decides that.
 fn Scanner::scan_tilde(self : Scanner, start : @basic.Pos, from : Int) -> Token {
+  if self.has(from, "~#{") {
+    return self.scan_sexp_escape(start, from, keyword=true)
+  }
   match self.scan_plain_identifier(from + 1) {
     Some(e) => self.finish(start, e, Keyword, mode=Continuing)
-    None => self.finish(start, from + 1, Fail(ReadError))
+    None => self.scan_number_or_operator(start, from)
   }
 }

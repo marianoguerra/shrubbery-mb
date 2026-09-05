@@ -10,6 +10,9 @@ fn Scanner::scan_hash(self : Scanner, start : @basic.Pos, from : Int) -> Token {
   if self.has(from, "#\"") {
     return self.scan_byte_string(start, from)
   }
+  if self.has(from, "#{") {
+    return self.scan_sexp_escape(start, from, keyword=false)
+  }
   // `#!` opens a script line, but only when followed by a space or `/`.
   // Anything else after `#!` is an error, and the reference makes the error
   // token stop at the first whitespace.

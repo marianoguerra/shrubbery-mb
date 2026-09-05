@@ -60,7 +60,11 @@
       [(and (number? v) (exact? v) (rational? v))
        (fprintf out "~a/~a" (numerator v) (denominator v))]
       [(flonum? v) (write-string (flo->canonical v) out)]
-      [(syntax? v) (write-string "#<syntax>" out) (loop (syntax->datum v))]
+      ;; The reference reads a `#{...}` escape with `read-syntax`, so its value
+      ;; arrives wrapped in syntax objects carrying source locations. Those are
+      ;; not part of the value the notation denotes -- and are not something
+      ;; this port models -- so they are stripped before comparing.
+      [(syntax? v) (loop (syntax->datum v))]
       [(regexp? v) (fprintf out "#<rx:~a>" (escape-text (object-name v)))]
       [(null? v) (write-string "()" out)]
       [(pair? v)

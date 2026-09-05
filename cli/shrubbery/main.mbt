@@ -56,7 +56,7 @@ fn cmd_tokens(files : Array[String]) -> Unit {
       buf.write_char('\t')
       buf.write_string(t.column().to_display())
       buf.write_char('\t')
-      buf.write_string(escape_text(t.text))
+      buf.write_string(escape_text(t.raw_text()))
       buf.write_char('\t')
       match t.kind {
         Literal(d) => buf.write_string(d.canonical())

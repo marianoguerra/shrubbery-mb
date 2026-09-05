@@ -2,7 +2,7 @@ identifier	1	0	"x"	-
 block-operator	1	1	":"	-
 whitespace	1	2	"\u{a}"	-
 whitespace	2	0	"  "	-
-literal	2	2	"#{#(let f)}"	#(#<syntax>|let| #<syntax>|f|)
+literal	2	2	"#{#(let f)}"	#(|let| |f|)
 whitespace	3	11	"\u{a}"	-
 whitespace	4	0	"  "	-
 keyword	4	2	"~subst"	-
