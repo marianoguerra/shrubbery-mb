@@ -26,6 +26,7 @@ fn Parser::continue_at(
   delta : Int,
   count : Bool,
   variant : @lexer.Variant,
+  depth : Int,
 ) -> AtContinue raise @err.ShrubberyError {
   let mode = match am {
     None => return { adjust: g => g, at_mode: None, rest: start, line, delta, }
@@ -100,6 +101,7 @@ fn Parser::continue_at(
       Some(opener),
       count,
       variant,
+      depth,
     )
     let group = @ast.Node::new(Group([seq.node]), seq.node.span)
     args.push(group)
@@ -213,6 +215,7 @@ fn Parser::parse_text_sequence(
   opener_t : @lexer.Token?,
   count : Bool,
   variant : @lexer.Variant,
+  depth : Int,
 ) -> TextSequence raise @err.ShrubberyError {
   let content : Array[ContentPiece] = []
   let mut i = start
@@ -240,6 +243,9 @@ fn Parser::parse_text_sequence(
         // calling the `@` arm directly says the same thing without rewriting
         // the stream.
         let g = self.parse_at(t, i, {
+          // The body is a nesting level of its own: an `@` inside it opens
+          // another sequence on top of this one.
+          depth: depth + 1,
           count,
           line: Some(t.line()),
           column: Some(t.column()),

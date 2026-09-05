@@ -50,6 +50,7 @@ pub(all) enum ErrorKind {
   MisplacedBar
   MisplacedGuillemet
   NotOnSameLine(preceding~ : String)
+  NestingTooDeep(limit~ : Int)
   MisplacedGroupComment
   NoGroupForTermComment
   ContinuationFollowedByToken

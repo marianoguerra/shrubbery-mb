@@ -6,6 +6,9 @@ priv struct Parser {
   /// parsing continues; otherwise the first one is raised.
   diags : Array[@err.Diagnostic]
   recover : Bool
+  /// How deep the grammar may recur before it refuses. See
+  /// `default_max_depth`.
+  max_depth : Int
 }
 
 ///|

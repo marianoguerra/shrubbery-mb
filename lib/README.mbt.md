@@ -189,6 +189,19 @@ test {
 }
 ```
 
+## Limits
+
+Parsing is recursive, so nesting is bounded: past `max_depth` (64 by default)
+input is refused with `NestingTooDeep` rather than running the stack out. The
+number comes from the smallest stack this library runs on — nested blocks
+overflow the `wasm` backend between 90 and 100 levels — and not from what
+source looks like; the 610 real Rhombus modules in the corpus are nowhere near
+it. A consumer that knows its own stack can raise it.
+
+That one diagnostic is raised even under `recover=true`. Recovery means
+recording a problem and carrying on, and there is nowhere to carry on to when
+the parser cannot descend.
+
 ## Correctness
 
 Every claim above is checked against the Racket reference implementation over a

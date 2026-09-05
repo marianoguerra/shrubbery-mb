@@ -351,7 +351,11 @@ fn Scanner::after_at_token(self : Scanner, frame : AtFrame, t : Token) -> Token 
         closes(frame.openers[frame.openers.length() - 1], t.text) {
         let _ = frame.openers.pop()
       } else {
-        token = { ..t, kind: Fail(InvalidAfterAt), }
+        // The reference reads the term after an `@` through the lexer, so a closer
+        // that matches nothing is the LEXER's complaint -- a read error at the
+        // closer -- not the parser's about the `@`. `@@` is the other way round:
+        // that token lexes cleanly and is merely in the wrong place.
+        token = { ..t, kind: Fail(ReadError), }
       }
     _ => ()
   }

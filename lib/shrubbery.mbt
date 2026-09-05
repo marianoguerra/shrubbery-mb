@@ -23,8 +23,9 @@ pub fn parse(
   src : String,
   variant? : @lexer.Variant = @lexer.default_variant,
   recover? : Bool = false,
+  max_depth? : Int = @parser.default_max_depth,
 ) -> @parser.Parsed raise @err.ShrubberyError {
-  @parser.parse(src, variant~, recover~)
+  @parser.parse(src, variant~, recover~, max_depth~)
 }
 
 ///|
@@ -34,8 +35,9 @@ pub fn parse_text(
   src : String,
   variant? : @lexer.Variant = @lexer.default_variant,
   recover? : Bool = false,
+  max_depth? : Int = @parser.default_max_depth,
 ) -> @parser.Parsed raise @err.ShrubberyError {
-  @parser.parse(src, mode=Text, variant~, recover~)
+  @parser.parse(src, mode=Text, variant~, recover~, max_depth~)
 }
 
 ///|

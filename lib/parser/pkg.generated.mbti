@@ -9,9 +9,11 @@ import {
 }
 
 // Values
-pub fn parse(String, mode? : Mode, variant? : @lexer.Variant, start_column? : @column.Column, recover? : Bool) -> Parsed raise @error.ShrubberyError
+pub let default_max_depth : Int
 
-pub fn parse_tokens(Array[@lexer.Token], mode? : Mode, variant? : @lexer.Variant, recover? : Bool) -> Parsed raise @error.ShrubberyError
+pub fn parse(String, mode? : Mode, variant? : @lexer.Variant, start_column? : @column.Column, recover? : Bool, max_depth? : Int) -> Parsed raise @error.ShrubberyError
+
+pub fn parse_tokens(Array[@lexer.Token], mode? : Mode, variant? : @lexer.Variant, recover? : Bool, max_depth? : Int) -> Parsed raise @error.ShrubberyError
 
 // Errors
 

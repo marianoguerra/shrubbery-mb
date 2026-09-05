@@ -199,6 +199,8 @@ priv struct PState {
   raw : RawList
   at_mode : AtMode?
   variant : @lexer.Variant
+  /// How many sequences are open around this one. See `GState::depth`.
+  depth : Int
 }
 
 ///|
@@ -266,6 +268,12 @@ priv struct GState {
   tail_commenting : @lexer.Token?
   raw : RawList
   variant : @lexer.Variant
+  /// How many sequences are open around this one: one per bracket pair and one
+  /// per block, which is one stack frame per level in a parser that recurs
+  /// through the grammar. Bounded, so that input nested past anything a person
+  /// writes is refused with a diagnostic rather than by running out of stack --
+  /// which on the native backend is a signal, not an error a caller can catch.
+  depth : Int
 }
 
 ///|

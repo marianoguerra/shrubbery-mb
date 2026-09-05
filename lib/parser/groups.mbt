@@ -1,4 +1,24 @@
 ///|
+/// How many sequences may be open at once, by default.
+///
+/// One frame per bracket pair and per block, so this is what keeps the stack
+/// finite on input that nests without end. Two numbers decide it, and they are
+/// not close together:
+///
+///   * Real source nests nothing like this deep. The 610 Rhombus modules in
+///     the corpus come nowhere near it.
+///   * The smallest stack this library runs on does not go much further. On
+///     the `wasm` backend, nested blocks overflow somewhere between 90 and 100
+///     levels -- so the limit is not "20x what anyone writes", which would be
+///     past the point where the check could still be reached. It is a little
+///     under half of the smallest ceiling measured.
+///
+/// A consumer that knows its own stack can raise it: `parse` takes `max_depth`.
+/// Anything that nests deeper than a person would write is data rather than
+/// source, and a refusal it can catch beats a signal it cannot.
+pub let default_max_depth : Int = 64
+
+///|
 /// Parse a sequence of groups: the top level, the inside of an opener-closer
 /// pair, or the body of a block.
 ///
@@ -13,6 +33,21 @@ fn Parser::parse_groups(
 ) -> GroupsResult raise @err.ShrubberyError {
   let mut i = start
   let mut sg = sg
+  if sg.depth > self.max_depth {
+    // Refused here because this is where a new sequence begins, so it is the
+    // frame whose absence keeps the stack finite.
+    //
+    // This one raises even in recovery mode, and it is the only kind that
+    // does. Recovery means "record it and carry on", and there is nowhere to
+    // carry on TO: the parser would return to the opener it could not descend
+    // into, which has consumed nothing, and open it again. The first version
+    // of this check recovered, and turned an overflow at 5000 nested brackets
+    // into a slower overflow at 5000 nested brackets.
+    let t = self.tok(if self.at_end(i) { i - 1 } else { i })
+    let d = @err.Diagnostic::new(NestingTooDeep(limit=self.max_depth), t.span)
+    self.diags.push(d)
+    raise ShrubberyError(d)
+  }
   // The reference recurs in tail position on every arm that continues the
   // sequence; a loop here says the same thing and keeps the stack shallow on a
   // file with thousands of top-level groups.

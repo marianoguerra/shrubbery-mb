@@ -4,6 +4,14 @@ All notable changes to `marianoguerra/shrubbery-cli` are recorded here. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this module follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] — 2026-09-05
+
+### Fixed
+
+- Takes `marianoguerra/shrubbery@0.1.1`, so `check` no longer dies with a
+  signal on an `@`-notation body whose `@` has nothing valid after it. `check`
+  parses in recovery mode, which is the mode the crash was in.
+
 ## [0.1.0] — 2026-09-05
 
 First release.

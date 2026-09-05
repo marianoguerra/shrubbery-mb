@@ -119,7 +119,15 @@ fn Parser::parse_at(
       }
     }
     _ => {
-      self.fail(next_t, InvalidAfterAt)
+      // A token the LEXER already rejected reports its own error rather than a
+      // complaint about the `@`. The reference reads the term after an `@`
+      // through the lexer, so `@` immediately before a `}` is a read error at
+      // the `}`; only a token that lexed cleanly and is merely in the wrong
+      // place is "invalid after `@`".
+      match next_t.kind {
+        Fail(kind) => self.fail(next_t, kind)
+        _ => self.fail(next_t, InvalidAfterAt)
+      }
       {
         items: [],
         rest: i + 1,

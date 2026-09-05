@@ -23,6 +23,7 @@ fn Parser::parse_block(
   block_mode? : BlockMode? = None,
   can_empty? : Bool = false,
   could_empty_if_start? : Bool = false,
+  depth~ : Int,
 ) -> GroupResult raise @err.ShrubberyError {
   let (opener_t, oa) = self.next_of_opener(start, line, delta, RNil, count)
   match (t, opener_t) {
@@ -85,6 +86,7 @@ fn Parser::parse_block(
   let next_t = self.tok(a.rest)
   let content_column = next_t.column()
   let inner = self.parse_groups(a.rest, {
+    depth: depth + 1,
     count: inside_count,
     closer: match opener_t {
       Some(ot) => Delim("\u{BB}", ot)
@@ -129,6 +131,7 @@ fn Parser::parse_block(
   // what `End` mode enforces.
   let post = if used_closer {
     self.parse_group(inner.rest, {
+      depth,
       count,
       line: inner.end_line,
       column: parent_column,

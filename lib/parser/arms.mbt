@@ -17,6 +17,7 @@ fn Parser::parse_splice(
     sg.count,
   )
   let inner = self.parse_groups(b.rest, {
+    depth: sg.depth + 1,
     count: false,
     closer: Delim("\u{BB}", next_t),
     paren_immed: NotImmed,
@@ -128,6 +129,7 @@ fn Parser::parse_bar_group(
     None => sg.tail_commenting
   }
   let block = self.parse_block(
+    depth=sg.depth,
     Some(t),
     i + 1,
     count=sg.count,
@@ -208,6 +210,7 @@ fn Parser::parse_one_group(
     self.fail(t, SecondGroupAfterAt)
   }
   let g = self.parse_group(i, {
+    depth: sg.depth,
     count: sg.count,
     line: Some(line),
     column: Some(use_column),
@@ -222,6 +225,27 @@ fn Parser::parse_one_group(
     at_mode: None,
     variant: sg.variant,
   })
+  // A group that consumed nothing must not be followed by "the rest of the
+  // sequence": `parse_groups` would dispatch on the same token and arrive back
+  // here, for ever. It cannot happen while the first mistake is raised, because
+  // the mistake comes first -- but recovery mode raises nothing, so a token no
+  // arm consumes spins until the stack is gone. The way to get one is an `@`
+  // body whose closer failed to lex, which strands the body's content at group
+  // level where `AtContent` ends a group without consuming it.
+  //
+  // Handing the token back is the conservative answer: whatever opened this
+  // sequence sees it next and reports it, or the sequence ends.
+  if g.rest == i {
+    return {
+      groups: [],
+      rest: i,
+      end_line: g.end_line,
+      end_delta: g.end_delta,
+      end_token: None,
+      tail_commenting: g.tail_commenting,
+      tail_raw: pre_raw.then(g.tail_raw),
+    }
+  }
   let rest = self.parse_groups(g.rest, {
     ..sg,
     column: Some(use_column),

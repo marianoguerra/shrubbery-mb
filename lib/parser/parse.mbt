@@ -44,9 +44,10 @@ pub fn parse(
   variant? : @lexer.Variant = @lexer.default_variant,
   start_column? : @column.Column = @column.zero,
   recover? : Bool = false,
+  max_depth? : Int = default_max_depth,
 ) -> Parsed raise @err.ShrubberyError {
   let toks = @lexer.lex_all(src, variant~, start_column~)
-  parse_tokens(toks, mode~, variant~, recover~)
+  parse_tokens(toks, mode~, variant~, recover~, max_depth~)
 }
 
 ///|
@@ -59,6 +60,7 @@ pub fn parse_tokens(
   mode? : Mode = Top,
   variant? : @lexer.Variant = @lexer.default_variant,
   recover? : Bool = false,
+  max_depth? : Int = default_max_depth,
 ) -> Parsed raise @err.ShrubberyError {
   // The end-of-input token has served its purpose in the scanner; the parser
   // asks "are there tokens left?" instead, as the reference does.
@@ -68,7 +70,7 @@ pub fn parse_tokens(
       body.push(t)
     }
   }
-  let p = { toks: body, diags: [], recover, }
+  let p = { toks: body, diags: [], recover, max_depth, }
   let fallback = if body.length() > 0 {
     body[0].span
   } else {
@@ -77,6 +79,7 @@ pub fn parse_tokens(
   match mode {
     Top => {
       let result = p.parse_groups(0, {
+        depth: 0,
         count: true,
         closer: Eof,
         paren_immed: NotImmed,
@@ -107,7 +110,7 @@ pub fn parse_tokens(
       { root, diagnostics: p.diags, }
     }
     Text => {
-      let seq = p.parse_text_sequence(0, Some(1), 0, None, true, variant)
+      let seq = p.parse_text_sequence(0, Some(1), 0, None, true, variant, 0)
       { root: seq.node, diagnostics: p.diags, }
     }
   }

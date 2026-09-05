@@ -70,6 +70,7 @@ fn Parser::parse_group(
         // the "cannot start before the group's column" check applies -- the
         // column was just checked against the group's own, above.
         return self.parse_block(
+          depth=s.depth,
           None,
           use_i,
           count=s.count,
@@ -123,6 +124,7 @@ fn Parser::parse_group(
           s.column.unwrap_or(@column.zero),
         )
         return self.parse_block(
+          depth=s.depth,
           Some(t),
           i + 1,
           count=s.count,
@@ -246,6 +248,7 @@ fn Parser::keep(
     suffix_delta,
     s.count,
     s.variant,
+    s.depth,
   )
   let rest = self.parse_group(cont.rest, {
     ..s,
@@ -315,6 +318,7 @@ fn Parser::parse_alts_block(
   // how the sequence comes to have the bar's own column, and how a second `|`
   // at that column is recognised as a sibling rather than as a mistake.
   self.parse_block(
+    depth=s.depth,
     None,
     i,
     count=s.count,

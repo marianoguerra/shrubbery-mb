@@ -68,6 +68,7 @@ fn Parser::parse_opener(
     self.tok(a.rest).column()
   }
   let inner = self.parse_groups(a.rest, {
+    depth: s.depth + 1,
     count: s.count,
     closer: Delim(use_closer, t),
     paren_immed,
@@ -168,6 +169,7 @@ fn Parser::parse_opener(
     suffix_delta,
     s.count,
     s.variant,
+    s.depth,
   )
   let rest = self.parse_group(cont.rest, {
     ..s,

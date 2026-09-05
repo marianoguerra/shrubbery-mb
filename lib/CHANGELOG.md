@@ -4,6 +4,34 @@ All notable changes to `marianoguerra/shrubbery` are recorded here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 module follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] — 2026-09-05
+
+### Fixed
+
+- **Recovery could recur without consuming, which on the native backend is a
+  signal rather than an error a caller can catch.** Any failure inside an
+  `@`-notation body strands the body's own tokens at group level, where a group
+  ends without consuming them; `parse_groups` and `parse_one_group` then called
+  each other for ever. Only `recover=true` reached it, because otherwise the
+  first mistake is raised before the stranded tokens are seen. Reported from
+  three directions with three different accounts of which characters did it —
+  the character after the `@` was never the variable.
+- **An unmatched closer straight after an `@` is a read error**, at the closer,
+  which is what the reference implementation reports. It used to be "invalid
+  after `@`" at the `@`. `@@` is unchanged and still "invalid after `@`": that
+  token lexes cleanly and is merely in the wrong place.
+
+### Added
+
+- **A nesting limit.** Input nested deeper than `parse` will go is refused with
+  `NestingTooDeep`, rather than running the stack out. It is the one diagnostic
+  that is raised even under `recover=true`, because recovery means carrying on
+  and there is nowhere to carry on to. `parse` and `parse_text` take
+  `max_depth`, defaulting to `@parser.default_max_depth` (64) — chosen from the
+  smallest stack this library runs on rather than from what anyone writes: on
+  the `wasm` backend, nested blocks overflow between 90 and 100 levels. All 696
+  corpus files are far below it.
+
 ## [0.1.0] — 2026-09-05
 
 First release: a port of the Racket reference implementation of Shrubbery

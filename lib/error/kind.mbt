@@ -46,6 +46,14 @@ pub(all) enum ErrorKind {
   MisplacedBar
   MisplacedGuillemet
   NotOnSameLine(preceding~ : String)
+  // --- limits --------------------------------------------------------------
+  /// Nesting deeper than the parser will go.
+  ///
+  /// The only kind here that is not the reference's. The reference recurs
+  /// without a bound and lets the runtime decide; on a native build that
+  /// decision is a signal rather than an error, so input nested past anything
+  /// a person writes is refused with a diagnostic a caller can catch.
+  NestingTooDeep(limit~ : Int)
   // --- comments and continuations ------------------------------------------
   MisplacedGroupComment
   NoGroupForTermComment
@@ -135,6 +143,7 @@ pub fn ErrorKind::reference_text(self : ErrorKind) -> String {
     MisplacedGuillemet => "misplaced `«`"
     NotOnSameLine(preceding~) =>
       "not on the same line as preceding `\{preceding}`"
+    NestingTooDeep(limit~) => "nesting deeper than \{limit} is not supported"
     MisplacedGroupComment => "misplaced group comment"
     NoGroupForTermComment => "no group for term comment"
     // Upstream's typo, reproduced deliberately.
@@ -202,6 +211,7 @@ pub fn ErrorKind::code(self : ErrorKind) -> String {
     MisplacedBar => "misplaced_bar"
     MisplacedGuillemet => "misplaced_guillemet"
     NotOnSameLine(_) => "not_on_same_line"
+    NestingTooDeep(_) => "nesting_too_deep"
     MisplacedGroupComment => "misplaced_group_comment"
     NoGroupForTermComment => "no_group_for_term_comment"
     ContinuationFollowedByToken => "continuation_followed_by_token"
