@@ -306,3 +306,32 @@ reference-check:
 oracle-parse file:
     {{rkt}} racket -e '(require shrubbery/parse racket/pretty) \
         (pretty-write (syntax->datum (call-with-input-file "{{file}}" parse-all)))'
+
+# ---------------------------------------------------------------------------
+# Publishing to mooncakes
+# ---------------------------------------------------------------------------
+#
+# Three modules go out; the root one never does. `tools/publish.sh` is what
+# makes that structural rather than a habit -- it can only address the three
+# names, and it walks them in dependency order.
+
+# `lib` and `cli` report "pending" until their dependencies exist in the
+# registry: `moon publish` verifies the packaged zip against the registry, and
+# on a first release the dependency is not there yet.
+#
+# Show what would go to mooncakes, without sending it.
+[group('publish')]
+publish-dry:
+    tools/publish.sh --dry-run
+
+# A published version cannot be withdrawn, so the full gate runs first.
+#
+# Publish every module, in dependency order.
+[group('publish')]
+publish: ci
+    tools/publish.sh
+
+# For a follow-up release of one module, e.g. `just publish-one lib`.
+[group('publish')]
+publish-one module: ci
+    tools/publish.sh {{module}}

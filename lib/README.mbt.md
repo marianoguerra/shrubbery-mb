@@ -132,7 +132,7 @@ test {
 ```
 
 And `to_report` renders one, through
-[error-report](https://github.com/marianoguerra/shrubbery-mb):
+[error-report](https://mooncakes.io/docs/marianoguerra/error-report):
 
 ```mbt check
 ///|

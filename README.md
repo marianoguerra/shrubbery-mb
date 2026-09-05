@@ -18,9 +18,9 @@ inspection.
 
 | directory | module | what |
 |---|---|---|
-| `error-report/` | `marianoguerra/error-report` | a generic diagnostic library — data first, renderers second |
-| `lib/` | `marianoguerra/shrubbery` | the notation: lexer, parser, AST, printers |
-| `cli/` | `marianoguerra/shrubbery-cli` | the command-line tool |
+| `error-report/` | [`marianoguerra/error-report`](https://mooncakes.io/docs/marianoguerra/error-report) | a generic diagnostic library — data first, renderers second |
+| `lib/` | [`marianoguerra/shrubbery`](https://mooncakes.io/docs/marianoguerra/shrubbery) | the notation: lexer, parser, AST, printers |
+| `cli/` | [`marianoguerra/shrubbery-cli`](https://mooncakes.io/docs/marianoguerra/shrubbery-cli) | the command-line tool |
 | `.` | `marianoguerra/shrubbery-dev` | corpus, goldens and the harness; never published |
 
 `error-report/` is a guest: it has no dependencies, never names this project,
@@ -51,6 +51,13 @@ rejection cases, and 610 real Rhombus modules. All at 100%:
 
 The suite is hermetic: the corpus and the goldens are committed, so it runs with
 neither Racket nor the reference checkout present.
+
+## Installing
+
+```sh
+moon add marianoguerra/shrubbery      # the library
+moon add marianoguerra/shrubbery-cli  # the command-line tool
+```
 
 ## Status
 

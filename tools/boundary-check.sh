@@ -34,11 +34,17 @@ if grep -qE '^[[:space:]]*import[[:space:]]*\{' "$mod/moon.mod"; then
   status=1
 fi
 
-# The name check. `.mbti` files are generated and name the module itself, so
-# they are excluded; everything a human writes is in scope.
+# The name check. Two exemptions, both narrow:
+#
+#   * `.mbti` files are generated and name the module itself.
+#   * `moon.mod`'s `repository` line, which says where the source is HOSTED
+#     today. That is a packaging fact, not a dependency: this module shares a
+#     repository with its first consumer until it is spun out, and the spin-out
+#     changes that one line. Everything else a human writes is in scope.
 if grep -rniE 'shrubbery|rhombus' "$mod" \
      --include='*.mbt' --include='*.md' --include='moon.pkg' --include='moon.mod' \
-     | grep -v 'pkg.generated.mbti' >&2; then
+     | grep -v 'pkg.generated.mbti' \
+     | grep -vE '^[^:]*moon\.mod:[0-9]+:repository = ' >&2; then
   echo "boundary: error-report mentions the consumer it was extracted for" >&2
   status=1
 fi
