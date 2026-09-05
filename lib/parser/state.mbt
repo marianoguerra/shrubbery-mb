@@ -112,19 +112,59 @@ fn RawList::to_raw(self : RawList) -> @raw.Raw {
 }
 
 ///|
-
-///|
-/// `self` with `other` appended after it, both reversed.
-fn RawList::append(self : RawList, other : RawList) -> RawList {
-  // `other` comes first in source order, so it ends up deeper in the reversed
-  // list: walk `self` from its far end and cons onto `other`.
+/// Flatten, splitting at an `@` token.
+///
+/// Everything from the `@` onwards belongs to the TERM rather than to whatever
+/// encloses it -- that is the whole use the parser makes of `raw-inner-prefix`.
+/// Without the split, the `@` of an `@x` inside a group would be shifted onto
+/// the previous term's suffix and print in the wrong place.
+fn RawList::to_raw_split_at(self : RawList) -> (@raw.Raw, @raw.Raw) {
   let items = []
   let mut cur = self
   while cur is RCons(item, rest) {
     items.push(item)
     cur = rest
   }
-  let mut out = other
+  let mut before : @raw.Raw = Empty
+  let mut after : @raw.Raw = Empty
+  let mut seen_at = false
+  for i = items.length() - 1; i >= 0; i = i - 1 {
+    let piece : @raw.Raw = match items[i] {
+      RTok(t) => Str(t.raw_text())
+      RText(r) => r
+    }
+    let is_at = match items[i] {
+      RTok(t) => t.kind is At
+      _ => false
+    }
+    if is_at {
+      seen_at = true
+    }
+    if seen_at {
+      after = after.combine(piece)
+    } else {
+      before = before.combine(piece)
+    }
+  }
+  (before, after)
+}
+
+///|
+/// The two runs joined, with `self` FIRST in source order.
+///
+/// The direction is in the name because both lists are stored reversed, and
+/// getting it backwards is invisible until a comment turns up on the wrong side
+/// of the thing it was written about.
+fn RawList::then(self : RawList, later : RawList) -> RawList {
+  let items = []
+  let mut cur = later
+  while cur is RCons(item, rest) {
+    items.push(item)
+    cur = rest
+  }
+  // `items` is latest-first; consing from the far end puts them back on top of
+  // `self` in source order.
+  let mut out = self
   for i = items.length() - 1; i >= 0; i = i - 1 {
     out = RCons(items[i], out)
   }

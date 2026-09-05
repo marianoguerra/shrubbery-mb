@@ -72,7 +72,7 @@ fn Parser::parse_block(
     for x in alts {
       items.push(x)
     }
-    attach_block_raw(head, raw, RNil)
+    attach_block_raw(head, t, raw, Empty)
     return {
       items,
       rest: a.rest,
@@ -117,6 +117,13 @@ fn Parser::parse_block(
     opener_t is None {
     fail_empty()
   }
+  // Comments at the block's OWN indentation stay with it; everything else that
+  // trails belongs to whatever encloses the block, so the split has to happen
+  // BEFORE the outward tail is decided or the same comments are written twice.
+  let (outward, block_suffix) = self.keep_same_indentation_comments(
+    Some(content_column),
+    inner.tail_raw,
+  )
   let used_closer = opener_t is Some(_) || closer.is_delim()
   // After a `»` the group may take nothing more but alternatives, which is
   // what `End` mode enforces.
@@ -144,7 +151,7 @@ fn Parser::parse_block(
         end_line: inner.end_line,
         end_delta: inner.end_delta,
         tail_commenting: inner.tail_commenting,
-        tail_raw: inner.tail_raw,
+        tail_raw: outward,
       } : GroupResult)
   }
   let fallback = match t {
@@ -155,7 +162,14 @@ fn Parser::parse_block(
   let drop = inner.groups.length() == 0 && drop_empty
   let items = []
   if !drop {
-    attach_block_raw(head, raw, if used_closer { inner.tail_raw } else { RNil })
+    attach_block_raw(
+      head,
+      t,
+      raw,
+      (if used_closer { outward.to_raw() } else { Empty }).combine(
+        block_suffix.to_raw(),
+      ),
+    )
     items.push(head)
     for x in alts {
       items.push(x)
@@ -171,7 +185,7 @@ fn Parser::parse_block(
     end_delta: post.end_delta,
     tail_commenting: post.tail_commenting,
     tail_raw: if drop {
-      raw.append(post.tail_raw)
+      raw.then(post.tail_raw)
     } else {
       post.tail_raw
     },
@@ -179,8 +193,76 @@ fn Parser::parse_block(
 }
 
 ///|
-/// Give a block its opener's text as `raw` and its closer's as `tail`.
-fn attach_block_raw(block : @ast.Node, pre : RawList, tail : RawList) -> Unit {
-  block.meta.prefix = pre.to_raw().combine(block.meta.prefix)
-  block.meta.tail = block.meta.tail.combine(tail.to_raw())
+/// Split the raw that trails a block's content into the part that belongs to
+/// the block and the part that belongs to whatever encloses it.
+///
+/// A comment sitting at the block's OWN indentation is part of the block -- it
+/// reads as a note about its last group -- while one further left belongs
+/// outside. The reference notes that reversing twice here is quadratic if
+/// blocks are nested N deep with N comments after them; that is not a file
+/// anyone writes.
+fn Parser::keep_same_indentation_comments(
+  self : Parser,
+  column : @column.Column?,
+  tail : RawList,
+) -> (RawList, RawList) raise @err.ShrubberyError {
+  let col = match column {
+    Some(c) => c
+    None => return (tail, RNil)
+  }
+  // Walk from the START of the trailing run, which is the far end of this
+  // reversed list.
+  let items = []
+  let mut cur = tail
+  while cur is RCons(item, rest) {
+    items.push(item)
+    cur = rest
+  }
+  items.rev_in_place()
+  let mut split = 0
+  let mut i = 0
+  while i < items.length() {
+    match items[i] {
+      RTok(t) =>
+        if t.kind is Whitespace {
+          i = i + 1
+        } else if t.kind is Comment && self.col_eq(t, col, t.column()) {
+          i = i + 1
+          // This comment, and the whitespace that led to it, stay.
+          split = i
+        } else {
+          break
+        }
+      _ => break
+    }
+  }
+  let mut kept : RawList = RNil
+  for x in items[split:] {
+    kept = RCons(x, kept)
+  }
+  let mut suffix : RawList = RNil
+  for x in items[0:split] {
+    suffix = RCons(x, suffix)
+  }
+  (kept, suffix)
+}
+
+///|
+/// Give a block the text of the `:` or `|` that opened it, the prefix before
+/// it, and whatever trailed its content.
+fn attach_block_raw(
+  block : @ast.Node,
+  t : @lexer.Token?,
+  pre : RawList,
+  tail : @raw.Raw,
+) -> Unit {
+  match t {
+    Some(tok) => {
+      let head : @raw.Raw = Str(tok.raw_text())
+      block.meta.raw = head.combine(block.meta.raw)
+    }
+    None => ()
+  }
+  attach_prefix(block, pre)
+  block.meta.tail = block.meta.tail.combine(tail)
 }

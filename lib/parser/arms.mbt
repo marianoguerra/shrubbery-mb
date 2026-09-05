@@ -155,7 +155,7 @@ fn Parser::parse_bar_group(
     tail_commenting: block.tail_commenting,
     raw: match commenting {
       Some(_) =>
-        pre_raw.push_text(group_source(block.items)).append(block.tail_raw)
+        pre_raw.push_text(group_source(block.items)).then(block.tail_raw)
       None => block.tail_raw
     },
   })
@@ -238,7 +238,7 @@ fn Parser::parse_one_group(
     commenting: None,
     tail_commenting: g.tail_commenting,
     raw: match commenting {
-      Some(_) => pre_raw.push_text(group_source(g.items)).append(g.tail_raw)
+      Some(_) => pre_raw.push_text(group_source(g.items)).then(g.tail_raw)
       None => g.tail_raw
     },
     sequence_mode: if commenting is None && sg.sequence_mode is OneOnly {
@@ -250,8 +250,11 @@ fn Parser::parse_one_group(
   match commenting {
     Some(_) => rest
     None => {
+      // Whatever whitespace and comments led up to this group belong to the
+      // GROUP, not to its first term: the reference attaches a prefix to the
+      // enclosing group whenever the term it would otherwise land on is first.
       let meta = @raw.Meta::new()
-      meta.prefix = pre_raw.to_raw()
+      attach_meta_prefix(meta, pre_raw)
       let groups = [
         (
           { items: g.items, bar: None, span: span_over(g.items, t.span), meta, } :

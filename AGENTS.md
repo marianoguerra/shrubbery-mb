@@ -87,12 +87,21 @@ because the expectations flip as the port grows. Each bucket has a floor:
 dropping below it fails, and rising above it also fails, so that an improvement
 is recorded deliberately in a commit whose diff says what got better.
 
-Two oracles today. `tokens` compares the scanned stream; `parse` compares the
+Three oracles today. `tokens` compares the scanned stream; `parse` compares the
 parse tree AND, for a file the reference rejects, its error message — one
 comparison rather than two, so that accepting a file the reference rejects is a
-failure rather than a silence in one oracle and a pass in another. Eleven
-corpus files are skipped by the token oracle because the reference's own
-`lex-all` stops at the first failure token; the parse oracle covers them.
+failure rather than a silence in one oracle and a pass in another; `source`
+compares what we rebuild from the tree against what the reference rebuilds from
+its own. Eleven corpus files are skipped by the token oracle because the
+reference's own `lex-all` stops at the first failure token; the other two cover
+them.
+
+`source` compares against the REFERENCE's reproduction, not against the input.
+`shrubbery-syntax->string` re-prints a `#{...}` escape from the datum rather
+than from the source, so a multi-line escape comes back on one line and the
+reference does not reproduce such a file either. 623 of the 696 corpus files
+come back byte-identical to the input, and that is exactly the set the reference
+manages too.
 
 ## Conventions
 
@@ -135,10 +144,18 @@ corpus files are skipped by the token oracle because the reference's own
 - **Identifiers admit emoji sequences**, including ZWJ sequences, and
   single-codepoint emoji are *excluded* from operator characters.
 - **Raw-text metadata is nine properties** whose field order is emission order.
-  A bug in the final `normalize_group_raw` pass breaks round-tripping without
-  breaking parsing, and often without changing the concatenation either — which
-  is why it is checked node by node against the reference and not only by byte
-  equality of the whole file.
+  `normalize_group_raw` moves text between adjacent nodes and never adds or
+  drops any, so source reproduction is exact with or without it; what it fixes
+  is WHERE the text sits, which is what a consumer reading one node's metadata
+  sees.
+- **A trimmed text piece keeps its ORIGINAL text as raw.** In an indented `@`
+  body the datum is the line without its shared indentation and the raw is the
+  line as written. Keeping only one of them either changes what the text says or
+  makes the source unreconstructable.
+- **The harness reads the port's output as BYTES.** Python's `text=True` turns
+  on universal newlines, which rewrites a bare `\r` to `\n` — and shrubbery
+  treats a bare `\r` as a line terminator, so it appears inside the very text
+  being compared.
 - **Numeric literals stay raw strings** through the front end. Parsing them
   early would break round-tripping.
 - **`parse_alts_block` does not consume its `|`.** The block's group sequence

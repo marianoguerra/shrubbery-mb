@@ -1,0 +1,115 @@
+#//
+gone:
+  sub
+here:
+  sub
+
+block:
+#//
+  gone
+  here
+
+block:
+  #// gone
+  here
+
+(#// gone,
+ here)
+(#// gone:
+  too,
+ here)
+(#//
+ gone,
+ here)
+(here,
+ #//
+ gone)
+(here,
+#//
+ gone)
+(here,
+ #// gone)
+
+cond
+| #// gone
+  here
+cond
+| 
+  #// gone
+  here
+cond
+| 
+  #//
+  gone
+  here
+| 
+#//
+  gone
+  here
+
+cond #// | gone | here
+cond | here #// | gone
+cond #// | gone
+         | here
+cond | #// gone; here | here
+
+{
+  hello:
+    val x: f(1, 2 + 3)
+    match x
+    | 1: 'one'
+    | 2: 'two'
+}
+
+{
+  hello:
+    val x:
+      #//
+      g(-1)
+      f(
+        #//
+        0,
+        1,
+        2 + 3,
+        #//
+        4 + 5)
+    #//
+    not included in the code
+    match x
+    #//
+    | 0: no
+    | 1: 'one'
+    #//
+    | 1.5: no
+    | 2: 'two'
+    #//
+    | 3: no,
+  #//
+  goodbye:
+    the enclosing group of the block is commented out
+}
+
+{
+  hello:
+    val x:
+      #// g(-1)
+      f(#// 0, 1, 2 + 3, #// 4 + 5)
+    #// not included in the code
+    match x #// | 0: no | 1: 'one' #// | 1.5: no
+                | 2: 'two' #// | 3: no,
+  #// goodbye:
+    the enclosing group of the block is commented out
+}
+
+alone
+#//
+| only alt gone
+
+alone
+#//
+| first alt gone
+#//
+| second alt gone
+
+(#// | gone, ok)
+(alone #// | gone, ok)

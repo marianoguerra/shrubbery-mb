@@ -123,6 +123,7 @@ ci:
     moon build --target native
     tools/shrubdiff.py tokens --show 0
     tools/shrubdiff.py parse --show 0
+    tools/shrubdiff.py source --show 0
 
 # ---------------------------------------------------------------------------
 # The differential suite -- the project's real correctness gate
@@ -145,6 +146,7 @@ diff-tokens *args: build
 diff-only pattern: build
     {{diff}} tokens --filter {{pattern}} --show 3
     {{diff}} parse --filter {{pattern}} --show 3
+    {{diff}} source --filter {{pattern}} --show 3
 
 # The inner loop when the port rejects something the reference accepts.
 #
@@ -162,9 +164,20 @@ explain file: build
 diff-parse *args: build
     {{diff}} parse --show 0 {{args}}
 
+# The strongest single claim in the suite: what we rebuild from the tree is
+# what the REFERENCE rebuilds from its own. Not what the input said --
+# `shrubbery-syntax->string` re-prints a `#{...}` escape from the datum, so a
+# multi-line escape comes back on one line and the reference does not reproduce
+# such a file either.
+#
+# Compare the source rebuilt from the tree against the reference's.
+[group('diff')]
+diff-source *args: build
+    {{diff}} source --show 0 {{args}}
+
 # Everything hermetic that gates.
 [group('diff')]
-diff: diff-tokens diff-parse
+diff: diff-tokens diff-parse diff-source
 
 # ---------------------------------------------------------------------------
 # Regenerating committed artifacts (needs Racket; never in CI)

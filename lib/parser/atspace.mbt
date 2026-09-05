@@ -1,16 +1,20 @@
 ///|
 /// One piece of a text body, while whitespace is being adjusted.
 priv struct TextPiece {
+  /// The text the piece DENOTES, after trimming.
   mut text : String
+  /// The source text it ACCOUNTS FOR, which trimming does not touch.
+  ///
+  /// These come apart on every line of an indented `@` body: the datum is the
+  /// line without its shared indentation, and the raw is the line as written.
+  /// Keeping only one of them would either change what the text says or make
+  /// the source unreconstructable.
+  raw : @raw.Raw
   /// The port column where this piece starts, which is what makes the shared
   /// indentation of the FIRST line -- the one that shares a line with the
   /// opener -- comparable to the rest.
   col0 : Int
   span : @basic.Span
-  /// True for whitespace this pass put back after de-indenting. The reference
-  /// gives such a piece an empty raw property, because its text was already
-  /// accounted for by the piece it was split from.
-  synthetic : Bool
 }
 
 ///|
@@ -68,9 +72,9 @@ fn adjust_content_space(
       CText(t) =>
         PText({
           text: t.text,
+          raw: Str(t.raw_text()),
           col0: t.span.start.col0,
           span: t.span,
-          synthetic: false,
         })
       CComment(r) => PComment(r)
       CGroup(n) => PGroup(n)
@@ -97,7 +101,7 @@ fn adjust_content_space(
 ///|
 fn raw_of(p : Piece?) -> @raw.Raw {
   match p {
-    Some(PText(t)) => Str(t.text)
+    Some(PText(t)) => t.raw
     Some(PComment(r)) => r
     _ => Empty
   }
@@ -125,6 +129,8 @@ fn remove_trailing_spaces(pieces : Array[Piece]) -> Unit {
             }
           }
           if end < p.text.length() {
+            // Only the datum is trimmed; the raw still accounts for the
+            // whitespace that was written.
             p.text = p.text.clamped_view(end~).to_owned()
           }
         }
@@ -259,26 +265,27 @@ fn trim_shared_column(
           out.push(
             PText({
               text: " ".repeat(add_back),
+              // When the line had content, this whitespace is already part of
+              // that content's raw and must not be counted twice; when the line
+              // was nothing BUT indentation, this piece is all that is left to
+              // carry it.
+              raw: if dropped {
+                t.raw
+              } else {
+                Empty
+              },
               col0: t.col0,
               span: t.span,
-              // Its text is part of the piece it was split from, so it must not
-              // be counted twice when the source is rebuilt.
-              synthetic: !dropped,
             }),
           )
         } else if dropped {
           // A line that was nothing but shared indentation leaves its text
           // behind as a comment, so the source can still be rebuilt.
-          out.push(PComment(Str(t.text)))
+          out.push(PComment(t.raw))
         }
         if !dropped {
           out.push(
-            PText({
-              text: rest,
-              col0: t.col0 + n,
-              span: t.span,
-              synthetic: false,
-            }),
+            PText({ text: rest, raw: t.raw, col0: t.col0 + n, span: t.span, }),
           )
         }
         saw_nl = false
@@ -303,7 +310,7 @@ fn convert_content(pieces : Array[Piece]) -> (Array[@ast.Node], @raw.Raw) {
       PComment(r) => pending = pending.combine(r)
       PText(t) => {
         let leaf = @ast.Node::new(Lit(Str(t.text)), t.span)
-        leaf.meta.raw = if t.synthetic { Empty } else { Str(t.text) }
+        leaf.meta.raw = t.raw
         let node = @ast.Node::new(Group([leaf]), t.span)
         node.meta.prefix = pending
         pending = Empty

@@ -1,0 +1,15 @@
+
+'apple'
+'apple + banana'
+'apple; banana'
+'apple
+ banana'
+':
+   apple
+   banana'
+'(a)'
+'(a 'nested' b)'
+'«a 'nested' b»'
+'  « a 'nested' b »  '
+' /* x */ « a 'nested' b » 
+ '

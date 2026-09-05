@@ -125,16 +125,26 @@ fn Parser::continue_at(
         // The argument list is already there -- `@f(a){b}` -- so the text
         // becomes one MORE argument in it rather than a second parenthesised
         // group beside it.
+        //
+        // Its raw text has to be taken apart to match: the `(` becomes the new
+        // node's prefix and the `)` moves onto the FIRST text argument, so that
+        // `@f(a){b}` still prints its closer where it was written rather than
+        // after the braces.
         let existing = g[0]
         let combined = existing.children()
         for a in args {
           combined.push(a)
         }
-        let node = @ast.Node::new(
-          Parens(combined),
-          existing.span,
-          meta=existing.meta,
-        )
+        if args.length() > 0 {
+          let first = args[0]
+          first.meta.prefix = existing.meta.tail
+            .combine(existing.meta.suffix)
+            .combine(first.meta.prefix)
+        }
+        let node = @ast.Node::new(Parens(combined), existing.span)
+        node.meta.prefix = existing.meta.prefix
+          .combine(existing.meta.inner_prefix)
+          .combine(existing.meta.raw)
         let out = [node]
         for x in g[1:] {
           out.push(x)
@@ -245,8 +255,10 @@ fn Parser::parse_text_sequence(
           variant,
         })
         if comment {
-          let head : @raw.Raw = Str(t.raw_text())
-          content.push(CComment(head.combine(group_source(g.items))))
+          // The `@//` is already inside the group: `keep` made it the element's
+          // own raw, and folding a call's operator into its argument list put
+          // it in front of them. Prepending it again would print it twice.
+          content.push(CComment(group_source(g.items)))
         } else {
           content.push(
             CGroup(@ast.Node::new(Group(g.items), span_over(g.items, t.span))),
@@ -276,10 +288,18 @@ fn Parser::parse_text_sequence(
     Some(o) => node.meta.raw = Str(o.raw_text())
     None => ()
   }
-  node.meta.tail = match closer {
-    Some(c) => prefix_raw.combine(suffix_raw).combine(Str(c.raw_text()))
-    None => prefix_raw.combine(suffix_raw)
+  // The whitespace the conversion took off the FRONT belongs in front of the
+  // first piece of content, not at the end of the body. With no content left
+  // there is nowhere else for it to go, so it joins the tail.
+  if pieces.length() > 0 {
+    pieces[0].meta.prefix = prefix_raw.combine(pieces[0].meta.prefix)
   }
+  let lead : @raw.Raw = if pieces.length() > 0 { Empty } else { prefix_raw }
+  let closer_raw : @raw.Raw = match closer {
+    Some(c) => Str(c.raw_text())
+    None => Empty
+  }
+  node.meta.tail = lead.combine(suffix_raw).combine(closer_raw)
   let end_line = match closer {
     Some(c) => Some(c.line())
     None => cur_line
@@ -343,8 +363,18 @@ fn Parser::splice_at(
   }
   if out.length() > 0 {
     out[0].meta.prefix = at_node.meta.prefix
+      .combine(at_node.meta.inner_prefix)
       .combine(at_node.meta.raw)
       .combine(out[0].meta.prefix)
   }
-  (out, tail_raw)
+  // The `»` and whatever followed it: onto the term after the splice if there
+  // is one, and otherwise into the raw the caller carries forward.
+  let closing = at_node.meta.tail.combine(at_node.meta.suffix)
+  if rest.length() > 0 {
+    rest[0].meta.prefix = closing.combine(rest[0].meta.prefix)
+    (out, tail_raw)
+  } else {
+    // The closer comes BEFORE whatever else was trailing, not after it.
+    (out, RNil.push_text(closing).then(tail_raw))
+  }
 }

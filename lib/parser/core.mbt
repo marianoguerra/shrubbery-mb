@@ -48,6 +48,20 @@ fn strip_tilde(t : @lexer.Token) -> String {
 }
 
 ///|
+/// Give `node` the prefix in `pre`, keeping anything from an `@` onwards as the
+/// inner prefix.
+fn attach_prefix(node : @ast.Node, pre : RawList) -> Unit {
+  attach_meta_prefix(node.meta, pre)
+}
+
+///|
+fn attach_meta_prefix(meta : @raw.Meta, pre : RawList) -> Unit {
+  let (before, inner) = pre.to_raw_split_at()
+  meta.prefix = before.combine(meta.prefix)
+  meta.inner_prefix = inner.combine(meta.inner_prefix)
+}
+
+///|
 /// Turn the pending groups into finished ones.
 fn to_group_nodes(gs : Array[PendingGroup]) -> Array[@ast.Node] {
   gs.map(g => {

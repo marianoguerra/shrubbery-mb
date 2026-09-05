@@ -192,7 +192,7 @@ fn Parser::parse_opener(
     },
     span_of(t, end_t),
   )
-  node.meta.prefix = pre_raw.to_raw()
+  attach_prefix(node, pre_raw)
   node.meta.raw = Str(t.raw_text())
   node.meta.tail = group_tail_raw.to_raw()
   node.meta.suffix = suffix_raw.to_raw()

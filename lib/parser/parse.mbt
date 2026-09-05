@@ -103,6 +103,7 @@ pub fn parse_tokens(
       let items = bars_insert_alts(result.groups, fallback)
       let root = @ast.Node::new(Multi(items), span_over(items, fallback))
       root.meta.suffix = result.tail_raw.to_raw()
+      normalize_group_raw(root)
       { root, diagnostics: p.diags, }
     }
     Text => {

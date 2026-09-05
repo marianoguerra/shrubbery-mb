@@ -59,17 +59,27 @@ def run_impl(command, files):
     """
     if not IMPL.exists():
         sys.exit(f"missing {IMPL}; run `just build`")
+    # Bytes, not text: `text=True` turns on universal newlines, which rewrites
+    # a bare carriage return to a linefeed. Shrubbery treats a bare `\r` as a
+    # line terminator, so it appears inside the very text being compared, and
+    # the translation turns an exact reproduction into a difference.
     proc = subprocess.run(
         [str(IMPL), command] + [str(f) for f in files],
         capture_output=True,
-        text=True,
     )
     if proc.returncode != 0:
-        sys.exit(f"{IMPL} failed:\n{proc.stderr}")
+        sys.exit(f"{IMPL} failed:\n{proc.stderr.decode()}")
+    # Split on "\n" and nothing else. `splitlines` also breaks on a bare
+    # carriage return, which shrubbery treats as a line terminator and which
+    # therefore appears inside the very text being compared -- splitting there
+    # silently deletes it and turns an exact reproduction into a difference.
     sections = {}
     current = None
     lines = []
-    for line in proc.stdout.splitlines():
+    raw = proc.stdout.decode("utf-8")
+    if raw.endswith("\n"):
+        raw = raw[:-1]
+    for line in raw.split("\n"):
         if line.startswith("==== "):
             if current is not None:
                 sections[current] = "\n".join(lines) + ("\n" if lines else "")
@@ -163,6 +173,52 @@ def compare(oracle, index_name, suffix, args, what, skip=frozenset()):
     return files, passed, failures, skipped
 
 
+def cmd_source(args):
+    """What we rebuild from the tree must equal what the REFERENCE rebuilds.
+
+    Not what the input said. `shrubbery-syntax->string` re-prints a `#{...}`
+    escape from the datum rather than from the source, so a multi-line escape
+    comes back on one line and the reference does not reproduce such a file
+    either. Comparing against the input would make that a failure of the port;
+    comparing against the reference makes it what it is -- agreement.
+
+    The count of files that come back byte-identical to the INPUT is reported
+    alongside, because that is the number a consumer actually cares about.
+    """
+    index = read_index("source.index")
+    files = corpus_files(args.filter)
+    if not files:
+        sys.exit("no corpus files matched")
+    sections = run_impl("source", files)
+    passed, failures, skipped, exact = 0, [], 0, 0
+    for path in files:
+        rel = str(path.relative_to(CORPUS))
+        got = sections.get(str(path), "")
+        if got.startswith("!error"):
+            body = "!error\n"
+        elif got.startswith("<<<<\n") and "\x00" in got:
+            body = got[len("<<<<\n"):]
+            body = body[: body.rindex("\x00")]
+        else:
+            failures.append((rel, "malformed output from the port", None))
+            continue
+        want_digest = index.get(rel)
+        if want_digest is None:
+            failures.append((rel, "not in the golden index", None))
+            continue
+        if body == path.read_text():
+            exact += 1
+        if hashlib.sha1(body.encode()).hexdigest() == want_digest:
+            passed += 1
+            continue
+        full = GOLDEN / Path(rel).with_suffix(".source")
+        detail = unified(full.read_text(), body, rel) if full.exists() else None
+        failures.append((rel, "rebuilt source differs", detail))
+    status = report("source", files, passed, failures, skipped, args)
+    print(f"source: {exact}/{len(files)} come back byte-identical to the input")
+    return status
+
+
 def cmd_parse(args):
     files, passed, failures, skipped = compare(
         "parse", "parse.index", ".sexp", args, "parse trees differ"
@@ -225,6 +281,7 @@ def main():
     for name, fn, help_text in (
         ("tokens", cmd_tokens, "compare token streams"),
         ("parse", cmd_parse, "compare parse trees, and the errors for files that are rejected"),
+        ("source", cmd_source, "compare the source rebuilt from the tree against the reference's"),
     ):
         sp = sub.add_parser(name, help=help_text)
         sp.add_argument("--filter", help="only paths containing this substring")

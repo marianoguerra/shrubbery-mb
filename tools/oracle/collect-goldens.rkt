@@ -44,6 +44,7 @@
   (define failed '())
   (define hashes '())
   (define parse-hashes '())
+  (define source-hashes '())
   (for ([p (in-list files)])
     (define rel (path->string (find-relative-path (path->complete-path corpus)
                                                   (path->complete-path p))))
@@ -73,7 +74,15 @@
       (define pout (build-path golden (path-replace-extension rel #".sexp")))
       (make-directory* (path-only pout))
       (call-with-output-file pout #:exists 'replace
-        (lambda (o) (write-string ptext o)))))
+        (lambda (o) (write-string ptext o))))
+    ;; And what it reproduces from that parse.
+    (define stext (dump-source (source-of p)))
+    (set! source-hashes (cons (cons rel (sha1 (open-input-string stext))) source-hashes))
+    (when (full-golden? rel)
+      (define sout (build-path golden (path-replace-extension rel #".source")))
+      (make-directory* (path-only sout))
+      (call-with-output-file sout #:exists 'replace
+        (lambda (o) (write-string stext o)))))
   (make-directory* golden)
   (call-with-output-file (build-path golden "tokens.index") #:exists 'replace
     (lambda (o)
@@ -86,6 +95,12 @@
       (fprintf o "# sha1 of the reference's parse, one line per corpus file.\n")
       (fprintf o "# Regenerate with `just goldens`; a diff here is a behaviour change.\n")
       (for ([h (in-list (sort (reverse parse-hashes) string<? #:key car))])
+        (fprintf o "~a  ~a\n" (cdr h) (car h)))))
+  (call-with-output-file (build-path golden "source.index") #:exists 'replace
+    (lambda (o)
+      (fprintf o "# sha1 of what the reference reproduces from its own parse.\n")
+      (fprintf o "# Regenerate with `just goldens`; a diff here is a behaviour change.\n")
+      (for ([h (in-list (sort (reverse source-hashes) string<? #:key car))])
         (fprintf o "~a  ~a\n" (cdr h) (car h)))))
   (call-with-output-file (build-path golden "lex-failures.txt") #:exists 'replace
     (lambda (o)

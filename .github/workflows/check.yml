@@ -55,3 +55,4 @@ jobs:
           moon build --target native
           tools/shrubdiff.py tokens --show 0
           tools/shrubdiff.py parse --show 0
+          tools/shrubdiff.py source --show 0

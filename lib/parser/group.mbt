@@ -258,8 +258,8 @@ fn Parser::keep(
     at_mode: cont.at_mode,
   })
   let elem = leaf_of(t)
-  elem.meta.prefix = s.raw.to_raw()
-  elem.meta.suffix = suffix_raw.to_raw()
+  attach_prefix(elem, s.raw)
+  elem.meta.suffix = elem.meta.suffix.combine(suffix_raw.to_raw())
   let items = [elem]
   for x in rest.items {
     items.push(x)

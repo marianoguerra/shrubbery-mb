@@ -136,3 +136,53 @@ test "an s-expression escape is an ordinary term" {
     content="(multi (group |treelist-ref| (parens (group |x|))))",
   )
 }
+
+///|
+/// Parse and rebuild.
+fn rt(src : String) -> String raise {
+  @parser.parse(src).root().to_source()
+}
+
+///|
+test "the source rebuilds from the tree" {
+  // Every byte, including the parts the tree does not otherwise record:
+  // whitespace, comments, the `:` that opened a block, the closer of a paren.
+  for
+    src in [
+      "x + y\n", "hello:\n  world\n  universe\n", "f(1, 2)\n", "a\n| b\n| c\n", "'a ('nested') b'\n",
+      "x /* between */ y // after\n", "this is \\\nthe first group\n", "#// a\nb\n",
+      "hello:« if x |« world; planet » |« universe »»\n", "@typeset{Write @bold{\"hi\"}}\n",
+      "@f(a){b}{c}\n", "\n\n  leading and trailing\n\n",
+    ] {
+    assert_eq(rt(src), src)
+  }
+}
+
+///|
+test "a comment stays with what it was written about" {
+  // The trailing comment belongs to the block it is indented with, not to the
+  // group that follows it -- which is what `keep_same_indentation_comments`
+  // decides and what makes the rebuild put it back in the right place.
+  assert_eq(
+    rt("begin:\n 1+2\n // sticks\n\nnext\n"),
+    "begin:\n 1+2\n // sticks\n\nnext\n",
+  )
+}
+
+///|
+test "de-indented text keeps the text it was written with" {
+  // The datum is the line without its shared indentation; the raw is the line
+  // as written. Keeping only one would either change what the text says or
+  // make the source unreconstructable.
+  let src =
+    #|@a{
+    #|   one
+    #|   two
+    #|}
+    #|
+  assert_eq(rt(src), src)
+  inspect(
+    p(src),
+    content="(multi (group |a| (parens (group (brackets (group \"one\") (group \"\\u{a}\") (group \"two\"))))))",
+  )
+}

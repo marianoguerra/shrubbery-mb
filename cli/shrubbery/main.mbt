@@ -16,6 +16,7 @@ fn main {
     "tokens" => cmd_tokens(args[2:].to_owned())
     "parse" => cmd_parse(args[2:].to_owned())
     "check" => cmd_check(args[2:].to_owned())
+    "source" => cmd_source(args[2:].to_owned())
     "help" | "--help" | "-h" => usage()
     other => {
       println("shrubbery: unknown command '\{other}'")
@@ -33,6 +34,7 @@ fn usage() -> Unit {
   println("  parse    dump the parse tree in canonical form, or")
   println("           `!error <message>` for a file that is rejected")
   println("  check    parse and report any problem, with the source shown")
+  println("  source   rebuild the source from the parse tree's metadata")
 }
 
 ///|
@@ -155,4 +157,39 @@ fn cmd_check(files : Array[String]) -> Unit {
   if !bad {
     println("ok")
   }
+}
+
+///|
+/// Rebuild the source from the tree, and print it.
+///
+/// The round-trip oracle: this must equal the input byte for byte, which is a
+/// property rather than a golden — no reference run is needed to check it, and
+/// it covers every piece of raw-text metadata at once. A file is printed
+/// between `<<<<` and `>>>>` markers so that trailing whitespace survives the
+/// harness reading it back.
+fn cmd_source(files : Array[String]) -> Unit {
+  for path in files {
+    println("==== \{path}")
+    let src = @fs.read_file_to_string(path) catch {
+      _ => {
+        println("!!!! cannot read")
+        continue
+      }
+    }
+    let rebuilt = @parser.parse(src).root().to_source() catch {
+        _ => {
+          println("!error")
+          continue
+        }
+      }
+    println("<<<<")
+    print_raw(rebuilt)
+    println(">>>>")
+  }
+}
+
+///|
+/// Write text with no trailing newline of our own.
+fn print_raw(s : String) -> Unit {
+  println(s + "\u{0}")
 }

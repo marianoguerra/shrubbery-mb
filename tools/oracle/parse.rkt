@@ -7,10 +7,10 @@
 ;; A file the reference rejects prints `!error <message>` instead, so that the
 ;; error oracle and the parse oracle can share one golden.
 (require racket/file racket/string racket/port
-         shrubbery/parse
+         shrubbery/parse shrubbery/print
          "canonical.rkt")
 
-(provide dump-parse)
+(provide dump-parse dump-source)
 
 (define tags '(multi group block alts parens brackets braces quotes))
 
@@ -56,3 +56,19 @@
     (eprintf "usage: parse.rkt FILE\n")
     (exit 1))
   (display (dump-parse (file->string (vector-ref args 0)))))
+
+;; What the reference reproduces from its own parse.
+;;
+;; NOT the input: `shrubbery-syntax->string` re-prints a `#{...}` escape from
+;; the datum rather than from the source, so a multi-line escape comes back on
+;; one line and the reference does not reproduce such a file either. Comparing
+;; against the input would make that a failure of the port; comparing against
+;; the reference makes it what it is -- agreement.
+(define (dump-source src)
+  (define out (open-output-string))
+  (with-handlers ([exn:fail? (lambda (e) (write-string "!error\n" out))])
+    (define in (open-input-string src))
+    (port-count-lines! in)
+    (define stx (parse-all in))
+    (write-string (shrubbery-syntax->string stx #:keep-prefix? #t #:keep-suffix? #t) out))
+  (get-output-string out))
