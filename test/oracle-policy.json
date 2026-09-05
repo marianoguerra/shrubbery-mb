@@ -25,5 +25,11 @@
     "rhm": 610,
     "spec": 12,
     "tabs": 8
+  },
+  "print": {
+    "fail": 66,
+    "rhm": 610,
+    "spec": 12,
+    "tabs": 8
   }
 }

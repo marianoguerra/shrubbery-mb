@@ -1,0 +1,14 @@
+import {
+  "marianoguerra/shrubbery/ast",
+  "marianoguerra/shrubbery/doc",
+  "marianoguerra/shrubbery/sexp",
+  "marianoguerra/shrubbery/unicode",
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/double",
+}
+
+import {
+  "marianoguerra/shrubbery/write",
+  "marianoguerra/shrubbery/parser",
+  "moonbitlang/core/test",
+} for "test"

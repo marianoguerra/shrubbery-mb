@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/doc"
+
+// Values
+pub let empty : Doc
+
+pub fn join(Array[Doc], Doc) -> Doc
+
+pub fn render(Doc, StringBuilder, width? : Int?, column? : Int, indent? : Int) -> Int
+
+pub fn render_string(Doc, width? : Int?, column? : Int, indent? : Int) -> String
+
+pub fn seq(Array[Doc]) -> Doc
+
+// Errors
+
+// Types and methods
+pub(all) enum Doc {
+  Str(String)
+  Nl
+  Seq(Array[Doc])
+  Nest(Int, Doc)
+  Align(Doc)
+  Or(Doc, Doc)
+}
+pub fn Doc::to_sexpr(Self) -> String
+pub fn Doc::write_sexpr(Self, StringBuilder) -> Unit
+
+// Type aliases
+
+// Traits

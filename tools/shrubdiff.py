@@ -219,6 +219,13 @@ def cmd_source(args):
     return status
 
 
+def cmd_print(args):
+    files, passed, failures, skipped = compare(
+        "print", "print.index", ".print", args, "printed output differs"
+    )
+    return report("print", files, passed, failures, skipped, args)
+
+
 def cmd_parse(args):
     files, passed, failures, skipped = compare(
         "parse", "parse.index", ".sexp", args, "parse trees differ"
@@ -282,6 +289,7 @@ def main():
         ("tokens", cmd_tokens, "compare token streams"),
         ("parse", cmd_parse, "compare parse trees, and the errors for files that are rejected"),
         ("source", cmd_source, "compare the source rebuilt from the tree against the reference's"),
+        ("print", cmd_print, "compare re-formatted output in all eleven layout modes"),
     ):
         sp = sub.add_parser(name, help=help_text)
         sp.add_argument("--filter", help="only paths containing this substring")

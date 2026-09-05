@@ -1,0 +1,11 @@
+flat	a:« b; + c »
+pretty	a: b; + c
+pretty-0	a:\n  b\n  + c
+pretty-40	a: b; + c
+armor	a:« b; + c »
+armor-0	;«\n  a:«\n    b;\n    + c\n  »\n»
+armor-40	a:« b; + c »
+multi	a:\n  b\n  + c
+multi-0	a:\n  b\n  + c
+multi-40	a:\n  b\n  + c
+pretty-120	a: b; + c

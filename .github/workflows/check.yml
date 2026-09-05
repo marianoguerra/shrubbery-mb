@@ -56,3 +56,4 @@ jobs:
           tools/shrubdiff.py tokens --show 0
           tools/shrubdiff.py parse --show 0
           tools/shrubdiff.py source --show 0
+          tools/shrubdiff.py print --show 0

@@ -17,6 +17,8 @@ fn main {
     "parse" => cmd_parse(args[2:].to_owned())
     "check" => cmd_check(args[2:].to_owned())
     "source" => cmd_source(args[2:].to_owned())
+    "print" => cmd_print(args[2:].to_owned())
+    "doc" => cmd_doc(args[2:].to_owned())
     "help" | "--help" | "-h" => usage()
     other => {
       println("shrubbery: unknown command '\{other}'")
@@ -35,6 +37,9 @@ fn usage() -> Unit {
   println("           `!error <message>` for a file that is rejected")
   println("  check    parse and report any problem, with the source shown")
   println("  source   rebuild the source from the parse tree's metadata")
+  println("  print    re-format the tree in every layout mode")
+  println("  doc      dump the layout document, for comparing with the")
+  println("           reference's own")
 }
 
 ///|
@@ -192,4 +197,103 @@ fn cmd_source(files : Array[String]) -> Unit {
 /// Write text with no trailing newline of our own.
 fn print_raw(s : String) -> Unit {
   println(s + "\u{0}")
+}
+
+///|
+/// The eleven layout modes, in the order the reference's own suite runs them.
+///
+/// One record per mode, newlines escaped, so that a record is a line and a
+/// divergence names the mode it happened in.
+let print_modes : Array[(String, @write.Style, Int?)] = [
+  ("flat", Flat, None),
+  ("pretty", Pretty, None),
+  ("pretty-0", Pretty, Some(0)),
+  ("pretty-40", Pretty, Some(40)),
+  ("armor", Armoured, None),
+  ("armor-0", Armoured, Some(0)),
+  ("armor-40", Armoured, Some(40)),
+  ("multi", PreferMultiline, None),
+  ("multi-0", PreferMultiline, Some(0)),
+  ("multi-40", PreferMultiline, Some(40)),
+  ("pretty-120", Pretty, Some(120)),
+]
+
+///|
+fn cmd_print(files : Array[String]) -> Unit {
+  for path in files {
+    println("==== \{path}")
+    let src = @fs.read_file_to_string(path) catch {
+      _ => {
+        println("!!!! cannot read")
+        continue
+      }
+    }
+    let root = @parser.parse(src).root() catch {
+      _ => {
+        println("!error")
+        continue
+      }
+    }
+    let buf = StringBuilder()
+    for m in print_modes {
+      let (name, style, width) = m
+      buf.write_string(name)
+      buf.write_char('\t')
+      escape_lines(buf, @write.write(root, style~, width~))
+      buf.write_char('\n')
+    }
+    print_block(buf.to_string())
+  }
+}
+
+///|
+fn escape_lines(buf : StringBuilder, s : String) -> Unit {
+  for c in s {
+    match c {
+      '\n' => buf.write_string("\\n")
+      '\r' => buf.write_string("\\r")
+      '\t' => buf.write_string("\\t")
+      '\\' => buf.write_string("\\\\")
+      _ => buf.write_char(c)
+    }
+  }
+}
+
+///|
+fn print_block(s : String) -> Unit {
+  println(s.trim_end(chars="\n"))
+}
+
+///|
+/// Dump the layout document rather than a layout of it.
+///
+/// The debugging tool for the printer: it separates a layout disagreement --
+/// the renderer chose differently -- from a construction disagreement, where
+/// the two documents were never the same to begin with.
+fn cmd_doc(args : Array[String]) -> Unit {
+  if args.length() < 2 {
+    println("usage: shrubbery doc <pretty|armor|multi> FILE")
+    return
+  }
+  let style : @write.Style = match args[0] {
+    "armor" => Armoured
+    "multi" => PreferMultiline
+    _ => Pretty
+  }
+  for path in args[1:] {
+    println("==== \{path}")
+    let src = @fs.read_file_to_string(path) catch {
+      _ => {
+        println("!!!! cannot read")
+        continue
+      }
+    }
+    let root = @parser.parse(src).root() catch {
+      _ => {
+        println("!error")
+        continue
+      }
+    }
+    println(@write.to_doc(root, style~).to_sexpr())
+  }
 }

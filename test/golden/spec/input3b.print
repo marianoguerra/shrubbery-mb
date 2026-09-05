@@ -1,0 +1,11 @@
+flat	x:« #{#(let f)}; ~subst »; x (y, z)
+pretty	x:« #{#(let f)}; ~subst »; x (y, z)
+pretty-0	x:\n  #{#(let f)}\n  ~subst\nx (\n  y,\n  z\n)
+pretty-40	x:« #{#(let f)}; ~subst »; x (y, z)
+armor	x:« #{#(let f)}; ~subst »; x (y, z)
+armor-0	;«\n  x:«\n    #{#(let f)};\n    ~subst\n  »;\n  x (\n    y,\n    z\n  )\n»
+armor-40	x:« #{#(let f)}; ~subst »; x (y, z)
+multi	x:\n  #{#(let f)}\n  ~subst\nx (y, z)
+multi-0	x:\n  #{#(let f)}\n  ~subst\nx (y,\n   z)
+multi-40	x:\n  #{#(let f)}\n  ~subst\nx (y, z)
+pretty-120	x:« #{#(let f)}; ~subst »; x (y, z)

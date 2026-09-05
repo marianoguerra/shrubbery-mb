@@ -124,6 +124,7 @@ ci:
     tools/shrubdiff.py tokens --show 0
     tools/shrubdiff.py parse --show 0
     tools/shrubdiff.py source --show 0
+    tools/shrubdiff.py print --show 0
 
 # ---------------------------------------------------------------------------
 # The differential suite -- the project's real correctness gate
@@ -147,6 +148,7 @@ diff-only pattern: build
     {{diff}} tokens --filter {{pattern}} --show 3
     {{diff}} parse --filter {{pattern}} --show 3
     {{diff}} source --filter {{pattern}} --show 3
+    {{diff}} print --filter {{pattern}} --show 3
 
 # The inner loop when the port rejects something the reference accepts.
 #
@@ -154,6 +156,14 @@ diff-only pattern: build
 [group('diff')]
 explain file: build
     {{impl}} check {{file}}
+
+# Separates a LAYOUT disagreement -- the renderer chose differently -- from a
+# CONSTRUCTION one, where the two documents were never the same to begin with.
+#
+# Dump the layout document for a file, to compare with the reference's.
+[group('diff')]
+doc style file: build
+    {{impl}} doc {{style}} {{file}}
 
 # One comparison rather than two: a file the reference rejects has its error
 # message as its golden, so accepting such a file is a failure HERE rather than
@@ -175,9 +185,18 @@ diff-parse *args: build
 diff-source *args: build
     {{diff}} source --show 0 {{args}}
 
+# All eleven layout modes the reference's own suite exercises, byte for byte.
+# The strongest claim about the printer, and the one that says the layout
+# ALGORITHM agrees and not merely the output on the easy cases.
+#
+# Compare re-formatted output against the reference's.
+[group('diff')]
+diff-print *args: build
+    {{diff}} print --show 0 {{args}}
+
 # Everything hermetic that gates.
 [group('diff')]
-diff: diff-tokens diff-parse diff-source
+diff: diff-tokens diff-parse diff-source diff-print
 
 # ---------------------------------------------------------------------------
 # Regenerating committed artifacts (needs Racket; never in CI)

@@ -1,0 +1,11 @@
+flat	1; 2; begin:« 1 + 2 »; (begin:« x »)
+pretty	1; 2; begin:« 1 + 2 »; (begin: x)
+pretty-0	1\n2\nbegin:\n  1 + 2\n(\n  begin:\n    x\n)
+pretty-40	1; 2; begin:« 1 + 2 »; (begin: x)
+armor	1; 2; begin:« 1 + 2 »; (begin:« x »)
+armor-0	;«\n  1;\n  2;\n  begin:«\n    1 + 2\n  »;\n  (\n    begin:«\n      x\n    »\n  )\n»
+armor-40	1; 2; begin:« 1 + 2 »; (begin:« x »)
+multi	1\n2\nbegin: 1 + 2\n(begin: x)
+multi-0	1\n2\nbegin:\n  1 + 2\n(begin:\n   x)
+multi-40	1\n2\nbegin: 1 + 2\n(begin: x)
+pretty-120	1; 2; begin:« 1 + 2 »; (begin: x)

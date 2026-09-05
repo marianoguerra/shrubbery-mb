@@ -1,0 +1,11 @@
+flat	'«apple»'; '«apple + banana»'; '«apple; banana»'; '«apple; banana»'; '«:« apple; banana »»'; '«(a)»'; '«(a '«nested»' b)»'; '«a '«nested»' b»'; '«a '«nested»' b»'; '«a '«nested»' b»'
+pretty	'apple'; 'apple + banana'; 'apple; banana'; 'apple; banana'; ': apple; banana'; '(a)'; '(a 'nested' b)'; '«a 'nested' b»'; '«a 'nested' b»'; '«a 'nested' b»'
+pretty-0	'\n  apple\n'\n'\n  apple + banana\n'\n'\n  apple\n  banana\n'\n'\n  apple\n  banana\n'\n'\n  :\n    apple\n    banana\n'\n'\n  (\n    a\n  )\n'\n'\n  (\n    a '\n      nested\n    ' b\n  )\n'\n'«\n  a '\n    nested\n  ' b\n»'\n'«\n  a '\n    nested\n  ' b\n»'\n'«\n  a '\n    nested\n  ' b\n»'
+pretty-40	'apple'\n'apple + banana'\n'apple; banana'\n'apple; banana'\n': apple; banana'\n'(a)'\n'(a 'nested' b)'\n'«a 'nested' b»'\n'«a 'nested' b»'\n'«a 'nested' b»'
+armor	'apple'; 'apple + banana'; 'apple; banana'; 'apple; banana'; ':« apple; banana »'; '(a)'; '(a 'nested' b)'; '«a 'nested' b»'; '«a 'nested' b»'; '«a 'nested' b»'
+armor-0	;«\n  '\n    apple\n  ';\n  '\n    apple + banana\n  ';\n  '\n    apple;\n    banana\n  ';\n  '\n    apple;\n    banana\n  ';\n  '\n    :«\n      apple;\n      banana\n    »\n  ';\n  '\n    (\n      a\n    )\n  ';\n  '\n    (\n      a '\n        nested\n      ' b\n    )\n  ';\n  '«\n    a '\n      nested\n    ' b\n  »';\n  '«\n    a '\n      nested\n    ' b\n  »';\n  '«\n    a '\n      nested\n    ' b\n  »'\n»
+armor-40	;«\n  'apple';\n  'apple + banana';\n  'apple; banana';\n  'apple; banana';\n  ':« apple; banana »';\n  '(a)';\n  '(a 'nested' b)';\n  '«a 'nested' b»';\n  '«a 'nested' b»';\n  '«a 'nested' b»'\n»
+multi	'apple'\n'apple + banana'\n'\n  apple\n  banana\n'\n'\n  apple\n  banana\n'\n'\n  :\n    apple\n    banana\n'\n'(a)'\n'(a 'nested' b)'\n'«a 'nested' b»'\n'«a 'nested' b»'\n'«a 'nested' b»'
+multi-0	'apple'\n'apple + banana'\n'apple\n banana'\n'apple\n banana'\n':\n   apple\n   banana'\n'(a)'\n'(a 'nested' b)'\n'«a 'nested' b»'\n'«a 'nested' b»'\n'«a 'nested' b»'
+multi-40	'apple'\n'apple + banana'\n'apple\n banana'\n'apple\n banana'\n':\n   apple\n   banana'\n'(a)'\n'(a 'nested' b)'\n'«a 'nested' b»'\n'«a 'nested' b»'\n'«a 'nested' b»'
+pretty-120	'apple'\n'apple + banana'\n'apple; banana'\n'apple; banana'\n': apple; banana'\n'(a)'\n'(a 'nested' b)'\n'«a 'nested' b»'\n'«a 'nested' b»'\n'«a 'nested' b»'

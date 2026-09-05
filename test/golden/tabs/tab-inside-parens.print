@@ -1,0 +1,11 @@
+flat	f (a, b)
+pretty	f (a, b)
+pretty-0	f (\n  a,\n  b\n)
+pretty-40	f (a, b)
+armor	f (a, b)
+armor-0	;«\n  f (\n    a,\n    b\n  )\n»
+armor-40	f (a, b)
+multi	f (a, b)
+multi-0	f (a,\n   b)
+multi-40	f (a, b)
+pretty-120	f (a, b)

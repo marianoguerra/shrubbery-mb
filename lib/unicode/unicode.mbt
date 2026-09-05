@@ -57,6 +57,18 @@ pub fn is_whitespace(c : Char) -> Bool {
 }
 
 ///|
+/// Whether Racket's `write` leaves this character as itself inside a string
+/// literal, rather than escaping it.
+///
+/// Asked of `write` itself rather than derived from a character property,
+/// because the rule is the printer's: U+10FFFF is a noncharacter and comes back
+/// as `\U0010FFFF`, while U+00A0 is a non-breaking space and comes back as
+/// itself. `"` and `\` are not in the table -- they are escaped by name.
+pub fn is_string_literal_plain(c : Char) -> Bool {
+  in_table(@tables.string_literal_plain, c.to_int())
+}
+
+///|
 /// Whether `c` is an emoji all by itself.
 ///
 /// These are identifier characters, and they are the reason the operator

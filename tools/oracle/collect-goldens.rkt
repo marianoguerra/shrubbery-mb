@@ -10,7 +10,8 @@
 ;;   racket tools/oracle/collect-goldens.rkt        (or: just goldens)
 (require racket/file racket/path racket/string racket/list file/sha1
          "tokens.rkt"
-         "parse.rkt")
+         "parse.rkt"
+         "print.rkt")
 
 (define corpus "test/corpus")
 (define golden "test/golden")
@@ -45,6 +46,7 @@
   (define hashes '())
   (define parse-hashes '())
   (define source-hashes '())
+  (define print-hashes '())
   (for ([p (in-list files)])
     (define rel (path->string (find-relative-path (path->complete-path corpus)
                                                   (path->complete-path p))))
@@ -82,7 +84,15 @@
       (define sout (build-path golden (path-replace-extension rel #".source")))
       (make-directory* (path-only sout))
       (call-with-output-file sout #:exists 'replace
-        (lambda (o) (write-string stext o)))))
+        (lambda (o) (write-string stext o))))
+    ;; And what it prints, in every layout mode.
+    (define wtext (dump-print (source-of p)))
+    (set! print-hashes (cons (cons rel (sha1 (open-input-string wtext))) print-hashes))
+    (when (full-golden? rel)
+      (define wout (build-path golden (path-replace-extension rel #".print")))
+      (make-directory* (path-only wout))
+      (call-with-output-file wout #:exists 'replace
+        (lambda (o) (write-string wtext o)))))
   (make-directory* golden)
   (call-with-output-file (build-path golden "tokens.index") #:exists 'replace
     (lambda (o)
@@ -101,6 +111,12 @@
       (fprintf o "# sha1 of what the reference reproduces from its own parse.\n")
       (fprintf o "# Regenerate with `just goldens`; a diff here is a behaviour change.\n")
       (for ([h (in-list (sort (reverse source-hashes) string<? #:key car))])
+        (fprintf o "~a  ~a\n" (cdr h) (car h)))))
+  (call-with-output-file (build-path golden "print.index") #:exists 'replace
+    (lambda (o)
+      (fprintf o "# sha1 of what the reference prints, in all eleven layout modes.\n")
+      (fprintf o "# Regenerate with `just goldens`; a diff here is a behaviour change.\n")
+      (for ([h (in-list (sort (reverse print-hashes) string<? #:key car))])
         (fprintf o "~a  ~a\n" (cdr h) (car h)))))
   (call-with-output-file (build-path golden "lex-failures.txt") #:exists 'replace
     (lambda (o)

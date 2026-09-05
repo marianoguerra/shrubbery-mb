@@ -14,6 +14,8 @@ pub let one_char_emoji : FixedArray[Int]
 
 pub let punctuation : FixedArray[Int]
 
+pub let string_literal_plain : FixedArray[Int]
+
 pub let symbolic : FixedArray[Int]
 
 pub let whitespace : FixedArray[Int]

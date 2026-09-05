@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery/write"
+
+import {
+  "marianoguerra/shrubbery/ast",
+  "marianoguerra/shrubbery/doc",
+}
+
+// Values
+pub fn bytes_to_string(Bytes) -> String
+
+pub fn double_to_string(Double) -> String
+
+pub fn string_to_string(String) -> String
+
+pub fn to_doc(@ast.Node, style? : Style) -> @doc.Doc
+
+pub fn write(@ast.Node, style? : Style, width? : Int?) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Style {
+  Flat
+  Pretty
+  Armoured
+  PreferMultiline
+} derive(Eq)
+
+// Type aliases
+
+// Traits

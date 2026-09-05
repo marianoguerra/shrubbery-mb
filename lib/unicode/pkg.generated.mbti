@@ -16,6 +16,8 @@ pub fn is_one_char_emoji(Char) -> Bool
 
 pub fn is_punctuation(Char) -> Bool
 
+pub fn is_string_literal_plain(Char) -> Bool
+
 pub fn is_symbolic(Char) -> Bool
 
 pub fn is_whitespace(Char) -> Bool

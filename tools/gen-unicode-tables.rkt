@@ -25,6 +25,16 @@
 
 (define (surrogate? i) (and (>= i #xD800) (<= i #xDFFF)))
 
+;; Whether `write` prints this character as itself inside a string literal.
+;; `"` and `\\` are handled by name on the MoonBit side, so they are excluded
+;; here to keep the table about printability alone.
+(define (string-literal-plain? ch)
+  (and (not (char=? ch #\"))
+       (not (char=? ch #\\))
+       (let ([s (format "~s" (string ch))])
+         (and (= 3 (string-length s))
+              (char=? ch (string-ref s 1))))))
+
 ;; Ranges of code points satisfying `pred`, as a flat list (lo hi lo hi ...).
 (define (sweep pred)
   (define out '())
@@ -173,6 +183,14 @@
                   (sweep char-punctuation?) 12)
       (emit-table o "whitespace" "Racket's `char-whitespace?`."
                   (sweep char-whitespace?) 12)
+      ;; Which characters Racket's `write` leaves alone inside a string. Asked
+      ;; of `write` itself rather than derived from a property, because the rule
+      ;; is the printer's and not the character database's: U+10FFFF is a
+      ;; noncharacter and comes back as `\\U0010FFFF`, while U+00A0 is a
+      ;; non-breaking space and comes back as itself.
+      (emit-table o "string_literal_plain"
+                  "Characters Racket's `write` leaves as themselves inside a\nstring literal. Everything else is escaped."
+                  (sweep string-literal-plain?) 12)
       (emit-table o "one_char_emoji"
                   (format "The ~a single-code-point emoji. These are identifier\ncharacters, and are excluded from the operator characters."
                           (length one-char-points))
