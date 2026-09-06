@@ -54,6 +54,62 @@ test {
 }
 ```
 
+### An `@` body is a sequence of pieces, not a string
+
+`@` notation reads a `{…}` body as text, and that text arrives split up. There
+is one piece per run of text on a line, a `"\n"` piece for each line break, a
+piece holding whatever indentation a line has beyond the shared indentation,
+and a piece for whatever each escape produced. **Concatenate them.** The number
+of pieces is a fact about how the source was laid out, so a consumer that
+switches on the count, or reads only the first, behaves differently on wrapped
+prose than on a single line.
+
+```mbt check
+///|
+test {
+  // One line: one piece.
+  inspect(
+    @shrub.parse("@p{one two}\n").root().canonical(),
+    content="(multi (group |p| (parens (group (brackets (group \"one two\"))))))",
+  )
+  // Two lines, the second indented to the shared column: three pieces, with
+  // the shared indentation removed so the text says what it looks like.
+  inspect(
+    @shrub.parse("@p{one two\n   three four}\n").root().canonical(),
+    content=(
+      #|(multi (group |p| (parens (group (brackets (group "one two") (group "\u{a}") (group "three four"))))))
+    ),
+  )
+  // Indented deeper than that, and the excess is a piece of its own: joining
+  // with nothing keeps the relative indentation rather than flattening it.
+  inspect(
+    @shrub.parse("@p{one two\n     three four}\n").root().canonical(),
+    content=(
+      #|(multi (group |p| (parens (group (brackets (group "one two") (group "\u{a}") (group "  ") (group "three four"))))))
+    ),
+  )
+}
+```
+
+An escape splits the run it sits in, and the spaces around it stay on the
+pieces either side — they are not dropped, and they are not moved into a piece
+of their own:
+
+```mbt check
+///|
+test {
+  inspect(
+    @shrub.parse("@p{write to me @\"@\" home}\n").root().canonical(),
+    content=(
+      #|(multi (group |p| (parens (group (brackets (group "write to me ") (group "@") (group " home"))))))
+    ),
+  )
+}
+```
+
+`@@` is not an escape for a literal `@` — the reference rejects it too, and
+`@"@"` is the spelling.
+
 ## Every node remembers its source
 
 Whitespace, comments, the `:` that opened a block, the `)` that closed a
