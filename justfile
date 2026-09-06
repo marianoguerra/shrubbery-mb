@@ -143,6 +143,11 @@ html-diff *args: build
 html-only oracle: build
     {{justfile_directory()}}/tools/htmldiff.py {{oracle}} --no-ratchet --show 5
 
+# The generated properties and the fuzzer. Seeded, so a failure is reproducible.
+[group('html')]
+html-prop:
+    moon test -p marianoguerra/shrubbery-dev/test/html/prop --target native
+
 # The table it writes is committed, so the suite stays hermetic and CI needs
 # no network. Regenerating is a deliberate act and the diff is the review.
 #

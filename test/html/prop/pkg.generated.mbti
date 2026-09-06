@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-dev/test/html/prop"
+
+import {
+  "marianoguerra/html/ast",
+}
+
+// Values
+pub fn gen_document(Rng, Int) -> @ast.Document
+
+pub fn[T] minimize(T, (T) -> Array[T], (T) -> Bool, fuel? : Int) -> T
+
+pub fn shrink_document(@ast.Document) -> Array[@ast.Document]
+
+pub fn size_of(@ast.Document) -> Int
+
+// Errors
+
+// Types and methods
+type Rng
+pub fn Rng::below(Self, Int) -> Int
+pub fn Rng::bool(Self) -> Bool
+pub fn Rng::new(UInt64) -> Self
+pub fn Rng::next(Self) -> UInt64
+pub fn[T] Rng::pick(Self, Array[T]) -> T
+pub fn[T] Rng::weighted(Self, Array[(Int, T)]) -> T
+
+// Type aliases
+
+// Traits

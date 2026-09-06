@@ -227,9 +227,10 @@ fn call_head(el : @ast.Element) -> String {
       }
     }
   }
-  // After `element("name"` the separator has already been written, so the
-  // first attribute is not the first argument.
-  let mut first = @names.kebab(el.name.name) is Some(_)
+  // Both branches above leave the buffer ready for an argument -- `name(` or
+  // `element("name", ` -- so the first attribute never writes a separator of
+  // its own. Deriving this from which branch ran wrote `element("x", , a: "1")`.
+  let mut first = true
   for a in el.attrs {
     if !first {
       buf.write_string(", ")

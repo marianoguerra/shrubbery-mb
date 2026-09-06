@@ -1,0 +1,15 @@
+import {
+  "marianoguerra/html/ast",
+  "marianoguerra/html/span",
+  "marianoguerra/html/names",
+}
+
+import {
+  "marianoguerra/html/ast",
+  "marianoguerra/html/parse",
+  "marianoguerra/html/write",
+  "marianoguerra/shrubbery-html/lower",
+  "marianoguerra/shrubbery-html/emit",
+  "marianoguerra/shrubbery-dev/test/html/prop",
+  "moonbitlang/core/test",
+} for "test"
