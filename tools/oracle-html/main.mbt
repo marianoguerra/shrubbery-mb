@@ -25,6 +25,7 @@ fn main {
     println("  loop       markup -> shrubbery -> markup; must equal `print`")
     println("  lower      Shrubbery HTML -> markup")
     println("  emit       markup -> Shrubbery HTML")
+    println("  conform    our output must mean what the input meant")
     println("  survive    parse anything at all, and say so")
     println("  diagnose   the diagnostic codes a file produces")
     return
@@ -42,6 +43,7 @@ fn main {
           "loop" => markup_loop(text)
           "lower" => lower_shrub(text)
           "emit" => emit_shrub(text)
+          "conform" => conform(text)
           "survive" => survive(text)
           "diagnose" => diagnose(text)
           other => println("!error unknown command " + other)
@@ -242,6 +244,58 @@ fn emit_shrub(src : String) -> Unit {
     }
   }
   put(@emit.document(p.document()))
+}
+
+///|
+/// The only oracle here with an external reference, and the one that makes the
+/// markup-tree decision honest.
+///
+/// Everything else in this file compares the library against itself. This asks
+/// a CONFORMING parser -- `moonbit-community/html`, eighty tokenizer states and
+/// twenty-three insertion modes -- whether our output still means what the
+/// input meant: parse both with it, and compare the document trees it builds.
+///
+/// That is the only property a formatter actually owes anyone. It does not
+/// require our tree to be a document tree, which it deliberately is not; it
+/// requires our tree to be document-EQUIVALENT. Every file where the adoption
+/// agency or foster parenting changes the answer shows up here as a number
+/// rather than as a paragraph of hand-waving, which is what the CSS half had to
+/// settle for -- CSS has no reference implementation in MoonBit and this does.
+///
+/// The comparison is on `dump()`, which is the html5lib tree format: element
+/// names with their namespaces, attributes sorted, text and comments in
+/// document order. Comparing `Document::equal` instead would be the same claim
+/// with an unreadable failure.
+///
+/// Printed with `whitespace=Strict`, and that is the whole design of this
+/// oracle rather than a convenience. The default policy is ALLOWED to drop
+/// whitespace between block-level children -- that is what a formatter is for,
+/// and the dropped text nodes are real DOM nodes, so the document changes and
+/// changes correctly. Measuring the tree and the policy in one number would
+/// mean neither could be read. So the policy is turned off here and measured by
+/// `roundtrip` instead, and what is left is the sharper claim: with the printer
+/// told to move nothing, our tree round-trips through a conforming parser
+/// EXACTLY, and any difference at all is a bug.
+fn conform(src : String) -> Unit {
+  let before = @html5.parse(src)
+  let p = @parse.parse(src) catch {
+    e => {
+      println("!error markup " + e.diagnostic().kind.code())
+      return
+    }
+  }
+  let out = @write.document(p.document(), style=Minified, whitespace=Strict)
+  let after = @html5.parse(out)
+  if before.dump() == after.dump() {
+    println("conform: same")
+  } else {
+    println("conform: DIFFERENT")
+    println("  ours: " + out)
+    println("--- the reference reads the input as")
+    put(before.dump())
+    println("--- and our output as")
+    put(after.dump())
+  }
 }
 
 ///|

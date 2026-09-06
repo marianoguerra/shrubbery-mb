@@ -423,11 +423,14 @@ fn Printer::write_raw_body(
       }
       Text(t) =>
         // Escapable raw text: `<title>a &amp; b</title>`. References resolve
-        // here, so the text is escaped on the way out, but `<` is not markup
-        // and must go out as itself or a title containing one changes.
+        // here, so the text is escaped on the way out -- as TEXT, `<` included.
+        // Escaping it as an attribute value instead leaves the `<` live, and a
+        // `<title>` whose text contains `</title>` then ends its own element:
+        // the same injection a `<script>` body would be, in the one raw-text
+        // context that has an escape and can therefore be printed safely.
         match t.raw {
           Some(raw) => self.buf.write_string(raw)
-          None => self.buf.write_string(escape_attr(t.text))
+          None => self.buf.write_string(escape_text(t.text))
         }
       other => self.write_node(other)
     }

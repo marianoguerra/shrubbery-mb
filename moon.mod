@@ -3,6 +3,13 @@
 // modules the way an outside consumer would -- through their public API only,
 // which is what keeps that API honest.
 //
+// `moonbit-community/html` is here and NOWHERE else. It is a conforming WHATWG
+// parser -- eighty tokenizer states, twenty-three insertion modes, the adoption
+// agency, foster parenting -- and it is the external reference the `conform`
+// oracle needs. It is a DEV dependency for the same reason Racket is not a
+// dependency of `lib/`: the libraries are answerable to it, and must not link
+// it. `tools/boundary-check.sh` gates that.
+//
 // It sits at the repository root rather than in a directory of its own so that
 // `test/corpus/`, `test/golden/` and `tools/` keep the paths the justfile, the
 // Python harness and AGENTS.md all use.
@@ -24,6 +31,7 @@ import {
   "marianoguerra/shrubbery-css@0.1.0",
   "marianoguerra/shrubbery-html@0.1.0",
   "moonbitlang/x@0.5.1",
+  "moonbit-community/html@0.2.1",
 }
 
 license = "Apache-2.0"

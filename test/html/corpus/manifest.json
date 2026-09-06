@@ -10,8 +10,8 @@
     "broken": {
       "source": "this repository",
       "licence": "Apache-2.0",
-      "count": 16,
-      "note": "Deliberately invalid markup, one construct per file: unclosed elements, stray end tags, EOF inside a tag and inside a comment, duplicate attributes, bogus comments, malformed character references, CDATA in HTML, a late doctype, end tags for void elements, the adoption-agency case, and the attribute-value edges where an unquoted value meets `/>`."
+      "count": 17,
+      "note": "Deliberately invalid markup, one construct per file: unclosed elements, stray end tags, EOF inside a tag and inside a comment, duplicate attributes, bogus comments, malformed character references, CDATA in HTML, a late doctype, end tags for void elements, the adoption-agency case, the attribute-value edges where an unquoted value meets `/>`, and a `<?php ?>` processing instruction, which HTML does not have and reads as a comment."
     },
     "foreign": {
       "source": "this repository",
@@ -31,9 +31,13 @@
     "notation": "test/corpus -- 696 shrubbery files, the notation's own differential suite",
     "css": "test/css/corpus -- 347 CSS files, the CSS module's own suite"
   },
+  "reference": {
+    "//": "The `conform` oracle's external reference is a MoonBit dependency rather than a corpus: `moonbit-community/html@0.2.1`, a conforming WHATWG parser, declared in the ROOT module's moon.mod and nowhere else. `tools/boundary-check.sh` gates that. Nothing needs fetching at test time, so the suite stays hermetic.",
+    "//divergences": "Where the reference and this library disagree, the tie-break was Chromium's DOMParser rather than an assertion. test/html-oracle-policy.json names every file that does not conform and says whose divergence it is."
+  },
   "pending": {
     "//": "The vendored suites that belong here and are not here yet. Each is MIT and each would be committed under its own bucket with its provenance recorded above, exactly as `test/css/corpus` does.",
-    "html5lib-tests": "tree-construction/*.dat, split into one file per `#data` section. The adversarial corpus for `survive`, and the input a conformance oracle would need.",
+    "html5lib-tests": "The tokenizer suite at github.com/html5lib/html5lib-tests -- `tokenizer/*.test`, JSON, with expected token streams. Its tree-construction tests moved to web-platform-tests and are no longer in that repository.",
     "biome": "crates/biome_html_parser/tests -- the ok and error suites.",
     "prettier": "Prettier's HTML specs, as vendored by biome.",
     "//how": "Adding them is mechanical: drop the files into a new bucket directory, record the count and licence above, and add a floor per bucket to test/html-oracle-policy.json. The oracles need no change."

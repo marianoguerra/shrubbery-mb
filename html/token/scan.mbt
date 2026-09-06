@@ -139,21 +139,29 @@ fn is_hex(c : Char) -> Bool {
 }
 
 ///|
-/// A character that may appear in a tag or attribute name.
+/// A character that may appear in a tag name.
 ///
-/// Wider than the specification's, deliberately: it admits `:` and everything
-/// above U+007F, so that `xlink:href` and a custom element with an accented
-/// name arrive as one name rather than as a name and some text. The parser
-/// splits the prefix off; the scanner has no reason to.
-fn is_name_char(c : Char) -> Bool {
-  !is_ws(c) &&
-  c != '/' &&
-  c != '>' &&
-  c != '=' &&
-  c != '<' &&
-  c != '\u{0}' &&
-  c != '"' &&
-  c != '\''
+/// Almost anything: the specification's tag-name state sends `"`, `'`, `<` and
+/// `=` to its "anything else" branch, which appends them. So `<a<b>` is one tag
+/// whose name is `a<b`, and a scanner that stopped at the `<` would drop a
+/// character the document has -- which is invisible until a conforming parser
+/// is asked what it read.
+///
+/// `:` and everything above U+007F are in for the same reason, so that
+/// `xlink:href` and a custom element with an accented name arrive as one name.
+/// The parser splits the prefix off; the scanner has no reason to.
+fn is_tag_name_char(c : Char) -> Bool {
+  !is_ws(c) && c != '/' && c != '>' && c != '\u{0}'
+}
+
+///|
+/// A character that may appear in an attribute name.
+///
+/// The same set less `=`, which is the one character that ends a name rather
+/// than joining it. `"`, `'` and `<` are a parse error inside a name and are
+/// still part of it -- `<div a<b>` has one attribute called `a<b`.
+fn is_attr_name_char(c : Char) -> Bool {
+  is_tag_name_char(c) && c != '='
 }
 
 // --------------------------------------------------------------- the stream
@@ -268,7 +276,7 @@ fn Scanner::start_tag(self : Scanner) -> Token {
   let start = self.pos
   self.pos = self.pos + 1
   let name_start = self.pos
-  while self.pos < self.len && is_name_char(self.peek()) {
+  while self.pos < self.len && is_tag_name_char(self.peek()) {
     self.pos = self.pos + 1
   }
   let name = self.slice(name_start, self.pos).to_lower()
@@ -279,8 +287,12 @@ fn Scanner::start_tag(self : Scanner) -> Token {
       self.pos = self.pos + 1
     }
     if self.pos >= self.len {
+      // A tag that never closed is not a tag. The specification discards it,
+      // and so does this -- as a `Bogus` carrying the source it covered, so
+      // that the printer echoes exactly what was there instead of inventing a
+      // `>` the input did not have.
       self.note(EofInTag, @span.Span::new(start, self.pos))
-      break
+      return self.tok(start, Bogus(EofInTag, self.slice(start, self.pos)))
     }
     let c = self.peek()
     if c == '>' {
@@ -297,12 +309,19 @@ fn Scanner::start_tag(self : Scanner) -> Token {
       self.pos = self.pos + 1
       continue
     }
-    if c == '=' && attrs.length() == 0 {
+    if c == '=' {
+      // `<div =x>` is an attribute NAMED `=x`, per the specification: the `=`
+      // is taken into the name rather than skipped. Skipping it silently
+      // renames the attribute, which is the kind of difference only a
+      // conforming parser notices.
       self.note(
         UnexpectedEqualsSignBeforeAttributeName,
         @span.Span::new(self.pos, self.pos + 1),
       )
-      self.pos = self.pos + 1
+      match self.attribute(lead_equals=true) {
+        Some(a) => attrs.push(a)
+        None => self.pos = self.pos + 1
+      }
       continue
     }
     match self.attribute() {
@@ -335,7 +354,7 @@ fn Scanner::end_tag(self : Scanner) -> Token {
   let start = self.pos
   self.pos = self.pos + 2
   let name_start = self.pos
-  while self.pos < self.len && is_name_char(self.peek()) {
+  while self.pos < self.len && is_tag_name_char(self.peek()) {
     self.pos = self.pos + 1
   }
   let name = self.slice(name_start, self.pos).to_lower()
@@ -348,14 +367,18 @@ fn Scanner::end_tag(self : Scanner) -> Token {
     self.pos = self.pos + 1
   } else {
     self.note(EofInTag, @span.Span::new(start, self.pos))
+    return self.tok(start, Bogus(EofInTag, self.slice(start, self.pos)))
   }
   self.tok(start, EndTag(name))
 }
 
 ///|
-fn Scanner::attribute(self : Scanner) -> RawAttr? {
+fn Scanner::attribute(self : Scanner, lead_equals? : Bool = false) -> RawAttr? {
   let start = self.pos
-  while self.pos < self.len && is_name_char(self.peek()) {
+  if lead_equals {
+    self.pos = self.pos + 1
+  }
+  while self.pos < self.len && is_attr_name_char(self.peek()) {
     self.pos = self.pos + 1
   }
   if self.pos == start {

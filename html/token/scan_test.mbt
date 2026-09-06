@@ -210,8 +210,61 @@ test "a doctype, plain and legacy" {
 }
 
 ///|
-test "an unterminated tag ends the stream rather than looping" {
+test "an unterminated tag is discarded, not completed" {
+  // The specification drops a tag that never closed, and so does this: the
+  // token is a `Bogus` carrying the source, so the printer echoes what was
+  // there instead of inventing the `>` the input did not have. Completing it
+  // would put an element in the tree that no browser sees.
   let s = @token.tokenize("<div class=\"a")
   assert_eq(s.tokens.length(), 2)
+  inspect(
+    @token.dump(s.tokens),
+    content=(
+      #|bogus html::eof_in_tag <div class="a
+      #|eof
+      #|
+    ),
+  )
   assert_eq(s.problems[0].0.code(), "html::eof_in_tag")
+}
+
+///|
+test "an equals sign before a name is part of the name" {
+  // `<div =x>` has an attribute called `=x`. Skipping the `=` instead renames
+  // the attribute, which is invisible until a conforming parser is asked.
+  let s = @token.tokenize("<div =x>")
+  match s.tokens[0].kind {
+    StartTag(_, attrs, _) => {
+      assert_eq(attrs.length(), 1)
+      assert_eq(attrs[0].name, "=x")
+    }
+    _ => fail("expected a start tag")
+  }
+  assert_eq(
+    s.problems[0].0.code(),
+    "html::unexpected_equals_sign_before_attribute_name",
+  )
+}
+
+///|
+test "a name may contain the characters that look like they would end it" {
+  // The tag-name and attribute-name states send `<`, `\"` and `\'` to their
+  // "anything else" branch, which appends. A scanner that stopped would drop a
+  // character the document has.
+  match @token.tokens("<a<b>")[0].kind {
+    StartTag(name, _, _) => assert_eq(name, "a<b")
+    _ => fail("expected a start tag")
+  }
+  match @token.tokens("<div a<b>")[0].kind {
+    StartTag(_, attrs, _) => assert_eq(attrs[0].name, "a<b")
+    _ => fail("expected a start tag")
+  }
+  // `=` is the one character that ends a name rather than joining it.
+  match @token.tokens("<div a=b>")[0].kind {
+    StartTag(_, attrs, _) => {
+      assert_eq(attrs[0].name, "a")
+      assert_eq(attrs[0].value, Some("b"))
+    }
+    _ => fail("expected a start tag")
+  }
 }

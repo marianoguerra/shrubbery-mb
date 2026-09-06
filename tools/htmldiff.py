@@ -8,14 +8,19 @@ and a floor per bucket that fails in BOTH directions.  Dropping below a floor is
 a regression; rising above one is an improvement that has to be recorded in a
 commit whose diff says what got better.
 
-There is no external reference here.  ``shrubdiff.py`` compares against Racket;
-this compares the library against *itself*, which is what makes it hermetic:
+Four of the five compare the library against *itself*.  The fifth has an
+external reference, which the CSS half had to do without: ``moonbit-community/
+html`` is a conforming WHATWG parser, and it is a MoonBit dependency rather than
+a separate toolchain, so the suite stays hermetic anyway.
 
   loop       markup -> tree -> shrubbery -> tree -> markup must equal markup ->
              tree -> markup, modulo the three things the notation cannot say.
              The headline property, and the only one that exercises both
              directions of the bridge at once.
   roundtrip  printing is a fixed point: print, reparse, print again, compare.
+  conform    our output, parsed by a conforming parser, builds the same document
+             the input does.  The only property a formatter actually owes
+             anyone, and the one that makes the markup-tree decision honest.
   lower      the authored Shrubbery HTML corpus lowers with no diagnostic.
   survive    nothing crashes, on any input, including the deliberately broken
              bucket, the 696 shrubbery files that are not markup at all, and
@@ -145,6 +150,35 @@ def oracle_roundtrip(show):
     return results
 
 
+def oracle_conform(show):
+    """Our output means what the input meant, to a conforming parser."""
+    results = {}
+    for bucket in MARKUP_BUCKETS:
+        paths = files(bucket)
+        report(
+            results,
+            bucket,
+            paths,
+            run("conform", paths),
+            lambda a: "conform: same" in a,
+            show,
+        )
+    # The borrowed corpora again, and here they are not merely adversarial: a
+    # file that is not markup at all still has a document, and our output still
+    # has to build the same one.
+    for name, root in (("notation", SHRUB_CORPUS), ("css", CSS_CORPUS)):
+        paths = tree_files(root)
+        report(
+            results,
+            name,
+            paths,
+            run("conform", paths),
+            lambda a: "conform: same" in a,
+            show,
+        )
+    return results
+
+
 def oracle_lower(show):
     """The authored corpus lowers with nothing to complain about."""
     paths = files("shrub", ".shrubhtml")
@@ -192,6 +226,7 @@ def oracle_survive(show):
 ORACLES = {
     "loop": oracle_loop,
     "roundtrip": oracle_roundtrip,
+    "conform": oracle_conform,
     "lower": oracle_lower,
     "survive": oracle_survive,
 }

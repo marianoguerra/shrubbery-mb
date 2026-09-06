@@ -8,6 +8,14 @@
 #
 # The pressure will be to reach into it for one shrubbery-shaped convenience.
 # This makes that a CI failure rather than a discovery at spin-out time.
+#
+# The second rule here is about a different boundary with the same shape.
+# `moonbit-community/html` is a conforming WHATWG parser and the reference the
+# `conform` oracle asks. A published module that imported it would stop being
+# answerable TO it and start being built ON it, which is the difference between
+# a library that is checked and a library that is a wrapper -- and it would put
+# an entire tree builder in the dependency set of everyone who wanted a
+# formatter. It belongs to the development module and nowhere else.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -49,7 +57,16 @@ if grep -rniE 'shrubbery|rhombus|\bcss\b' "$mod" \
   status=1
 fi
 
+# The reference is a dev dependency. A published module may not name it.
+for published in lib css html shrub-css shrub-html cli error-report; do
+  if grep -rn 'moonbit-community/html' "$root/$published" \
+       --include='moon.pkg' --include='moon.mod' --include='*.mbt' >&2; then
+    echo "boundary: $published names the conformance reference" >&2
+    status=1
+  fi
+done
+
 if [ "$status" -eq 0 ]; then
-  echo "boundary: error-report is self-contained"
+  echo "boundary: error-report is self-contained, and the reference is dev-only"
 fi
 exit "$status"

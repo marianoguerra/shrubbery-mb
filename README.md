@@ -60,17 +60,23 @@ neither Racket nor the reference checkout present.
 
 ### CSS and markup
 
-Neither has an external reference, so both are held to properties of their own,
-over their own committed corpora, with a floor per bucket in
-`test/css-oracle-policy.json` and `test/html-oracle-policy.json` that fails from
-both sides:
+Both are held to properties of their own, over their own committed corpora, with
+a floor per bucket in `test/css-oracle-policy.json` and
+`test/html-oracle-policy.json` that fails from both sides:
 
-| oracle | claim |
-|---|---|
-| `loop` | source → tree → shrubbery → tree → source is the source |
-| `roundtrip` | printing is a fixed point |
-| `lower` | the authored shrubbery corpus lowers with no diagnostic |
-| `survive` | nothing crashes, on anything |
+| oracle | claim | reference |
+|---|---|---|
+| `loop` | source → tree → shrubbery → tree → source is the source | itself |
+| `roundtrip` | printing is a fixed point | itself |
+| `lower` | the authored shrubbery corpus lowers with no diagnostic | itself |
+| `survive` | nothing crashes, on anything | itself |
+| `conform` | markup only: our output builds the same document the input does | [`moonbit-community/html`](https://mooncakes.io/docs/moonbit-community/html) |
+
+`conform` is the only one with an outside opinion, and it is what makes the
+markup module's central decision — a tree of what was *written*, not of what a
+browser builds — checkable rather than merely argued. It is a MoonBit dependency
+of the development module alone, so it needs no extra toolchain and the suite
+stays hermetic.
 
 `survive` is pointed at every corpus in the repository, not only its own: almost
 none of the 696 notation files is CSS or markup, so both are free adversarial

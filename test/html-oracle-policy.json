@@ -4,15 +4,25 @@
   "//loop": "markup -> tree -> shrubbery -> tree -> markup equals markup -> tree -> markup. The headline property. Both sides are first normalised for the three things the notation cannot say -- an implied end tag, a void element's slash, a character reference's spelling -- so a file that does NOT close is a bug rather than a design limit. That is why every bucket is at 100%, including the deliberately broken one: a recovery that survives the detour is a real claim.",
   "loop": {
     "ok": 10,
-    "broken": 16,
+    "broken": 17,
     "foreign": 7
   },
 
   "//roundtrip": "Printing is a fixed point: print, reparse, print, compare, in pretty and minified. Expected to stay at 100%: a printer that is not idempotent grows the file every time it is run, which is worse than one that is merely ugly.",
   "roundtrip": {
     "ok": 10,
-    "broken": 16,
+    "broken": 17,
     "foreign": 7
+  },
+
+  "//conform": "Our printed output, parsed by `moonbit-community/html`, builds the same document the input does. The only oracle here with an external reference, and the only property a formatter actually owes anyone: it does not require our tree to be a document tree -- it deliberately is not -- it requires our tree to be document-EQUIVALENT. Printed with `whitespace=Strict`, because the default policy is ALLOWED to drop whitespace between block children and measuring the tree and the policy in one number would mean neither could be read.",
+  "//conform-gap": "Five files do not conform, and each is named because a floor below 100% must not silently absorb somebody's bug. TWO ARE OURS, by design: `adoption.html` needs the adoption agency and `end-tag-void.html` needs `</br>` to become a `<br>`, and both invent or move nodes, which is exactly what a markup tree is defined not to do. THREE ARE THE REFERENCE'S, checked against Chromium's DOMParser rather than asserted: it reads `<?php ... ?>` as a node HTML does not have, where the specification says bogus comment (`processing-instruction.html`, and `rhombus-xml...xml.shrub` in the notation corpus); and it does not apply generic RCDATA parsing to a `<title>` in body, so `<div><title>a<b>c</b></title></div>` gives it element children where Chromium and this library both give it text (`rhombus-html-lib...parser.shrub`). If a later version of the reference fixes either, the floor rises and the ratchet will say so.",
+  "conform": {
+    "ok": 10,
+    "broken": 14,
+    "foreign": 7,
+    "notation": 694,
+    "css": 347
   },
 
   "//lower": "The authored Shrubbery HTML corpus lowers with no diagnostic at all. This one is expected to stay at 100%: it is the syntax's own examples.",
@@ -23,7 +33,7 @@
   "//survive": "Nothing crashes, on anything, and nothing may drop below 100%. `notation` is the 696-file shrubbery corpus and `css` the 350-file CSS corpus, both already in the repository for other suites -- almost none of either is markup, so they are a free adversarial corpus for the parser AND for the lowering, which is pointed at the same bytes.",
   "survive": {
     "ok": 10,
-    "broken": 16,
+    "broken": 17,
     "foreign": 7,
     "shrub": 5,
     "notation": 696,

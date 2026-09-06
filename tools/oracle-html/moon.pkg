@@ -7,6 +7,7 @@ import {
   "marianoguerra/shrubbery-html/emit",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
+  "moonbit-community/html" @html5,
 }
 
 pkgtype(kind: "executable")

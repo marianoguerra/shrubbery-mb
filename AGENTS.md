@@ -109,9 +109,25 @@ dropping below it fails, and rising above it also fails, so that an improvement
 is recorded deliberately in a commit whose diff says what got better.
 
 `test/css-oracle-policy.json` and `test/html-oracle-policy.json` are the same
-thing for the two syntax modules, whose oracles compare the library against
-itself rather than against a reference. `test/css/corpus` and
-`test/html/corpus` are committed for the same reason `test/corpus` is.
+thing for the two syntax modules. `test/css/corpus` and `test/html/corpus` are
+committed for the same reason `test/corpus` is.
+
+The markup half has an external reference where the CSS half has none:
+`moonbit-community/html`, a conforming WHATWG parser, which the `conform` oracle
+asks whether our output still means what the input meant. It is a dependency of
+the **root module only**, and `tools/boundary-check.sh` fails if a published
+module names it — a library that imported the reference would stop being
+answerable to it and start being built on it, and would put a whole tree builder
+in the dependency set of everyone who wanted a formatter.
+
+**The reference is not the specification here.** That rule holds for the Racket
+port, where the reference defines the notation; for markup the specification is
+WHATWG's and the reference is a second implementation of it, so a disagreement
+is not automatically a bug on this side. Five files currently diverge and
+`test/html-oracle-policy.json` names each one with the side it belongs to. The
+tie-break was Chromium's `DOMParser`, run on the exact inputs, rather than an
+assertion — two of the five are the reference reading `<?php ?>` as a node HTML
+does not have and not applying RCDATA to a `<title>` in body.
 
 Four oracles today. `tokens` compares the scanned stream; `parse` compares the
 parse tree AND, for a file the reference rejects, its error message — one
@@ -178,7 +194,21 @@ places where an hour is lost:
   conforming WHATWG parse builds a DOCUMENT tree: invented `html`/`head`/`body`,
   misnesting repaired by the adoption agency, text foster-parented out of
   tables. That one is not reversible, so a formatter cannot be built on it.
-  Every comparison has to say which tree it means.
+  Every comparison has to say which tree it means — and the `conform` oracle is
+  how the distinction stays a claim rather than an opinion.
+- **A tag that never closed is not a tag.** `<div class="a` at end of input is
+  discarded, as the specification says, and kept as a `Bogus` carrying its
+  source. Completing it puts an element in the tree that no browser sees.
+- **`<`, `"` and `'` are name characters.** The tag-name and attribute-name
+  states send all three to their "anything else" branch, so `<a<b>` is one tag
+  called `a<b` and `<div a<b>` has one attribute called `a<b`. `=` is the only
+  character that ends an attribute name rather than joining it — and `<div =x>`
+  has an attribute called `=x`, because the `=` before a name is taken INTO it.
+- **`<title>` and `<textarea>` hold text, and their text is escaped as text.**
+  Escaping it as an attribute value leaves the `<` live, and a title containing
+  `</title>` then ends its own element. They are the only raw-text contexts that
+  have an escape at all, which is why they can be printed safely and `<script>`
+  cannot.
 - **The line between the two is "table or algorithm."** Implied end tags, void
   elements, raw text and namespaces are stated by the specification as tables,
   so they live in `html/names` as data and the parser applies them. The adoption

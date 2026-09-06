@@ -187,6 +187,21 @@ test "an invisible character is named rather than emitted" {
 }
 
 ///|
+test "escapable raw text is escaped as text, not as an attribute value" {
+  // `<title>` and `<textarea>` hold text with references but no markup, so
+  // their content is escaped the way text is -- `<` included. Escaping it as
+  // an attribute value instead leaves the `<` live, and a title whose text
+  // contains `</title>` then ends its own element. That is the same injection
+  // a `<script>` body would be, in the one raw-text context that HAS an escape
+  // and can therefore be printed safely.
+  let d = doc([el("title", [txt("</title><script>alert(1)</script>")])])
+  inspect(
+    @write.document(d, style=Minified),
+    content="<title>&lt;/title&gt;&lt;script&gt;alert(1)&lt;/script&gt;</title>",
+  )
+}
+
+///|
 test "a raw-text body containing its own end tag is refused" {
   assert_false(@write.raw_text_is_printable("x </SCRIPT> y", "script"))
   assert_true(@write.raw_text_is_printable("x </style> y", "script"))

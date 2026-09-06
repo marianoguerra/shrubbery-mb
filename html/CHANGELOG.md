@@ -32,6 +32,23 @@ module follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
   `text_content`, `elements`, `by_id`, `by_tag`, `display_of`. All computed on
   demand and stored nowhere.
 
+### Fixed
+
+Four divergences from the specification, all found by checking our output
+against a conforming WHATWG parser rather than against ourselves:
+
+- A `<title>` or `<textarea>` body was escaped as if it were an attribute value,
+  which left `<` live — so a title whose text contained `</title>` ended its own
+  element. An injection, in the one raw-text context that has an escape and can
+  therefore be printed safely.
+- A tag that ran to the end of the input was completed rather than discarded,
+  putting an element in the tree that no browser sees. It is now a `Bogus`
+  carrying its source, so the printer echoes what was there.
+- `<`, `"` and `'` were treated as ending a name. They are name characters:
+  `<a<b>` is one tag called `a<b`.
+- `<div =x>` dropped the `=`, silently renaming the attribute. The `=` before a
+  name is part of it.
+
 ### Notes
 
 - This is a **markup** tree, not a document tree. `<p>a<p>b` is two start tags
