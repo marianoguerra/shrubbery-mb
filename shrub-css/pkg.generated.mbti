@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-css"
+
+import {
+  "marianoguerra/css/write",
+  "marianoguerra/error-report",
+  "marianoguerra/shrubbery-css/error",
+  "marianoguerra/shrubbery-css/lower",
+}
+
+// Values
+pub fn lower(String, strict? : Bool) -> @lower.Lowered raise @error.ShrubCssError
+
+pub fn to_css(String, style? : @write.Style) -> String raise @error.ShrubCssError
+
+pub fn to_report(@error.Diagnostic, @error-report.SourceId) -> @error-report.Report
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,26 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-css/lower"
+
+import {
+  "marianoguerra/shrubbery-css/error",
+}
+
+// Values
+pub fn lower(@marianoguerra/shrubbery/ast.Node, strict? : Bool) -> Lowered raise @error.ShrubCssError
+
+pub fn lower_source(String, strict? : Bool) -> Lowered raise @error.ShrubCssError
+
+// Errors
+
+// Types and methods
+pub struct Lowered {
+  sheet : @marianoguerra/css/ast.Stylesheet
+  diagnostics : Array[@error.Diagnostic]
+}
+pub fn Lowered::diagnostics(Self) -> Array[@error.Diagnostic]
+pub fn Lowered::has_errors(Self) -> Bool
+pub fn Lowered::sheet(Self) -> @marianoguerra/css/ast.Stylesheet
+
+// Type aliases
+
+// Traits

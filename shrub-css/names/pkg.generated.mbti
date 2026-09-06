@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-css/names"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn combinator_keyword(Combinator) -> String
+
+pub fn combinator_of(String) -> Combinator?
+
+pub fn is_at_rule(String) -> Bool
+
+pub fn is_nth_pseudo(String) -> Bool
+
+pub fn is_pseudo_element(String) -> Bool
+
+pub fn is_pseudo_element_fn(String) -> Bool
+
+pub fn is_reserved_call(String) -> Bool
+
+pub fn is_selector_pseudo(String) -> Bool
+
+pub fn is_simple_pseudo(String) -> Bool
+
+pub fn kebab(String) -> String?
+
+pub fn unit_call(String) -> String?
+
+pub fn unit_of(String) -> String?
+
+pub fn unkebab(String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Combinator {
+  Descendant
+  Child
+  NextSibling
+  SubsequentSibling
+  Column
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits

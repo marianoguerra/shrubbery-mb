@@ -21,6 +21,7 @@ inspection.
 | `error-report/` | [`marianoguerra/error-report`](https://mooncakes.io/docs/marianoguerra/error-report) | a generic diagnostic library — data first, renderers second |
 | `lib/` | [`marianoguerra/shrubbery`](https://mooncakes.io/docs/marianoguerra/shrubbery) | the notation: lexer, parser, AST, printers |
 | `css/` | [`marianoguerra/css`](https://mooncakes.io/docs/marianoguerra/css) | a semantic CSS tree: tokenizer, tolerant parser, printer |
+| `shrub-css/` | [`marianoguerra/shrubbery-css`](https://mooncakes.io/docs/marianoguerra/shrubbery-css) | the bridge: CSS written in shrubbery notation |
 | `cli/` | [`marianoguerra/shrubbery-cli`](https://mooncakes.io/docs/marianoguerra/shrubbery-cli) | the command-line tool |
 | `.` | `marianoguerra/shrubbery-dev` | corpus, goldens and the harness; never published |
 

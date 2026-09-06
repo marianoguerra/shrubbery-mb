@@ -128,6 +128,11 @@ cli-test: build
 css-test:
     moon test -p marianoguerra/css --target native
 
+# Unit tests for the shrubbery-to-CSS bridge only.
+[group('css')]
+bridge-test:
+    moon test -p marianoguerra/shrubbery-css --target native
+
 # Check, format, unit tests, boundaries -- run before committing.
 [group('gates')]
 quick: check fmt test boundary-check embed-smoke diff cli-test

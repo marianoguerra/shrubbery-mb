@@ -29,7 +29,7 @@ fi
 
 # Dependency order. Not alphabetical, and not a set: `error-report` must exist
 # in the registry before `shrubbery` can name it.
-all=(error-report lib css cli)
+all=(error-report lib css shrub-css cli)
 
 if [ "$#" -gt 0 ]; then
   for m in "$@"; do

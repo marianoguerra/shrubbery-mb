@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-css/kind"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum ErrorKind {
+  ExpectedBlock
+  HeadlessBlock
+  AltsUnsupported
+  BracesUnsupported
+  QuotesUnsupported
+  DeclarationAtTopLevel
+  RuleInDeclarationContext
+  TypeSelectorNotFirst
+  DanglingCombinator
+  StrayKeyword(String)
+  SigilSelector(String)
+  OperatorCombinator(String)
+  UnknownSelectorCall(String)
+  BadCallShape(String)
+  HexDigitsLost
+  UnknownUnit(String)
+  BadSelector
+  BareTermInBlock(String)
+  ColonPseudo(String, String)
+  SemicolonDeclarations
+  BadAnB
+  Unsupported(String)
+} derive(Eq, @debug.Debug)
+pub fn ErrorKind::code(Self) -> String
+
+// Type aliases
+
+// Traits
