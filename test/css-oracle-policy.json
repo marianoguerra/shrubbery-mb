@@ -1,10 +1,10 @@
 {
   "//": "Floors for the CSS oracles, held from BOTH sides: dropping below one is a regression, and rising above one is an improvement that has to be recorded here in the same commit that earns it. Data rather than code, because these numbers move as the library grows and the diff is the point.",
 
-  "//loop": "CSS -> tree -> shrubbery -> tree -> CSS equals CSS -> tree -> CSS. The headline property. `biome-error` is deliberately absent: those files are invalid CSS, the parser recovers from them, and a recovery is not required to survive a detour through a different syntax. The gap to 100% is a long tail -- 82 files with 77 distinct signatures -- not a cluster.",
+  "//loop": "CSS -> tree -> shrubbery -> tree -> CSS equals CSS -> tree -> CSS. The headline property. `biome-error` is deliberately absent: those files are invalid CSS, the parser recovers from them, and a recovery is not required to survive a detour through a different syntax. The gap to 100% is a long tail -- 81 files with distinct signatures -- not a cluster.",
   "loop": {
-    "biome-ok": 75,
-    "prettier": 95,
+    "biome-ok": 76,
+    "prettier": 96,
     "vendor": 1
   },
 

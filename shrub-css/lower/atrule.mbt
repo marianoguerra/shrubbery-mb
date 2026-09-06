@@ -456,22 +456,51 @@ fn Lowerer::feature(
   at : @basic.Span,
   kind : CondKind,
 ) -> @ast.Condition raise @err.ShrubCssError {
-  // `(display: grid)` inside `supports`: a declaration, not a feature.
-  match items {
-    [{ it: Id(p), .. }, { it: Block(gs), .. }] =>
-      if gs.length() == 1 {
-        let (value, important) = self.value_of(gs[0])
-        let name = @names.unkebab(p)
-        // A declaration when it names a property, a plain feature otherwise.
-        // Both spell the same shrubbery, and both readings are legal CSS in
-        // their own at-rule, so the distinction is left to the consumer.
-        return if kind == Supports {
-          Decl({ property: Ident(name), value, important, span: cspan(at), })
-        } else {
-          Feature(Plain(name, value))
+  // `(display: grid)` inside `supports` is a declaration, not a feature, and
+  // its property may be the `ident("...")` escape as well as a bare name --
+  // the same two spellings a declaration has anywhere else.
+  let head_len = items.length() - 1
+  if head_len > 0 {
+    match items[head_len].it {
+      Block(gs) =>
+        if gs.length() == 1 {
+          let name : @ast.PropertyName? = match items[0:head_len] {
+            [{ it: Id(p), .. }] => Some(Ident(@names.unkebab(p)))
+            _ =>
+              match as_dashed(items[0:head_len]) {
+                Some(n) => Some(Custom(n))
+                None =>
+                  match as_call(items[0:head_len]) {
+                    Some((f, a, rest)) =>
+                      if f == "ident" && rest.length() == 0 {
+                        match literal_string(a) {
+                          Some(lit) => Some(Ident(lit))
+                          None => None
+                        }
+                      } else {
+                        None
+                      }
+                    None => None
+                  }
+              }
+          }
+          match name {
+            Some(property) => {
+              let (value, important) = self.value_of(gs[0])
+              // The same shrubbery, two readings, and CSS makes the same
+              // distinction: in `@supports` it is a declaration being tested,
+              // and in `@media` it is a plain feature.
+              return if kind == Supports {
+                Decl({ property, value, important, span: cspan(at), })
+              } else {
+                Feature(Plain(property.text(), value))
+              }
+            }
+            None => ()
+          }
         }
-      }
-    _ => ()
+      _ => ()
+    }
   }
   // `width = rem(40)`, `width <= rem(40)`.
   let ops = range_ops(items)

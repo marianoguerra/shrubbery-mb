@@ -143,6 +143,11 @@ css-diff *args: build
 css-only oracle: build
     {{justfile_directory()}}/tools/cssdiff.py {{oracle}} --no-ratchet --show 5
 
+# The generated properties and the fuzzer. Seeded, so a failure is reproducible.
+[group('css')]
+css-prop:
+    moon test -p marianoguerra/shrubbery-dev/test/css/prop --target native
+
 # Check, format, unit tests, boundaries -- run before committing.
 [group('gates')]
 quick: check fmt test boundary-check embed-smoke diff css-diff cli-test

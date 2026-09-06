@@ -75,17 +75,13 @@ fn Lowerer::values(
       Op("/") => out.push(Slash)
       Op(o) => out.push(Delim(o))
       Parens(gs) => out.push(Paren(self.comma_list(gs[:])))
-      // A bracket holding more than one group is CSS's comma-separated value
-      // list, which has no brackets of its own -- so it is spliced in. A
-      // bracket holding exactly one is CSS's own `[...]`, which is how grid
-      // line names are written, and stays a bracket.
+      // A bracket is CSS's comma-separated value list, which has no brackets
+      // of its own -- so it is spliced in. CSS's own `[...]` is written
+      // `bracket(...)`, because the two cannot share a spelling: a comma may
+      // only appear inside a bracket, so the bracket has to mean the list.
       Brackets(gs) =>
-        if gs.length() > 1 {
-          for v in self.comma_list(gs[:]) {
-            out.push(v)
-          }
-        } else {
-          out.push(Bracket(self.comma_list(gs[:])))
+        for v in self.comma_list(gs[:]) {
+          out.push(v)
         }
       Block(_) => out.push(Bogus(self.bogus(SemicolonDeclarations, n)))
       Braces(_) => out.push(Bogus(self.bogus(BracesUnsupported, n)))
@@ -143,6 +139,7 @@ fn Lowerer::value_call(
         Some(s) => return Call(Delim(s))
         None => ()
       }
+    "bracket" => return Call(Bracket(self.comma_list(args)))
     _ => ()
   }
   // A unit, if the name is one and the argument is a single number.

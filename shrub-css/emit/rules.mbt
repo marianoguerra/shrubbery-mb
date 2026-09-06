@@ -315,10 +315,7 @@ fn Emitter::write_condition(self : Emitter, c : @ast.Condition) -> Unit {
       // Inside a condition a declaration is written with `=`, not `:`, because
       // a `:` there opens a block -- legal, but one step from the semicolon
       // hazard, so it is not the canonical spelling.
-      match d.property {
-        Ident(n) => self.put(name_or_string(n))
-        Custom(n) => self.put(custom_property(n))
-      }
+      self.put(property_text(d.property))
       self.put(": ")
       self.write_values(d.value[:])
       self.put(")")

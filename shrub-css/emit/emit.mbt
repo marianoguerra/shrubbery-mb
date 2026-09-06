@@ -158,20 +158,7 @@ fn Emitter::write_decl_body(self : Emitter, b : @ast.DeclBlock) -> Unit {
 
 ///|
 fn Emitter::write_decl(self : Emitter, d : @ast.Declaration) -> Unit {
-  match d.property {
-    Ident(n) =>
-      match @names.kebab(n) {
-        Some(s) => self.put(s)
-        // A property name that cannot be a bare identifier takes the literal
-        // escape rather than being mangled.
-        None => {
-          self.put("ident(")
-          self.write_string(n)
-          self.put(")")
-        }
-      }
-    Custom(n) => self.put(custom_property(n))
-  }
+  self.put(property_text(d.property))
   self.put(": ")
   self.write_value_list(d.value[:])
   if d.important {
@@ -179,6 +166,23 @@ fn Emitter::write_decl(self : Emitter, d : @ast.Declaration) -> Unit {
       self.put(" ")
     }
     self.put("important()")
+  }
+}
+
+///|
+/// A property name, escaped when it cannot be a bare identifier.
+///
+/// Shared with the condition printer, because a declaration inside `@supports`
+/// is a declaration: writing its name any other way there would emit a string
+/// where a property belongs.
+fn property_text(p : @ast.PropertyName) -> String {
+  match p {
+    Ident(n) =>
+      match @names.kebab(n) {
+        Some(s) => s
+        None => "ident(" + quoted(n) + ")"
+      }
+    Custom(n) => custom_property(n)
   }
 }
 
@@ -335,10 +339,13 @@ fn Emitter::write_value(self : Emitter, v : @ast.ComponentValue) -> Unit {
       self.write_comma_groups(inner[:])
       self.put(")")
     }
+    // CSS's own `[...]` -- grid line names -- is a call, because the bracket
+    // itself is already spoken for: a comma may only live inside one, so
+    // `[a, b]` has to mean the comma list. Two things cannot share a spelling.
     Bracket(inner) => {
-      self.put("[")
+      self.put("bracket(")
       self.write_comma_groups(inner[:])
-      self.put("]")
+      self.put(")")
     }
     Comma => self.put(",")
     Slash => self.put("/")

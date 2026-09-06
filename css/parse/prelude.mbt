@@ -164,20 +164,34 @@ fn parse_anb(toks : ArrayView[@token.Token]) -> @ast.AnB? {
       } else if l == "even" {
         Some({ a: 2, b: 0, })
       } else {
-        // A bare `n`, `-n`, or `+n`.
+        // A bare `n`, `-n`, or `+n` -- or `n-1` and `-n-1`, which are single
+        // identifiers because `-` and digits are identifier characters.
         match n_coefficient(l) {
           Some(a) => Some({ a, b: 0, })
-          None => None
+          None =>
+            match ndash_ident(l) {
+              Some(pair) => Some({ a: pair.0, b: -pair.1, })
+              None => None
+            }
         }
       }
     }
     [Number(_, v, true)] => Some({ a: 0, b: v.to_int(), })
-    [Dimension(_, v, true, u)] =>
-      if u.to_lower() == "n" {
+    [Dimension(_, v, true, u)] => {
+      let unit = u.to_lower()
+      if unit == "n" {
         Some({ a: v.to_int(), b: 0, })
       } else {
-        None
+        // `2n-1` is ONE dimension token whose unit is `n-1`: `-` and digits
+        // are identifier characters, so the tokenizer takes them, and it is
+        // right to. The An+B grammar calls this an <ndashdigit-dimension> and
+        // re-splits it here, which is the only place that can.
+        match ndashdigit(unit) {
+          Some(b) => Some({ a: v.to_int(), b: -b, })
+          None => None
+        }
       }
+    }
     // `2n+1`, `2n-1` when the sign fused with the second number.
     [Dimension(_, v, true, u), Number(r, b, true)] =>
       if u.to_lower() == "n" && has_sign(r) {
@@ -209,6 +223,49 @@ fn parse_anb(toks : ArrayView[@token.Token]) -> @ast.AnB? {
       }
     _ => None
   }
+}
+
+///|
+/// The digits of an `n-<digits>` unit, if that is what this is.
+fn ndashdigit(unit : String) -> Int? {
+  if !unit.has_prefix("n-") {
+    return None
+  }
+  digits_of(unit.clamped_view(start=2).to_owned())
+}
+
+///|
+/// `n-1` and `-n-1` as a coefficient and its digits.
+fn ndash_ident(w : String) -> (Int, Int)? {
+  if w.has_prefix("-n-") {
+    match digits_of(w.clamped_view(start=3).to_owned()) {
+      Some(d) => Some((-1, d))
+      None => None
+    }
+  } else if w.has_prefix("n-") {
+    match digits_of(w.clamped_view(start=2).to_owned()) {
+      Some(d) => Some((1, d))
+      None => None
+    }
+  } else {
+    None
+  }
+}
+
+///|
+/// A run of decimal digits, and nothing else.
+fn digits_of(s : String) -> Int? {
+  if s.length() == 0 {
+    return None
+  }
+  let mut n = 0
+  for c in s {
+    if c < '0' || c > '9' {
+      return None
+    }
+    n = n * 10 + (c.to_int() - 48)
+  }
+  Some(n)
 }
 
 ///|
