@@ -171,6 +171,7 @@ ci:
     tools/shrubdiff.py parse --show 0
     tools/shrubdiff.py source --show 0
     tools/shrubdiff.py print --show 0
+    tools/cssdiff.py --show 0
     tools/cli-test.sh
 
 # ---------------------------------------------------------------------------
