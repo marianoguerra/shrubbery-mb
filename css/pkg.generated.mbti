@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/css"
+
+import {
+  "marianoguerra/css/ast",
+  "marianoguerra/css/error",
+  "marianoguerra/css/parse",
+  "marianoguerra/css/token",
+  "marianoguerra/css/write",
+  "marianoguerra/error-report",
+}
+
+// Values
+pub fn parse(String, strict? : Bool) -> @parse.Parsed raise @error.CssError
+
+pub fn parse_strict(String) -> @ast.Stylesheet raise @error.CssError
+
+pub fn to_css(@ast.Stylesheet, style? : @write.Style) -> String
+
+pub fn to_report(@error.Diagnostic, @error-report.SourceId) -> @error-report.Report
+
+pub fn tokens(String) -> Array[@token.Token]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

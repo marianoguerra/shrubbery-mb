@@ -41,7 +41,7 @@ fi
 #     today. That is a packaging fact, not a dependency: this module shares a
 #     repository with its first consumer until it is spun out, and the spin-out
 #     changes that one line. Everything else a human writes is in scope.
-if grep -rniE 'shrubbery|rhombus' "$mod" \
+if grep -rniE 'shrubbery|rhombus|\bcss\b' "$mod" \
      --include='*.mbt' --include='*.md' --include='moon.pkg' --include='moon.mod' \
      | grep -v 'pkg.generated.mbti' \
      | grep -vE '^[^:]*moon\.mod:[0-9]+:repository = ' >&2; then

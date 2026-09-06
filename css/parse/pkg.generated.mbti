@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/css/parse"
+
+import {
+  "marianoguerra/css/ast",
+  "marianoguerra/css/error",
+}
+
+// Values
+pub fn parse(String, strict? : Bool) -> Parsed raise @error.CssError
+
+pub fn parse_strict(String) -> @ast.Stylesheet raise @error.CssError
+
+// Errors
+
+// Types and methods
+pub struct Parsed {
+  sheet : @ast.Stylesheet
+  diagnostics : Array[@error.Diagnostic]
+}
+pub fn Parsed::diagnostics(Self) -> Array[@error.Diagnostic]
+pub fn Parsed::has_errors(Self) -> Bool
+pub fn Parsed::sheet(Self) -> @ast.Stylesheet
+
+// Type aliases
+
+// Traits

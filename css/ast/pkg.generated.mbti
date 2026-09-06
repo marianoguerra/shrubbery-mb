@@ -1,0 +1,338 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/css/ast"
+
+import {
+  "marianoguerra/css/kind",
+  "marianoguerra/css/span",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct AnB {
+  a : Int
+  b : Int
+} derive(Eq)
+
+pub(all) enum AttrCase {
+  Default
+  Insensitive
+  Sensitive
+} derive(Eq)
+
+pub(all) enum AttrOp {
+  Exact
+  Includes
+  DashMatch
+  Prefix
+  Suffix
+  Substring
+} derive(Eq)
+pub fn AttrOp::text(Self) -> String
+
+pub(all) struct AttrSelector {
+  ns : NsPrefix?
+  name : String
+  matcher : (AttrOp, AttrValue)?
+  case_ : AttrCase
+} derive(Eq)
+
+pub(all) enum AttrValue {
+  Str(String)
+  Ident(String)
+} derive(Eq)
+
+pub(all) enum BlockItem {
+  Decl(Declaration)
+  Rule(CssRule)
+  Comment(Comment)
+  Bogus(Bogus)
+} derive(Eq)
+
+pub(all) struct Bogus {
+  kind : @kind.ErrorKind
+  span : @span.Span
+  text : String
+} derive(Eq)
+pub fn Bogus::new(@kind.ErrorKind, @span.Span, text? : String) -> Self
+
+pub(all) enum Combinator {
+  Descendant
+  Child
+  NextSibling
+  SubsequentSibling
+  Column
+} derive(Eq)
+
+pub(all) struct Comment {
+  text : String
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum ComponentValue {
+  Ident(String)
+  Str(String)
+  Num(Number)
+  Dimension(Number, String)
+  Percentage(Number)
+  Hex(String)
+  Url(String)
+  Function(String, Array[ComponentValue])
+  Paren(Array[ComponentValue])
+  Bracket(Array[ComponentValue])
+  Comma
+  Slash
+  Delim(String)
+  Bogus(Bogus)
+} derive(Eq)
+
+pub(all) struct Compound {
+  type_sel : TypeSelector?
+  quals : Array[Qualifier]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum Condition {
+  Feature(Feature)
+  Decl(Declaration)
+  SelectorFn(Array[Selector])
+  Operation(LogicalOp, Array[Condition])
+  Unknown(Array[ComponentValue])
+  Bogus(Bogus)
+} derive(Eq)
+
+pub(all) struct ContainerRule {
+  name : String?
+  condition : Condition
+  body : Array[BlockItem]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum CssRule {
+  Style(StyleRule)
+  Media(MediaRule)
+  Supports(SupportsRule)
+  Container(ContainerRule)
+  Layer(LayerRule)
+  Keyframes(KeyframesRule)
+  FontFace(DeclBlock)
+  Page(PageRule)
+  Property(PropertyRule)
+  Import(ImportRule)
+  Charset(String, @span.Span)
+  Namespace(NamespaceRule)
+  Scope(ScopeRule)
+  StartingStyle(Array[BlockItem], @span.Span)
+  CounterStyle(String, DeclBlock)
+  Unknown(UnknownAtRule)
+  Bogus(Bogus)
+} derive(Eq)
+
+pub(all) struct DeclBlock {
+  decls : Array[BlockItem]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) struct Declaration {
+  property : PropertyName
+  value : Array[ComponentValue]
+  important : Bool
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum Feature {
+  Boolean(String)
+  Plain(String, Array[ComponentValue])
+  Range(String, RangeOp, Array[ComponentValue])
+  Interval(Array[ComponentValue], RangeOp, String, RangeOp, Array[ComponentValue])
+} derive(Eq)
+
+pub(all) struct ImportRule {
+  url : String
+  layer : LayerName??
+  supports : Condition?
+  media : Array[MediaQuery]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) struct KeyframeBlock {
+  selectors : Array[KeyframeSelector]
+  decls : DeclBlock
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum KeyframeSelector {
+  From
+  To
+  Percentage(Number)
+} derive(Eq)
+
+pub(all) enum KeyframesName {
+  Ident(String)
+  Str(String)
+} derive(Eq)
+
+pub(all) struct KeyframesRule {
+  name : KeyframesName
+  frames : Array[KeyframeBlock]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) struct LayerName {
+  parts : Array[String]
+} derive(Eq)
+
+pub(all) struct LayerRule {
+  names : Array[LayerName]
+  body : Array[BlockItem]?
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum LogicalOp {
+  And
+  Or
+  Not
+} derive(Eq)
+
+pub(all) enum MediaQualifier {
+  Only
+  Not
+} derive(Eq)
+
+pub(all) struct MediaQuery {
+  qualifier : MediaQualifier?
+  media_type : String?
+  condition : Condition?
+} derive(Eq)
+
+pub(all) struct MediaRule {
+  queries : Array[MediaQuery]
+  body : Array[BlockItem]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) struct NamespaceRule {
+  prefix : String?
+  url : String
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum NsPrefix {
+  None_
+  Any
+  Named(String)
+} derive(Eq)
+
+pub(all) struct Number {
+  repr : String
+  value : Double
+  is_int : Bool
+} derive(Eq)
+pub fn Number::of_int(Int) -> Self
+
+pub(all) struct PageRule {
+  selectors : Array[String]
+  body : Array[BlockItem]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum PropertyName {
+  Ident(String)
+  Custom(String)
+} derive(Eq)
+pub fn PropertyName::text(Self) -> String
+
+pub(all) struct PropertyRule {
+  name : String
+  decls : DeclBlock
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum PseudoClass {
+  Simple(String)
+  Nth(String, AnB, Array[Selector]?)
+  Sub(String, Array[Selector])
+  Lang(Array[String])
+  Dir(String)
+  Unknown(String, Array[ComponentValue])
+} derive(Eq)
+
+pub(all) enum PseudoElement {
+  Simple(String)
+  Sub(String, Array[Selector])
+  Fn(String, Array[ComponentValue])
+} derive(Eq)
+
+pub(all) enum Qualifier {
+  Class(String)
+  Id(String)
+  Attr(AttrSelector)
+  Pseudo(PseudoClass)
+  Element(PseudoElement)
+  Nesting
+  Bogus(Bogus)
+} derive(Eq)
+
+pub(all) enum RangeOp {
+  Lt
+  Le
+  Gt
+  Ge
+  Eq
+} derive(Eq)
+pub fn RangeOp::text(Self) -> String
+
+pub(all) struct ScopeRule {
+  start : Array[Selector]?
+  end : Array[Selector]?
+  body : Array[BlockItem]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum Selector {
+  Simple(Compound)
+  Complex(Selector, Combinator, Compound)
+  Relative(Combinator, Selector)
+  Bogus(Bogus)
+} derive(Eq)
+
+pub(all) struct StyleRule {
+  selectors : Array[Selector]
+  body : Array[BlockItem]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) struct Stylesheet {
+  items : Array[TopItem]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) struct SupportsRule {
+  condition : Condition
+  body : Array[BlockItem]
+  span : @span.Span
+} derive(Eq)
+
+pub(all) enum TopItem {
+  Rule(CssRule)
+  Comment(Comment)
+  Bogus(Bogus)
+} derive(Eq)
+
+pub(all) enum TypeSelector {
+  Universal(NsPrefix?)
+  Named(NsPrefix?, String)
+} derive(Eq)
+
+pub(all) struct UnknownAtRule {
+  name : String
+  prelude : Array[ComponentValue]
+  block : Array[BlockItem]?
+  span : @span.Span
+} derive(Eq)
+
+// Type aliases
+
+// Traits

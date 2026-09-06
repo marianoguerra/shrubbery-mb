@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/css/kind"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum ErrorKind {
+  UnexpectedEof
+  UnterminatedString
+  UnterminatedComment
+  UnterminatedUrl
+  BadUrl
+  UnexpectedCloser(String)
+  UnclosedBlock(String)
+  BadSelector
+  DanglingCombinator
+  BadAttributeSelector
+  BadPseudoClass(String)
+  BadAnB
+  ExpectedColon
+  EmptyValue
+  ImportantNotLast
+  BadBang
+  BadDeclaration
+  BadAtRuleShape(String)
+  UnknownAtRule(String)
+  BadAtRulePrelude(String)
+  BadMediaQuery
+  BadSupportsCondition
+  MixedLogicalOps
+  BadKeyframeSelector
+  DeclarationAtTopLevel
+  RuleInDeclarationContext
+  Unexpected(String)
+} derive(Eq, @debug.Debug)
+pub fn ErrorKind::code(Self) -> String
+pub fn ErrorKind::is_warning(Self) -> Bool
+
+// Type aliases
+
+// Traits

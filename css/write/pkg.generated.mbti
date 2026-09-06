@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/css/write"
+
+import {
+  "marianoguerra/css/ast",
+}
+
+// Values
+pub fn declaration(@ast.Declaration, style? : Style) -> String
+
+pub fn rule(@ast.CssRule, style? : Style) -> String
+
+pub fn selector(@ast.Selector, style? : Style) -> String
+
+pub fn stylesheet(@ast.Stylesheet, style? : Style) -> String
+
+pub fn value(Array[@ast.ComponentValue], style? : Style) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Style {
+  Pretty
+  Compact
+  Minified
+} derive(Eq)
+
+// Type aliases
+
+// Traits

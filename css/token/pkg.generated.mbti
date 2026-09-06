@@ -1,0 +1,62 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/css/token"
+
+import {
+  "marianoguerra/css/span",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn dump(Array[Token]) -> String
+
+pub fn tokenize(String) -> Array[Token]
+
+// Errors
+
+// Types and methods
+pub(all) enum HashKind {
+  Id
+  Unrestricted
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Token {
+  kind : TokenKind
+  span : @span.Span
+} derive(Eq, @debug.Debug)
+pub fn Token::is_trivia(Self) -> Bool
+
+pub(all) enum TokenKind {
+  Ident(String)
+  Function(String)
+  AtKeyword(String)
+  Hash(String, HashKind)
+  Str(String)
+  BadStr
+  Url(String)
+  BadUrl
+  Number(String, Double, Bool)
+  Percentage(String, Double)
+  Dimension(String, Double, Bool, String)
+  Whitespace
+  Colon
+  Semicolon
+  Comma
+  LBracket
+  RBracket
+  LParen
+  RParen
+  LBrace
+  RBrace
+  Cdo
+  Cdc
+  Comment(String)
+  Delim(Char)
+  Eof
+} derive(Eq, @debug.Debug)
+pub fn TokenKind::closer_for(Self) -> Self?
+pub fn TokenKind::is_opener(Self) -> Bool
+pub fn TokenKind::to_debug(Self) -> String
+
+// Type aliases
+
+// Traits

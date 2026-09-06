@@ -121,6 +121,13 @@ embed-smoke:
 cli-test: build
     tools/cli-test.sh
 
+# ---------------------------------------------------------------- css
+
+# Unit tests for the CSS module only -- the inner loop while working on it.
+[group('css')]
+css-test:
+    moon test -p marianoguerra/css --target native
+
 # Check, format, unit tests, boundaries -- run before committing.
 [group('gates')]
 quick: check fmt test boundary-check embed-smoke diff cli-test

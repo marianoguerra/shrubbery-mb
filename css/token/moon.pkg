@@ -1,0 +1,10 @@
+import {
+  "marianoguerra/css/span",
+  "moonbitlang/core/string",
+}
+
+import {
+  "marianoguerra/css/token",
+  "marianoguerra/css/span",
+  "moonbitlang/core/test",
+} for "test"

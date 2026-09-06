@@ -1,0 +1,7 @@
+import {
+}
+
+import {
+  "marianoguerra/css/span",
+  "moonbitlang/core/test",
+} for "test"

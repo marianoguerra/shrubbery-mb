@@ -1,0 +1,13 @@
+import {
+  "marianoguerra/css/ast",
+  "marianoguerra/css/parse",
+  "marianoguerra/css/write",
+  "marianoguerra/css/token",
+  "marianoguerra/css/error",
+  "marianoguerra/error-report" @report,
+}
+
+import {
+  "marianoguerra/css",
+  "moonbitlang/core/test",
+} for "test"

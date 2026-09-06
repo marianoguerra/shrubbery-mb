@@ -7,15 +7,16 @@ reference in [racket/rhombus](https://github.com/racket/rhombus).
 
 The specification is <https://docs.racket-lang.org/shrubbery/spec.html>.
 
-## Four modules in one workspace
+## Five modules in one workspace
 
 `moon.work` lists them. Every `moon` command below runs at the repository root
-and covers all four.
+and covers all five.
 
 | directory | module | published |
 |---|---|---|
 | `error-report/` | `marianoguerra/error-report` | yes — **and it has no dependencies**; keep it that way |
 | `lib/` | `marianoguerra/shrubbery` | yes; only `error-report` and `kawaz/grapheme` |
+| `css/` | `marianoguerra/css` | yes; only `error-report`. Knows nothing of shrubbery |
 | `cli/` | `marianoguerra/shrubbery-cli` | yes; `moonbitlang/x` lives here |
 | `.` (root) | `marianoguerra/shrubbery-dev` | no: `test/`, `tools/` |
 

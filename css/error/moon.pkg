@@ -1,0 +1,15 @@
+import {
+  "marianoguerra/css/span",
+  "marianoguerra/css/kind",
+  "marianoguerra/error-report" @report,
+}
+
+import {
+  "marianoguerra/css/error" @err,
+  "marianoguerra/css/span",
+  "marianoguerra/css/kind",
+  "marianoguerra/error-report" @report,
+  "marianoguerra/error-report/render",
+  "marianoguerra/error-report/style",
+  "moonbitlang/core/test",
+} for "test"
