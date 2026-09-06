@@ -121,6 +121,23 @@ embed-smoke:
 cli-test: build
     tools/cli-test.sh
 
+# ---------------------------------------------------------------- html
+
+# Unit tests for the HTML module only -- the inner loop while working on it.
+[group('html')]
+html-test:
+    moon test -p marianoguerra/html --target native
+
+# The table it writes is committed, so the suite stays hermetic and CI needs
+# no network. Regenerating is a deliberate act and the diff is the review.
+#
+# Regenerate the named character reference table from the WHATWG list.
+[group('html')]
+entities-regen:
+    curl -fsSL https://html.spec.whatwg.org/entities.json -o /tmp/entities.json
+    {{justfile_directory()}}/tools/gen-entities.py /tmp/entities.json {{justfile_directory()}}/html/names/entities.mbt
+    moon fmt
+
 # ---------------------------------------------------------------- css
 
 # Unit tests for the CSS module only -- the inner loop while working on it.

@@ -3,6 +3,7 @@ members = [
   "./error-report",
   "./lib",
   "./css",
+  "./html",
   "./shrub-css",
   "./cli",
 ]

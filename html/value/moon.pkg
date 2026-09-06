@@ -1,0 +1,10 @@
+import {
+  "marianoguerra/html/ast",
+  "marianoguerra/html/names",
+}
+
+import {
+  "marianoguerra/html/value",
+  "marianoguerra/html/parse",
+  "moonbitlang/core/test",
+} for "test"

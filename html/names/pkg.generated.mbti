@@ -1,0 +1,51 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/html/names"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn auto_closes(String) -> Bool
+
+pub fn display_of(String) -> Display
+
+pub fn foreign_attr(String) -> String?
+
+pub fn implies_close(String, String) -> Bool
+
+pub fn is_escapable_raw_text(String) -> Bool
+
+pub fn is_integration_point(String) -> Bool
+
+pub fn is_invisible(Char) -> Bool
+
+pub fn is_preformatted(String) -> Bool
+
+pub fn is_raw_text(String) -> Bool
+
+pub fn is_void(String) -> Bool
+
+pub let longest_reference : Int
+
+pub fn named_reference(String) -> String?
+
+pub let packed_references : String
+
+pub fn reference_for_invisible(Char) -> String?
+
+pub fn svg_tag(String) -> String?
+
+// Errors
+
+// Types and methods
+pub(all) enum Display {
+  Block
+  Inline
+  Pre
+  None_
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits

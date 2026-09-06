@@ -1,0 +1,9 @@
+import {
+}
+
+import {
+  "marianoguerra/html/names",
+  "moonbitlang/core/test",
+} for "test"
+
+formatter(ignore: [ "entities.mbt" ])

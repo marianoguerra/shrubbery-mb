@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Publish the three published modules to mooncakes, in dependency order.
+# Publish the published modules to mooncakes, in dependency order.
 #
 # Two things this exists to make impossible:
 #
 #   1. Publishing the ROOT module. `moon.mod` has no `private` field, so a bare
 #      `moon publish` at the repository root would upload the corpus, the
 #      goldens and the porting tools as `marianoguerra/shrubbery-dev`. This
-#      script can only address the three names below.
+#      script can only address the names below.
 #   2. Publishing out of order. `shrubbery` declares `error-report@0.1.0` and
 #      `shrubbery-cli` declares both, and the registry rejects a module whose
 #      dependency it has never seen. The order below is the dependency order.
@@ -29,7 +29,7 @@ fi
 
 # Dependency order. Not alphabetical, and not a set: `error-report` must exist
 # in the registry before `shrubbery` can name it.
-all=(error-report lib css shrub-css cli)
+all=(error-report lib css html shrub-css cli)
 
 if [ "$#" -gt 0 ]; then
   for m in "$@"; do

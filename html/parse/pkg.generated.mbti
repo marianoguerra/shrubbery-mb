@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/html/parse"
+
+import {
+  "marianoguerra/html/ast",
+  "marianoguerra/html/error",
+}
+
+// Values
+pub fn parse(String, strict? : Bool) -> Parsed raise @error.HtmlError
+
+pub fn parse_strict(String) -> @ast.Document raise @error.HtmlError
+
+// Errors
+
+// Types and methods
+pub struct Parsed {
+  document : @ast.Document
+  diagnostics : Array[@error.Diagnostic]
+}
+pub fn Parsed::diagnostics(Self) -> Array[@error.Diagnostic]
+pub fn Parsed::document(Self) -> @ast.Document
+pub fn Parsed::has_errors(Self) -> Bool
+
+// Type aliases
+
+// Traits

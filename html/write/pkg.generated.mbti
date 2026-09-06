@@ -1,0 +1,44 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/html/write"
+
+import {
+  "marianoguerra/html/ast",
+  "marianoguerra/html/kind",
+  "marianoguerra/html/span",
+}
+
+// Values
+pub fn document(@ast.Document, style? : Style, whitespace? : Whitespace) -> String
+
+pub fn document_checked(@ast.Document, style? : Style, whitespace? : Whitespace) -> (String, Array[(@kind.ErrorKind, @span.Span)])
+
+pub fn element(@ast.Element, style? : Style, whitespace? : Whitespace) -> String
+
+pub fn escape_attr(String) -> String
+
+pub fn escape_text(String) -> String
+
+pub fn may_go_unquoted(String) -> Bool
+
+pub fn node(@ast.Node, style? : Style, whitespace? : Whitespace) -> String
+
+pub fn raw_text_is_printable(String, String) -> Bool
+
+// Errors
+
+// Types and methods
+pub(all) enum Style {
+  Pretty
+  Compact
+  Minified
+} derive(Eq)
+
+pub(all) enum Whitespace {
+  Css
+  Strict
+  Ignore
+} derive(Eq)
+
+// Type aliases
+
+// Traits

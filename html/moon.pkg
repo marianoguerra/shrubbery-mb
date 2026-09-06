@@ -1,0 +1,17 @@
+import {
+  "marianoguerra/html/ast",
+  "marianoguerra/html/parse",
+  "marianoguerra/html/write",
+  "marianoguerra/html/token",
+  "marianoguerra/html/error",
+  "marianoguerra/html/value",
+  "marianoguerra/error-report" @report,
+}
+
+import {
+  "marianoguerra/html",
+  "marianoguerra/html/ast",
+  "marianoguerra/html/span",
+  "marianoguerra/html/value",
+  "moonbitlang/core/test",
+} for "test"

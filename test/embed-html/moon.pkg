@@ -1,0 +1,18 @@
+// The modularity claim for the markup tree, as a package rather than a
+// sentence.
+//
+// A consumer that builds markup and prints it -- a template engine, a code
+// generator -- should not pay for the tokenizer or the parser, and should not
+// link `error-report` either. This package imports exactly what such a consumer
+// would, and `tools/embed-smoke.sh` checks what the compiler actually links.
+
+import {
+  "marianoguerra/html/ast",
+  "marianoguerra/html/write",
+  "marianoguerra/html/span",
+}
+
+import {
+  "marianoguerra/shrubbery-dev/test/embed-html" @embed_html,
+  "moonbitlang/core/test",
+} for "test"

@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/html/value"
+
+import {
+  "marianoguerra/html/ast",
+  "marianoguerra/html/names",
+}
+
+// Values
+pub fn as_bool(@ast.Element, String) -> Bool
+
+pub fn as_int(@ast.Element, String) -> Int?
+
+pub fn attr(@ast.Element, String) -> String?
+
+pub fn by_id(@ast.Document, String) -> @ast.Element?
+
+pub fn by_tag(@ast.Document, String) -> Array[@ast.Element]
+
+pub fn class_list(@ast.Element) -> Array[String]
+
+pub fn display_of(@ast.Element) -> @names.Display
+
+pub fn elements(@ast.Node) -> Array[@ast.Element]
+
+pub fn has_attr(@ast.Element, String) -> Bool
+
+pub fn is_void(@ast.Element) -> Bool
+
+pub fn text_content(@ast.Node) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,53 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/html/token"
+
+import {
+  "marianoguerra/html/kind",
+  "marianoguerra/html/span",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn dump(Array[Token]) -> String
+
+pub fn tokenize(String) -> Scanned
+
+pub fn tokens(String) -> Array[Token]
+
+// Errors
+
+// Types and methods
+pub(all) struct RawAttr {
+  name : String
+  value : String?
+  raw : String?
+  span : @span.Span
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Scanned {
+  tokens : Array[Token]
+  problems : Array[(@kind.ErrorKind, @span.Span)]
+}
+
+pub(all) struct Token {
+  kind : TokenKind
+  span : @span.Span
+} derive(Eq, @debug.Debug)
+pub fn Token::is_whitespace(Self) -> Bool
+
+pub(all) enum TokenKind {
+  StartTag(String, Array[RawAttr], Bool)
+  EndTag(String)
+  Text(String, String?)
+  RawText(String)
+  Comment(String)
+  Doctype(String, String?, String?)
+  Cdata(String)
+  Bogus(@kind.ErrorKind, String)
+  Eof
+} derive(Eq, @debug.Debug)
+pub fn TokenKind::to_debug(Self) -> String
+
+// Type aliases
+
+// Traits

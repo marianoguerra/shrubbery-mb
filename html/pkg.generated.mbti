@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/html"
+
+import {
+  "marianoguerra/error-report",
+  "marianoguerra/html/ast",
+  "marianoguerra/html/error",
+  "marianoguerra/html/parse",
+  "marianoguerra/html/token",
+  "marianoguerra/html/write",
+}
+
+// Values
+pub fn attr(@ast.Element, String) -> String?
+
+pub fn class_list(@ast.Element) -> Array[String]
+
+pub fn parse(String, strict? : Bool) -> @parse.Parsed raise @error.HtmlError
+
+pub fn parse_strict(String) -> @ast.Document raise @error.HtmlError
+
+pub fn text_content(@ast.Node) -> String
+
+pub fn to_html(@ast.Document, style? : @write.Style, whitespace? : @write.Whitespace) -> String
+
+pub fn to_report(@error.Diagnostic, @error-report.SourceId) -> @error-report.Report
+
+pub fn tokens(String) -> Array[@token.Token]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

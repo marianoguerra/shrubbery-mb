@@ -1,0 +1,10 @@
+import {
+  "marianoguerra/html/span",
+  "marianoguerra/html/kind",
+  "marianoguerra/html/names",
+}
+
+import {
+  "marianoguerra/html/token",
+  "moonbitlang/core/test",
+} for "test"
