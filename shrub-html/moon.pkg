@@ -1,0 +1,16 @@
+import {
+  "marianoguerra/shrubbery-html/lower",
+  "marianoguerra/shrubbery-html/emit",
+  "marianoguerra/shrubbery-html/error",
+  "marianoguerra/html/ast",
+  "marianoguerra/html/parse",
+  "marianoguerra/html/write",
+  "marianoguerra/html/error" @htmlerror,
+  "marianoguerra/error-report" @report,
+}
+
+import {
+  "marianoguerra/shrubbery-html" @shrubbery_html,
+  "marianoguerra/html/write",
+  "moonbitlang/core/test",
+} for "test"

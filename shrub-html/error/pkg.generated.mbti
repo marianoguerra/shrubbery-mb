@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-html/error"
+
+import {
+  "marianoguerra/error-report",
+  "marianoguerra/shrubbery-html/kind",
+  "marianoguerra/shrubbery/basic",
+}
+
+// Values
+
+// Errors
+pub(all) suberror ShrubHtmlError {
+  ShrubHtmlError(Diagnostic)
+}
+pub fn ShrubHtmlError::diagnostic(Self) -> Diagnostic
+
+// Types and methods
+pub(all) struct Diagnostic {
+  kind : @kind.ErrorKind
+  span : @basic.Span
+  severity : @error-report.Severity
+  related : Array[(@basic.Span, String)]
+}
+pub fn Diagnostic::is_error(Self) -> Bool
+pub fn Diagnostic::new(@kind.ErrorKind, @basic.Span, severity? : @error-report.Severity, related? : Array[(@basic.Span, String)]) -> Self
+pub fn Diagnostic::of_kind(@kind.ErrorKind, @basic.Span) -> Self
+pub fn[T] Diagnostic::raise_(Self) -> T raise ShrubHtmlError
+pub fn Diagnostic::to_report(Self, @error-report.SourceId) -> @error-report.Report
+
+// Type aliases
+
+// Traits

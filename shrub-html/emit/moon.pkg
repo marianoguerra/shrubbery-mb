@@ -1,0 +1,13 @@
+import {
+  "marianoguerra/shrubbery-html/names",
+  "marianoguerra/html/ast",
+  "marianoguerra/html/names" @hnames,
+}
+
+import {
+  "marianoguerra/shrubbery-html/emit",
+  "marianoguerra/shrubbery-html/lower",
+  "marianoguerra/html/parse",
+  "marianoguerra/html/write",
+  "moonbitlang/core/test",
+} for "test"

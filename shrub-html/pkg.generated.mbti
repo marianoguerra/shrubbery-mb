@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-html"
+
+import {
+  "marianoguerra/error-report",
+  "marianoguerra/html/write",
+  "marianoguerra/shrubbery-html/lower",
+}
+
+// Values
+pub fn emit(@marianoguerra/html/ast.Document) -> String
+
+pub fn lower(String, strict? : Bool, hook? : ((String, Array[@marianoguerra/shrubbery/ast.Node]) -> String?)?) -> @lower.Lowered raise @marianoguerra/shrubbery-html/error.ShrubHtmlError
+
+pub fn to_html(String, style? : @write.Style, whitespace? : @write.Whitespace) -> String raise @marianoguerra/shrubbery-html/error.ShrubHtmlError
+
+pub fn to_report(@marianoguerra/shrubbery-html/error.Diagnostic, @error-report.SourceId) -> @error-report.Report
+
+pub fn to_shrubbery(String) -> String raise @marianoguerra/html/error.HtmlError
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

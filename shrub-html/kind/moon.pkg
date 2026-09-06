@@ -1,0 +1,7 @@
+import {
+}
+
+import {
+  "marianoguerra/shrubbery-html/kind",
+  "moonbitlang/core/test",
+} for "test"

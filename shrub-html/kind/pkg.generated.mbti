@@ -1,0 +1,33 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-html/kind"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum ErrorKind {
+  SigilTag(String)
+  ReservedCall(String)
+  BareTermInBlock(String)
+  AttrNotDeclaration
+  BadAttrValue
+  ChildrenOnVoid(String)
+  BadEscapeCall(String)
+  BlockOnNonElement
+  AltsUnsupported
+  BracesUnsupported
+  TrailingRunAfterBlock
+  NameNotSpellable(String)
+  Unsupported(String)
+} derive(Eq, @debug.Debug)
+pub fn ErrorKind::code(Self) -> String
+pub fn ErrorKind::is_warning(Self) -> Bool
+
+// Type aliases
+
+// Traits

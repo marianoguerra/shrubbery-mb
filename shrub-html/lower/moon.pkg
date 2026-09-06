@@ -1,0 +1,19 @@
+import {
+  "marianoguerra/shrubbery-html/names",
+  "marianoguerra/shrubbery-html/kind",
+  "marianoguerra/shrubbery-html/error" @err,
+  "marianoguerra/shrubbery" @shrub,
+  "marianoguerra/shrubbery/ast" @sast,
+  "marianoguerra/shrubbery/basic",
+  "marianoguerra/shrubbery/error" @shrub_err,
+  "marianoguerra/html/ast",
+  "marianoguerra/html/span" @hspan,
+  "marianoguerra/html/kind" @hkind,
+  "marianoguerra/html/names" @hnames,
+}
+
+import {
+  "marianoguerra/shrubbery-html/lower",
+  "marianoguerra/html/write",
+  "moonbitlang/core/test",
+} for "test"

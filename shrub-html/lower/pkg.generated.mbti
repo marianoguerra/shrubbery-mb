@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-html/lower"
+
+import {
+  "marianoguerra/shrubbery-html/error",
+}
+
+// Values
+pub fn lower(@marianoguerra/shrubbery/ast.Node, strict? : Bool, hook? : ((String, Array[@marianoguerra/shrubbery/ast.Node]) -> String?)?) -> Lowered raise @error.ShrubHtmlError
+
+pub fn lower_source(String, strict? : Bool, hook? : ((String, Array[@marianoguerra/shrubbery/ast.Node]) -> String?)?) -> Lowered raise @error.ShrubHtmlError
+
+// Errors
+
+// Types and methods
+pub struct Lowered {
+  document : @marianoguerra/html/ast.Document
+  diagnostics : Array[@error.Diagnostic]
+}
+pub fn Lowered::diagnostics(Self) -> Array[@error.Diagnostic]
+pub fn Lowered::document(Self) -> @marianoguerra/html/ast.Document
+pub fn Lowered::has_errors(Self) -> Bool
+
+// Type aliases
+pub type RawTextHook = (String, Array[@marianoguerra/shrubbery/ast.Node]) -> String?
+
+// Traits

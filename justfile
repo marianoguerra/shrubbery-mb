@@ -128,6 +128,11 @@ cli-test: build
 html-test:
     moon test -p marianoguerra/html --target native
 
+# Unit tests for the shrubbery-to-markup bridge only.
+[group('html')]
+html-bridge-test:
+    moon test -p marianoguerra/shrubbery-html --target native
+
 # The table it writes is committed, so the suite stays hermetic and CI needs
 # no network. Regenerating is a deliberate act and the diff is the review.
 #
