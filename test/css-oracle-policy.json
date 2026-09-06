@@ -1,0 +1,32 @@
+{
+  "//": "Floors for the CSS oracles, held from BOTH sides: dropping below one is a regression, and rising above one is an improvement that has to be recorded here in the same commit that earns it. Data rather than code, because these numbers move as the library grows and the diff is the point.",
+
+  "//loop": "CSS -> tree -> shrubbery -> tree -> CSS equals CSS -> tree -> CSS. The headline property. `biome-error` is deliberately absent: those files are invalid CSS, the parser recovers from them, and a recovery is not required to survive a detour through a different syntax. The gap to 100% is a long tail -- 82 files with 77 distinct signatures -- not a cluster.",
+  "loop": {
+    "biome-ok": 75,
+    "prettier": 95,
+    "vendor": 1
+  },
+
+  "//roundtrip": "Printing is a fixed point: print, reparse, print, compare. The `biome-error` shortfall is error-recovery stability, where a `Bogus` echoes text that reparses differently.",
+  "roundtrip": {
+    "biome-error": 53,
+    "biome-ok": 92,
+    "prettier": 144,
+    "vendor": 1
+  },
+
+  "//lower": "The authored Shrubbery CSS corpus lowers with no error diagnostic. This one is expected to stay at 100%: it is the syntax's own examples.",
+  "lower": {
+    "shrub": 4
+  },
+
+  "//survive": "Nothing crashes, on anything. `notation` is the 696-file shrubbery corpus that the notation's own suite already carries -- almost none of it is valid Shrubbery CSS, so it is a free adversarial corpus for the lowering, and it must stay at 100%.",
+  "survive": {
+    "biome-error": 90,
+    "biome-ok": 99,
+    "notation": 696,
+    "prettier": 153,
+    "vendor": 1
+  }
+}

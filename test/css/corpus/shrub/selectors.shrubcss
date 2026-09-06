@@ -1,0 +1,66 @@
+// Every selector shape the syntax can spell.
+any():
+  a: b
+
+tag(media):
+  a: b
+
+nav ~in a ~child span ~next em ~sibling i ~column td:
+  a: b
+
+circle ns(svg):
+  a: b
+
+any() ns(any()):
+  a: b
+
+p ns():
+  a: b
+
+a class(b) id(c) hover() element(before):
+  a: b
+
+class("btn__primary"):
+  a: b
+
+input has_attr(disabled):
+  a: b
+
+input has_attr(type = "text" ~i):
+  a: b
+
+input has_attr(class ~= "btn"):
+  a: b
+
+input has_attr(lang |= "en"):
+  a: b
+
+input has_attr(href ^= "https"):
+  a: b
+
+input has_attr(src $= ".png"):
+  a: b
+
+input has_attr(title *= "x"):
+  a: b
+
+li nth_child(2 n + 1):
+  a: b
+
+li nth_child(- n + 3):
+  a: b
+
+li nth_child(odd):
+  a: b
+
+li nth_child(2 n of class(x)):
+  a: b
+
+a is(h1, h2) not(class(x)) has(class(y)) where(class(z)):
+  a: b
+
+a lang(en) dir(ltr):
+  a: b
+
+parent() ~child first_child():
+  a: b

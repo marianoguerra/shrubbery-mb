@@ -81,6 +81,13 @@ pub fn lower(
     _ => []
   }
   for g in groups {
+    match as_comment(g) {
+      Some(c) => {
+        items.push(Comment(c))
+        continue
+      }
+      None => ()
+    }
     match l.statement(g, Top) {
       Some(r) => items.push(Rule(r))
       None => ()
@@ -233,6 +240,30 @@ fn is_declaration(
 }
 
 ///|
+/// `comment("...")`: a CSS comment, carried as data.
+///
+/// It has to be data because shrubbery comments are trivia, and trivia does not
+/// reach the tree. See the emitter for the whole argument.
+fn as_comment(g : @sast.Node) -> @ast.Comment? {
+  let items = match g.it {
+    Group(xs) => xs[:]
+    _ => return None
+  }
+  match as_call(items) {
+    Some((name, args, rest)) =>
+      if name == "comment" && rest.length() == 0 {
+        match literal_string(args) {
+          Some(text) => Some({ text, span: cspan(g.span), })
+          None => None
+        }
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
 /// Whether a block holds one value rather than a rule body.
 fn block_is_value(block : @sast.Node) -> Bool {
   match block.it {
@@ -270,6 +301,13 @@ fn Lowerer::block_items(
     _ => return out
   }
   for g in groups {
+    match as_comment(g) {
+      Some(c) => {
+        out.push(Comment(c))
+        continue
+      }
+      None => ()
+    }
     let items = match g.it {
       Group(xs) => xs
       _ => {

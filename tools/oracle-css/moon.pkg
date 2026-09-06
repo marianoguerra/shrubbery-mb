@@ -1,0 +1,10 @@
+import {
+  "marianoguerra/css/parse",
+  "marianoguerra/css/write",
+  "marianoguerra/shrubbery-css/lower",
+  "marianoguerra/shrubbery-css/emit",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+}
+
+pkgtype(kind: "executable")

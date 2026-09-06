@@ -35,11 +35,31 @@ fn Parser::parse_selector_list(
     }
     i = i + 1
   }
-  out.push(self.parse_selector(toks[from:], start))
+  // A trailing comma leaves a run with nothing in it. That is an error, and it
+  // is reported -- but it must not also become a `Bogus` SELECTOR, because
+  // printing one emits the dangling comma again and the output stops being a
+  // fixed point.
+  let tail = toks[from:]
+  if only_trivia_toks(tail) && out.length() > 0 {
+    let sp = span_of_view(tail, start)
+    self.error(BadSelector, sp)
+  } else {
+    out.push(self.parse_selector(tail, start))
+  }
   if out.length() == 0 {
     out.push(Bogus(self.bogus(BadSelector, start, start)))
   }
   out
+}
+
+///|
+fn only_trivia_toks(toks : ArrayView[@token.Token]) -> Bool {
+  for t in toks {
+    if !t.is_trivia() {
+      return false
+    }
+  }
+  true
 }
 
 ///|

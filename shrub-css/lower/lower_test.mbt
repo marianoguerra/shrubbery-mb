@@ -160,12 +160,19 @@ test "at-rules are calls" {
     css("media(width <= rem(40)):\n  class(c):\n    p: rem(1)\n"),
     content="@media (width<=40rem){.c{p:1rem}}",
   )
+  // The block form is the plain feature; `=` is a range test that compares
+  // for equality. CSS has both and they are different nodes, so the syntax
+  // needs two spellings too.
   inspect(
-    css("media(screen and (min_width = rem(40))):\n  a:\n    b: c\n"),
+    css("media(screen and (min_width: rem(40))):\n  a:\n    b: c\n"),
     content="@media screen and (min-width:40rem){a{b:c}}",
   )
   inspect(
-    css("supports(not (display = grid)):\n  a:\n    b: c\n"),
+    css("media((min_width = rem(40))):\n  a:\n    b: c\n"),
+    content="@media (min-width=40rem){a{b:c}}",
+  )
+  inspect(
+    css("supports(not (display: grid)):\n  a:\n    b: c\n"),
     content="@supports not (display:grid){a{b:c}}",
   )
   inspect(

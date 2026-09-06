@@ -1,0 +1,24 @@
+// Every value shape the syntax can spell.
+a:
+  lengths: px(10) rem(1.5) em(0.5) ch(2) vh(100) cqw(50)
+  angles: deg(45) rad(1.5) turn(0.25)
+  times: s(0.2) ms(200)
+  resolutions: dpi(96) dppx(2)
+  flex: fr(1)
+  capitals: q(4) hz(50) khz(2)
+  unknown_unit: dim(3, "newunit")
+  percentage: percent(50)
+  colours: hex(fff) hex("007700") rgb(0 0 0 / percent(5))
+  strings: "a \"quoted\" string"
+  urls: url("https://example.com/a.png")
+  lists: [Charter, Georgia, serif]
+  slash: 1 / 2
+  grid: [full_start] fr(1) [full_end]
+  calc: calc(percent(100) - rem(2))
+  custom: var(--brand, red)
+  literal: ident("side_bar")
+  vendor: _webkit_fill_available
+  flag: red important()
+
+root():
+  --brand_fg: hex(123456)

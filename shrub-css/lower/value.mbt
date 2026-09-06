@@ -138,6 +138,11 @@ fn Lowerer::value_call(
         None => ()
       }
     "dim" => return Call(self.dim_of(args, at))
+    "delim" =>
+      match literal_string(args) {
+        Some(s) => return Call(Delim(s))
+        None => ()
+      }
     _ => ()
   }
   // A unit, if the name is one and the argument is a single number.

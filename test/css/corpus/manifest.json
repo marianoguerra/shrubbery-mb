@@ -1,0 +1,40 @@
+{
+  "//": "Where every committed CSS fixture came from, and under what licence. The corpus is committed rather than fetched so the suite is hermetic: CI needs this repository and nothing else.",
+  "buckets": {
+    "biome-ok": {
+      "source": "biomejs/biome",
+      "path": "crates/biome_css_parser/tests/css_test_suite/ok/",
+      "licence": "MIT",
+      "count": 99,
+      "note": "The SCSS, Tailwind and Grit-metavariable subdirectories are excluded: they exercise biome's dialect extensions, not CSS, and would report spurious failures."
+    },
+    "biome-error": {
+      "source": "biomejs/biome",
+      "path": "crates/biome_css_parser/tests/css_test_suite/error/",
+      "licence": "MIT",
+      "count": 90,
+      "note": "Deliberately invalid CSS. Used for the survive and roundtrip oracles only -- a recovery from broken input is not required to survive a round trip through a different syntax."
+    },
+    "prettier": {
+      "source": "biomejs/biome (vendored Prettier suite)",
+      "path": "crates/biome_css_formatter/tests/specs/prettier/css/",
+      "licence": "MIT",
+      "count": 153,
+      "note": "The broadest real-world coverage available: comments, custom properties, character escaping, front matter, and a good deal of CSS nobody would write on purpose."
+    },
+    "vendor": {
+      "source": "necolas/normalize.css",
+      "licence": "MIT",
+      "count": 1
+    },
+    "shrub": {
+      "source": "this repository",
+      "licence": "Apache-2.0",
+      "count": 4,
+      "note": "Shrubbery CSS written by hand, covering every construct the syntax can spell."
+    }
+  },
+  "excluded": {
+    "lightningcss": "MPL-2.0, and its ~3000 cases are string literals inside a 31k-line source file. Vendoring them would mix file-level copyleft into an Apache-2.0 repository for coverage that biome and Prettier already give in file form. It informs the AST design, which is not a licensing question."
+  }
+}

@@ -1,0 +1,83 @@
+charset("utf-8")
+
+import("a.css")
+
+import("b.css", layer(base.theme), supports((display = grid)), screen)
+
+namespace("http://www.w3.org/2000/svg")
+
+namespace(svg, "http://www.w3.org/2000/svg")
+
+layer(a, b.c)
+
+layer(base):
+  a:
+    b: c
+
+media(screen):
+  a:
+    b: c
+
+media(only print):
+  a:
+    b: c
+
+media(not screen):
+  a:
+    b: c
+
+media(width <= rem(40)):
+  a:
+    b: c
+
+media(rem(20) <= width <= rem(40)):
+  a:
+    b: c
+
+media(screen and (min_width = rem(40))):
+  a:
+    b: c
+
+media((hover) and (pointer)):
+  a:
+    b: c
+
+supports((display = grid) or (display = flex)):
+  a:
+    b: c
+
+supports(selector(a ~child b)):
+  a:
+    b: c
+
+container(card, (width > rem(20))):
+  a:
+    b: c
+
+keyframes(fade):
+  from:
+    o: 0
+  percent(50):
+    o: 0.5
+  to:
+    o: 1
+
+font_face():
+  font_family: "Inter"
+
+counter_style(thumbs):
+  system: cyclic
+
+property(--x):
+  syntax: "*"
+
+page(first()):
+  margin: dim(1, "in")
+
+starting_style():
+  a:
+    b: c
+
+scope(class(a) ~to class(b)):
+  c:
+    d: e

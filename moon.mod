@@ -19,6 +19,9 @@ import {
   "marianoguerra/error-report@0.1.0",
   "marianoguerra/shrubbery@0.1.1",
   "marianoguerra/shrubbery-cli@0.1.1",
+  "marianoguerra/css@0.1.0",
+  "marianoguerra/shrubbery-css@0.1.0",
+  "moonbitlang/x@0.5.1",
 }
 
 license = "Apache-2.0"

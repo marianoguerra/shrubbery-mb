@@ -72,16 +72,20 @@ pub fn unit_of(name : String) -> String? {
 /// table does not know -- which is how a stylesheet using a unit newer than
 /// this library still round-trips.
 pub fn unit_call(unit : String) -> String? {
-  match unit {
-    "Q" => Some("q")
-    "Hz" => Some("hz")
-    "kHz" => Some("khz")
-    _ =>
-      if is_plain_unit(unit.to_lower()) {
-        Some(unit.to_lower())
-      } else {
-        None
-      }
+  let call = match unit {
+    "Q" => "q"
+    "Hz" => "hz"
+    "kHz" => "khz"
+    _ => unit.to_lower()
+  }
+  // Only when the call names this exact spelling. CSS units are
+  // case-insensitive, so `5EM` and `5em` mean the same thing -- but they are
+  // not the same TEXT, and a bridge that quietly lower-cased one would rewrite
+  // a line it was asked only to reformat. A non-canonical spelling takes the
+  // `dim(n, "EM")` escape instead, which keeps it exactly.
+  match unit_of(call) {
+    Some(u) if u == unit => Some(call)
+    _ => None
   }
 }
 
@@ -194,6 +198,10 @@ pub fn is_at_rule(name : String) -> Bool {
     "counter-style" | "page" | "property" | "scope" => true
     "starting-style" | "import" | "charset" | "namespace" => true
     "document" | "viewport" | "position-try" | "view-transition" => true
+    // The escape for an at-rule this table does not know. It has to be here,
+    // because this predicate is what makes `statement` dispatch to the at-rule
+    // path at all.
+    "at" => true
     _ => false
   }
 }

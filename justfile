@@ -133,9 +133,19 @@ css-test:
 bridge-test:
     moon test -p marianoguerra/shrubbery-css --target native
 
+# Every CSS oracle over the committed corpus, held to the ratchet.
+[group('css')]
+css-diff *args: build
+    {{justfile_directory()}}/tools/cssdiff.py {{args}} --show 0
+
+# One CSS oracle, with the failing files shown -- the inner loop, not a gate.
+[group('css')]
+css-only oracle: build
+    {{justfile_directory()}}/tools/cssdiff.py {{oracle}} --no-ratchet --show 5
+
 # Check, format, unit tests, boundaries -- run before committing.
 [group('gates')]
-quick: check fmt test boundary-check embed-smoke diff cli-test
+quick: check fmt test boundary-check embed-smoke diff css-diff cli-test
 
 # Mirrors .github/workflows/check.yml, including the two `git diff --exit-code`
 # steps -- which is how a stale `.mbti` or an unformatted file is caught.

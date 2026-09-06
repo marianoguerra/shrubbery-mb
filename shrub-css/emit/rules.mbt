@@ -155,10 +155,20 @@ fn Emitter::write_rule(self : Emitter, r : @ast.CssRule) -> Unit {
       self.write_decl_body(b)
     }
     Unknown(u) => {
-      self.put(name_or_string(u.name))
-      self.put("(")
-      self.write_comma_groups(u.prelude[:])
+      // An at-rule this library does not know needs a form that says it IS an
+      // at-rule. Emitting `color_profile(...)` would read back as a selector
+      // containing an unknown pseudo-class, which is how a whole `@`-rule can
+      // silently become a rule that matches nothing.
+      self.put("at(")
+      self.write_string(u.name)
+      if u.prelude.length() > 0 {
+        self.put(", ")
+        self.write_comma_groups(u.prelude[:])
+      }
       self.put(")")
+      // `@x {}` and `@x;` are different rules, and the difference has to
+      // survive: an empty block writes `«»`, and no block writes nothing at
+      // all. Collapsing them would turn every empty at-rule into a statement.
       match u.block {
         Some(body) => self.write_body(body[:])
         None => ()
@@ -184,13 +194,15 @@ fn Emitter::write_layer_name(self : Emitter, n : @ast.LayerName) -> Unit {
 /// `@page :first` is `page(first())`: a pseudo-page is a pseudo, so it is a
 /// call like every other one.
 fn Emitter::write_page_selector(self : Emitter, s : String) -> Unit {
-  let body = if s.has_prefix(":") {
-    s.clamped_view(start=1).to_owned()
+  // `@page :first` names a pseudo-page and `@page LandscapeTable` names a
+  // page. They are different things, so the pseudo keeps its call and the
+  // name stays a bare name.
+  if s.has_prefix(":") {
+    self.put(name_or_string(s.clamped_view(start=1).to_owned()))
+    self.put("()")
   } else {
-    s
+    self.put(name_or_string(s))
   }
-  self.put(name_or_string(body))
-  self.put("()")
 }
 
 ///|
@@ -307,7 +319,7 @@ fn Emitter::write_condition(self : Emitter, c : @ast.Condition) -> Unit {
         Ident(n) => self.put(name_or_string(n))
         Custom(n) => self.put(custom_property(n))
       }
-      self.put(" = ")
+      self.put(": ")
       self.write_values(d.value[:])
       self.put(")")
     }
@@ -376,9 +388,13 @@ fn Emitter::write_feature(self : Emitter, f : @ast.Feature) -> Unit {
   self.put("(")
   match f {
     Boolean(n) => self.put(name_or_string(n))
+    // `(width: 40rem)` and `(width = 40rem)` are different nodes in CSS -- a
+    // plain feature and a range test that happens to compare for equality --
+    // so they need different spellings here. The block form is legal inside
+    // parentheses, where it cannot run away to the end of a line.
     Plain(n, vs) => {
       self.put(name_or_string(n))
-      self.put(" = ")
+      self.put(": ")
       self.write_values(vs[:])
     }
     Range(n, op, vs) => {

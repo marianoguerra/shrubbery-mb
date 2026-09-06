@@ -1,0 +1,67 @@
+charset("utf-8")
+import("reset.css", layer(base))
+
+// Design tokens.
+root():
+  --brand: oklch(0.62 0.19 258)
+  --gap: rem(1)
+  color_scheme: light dark
+
+[h1, h2, h3]:
+  margin_block: 0 em(0.5)
+  font_family: [Charter, Georgia, serif]
+  text_wrap: balance
+
+nav ~in a:
+  color: var(--brand)
+  text_decoration: none
+
+  [parent() hover(), parent() focus_visible()]:
+    text_decoration: underline
+
+  parent() element(after):
+    content: " x"
+
+class(card):
+  display: grid
+  gap: var(--gap)
+  padding: rem(1) rem(1.25)
+  box_shadow: [0 px(1) px(2) rgb(0 0 0 / percent(5)), 0 px(8) px(24) rgb(0 0 0 / percent(8))]
+
+  parent() ~child first_child():
+    font_weight: 600
+
+  parent() class(is_selected):
+    outline: px(2) solid var(--brand)
+
+id(sidebar) ~in li nth_child(2 n + 1):
+  background: hex(f7f7f7)
+
+input has_attr(type = "text") not(disabled()):
+  border: px(1) solid hex(ccc)
+
+any() ~column td:
+  text_align: right
+
+media(width <= rem(40)):
+  class(card):
+    padding: rem(0.75)
+
+supports(not (display = grid)):
+  class(card):
+    display: flex
+
+keyframes(fade_in):
+  percent(0):
+    opacity: 0
+  percent(100):
+    opacity: 1
+
+font_face():
+  font_family: "Inter"
+  src: url("inter.woff2") format("woff2")
+
+layer(base, components)
+
+class(spinner):
+  animation: fade_in ms(200) ease_out both important()

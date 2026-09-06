@@ -36,7 +36,7 @@ fn Lowerer::at_rule(
     ("supports", Some(b)) =>
       Some(
         Supports({
-          condition: self.condition(args, g.span),
+          condition: self.condition(args, g.span, Supports),
           body: self.block_items(b, inner),
           span,
         }),
@@ -46,19 +46,25 @@ fn Lowerer::at_rule(
       Some(
         Container({
           name: cname,
-          condition: self.condition(rest, g.span),
+          condition: self.condition(rest, g.span, Query),
           body: self.block_items(b, inner),
           span,
         }),
       )
     }
     ("keyframes", Some(b)) => {
-      let kname : @ast.KeyframesName = match name_arg(args) {
-        Some(n) => Ident(n)
-        None => {
-          self.error(BadCallShape("keyframes"), g.span)
-          Ident("")
-        }
+      // A quoted name and a bare one are different rules in CSS, so the
+      // string is checked first rather than being folded into an identifier.
+      let kname : @ast.KeyframesName = match literal_string(args) {
+        Some(s) => Str(s)
+        None =>
+          match single_ident(args) {
+            Some(n) => Ident(@names.unkebab(n))
+            None => {
+              self.error(BadCallShape("keyframes"), g.span)
+              Ident("")
+            }
+          }
       }
       Some(Keyframes({ name: kname, frames: self.frames(b), span, }))
     }
@@ -76,7 +82,9 @@ fn Lowerer::at_rule(
       Some(
         Page({
           selectors: page_selectors(args),
-          body: self.block_items(b, DeclOnly),
+          // Not `DeclOnly`: a page body may hold margin at-rules -- `@top-left`
+          // and its fifteen siblings -- as well as declarations.
+          body: self.block_items(b, Nested),
           span,
         }),
       )
@@ -123,11 +131,50 @@ fn Lowerer::at_rule(
       }
     }
     ("import", None) => self.import_of(args, g, span)
+    // `at("name", prelude)`: the escape for an at-rule this library does not
+    // know. Without a marked form an unknown `@`-rule reads back as a selector
+    // containing an unknown pseudo-class, which is a whole rule silently
+    // becoming one that matches nothing.
+    ("at", _) => {
+      let gs = arg_groups(args)
+      if gs.length() == 0 {
+        return Some(self.bogus_rule(BadCallShape("at"), g))
+      }
+      let at_name = match gs[0] {
+        [{ it: Lit(Str(s)), .. }] => s
+        [{ it: Id(n), .. }] => @names.unkebab(n)
+        _ => return Some(self.bogus_rule(BadCallShape("at"), g))
+      }
+      let prelude : Array[@ast.ComponentValue] = []
+      let mut i = 1
+      while i < gs.length() {
+        if i > 1 {
+          prelude.push(Comma)
+        }
+        let (vs, _) = self.values(gs[i])
+        for v in vs {
+          prelude.push(v)
+        }
+        i = i + 1
+      }
+      // `Nested`, not the enclosing context: `at(...)` is by definition an
+      // at-rule nobody knows, so nothing can say whether its body holds
+      // declarations or rules, and `Nested` is the context that admits both.
+      let body = match block {
+        Some(b) => Some(self.block_items(b, Nested))
+        None => None
+      }
+      Some(Unknown({ name: at_name, prelude, block: body, span, }))
+    }
     (_, blk) => {
       // A known at-rule in the wrong shape, or one the table does not know.
       self.error(BadCallShape(name), g.span)
+      // `Nested`, not `inner`: nothing here knows what this at-rule holds, and
+      // `Nested` is the context that admits both declarations and rules. Using
+      // the enclosing context would make `@styleset { nice-style: 12 }` at the
+      // top of a file read its declaration as a rule.
       let body = match blk {
-        Some(b) => Some(self.block_items(b, inner))
+        Some(b) => Some(self.block_items(b, Nested))
         None => None
       }
       Some(
@@ -172,7 +219,7 @@ fn Lowerer::import_of(
       Some((n, a, _)) if n == "layer" =>
         layer = Some(Some({ parts: layer_parts(a), }))
       Some((n, a, _)) if n == "supports" =>
-        supports = Some(self.condition(a, g.span))
+        supports = Some(self.condition(a, g.span, Supports))
       _ =>
         match items {
           [{ it: Id("layer"), .. }] => layer = Some(None)
@@ -247,7 +294,7 @@ fn Lowerer::media_query(
   let condition = if rest.length() == 0 {
     None
   } else {
-    Some(self.condition_items(rest, at))
+    Some(self.condition_items(rest, at, Query))
   }
   { qualifier, media_type, condition, }
 }
@@ -278,12 +325,25 @@ fn Lowerer::condition(
   self : Lowerer,
   args : ArrayView[@sast.Node],
   at : @basic.Span,
+  kind : CondKind,
 ) -> @ast.Condition raise @err.ShrubCssError {
   match args {
-    [{ it: Group(xs), .. }] => self.condition_items(xs[:], at)
-    _ => self.condition_items(args, at)
+    [{ it: Group(xs), .. }] => self.condition_items(xs[:], at, kind)
+    _ => self.condition_items(args, at, kind)
   }
 }
+
+///|
+/// What a `name: value` inside a condition means.
+///
+/// The same shrubbery, two readings, and CSS makes the same distinction: in
+/// `@supports` it is a declaration being tested for support, and in `@media`
+/// or `@container` it is a plain feature test. Nothing in the text tells them
+/// apart, so the context has to.
+priv enum CondKind {
+  Query
+  Supports
+} derive(Eq)
 
 ///|
 /// A condition: features and parenthesised groups, joined by `and`/`or`.
@@ -291,6 +351,7 @@ fn Lowerer::condition_items(
   self : Lowerer,
   items : ArrayView[@sast.Node],
   at : @basic.Span,
+  kind : CondKind,
 ) -> @ast.Condition raise @err.ShrubCssError {
   if items.length() == 0 {
     return Bogus(self.bogus_at(BadSelector, at))
@@ -306,20 +367,20 @@ fn Lowerer::condition_items(
   if ands.length() > 1 {
     let cs : Array[@ast.Condition] = []
     for part in ands {
-      flatten(cs, self.condition_items(part, at), And)
+      flatten(cs, self.condition_items(part, at, kind), And)
     }
     return Operation(And, cs)
   }
   if ors.length() > 1 {
     let cs : Array[@ast.Condition] = []
     for part in ors {
-      flatten(cs, self.condition_items(part, at), Or)
+      flatten(cs, self.condition_items(part, at, kind), Or)
     }
     return Operation(Or, cs)
   }
   match items {
     [{ it: Id("not"), .. }, ..] =>
-      return Operation(Not, [self.condition_items(items[1:], at)])
+      return Operation(Not, [self.condition_items(items[1:], at, kind)])
     _ => ()
   }
   // A parenthesised group is a nested condition; anything else is a leaf.
@@ -332,9 +393,9 @@ fn Lowerer::condition_items(
             _ => one(g)
           }
           if has_logical(inner) {
-            return self.condition_items(inner, at)
+            return self.condition_items(inner, at, kind)
           }
-          return self.feature(inner, at)
+          return self.feature(inner, at, kind)
         }
         _ => ()
       }
@@ -354,7 +415,7 @@ fn Lowerer::condition_items(
     }
     _ => ()
   }
-  self.feature(items, at)
+  self.feature(items, at, kind)
 }
 
 ///|
@@ -393,6 +454,7 @@ fn Lowerer::feature(
   self : Lowerer,
   items : ArrayView[@sast.Node],
   at : @basic.Span,
+  kind : CondKind,
 ) -> @ast.Condition raise @err.ShrubCssError {
   // `(display: grid)` inside `supports`: a declaration, not a feature.
   match items {
@@ -403,12 +465,11 @@ fn Lowerer::feature(
         // A declaration when it names a property, a plain feature otherwise.
         // Both spell the same shrubbery, and both readings are legal CSS in
         // their own at-rule, so the distinction is left to the consumer.
-        return Decl({
-          property: Ident(name),
-          value,
-          important,
-          span: cspan(at),
-        })
+        return if kind == Supports {
+          Decl({ property: Ident(name), value, important, span: cspan(at), })
+        } else {
+          Feature(Plain(name, value))
+        }
       }
     _ => ()
   }
@@ -418,18 +479,21 @@ fn Lowerer::feature(
     let (i, op) = ops[0]
     let left = items[0:i]
     let right = items[i + 1:]
-    match left {
-      [{ it: Id(n), .. }] => {
+    // The name may be a custom property -- `style(--responsive: true)` -- which
+    // is two nodes, not one. It has to be recognised here, before the fallback
+    // decides the name must be on the right and flips the comparison round.
+    let left_name : String? = match left {
+      [{ it: Id(n), .. }] => Some(@names.unkebab(n))
+      _ => as_dashed(left)
+    }
+    match left_name {
+      Some(n) => {
         let (vs, _) = self.values(right)
-        return Feature(
-          if op is Eq {
-            Plain(@names.unkebab(n), vs)
-          } else {
-            Range(@names.unkebab(n), op, vs)
-          },
-        )
+        // `=` is a range test comparing for equality; the plain form is the
+        // block spelling, handled above.
+        return Feature(Range(n, op, vs))
       }
-      _ =>
+      None =>
         match right {
           [{ it: Id(n), .. }] => {
             let (vs, _) = self.values(left)
@@ -518,7 +582,8 @@ fn split_container(
   let gs = arg_groups(args)
   if gs.length() >= 2 {
     match gs[0] {
-      [{ it: Id(n), .. }] if !is_logical(n) => return (Some(n), args[1:])
+      [{ it: Id(n), .. }] if !is_logical(n) =>
+        return (Some(@names.unkebab(n)), args[1:])
       _ => ()
     }
   }
@@ -651,19 +716,29 @@ fn page_selectors(args : ArrayView[@sast.Node]) -> Array[String] {
       Group(xs) => xs[:]
       _ => one(g)
     }
+    // A run of calls is a run of pseudo-pages -- `page(first() right())` is
+    // `@page :first:right` -- and a bare name is the page's own name.
     let b = StringBuilder()
-    for n in items {
-      match n.it {
-        Id(name) => b.write_string(@names.unkebab(name))
-        Parens(_) => ()
-        _ => ()
+    let mut i = 0
+    while i < items.length() {
+      match as_call(items[i:]) {
+        Some((name, _, _)) => {
+          b.write_string(":")
+          b.write_string(@names.unkebab(name))
+          i = i + 2
+        }
+        None => {
+          match items[i].it {
+            Id(name) => b.write_string(@names.unkebab(name))
+            _ => ()
+          }
+          i = i + 1
+        }
       }
     }
     let s = b.to_string()
     if s != "" {
-      // A page selector's pseudo-page is written as a call, like every other
-      // pseudo: `page(first())` is `@page :first`.
-      out.push(":" + s)
+      out.push(s)
     }
   }
   out

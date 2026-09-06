@@ -89,17 +89,21 @@ fn Emitter::write_sheet(self : Emitter, sheet : @ast.Stylesheet) -> Unit {
 }
 
 ///|
-/// A CSS comment as a shrubbery line comment.
+/// A CSS comment as a call.
 ///
-/// `//` rather than `/* */` because a shrubbery block comment nests, so a body
-/// containing `*/` would end it early; a line comment cannot be closed by its
-/// own content at all.
+/// Not as a shrubbery comment, which is the obvious thing and the wrong one: a
+/// `//` or `/* */` in shrubbery is trivia, and trivia lives in the node's raw
+/// metadata rather than in the tree. The lowering never reads metadata -- that
+/// purity is what makes it total -- so a comment written as a comment would be
+/// dropped on the way back, and a stylesheet would quietly lose every note in
+/// it.
+///
+/// A comment is data in the CSS tree, so it is written as data here. `comment`
+/// joins the same family as every other call.
 fn Emitter::write_comment(self : Emitter, c : @ast.Comment) -> Unit {
-  self.put("//")
-  for line in c.text.split("\n") {
-    self.put(line.to_owned())
-    break
-  }
+  self.put("comment(")
+  self.write_string(c.text)
+  self.put(")")
 }
 
 ///|
@@ -253,12 +257,24 @@ fn Emitter::write_values(
   vs : ArrayView[@ast.ComponentValue],
 ) -> Unit {
   let mut first = true
-  for v in vs {
+  for i, v in vs {
     if !first {
       self.put(" ")
     }
     first = false
-    self.write_value(v)
+    // An identifier immediately before a group is indistinguishable from a
+    // call: shrubbery does not record the space, so `not (x)` and `not(x)`
+    // are the same nodes. The literal escape is not a call, so it keeps the
+    // two apart -- and CSS does distinguish them, in `@supports` above all.
+    let next_is_group = i + 1 < vs.length() && vs[i + 1] is Paren(_)
+    match v {
+      Ident(s) if next_is_group => {
+        self.put("ident(")
+        self.write_string(s)
+        self.put(")")
+      }
+      _ => self.write_value(v)
+    }
   }
 }
 
@@ -326,7 +342,19 @@ fn Emitter::write_value(self : Emitter, v : @ast.ComponentValue) -> Unit {
     }
     Comma => self.put(",")
     Slash => self.put("/")
-    Delim(s) => self.put(s)
+    // Most delimiters are operators in shrubbery too and pass straight
+    // through. Three are not: `:` opens a block, `;` ends a group, and `,`
+    // separates them -- so a value containing one (an IE `progid:` filter, a
+    // `@custom-selector` prelude, YAML front matter) needs the escape, or the
+    // emitted file would be structured by its own data.
+    Delim(s) =>
+      if s == ":" || s == ";" || s == "," {
+        self.put("delim(")
+        self.write_string(s)
+        self.put(")")
+      } else {
+        self.put(s)
+      }
     Bogus(_) => self.put("/* unreadable */")
   }
 }
