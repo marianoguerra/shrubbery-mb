@@ -58,8 +58,8 @@ pub fn Lowered::has_errors(self : Lowered) -> Bool {
 /// shrubbery CSS -- and acting on it would make `marianoguerra/shrubbery-css` a
 /// dependency of this module, which every consumer would then fetch whether
 /// they wanted CSS or not. So the hook is a parameter instead: a caller that
-/// already depends on both, such as the command-line tool, supplies one and
-/// gets the composition; everyone else pays nothing.
+/// already depends on both supplies one and gets the composition; everyone else
+/// pays nothing.
 ///
 /// The function is handed the element's name and the groups in its block, and
 /// returns the raw text to put inside it, or `None` to fall back to the

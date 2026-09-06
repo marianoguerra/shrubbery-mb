@@ -22,6 +22,8 @@ inspection.
 | `lib/` | [`marianoguerra/shrubbery`](https://mooncakes.io/docs/marianoguerra/shrubbery) | the notation: lexer, parser, AST, printers |
 | `css/` | [`marianoguerra/css`](https://mooncakes.io/docs/marianoguerra/css) | a semantic CSS tree: tokenizer, tolerant parser, printer |
 | `shrub-css/` | [`marianoguerra/shrubbery-css`](https://mooncakes.io/docs/marianoguerra/shrubbery-css) | the bridge: CSS written in shrubbery notation |
+| `html/` | [`marianoguerra/html`](https://mooncakes.io/docs/marianoguerra/html) | a semantic markup tree -- HTML, SVG, MathML: tokenizer, tolerant parser, printer |
+| `shrub-html/` | [`marianoguerra/shrubbery-html`](https://mooncakes.io/docs/marianoguerra/shrubbery-html) | the bridge: HTML written in shrubbery notation |
 | `cli/` | [`marianoguerra/shrubbery-cli`](https://mooncakes.io/docs/marianoguerra/shrubbery-cli) | the command-line tool |
 | `.` | `marianoguerra/shrubbery-dev` | corpus, goldens and the harness; never published |
 
@@ -41,6 +43,8 @@ just ci         # everything CI enforces
 
 ## Correctness
 
+### The notation
+
 Four oracles, over a 696-file corpus — the reference's own test inputs, its 66
 rejection cases, and 610 real Rhombus modules. All at 100%:
 
@@ -54,11 +58,34 @@ rejection cases, and 610 real Rhombus modules. All at 100%:
 The suite is hermetic: the corpus and the goldens are committed, so it runs with
 neither Racket nor the reference checkout present.
 
+### CSS and markup
+
+Neither has an external reference, so both are held to properties of their own,
+over their own committed corpora, with a floor per bucket in
+`test/css-oracle-policy.json` and `test/html-oracle-policy.json` that fails from
+both sides:
+
+| oracle | claim |
+|---|---|
+| `loop` | source → tree → shrubbery → tree → source is the source |
+| `roundtrip` | printing is a fixed point |
+| `lower` | the authored shrubbery corpus lowers with no diagnostic |
+| `survive` | nothing crashes, on anything |
+
+`survive` is pointed at every corpus in the repository, not only its own: almost
+none of the 696 notation files is CSS or markup, so both are free adversarial
+input for the other two modules. On top of that, `test/css/prop` and
+`test/html/prop` generate trees nobody wrote down and shrink the ones that fail.
+
 ## Installing
 
 ```sh
-moon add marianoguerra/shrubbery      # the library
-moon add marianoguerra/shrubbery-cli  # the command-line tool
+moon add marianoguerra/shrubbery       # the notation
+moon add marianoguerra/shrubbery-cli   # the command-line tool
+moon add marianoguerra/css             # a CSS tree
+moon add marianoguerra/shrubbery-css   # CSS in the notation
+moon add marianoguerra/html            # a markup tree: HTML, SVG, MathML
+moon add marianoguerra/shrubbery-html  # HTML in the notation
 ```
 
 ## Status

@@ -146,7 +146,8 @@ test "a script is text, not markup" {
 The obvious next thought — let a `style()` body hold shrubbery CSS — is not a
 dependency here, because a module's dependencies are fetched by every consumer
 and an HTML user should not pay for the CSS tables. `lower` takes a `hook` for
-it instead, and the command-line tool is where the two halves meet.
+it instead, so a consumer that already depends on both halves — a site
+generator, say — gets the composition, and everyone else pays nothing.
 
 ## Both directions
 

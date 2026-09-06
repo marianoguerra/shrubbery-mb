@@ -11,8 +11,9 @@
 // The same rule is why `marianoguerra/shrubbery-css` is NOT a dependency here,
 // tempting as it is to let a `style()` body hold shrubbery CSS: every consumer
 // of this module would then fetch the CSS tables. `lower` takes an optional
-// hook for a raw-text element's body instead, and the CLI -- which already
-// depends on everything -- is where the two halves meet.
+// hook for a raw-text element's body instead, so the composition belongs to a
+// consumer that already depends on both halves rather than to everyone who
+// depends on one.
 //
 // It is also the module most likely to change, because the surface syntax it
 // implements is still being argued about. Nothing downstream of a decision

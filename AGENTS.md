@@ -7,24 +7,26 @@ reference in [racket/rhombus](https://github.com/racket/rhombus).
 
 The specification is <https://docs.racket-lang.org/shrubbery/spec.html>.
 
-## Six modules in one workspace
+## Eight modules in one workspace
 
 `moon.work` lists them. Every `moon` command below runs at the repository root
-and covers all six.
+and covers all eight.
 
 | directory | module | published |
 |---|---|---|
 | `error-report/` | `marianoguerra/error-report` | yes — **and it has no dependencies**; keep it that way |
 | `lib/` | `marianoguerra/shrubbery` | yes; only `error-report` and `kawaz/grapheme` |
 | `css/` | `marianoguerra/css` | yes; only `error-report`. Knows nothing of shrubbery |
-| `shrub-css/` | `marianoguerra/shrubbery-css` | yes; the only module that names both sides |
+| `shrub-css/` | `marianoguerra/shrubbery-css` | yes; the only module that names shrubbery and CSS |
+| `html/` | `marianoguerra/html` | yes; only `error-report`. Knows nothing of shrubbery |
+| `shrub-html/` | `marianoguerra/shrubbery-html` | yes; the only module that names shrubbery and markup |
 | `cli/` | `marianoguerra/shrubbery-cli` | yes; `moonbitlang/x` lives here |
 | `.` (root) | `marianoguerra/shrubbery-dev` | no: `test/`, `tools/` |
 
 Publishing goes through `just publish-dry` and `just publish`, never a bare
 `moon publish`: with no `-C` that would upload the ROOT module — the corpus, the
 goldens and the porting tools — under `shrubbery-dev`, and a published version
-cannot be withdrawn. `tools/publish.sh` can address only the three names above,
+cannot be withdrawn. `tools/publish.sh` can address only the published names above,
 and walks them in dependency order because `moon publish` verifies its packaged
 zip against the registry: `shrubbery` cannot be verified until `error-report` is
 up there, which is why a first release reports the later two as *pending* until
@@ -36,7 +38,8 @@ Two rules follow from the split, and both are load-bearing:
   packages they import, so one convenience dependency in `lib/moon.mod` is paid
   for by a project that wanted only the parser. Adding one is a design decision,
   not a manifest edit.
-- **`shrubbery-dev` reaches the other three through their public API only.** That
+- **`shrubbery-dev` reaches the published modules through their public API
+  only.** That
   is what keeps the API honest — whatever the harness needs is, by construction,
   a name that has to stay public.
 
@@ -105,6 +108,11 @@ because the expectations flip as the port grows. Each bucket has a floor:
 dropping below it fails, and rising above it also fails, so that an improvement
 is recorded deliberately in a commit whose diff says what got better.
 
+`test/css-oracle-policy.json` and `test/html-oracle-policy.json` are the same
+thing for the two syntax modules, whose oracles compare the library against
+itself rather than against a reference. `test/css/corpus` and
+`test/html/corpus` are committed for the same reason `test/corpus` is.
+
 Four oracles today. `tokens` compares the scanned stream; `parse` compares the
 parse tree AND, for a file the reference rejects, its error message — one
 comparison rather than two, so that accepting a file the reference rejects is a
@@ -159,6 +167,63 @@ alternative with a temporary tag inside the group and strips it later).
 - Generated sources opt out of the formatter: `formatter(ignore: [...])`.
 - Prefer `assert_eq` for stable results and `inspect` snapshots for structured
   output; update snapshots with `moon test -u`.
+
+## Markup notes that are easy to get wrong
+
+The CSS module and the markup module look alike and are not. These are the
+places where an hour is lost:
+
+- **Two things are called "the tree."** `marianoguerra/html` is a MARKUP tree —
+  what was written, `<p>a<p>b` being two start tags and no end tags. A
+  conforming WHATWG parse builds a DOCUMENT tree: invented `html`/`head`/`body`,
+  misnesting repaired by the adoption agency, text foster-parented out of
+  tables. That one is not reversible, so a formatter cannot be built on it.
+  Every comparison has to say which tree it means.
+- **The line between the two is "table or algorithm."** Implied end tags, void
+  elements, raw text and namespaces are stated by the specification as tables,
+  so they live in `html/names` as data and the parser applies them. The adoption
+  agency and foster parenting are algorithms, and they are out of scope. Moving
+  the line buys a few more files that nest like a browser and costs the property
+  the library exists for.
+- **An element with no end tag LEAKS.** Anything written after an `Implied` or
+  `Unclosed` element becomes part of its content, so the printer may not lay out
+  around one — `<ul><li>a<li>b</ul>` comes back on one line. Getting this wrong
+  does not produce wrong output, it produces output that grows by one newline
+  every time the file is formatted, and only the fixed-point oracle notices.
+- **A block swallows the rest of its line.** In the notation,
+  `p(): "Hello " strong(): "world" "!"` puts the `"!"` INSIDE the `strong`. It
+  parses cleanly and means the wrong thing, which is why it has a warning of its
+  own and why `emit` writes one child per line, always.
+- **`<div/>` is a start tag; `<circle/>` is a complete element.** The same bytes,
+  decided by the namespace stack — and so are attribute case (`viewBox`),
+  whether `<![CDATA[` is CDATA or a comment, and whether `<title>` holds text or
+  elements. An integration point (`foreignObject`, `desc`, SVG `title`, the
+  MathML text containers) puts HTML back in scope for its CHILDREN, not for
+  itself.
+- **A tag name is stored the way its vocabulary spells it**, so an end tag —
+  which arrives lowercased — is matched against the lowercased stored name.
+  Comparing them directly is a bug that shows only inside foreign content.
+- **Raw text ends at the first `</name`**, ASCII-case-insensitively, inside a
+  JavaScript string literal included. There is no escape, so the printer REFUSES
+  a body containing one rather than rewriting it: `document_checked` reports
+  `html::unprintable_raw_text` and the bytes go out unchanged. Silently changing
+  the text of a `<script>` is how a formatter becomes a security bug.
+- **`&` is always escaped, in every context.** The specification's ambiguous-
+  ampersand rule is context-dependent and correct; implementing it would be
+  right in two ways it could be wrong in three. The blunt rule costs nothing,
+  because a literal `&` from the source carries its own spelling in `Text::raw`
+  and never reaches the escaper.
+- **A `Text` node's `raw` is a spelling, not a value.** Comparing text compares
+  `text`; comparing sources compares `raw`. Generated trees have no `raw`, which
+  is why every property compares printed forms.
+- **The final newline is appended only if there is not one already.** A document
+  ending in a text run already has it, and adding a second makes the next pass
+  add a third.
+- **The loop oracle normalises three things on BOTH sides** — an implied end
+  tag, a void element's slash, a character reference's spelling — because the
+  notation cannot express any of them. That is why a file that does not close is
+  a bug rather than a design limit, and why the floors are at 100% where the CSS
+  ones are not.
 
 ## Porting notes that are easy to get wrong
 
