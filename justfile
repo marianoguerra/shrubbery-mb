@@ -163,6 +163,24 @@ entities-regen:
     {{justfile_directory()}}/tools/gen-entities.py /tmp/entities.json {{justfile_directory()}}/html/names/entities.mbt
     moon fmt
 
+# ------------------------------------------------------------ playground
+
+# Build the wasm and serve the page. `use-js-builtin-string` makes MoonBit's
+# `String` the host's, so the binding is `WebAssembly.instantiate` and nothing
+# else -- no linear memory, no encoding. It needs a browser with the JS String
+# Builtins proposal: Chrome 130+, Firefox 134+.
+#
+# Build the playground and serve it on http://localhost:8000.
+[group('playground')]
+playground: playground-build
+    python3 -m http.server 8000 --directory {{justfile_directory()}}/playground
+
+# Compile the four conversions to wasm-gc and put the module beside the page.
+[group('playground')]
+playground-build:
+    moon build --target wasm-gc --release
+    cp {{justfile_directory()}}/_build/wasm-gc/release/build/marianoguerra/shrubbery-dev/playground/playground.wasm {{justfile_directory()}}/playground/
+
 # ---------------------------------------------------------------- css
 
 # Unit tests for the CSS module only -- the inner loop while working on it.

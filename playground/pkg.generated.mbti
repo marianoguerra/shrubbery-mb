@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-dev/playground"
+
+// Values
+pub fn css_of_shrubbery(String, String) -> String
+
+pub fn html_of_shrubbery(String, String) -> String
+
+pub fn shrubbery_of_css(String) -> String
+
+pub fn shrubbery_of_html(String) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

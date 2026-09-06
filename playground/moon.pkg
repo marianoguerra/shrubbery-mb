@@ -1,0 +1,27 @@
+import {
+  "marianoguerra/shrubbery-css" @shrubcss,
+  "marianoguerra/shrubbery-css/emit" @cssemit,
+  "marianoguerra/css/parse" @cssparse,
+  "marianoguerra/css/write" @cssw,
+  "marianoguerra/shrubbery-html" @shrubhtml,
+  "marianoguerra/shrubbery-html/emit" @htmlemit,
+  "marianoguerra/html/parse" @htmlparse,
+  "marianoguerra/html/write" @htmlw,
+  "marianoguerra/error-report" @report,
+  "marianoguerra/error-report/render",
+  "marianoguerra/error-report/style",
+}
+
+options(
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "css_of_shrubbery",
+        "shrubbery_of_css",
+        "html_of_shrubbery",
+        "shrubbery_of_html",
+      ],
+      "use-js-builtin-string": true,
+    },
+  },
+)

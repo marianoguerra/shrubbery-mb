@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shrubbery Playground</title>
+<style>
+/* ─────────────────────────────────────────────────────────────
+   Two vocabularies, two colours: evergreen is the notation,
+   brick is the language it lowers to. The gutter between the
+   columns is where they meet, and it holds the two arrows.
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --ground:    #FCFDFB;
+  --surface:   #F1F4EF;
+  --sunken:    #FFFFFF;
+  --ink:       #16201A;
+  --muted:     #5A665E;
+  --faint:     #869089;
+  --rule:      #D9E0D5;
+  --rule-firm: #BFC9BA;
+  --shrub:     #2F6B4F;
+  --shrub-bg:  #E6F0E8;
+  --markup:    #9C4B2F;
+  --markup-bg: #F6E9E2;
+  --warn:      #8A6417;
+  --warn-bg:   #F6EEDA;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground:    #0F120E;
+    --surface:   #171B15;
+    --sunken:    #12160F;
+    --ink:       #E5EADF;
+    --muted:     #99A396;
+    --faint:     #75806F;
+    --rule:      #2B322A;
+    --rule-firm: #3D453B;
+    --shrub:     #85C7A0;
+    --shrub-bg:  #1A2A20;
+    --markup:    #E39168;
+    --markup-bg: #2C1E17;
+    --warn:      #D8B45F;
+    --warn-bg:   #2A2415;
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── header ─────────────────────────────────────────────────── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.7rem 1.1rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+.wordmark {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.wordmark em { font-style: normal; color: var(--shrub); }
+
+.tabs { display: flex; gap: 0.25rem; }
+.tab {
+  font: inherit;
+  font-weight: 500;
+  color: var(--muted);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  padding: 0.32rem 0.8rem;
+  cursor: pointer;
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] {
+  color: var(--ink);
+  background: var(--ground);
+  border-color: var(--rule-firm);
+}
+.tab:focus-visible { outline: 2px solid var(--shrub); outline-offset: 1px; }
+
+.controls { display: flex; gap: 1rem; align-items: center; margin-left: auto; flex-wrap: wrap; }
+label.field { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); }
+select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--ground);
+  border: 1px solid var(--rule-firm);
+  border-radius: 5px;
+  padding: 0.28rem 0.4rem;
+  max-width: 22rem;
+}
+select:focus-visible { outline: 2px solid var(--shrub); outline-offset: 1px; }
+
+/* ── panes ──────────────────────────────────────────────────── */
+main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.panel { flex: 1; min-height: 0; display: none; }
+.panel.active { display: grid; }
+.panel {
+  grid-template-columns: 1fr 3.5rem 1fr;
+  grid-template-rows: auto 1fr;
+}
+.pane-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0.85rem;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.pane-head.shrub  { color: var(--shrub);  background: var(--shrub-bg); }
+.pane-head.markup { color: var(--markup); background: var(--markup-bg); }
+.pane-head .hint { letter-spacing: 0; text-transform: none; color: var(--muted); font-family: var(--sans); }
+
+textarea {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  tab-size: 2;
+  border: 0;
+  resize: none;
+  width: 100%;
+  height: 100%;
+  padding: 0.85rem;
+  background: var(--sunken);
+  color: var(--ink);
+}
+textarea:focus { outline: 2px solid var(--shrub); outline-offset: -2px; }
+
+/* ── the gutter, which is where the two sides meet ──────────── */
+.gutter {
+  /* Definite in BOTH axes. With only a row given, auto-placement puts this
+     first -- it has a definite row and the heads do not -- and the columns
+     come out in the wrong order. */
+  grid-column: 2;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-left: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+  background: var(--surface);
+}
+.arrow {
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid var(--rule-firm);
+  border-radius: 5px;
+  background: var(--ground);
+  color: var(--muted);
+  cursor: pointer;
+}
+.arrow:hover { color: var(--ink); border-color: var(--ink); }
+.arrow:focus-visible { outline: 2px solid var(--shrub); outline-offset: 1px; }
+.arrow.to-markup:hover { color: var(--markup); border-color: var(--markup); }
+.arrow.to-shrub:hover  { color: var(--shrub);  border-color: var(--shrub); }
+
+/* ── diagnostics ────────────────────────────────────────────── */
+.diagnostics {
+  border-top: 1px solid var(--rule);
+  background: var(--surface);
+  max-height: 34vh;
+  overflow: auto;
+  padding: 0.6rem 0.9rem;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: pre;
+  color: var(--ink);
+  display: none;
+}
+.diagnostics.shown { display: block; }
+.diagnostics .count {
+  display: block;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--warn);
+  margin-bottom: 0.5rem;
+  white-space: normal;
+}
+.status {
+  border-top: 1px solid var(--rule);
+  background: var(--surface);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+.status .ok { color: var(--shrub); }
+.status .bad { color: var(--markup); }
+
+@media (max-width: 760px) {
+  .panel { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto auto 1fr; }
+  .gutter { grid-column: auto; grid-row: auto; flex-direction: row; border: 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 0.4rem; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="wordmark">Shrubbery <em>Playground</em></span>
+  <div class="tabs" role="tablist" aria-label="Language">
+    <button class="tab" role="tab" id="tab-css" aria-controls="panel-css" aria-selected="true">CSS</button>
+    <button class="tab" role="tab" id="tab-html" aria-controls="panel-html" aria-selected="false">HTML</button>
+  </div>
+  <div class="controls">
+    <label class="field">Example
+      <select id="examples"></select>
+    </label>
+    <label class="field">Output
+      <select id="style">
+        <option value="pretty">pretty</option>
+        <option value="compact">compact</option>
+        <option value="minified">minified</option>
+      </select>
+    </label>
+  </div>
+</header>
+
+<main>
+  <section class="panel active" id="panel-css" role="tabpanel" aria-labelledby="tab-css">
+    <div class="pane-head shrub"><span>Shrubbery CSS</span><span class="hint">a thing is a call</span></div>
+    <div class="gutter">
+      <button class="arrow to-markup" data-lang="css" data-dir="down" title="Lower to CSS">→</button>
+      <button class="arrow to-shrub" data-lang="css" data-dir="up" title="Raise to Shrubbery CSS">←</button>
+    </div>
+    <div class="pane-head markup"><span>CSS</span><span class="hint">semantic tree, printed</span></div>
+    <textarea id="css-shrub" spellcheck="false" aria-label="Shrubbery CSS"></textarea>
+    <textarea id="css-out" spellcheck="false" aria-label="CSS"></textarea>
+  </section>
+
+  <section class="panel" id="panel-html" role="tabpanel" aria-labelledby="tab-html">
+    <div class="pane-head shrub"><span>Shrubbery HTML</span><span class="hint">an element is a call</span></div>
+    <div class="gutter">
+      <button class="arrow to-markup" data-lang="html" data-dir="down" title="Lower to HTML">→</button>
+      <button class="arrow to-shrub" data-lang="html" data-dir="up" title="Raise to Shrubbery HTML">←</button>
+    </div>
+    <div class="pane-head markup"><span>HTML &middot; SVG &middot; MathML</span><span class="hint">markup tree, printed</span></div>
+    <textarea id="html-shrub" spellcheck="false" aria-label="Shrubbery HTML"></textarea>
+    <textarea id="html-out" spellcheck="false" aria-label="HTML"></textarea>
+  </section>
+
+  <pre class="diagnostics" id="diagnostics"></pre>
+  <div class="status">
+    <span id="status">Loading the wasm module…</span>
+    <span id="build"></span>
+  </div>
+</main>
+
+<script type="module">
+// ─────────────────────────────────────────────────────────────
+// The whole binding. `use-js-builtin-string` makes MoonBit's
+// String the host's String, so there is no linear memory to
+// poke at and no encoding to get wrong: strings in, strings out.
+// The 1,152 imports from module "_" are the program's own string
+// constants, which the engine supplies from importedStringConstants.
+// ─────────────────────────────────────────────────────────────
+const statusEl = document.getElementById('status');
+const buildEl = document.getElementById('build');
+const diagEl = document.getElementById('diagnostics');
+
+let wasm = null;
+
+async function boot() {
+  try {
+    const bytes = await (await fetch('playground.wasm')).arrayBuffer();
+    const module = await WebAssembly.compile(bytes, {
+      builtins: ['js-string'],
+      importedStringConstants: '_',
+    });
+    wasm = (await WebAssembly.instantiate(module, {})).exports;
+    buildEl.textContent = (bytes.byteLength / 1024).toFixed(0) + ' KB · wasm-gc';
+    select('css', 0);
+    select('html', 0);
+    ok('Ready.');
+  } catch (e) {
+    statusEl.innerHTML = '<span class="bad">' + escapeHtml(String(e)) + '</span>';
+    statusEl.title =
+      'This page needs the JS String Builtins proposal (Chrome 130+, Firefox 134+).';
+  }
+}
+
+function ok(text) { statusEl.innerHTML = '<span class="ok">' + escapeHtml(text) + '</span>'; }
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ── conversions ─────────────────────────────────────────────
+const CONVERT = {
+  css:  { down: (s, st) => wasm.css_of_shrubbery(s, st),  up: (s) => wasm.shrubbery_of_css(s) },
+  html: { down: (s, st) => wasm.html_of_shrubbery(s, st), up: (s) => wasm.shrubbery_of_html(s) },
+};
+
+function run(lang, dir) {
+  if (!wasm) return;
+  const from = document.getElementById(dir === 'down' ? lang + '-shrub' : lang + '-out');
+  const to   = document.getElementById(dir === 'down' ? lang + '-out'   : lang + '-shrub');
+  const style = document.getElementById('style').value;
+  let answer;
+  try {
+    answer = JSON.parse(CONVERT[lang][dir](from.value, style));
+  } catch (e) {
+    statusEl.innerHTML = '<span class="bad">' + escapeHtml(String(e)) + '</span>';
+    return;
+  }
+  to.value = answer.out;
+  showDiagnostics(answer.diagnostics, dir === 'down' ? 'lowering' : 'raising');
+}
+
+function showDiagnostics(list, what) {
+  if (!list.length) {
+    diagEl.className = 'diagnostics';
+    diagEl.textContent = '';
+    ok('No diagnostics — the ' + what + ' had nothing to say.');
+    return;
+  }
+  diagEl.className = 'diagnostics shown';
+  diagEl.innerHTML =
+    '<span class="count">' + list.length +
+    (list.length === 1 ? ' diagnostic' : ' diagnostics') + '</span>' +
+    escapeHtml(list.join('\n'));
+  statusEl.innerHTML = '<span class="bad">' + list.length +
+    (list.length === 1 ? ' diagnostic' : ' diagnostics') + '</span>';
+}
+
+// ── tabs ────────────────────────────────────────────────────
+const tabs = [...document.querySelectorAll('.tab')];
+tabs.forEach(tab => tab.addEventListener('click', () => {
+  tabs.forEach(t => {
+    const on = t === tab;
+    t.setAttribute('aria-selected', String(on));
+    document.getElementById(t.getAttribute('aria-controls')).classList.toggle('active', on);
+  });
+  fillExamples();
+  select(current(), 0);
+}));
+function current() {
+  return tabs.find(t => t.getAttribute('aria-selected') === 'true').id.slice(4);
+}
+
+// ── examples ────────────────────────────────────────────────
+const EXAMPLES = {
+  css: [
+    ['A card', [
+      'class(card):',
+      '  display: grid',
+      '  gap: rem(1)',
+      '  padding: rem(1) rem(1.25)',
+      '  background: hex(f7f7f7)',
+      '  border_radius: px(6)',
+    ]],
+    ['Relations are keywords, never a space', [
+      '// Juxtaposition is one compound selector; every relation is written out.',
+      'nav ~in a:',
+      '  color: var(--brand)',
+      '',
+      'a class(active):',
+      '  font_weight: 600',
+      '',
+      'ul ~child li ~next li:',
+      '  margin_top: rem(0.5)',
+    ]],
+    ['Units, colours and functions are calls', [
+      'root():',
+      '  --brand: oklch(0.62 0.19 258)',
+      '  --gap: rem(1)',
+      '',
+      'class(hero):',
+      '  width: calc(percent(100) - rem(2))',
+      '  box_shadow: [0 px(1) px(2) rgb(0 0 0 / percent(5)), 0 px(8) px(24) rgb(0 0 0 / percent(8))]',
+      '  transition: opacity ms(150) ease_in_out',
+    ]],
+    ['At-rules', [
+      'charset("utf-8")',
+      'import("reset.css", layer(base))',
+      '',
+      'media(width <= rem(40)):',
+      '  class(card):',
+      '    padding: rem(0.5)',
+      '',
+      'supports(not (display = grid)):',
+      '  class(card):',
+      '    display: flex',
+      '',
+      'keyframes(fade):',
+      '  percent(0):',
+      '    opacity: 0',
+      '  percent(100):',
+      '    opacity: 1',
+    ]],
+    ['Nesting and the parent selector', [
+      'class(card):',
+      '  border: px(1) solid hex(ddd)',
+      '',
+      '  parent() hover():',
+      '    border_color: hex(999)',
+      '',
+      '  parent() element(before):',
+      '    content: ""',
+      '',
+      '  parent() ~child first_child():',
+      '    font_weight: 600',
+    ]],
+    ['Escapes, for names the notation cannot spell', [
+      '// `_` becomes `-`, so a name that really has an underscore is quoted.',
+      'class("btn__primary"):',
+      '  color: hex(fff)',
+      '',
+      'ident("side_bar"):',
+      '  display: none',
+      '',
+      'input has_attr(type = "text") not(disabled()):',
+      '  border: px(1) solid hex(ccc)',
+    ]],
+    ['A mistake, and what the diagnostic says', [
+      '// CSS habits are recognised and answered by name.',
+      '.card:',
+      '  color: red',
+    ]],
+  ],
+  html: [
+    ['A page', [
+      'doctype()',
+      'html(lang: "en"):',
+      '  head():',
+      '    meta(charset: "utf-8")',
+      '    title(): "Shrubbery HTML"',
+      '    link(rel: "stylesheet", href: "/style.css")',
+      '  body():',
+      '    main(class: "card"):',
+      '      h1(): "Hello"',
+      '      p():',
+      '        "Written in "',
+      '        a(href: "/spec"): "shrubbery"',
+      '        "."',
+    ]],
+    ['Whitespace lives inside the strings', [
+      '// The indentation carries nothing, so reindenting cannot change the page.',
+      '// The space before the link is data, and the string holds it.',
+      'p():',
+      '  "Read "',
+      '  a(href: "/x"): "more"',
+      '',
+      'p():',
+      '  "Read"',
+      '  a(href: "/x"): "more"',
+    ]],
+    ['Attributes are declarations', [
+      'input(type: "checkbox", checked, disabled)',
+      'input(type: "text", value: "unquoted", size: 40)',
+      'div(data_id: "3", aria_label: "Close", role: "button")',
+      'img(src: "a.png", alt: "")',
+      '// A name that `_` to `-` cannot reach is written literally.',
+      'svg():',
+      '  use(attr("xlink:href", "#icon"))',
+    ]],
+    ['SVG, and HTML again inside it', [
+      '// The namespace follows the element: there is no keyword for it.',
+      'svg(viewBox: "0 0 24 24", width: 24, height: 24):',
+      '  defs():',
+      '    linearGradient(id: "g", gradientUnits: "userSpaceOnUse"):',
+      '      stop(offset: "0%", stop_color: "#2F6B4F")',
+      '      stop(offset: "100%", stop_color: "#85C7A0")',
+      '  path(d: "M4 4h16v16H4z", fill: "url(#g)")',
+      '  foreignObject(width: 24, height: 24):',
+      '    p(): "HTML again, and "',
+      '    br()',
+    ]],
+    ['MathML', [
+      'math(display: "block"):',
+      '  mfrac():',
+      '    mrow():',
+      '      mi(): "a"',
+      '      mo(): "+"',
+      '      mn(): "2"',
+      '    msqrt():',
+      '      mi(): "b"',
+    ]],
+    ['Raw text, and comments that survive', [
+      '// At-notation is an indentation-stripping literal text block.',
+      'script(type: "module"):',
+      '  @{',
+      '    if (a < b && c > d) { go() }',
+      '  }',
+      'style():',
+      '  @{',
+      '    .a > .b { content: "x" }',
+      '  }',
+      'comment(" build 3 ")',
+      'pre():',
+      '  @{first',
+      '      second}',
+    ]],
+    ['Text cannot escape its node', [
+      '// Every one of these has ended a node it was not supposed to end,',
+      '// in some parser. Lower it and look at what comes out.',
+      'p(title: "\\">< img onerror=x>"):',
+      // The backslash below is this page protecting itself from the very
+      // string it is showing off: written out plainly, that sequence would end
+      // the block it sits in. It is the same hazard `@html.write` refuses to
+      // print -- and it caught this page twice before the escape went in.
+      '  "</p><script>alert(1)<\\/script>"',
+      '  br()',
+      '  "a & b &nbsp; &notin;"',
+    ]],
+    ['A mistake, and the one that means the wrong thing', [
+      '// A block runs to the end of its line, so the "!" is INSIDE the strong.',
+      'p(): "Hello " strong(): "world" "!"',
+      '',
+      '// And an HTML habit is answered by name.',
+      '<div>',
+    ]],
+  ],
+};
+
+const exampleSel = document.getElementById('examples');
+function fillExamples() {
+  const lang = current();
+  exampleSel.innerHTML = '';
+  EXAMPLES[lang].forEach((ex, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = ex[0];
+    exampleSel.append(opt);
+  });
+}
+function select(lang, i) {
+  const box = document.getElementById(lang + '-shrub');
+  box.value = EXAMPLES[lang][i][1].join('\n') + '\n';
+  run(lang, 'down');
+}
+exampleSel.addEventListener('change', () => select(current(), Number(exampleSel.value)));
+
+// ── wiring ──────────────────────────────────────────────────
+document.querySelectorAll('.arrow').forEach(b =>
+  b.addEventListener('click', () => run(b.dataset.lang, b.dataset.dir)));
+
+document.getElementById('style').addEventListener('change', () => run(current(), 'down'));
+
+// Live, with a short pause so that a diagnostic does not flash on every
+// keystroke of a word that is not finished yet.
+let timer = null;
+for (const [lang, dir, id] of [
+  ['css', 'down', 'css-shrub'], ['css', 'up', 'css-out'],
+  ['html', 'down', 'html-shrub'], ['html', 'up', 'html-out'],
+]) {
+  document.getElementById(id).addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => run(lang, dir), 220);
+  });
+}
+
+fillExamples();
+boot();
+</script>
+</body>
+</html>

@@ -37,7 +37,16 @@ and is meant to be lifted into its own repository. See its
 just            # list every task
 just quick      # check, format, test, boundaries
 just ci         # everything CI enforces
+just playground # the four conversions, in a browser
 ```
+
+`just playground` compiles the two bridges to wasm-gc and serves a page with
+both directions of both conversions side by side, an example picker, and the
+diagnostics rendered exactly as the command line renders them. Nothing is
+installed and nothing is uploaded: `use-js-builtin-string` makes MoonBit's
+`String` the host's, so the whole binding is one `WebAssembly.instantiate`. It
+needs a browser with the JS String Builtins proposal — Chrome 130+, Firefox
+134+.
 
 `AGENTS.md` is the guide for the details that are easy to get wrong.
 

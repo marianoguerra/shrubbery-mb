@@ -21,7 +21,7 @@ and covers all eight.
 | `html/` | `marianoguerra/html` | yes; only `error-report`. Knows nothing of shrubbery |
 | `shrub-html/` | `marianoguerra/shrubbery-html` | yes; the only module that names shrubbery and markup |
 | `cli/` | `marianoguerra/shrubbery-cli` | yes; `moonbitlang/x` lives here |
-| `.` (root) | `marianoguerra/shrubbery-dev` | no: `test/`, `tools/` |
+| `.` (root) | `marianoguerra/shrubbery-dev` | no: `test/`, `tools/`, `playground/` |
 
 Publishing goes through `just publish-dry` and `just publish`, never a bare
 `moon publish`: with no `-C` that would upload the ROOT module — the corpus, the

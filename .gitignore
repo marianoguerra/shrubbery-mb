@@ -8,3 +8,9 @@ target
 # The reference checkout: read-only material, never a build or CI input.
 # Restore with tools/fetch-reference.sh.
 /reference
+
+# Built by `just playground-build`, next to the page that loads it.
+/playground/*.wasm
+
+# Local dev-server config for the browser tooling.
+/.claude/
