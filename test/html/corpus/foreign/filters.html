@@ -1,0 +1,10 @@
+<svg viewBox="0 0 100 100">
+  <filter id="f" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse">
+    <feGaussianBlur stdDeviation="2" edgeMode="duplicate"/>
+    <feColorMatrix type="saturate" values="0.5"/>
+    <feComponentTransfer><feFuncA type="linear" slope="0.5"/></feComponentTransfer>
+    <feDropShadow dx="1" dy="1"/>
+  </filter>
+  <text x="10" y="20" textLength="80" lengthAdjust="spacing">SVG text</text>
+  <textPath href="#p" startOffset="10">on a path</textPath>
+</svg>

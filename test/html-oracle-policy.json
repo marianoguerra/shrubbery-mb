@@ -1,0 +1,32 @@
+{
+  "//": "Floors for the markup oracles, held from BOTH sides: dropping below one is a regression, and rising above one is an improvement that has to be recorded here in the same commit that earns it. Data rather than code, because these numbers move as the library grows and the diff is the point.",
+
+  "//loop": "markup -> tree -> shrubbery -> tree -> markup equals markup -> tree -> markup. The headline property. Both sides are first normalised for the three things the notation cannot say -- an implied end tag, a void element's slash, a character reference's spelling -- so a file that does NOT close is a bug rather than a design limit. That is why every bucket is at 100%, including the deliberately broken one: a recovery that survives the detour is a real claim.",
+  "loop": {
+    "ok": 10,
+    "broken": 16,
+    "foreign": 7
+  },
+
+  "//roundtrip": "Printing is a fixed point: print, reparse, print, compare, in pretty and minified. Expected to stay at 100%: a printer that is not idempotent grows the file every time it is run, which is worse than one that is merely ugly.",
+  "roundtrip": {
+    "ok": 10,
+    "broken": 16,
+    "foreign": 7
+  },
+
+  "//lower": "The authored Shrubbery HTML corpus lowers with no diagnostic at all. This one is expected to stay at 100%: it is the syntax's own examples.",
+  "lower": {
+    "shrub": 5
+  },
+
+  "//survive": "Nothing crashes, on anything, and nothing may drop below 100%. `notation` is the 696-file shrubbery corpus and `css` the 350-file CSS corpus, both already in the repository for other suites -- almost none of either is markup, so they are a free adversarial corpus for the parser AND for the lowering, which is pointed at the same bytes.",
+  "survive": {
+    "ok": 10,
+    "broken": 16,
+    "foreign": 7,
+    "shrub": 5,
+    "notation": 696,
+    "css": 347
+  }
+}

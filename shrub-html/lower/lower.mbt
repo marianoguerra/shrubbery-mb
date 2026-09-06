@@ -175,6 +175,28 @@ fn Lowerer::bogus(
   )
 }
 
+///|
+/// The same, for a call, whose source is two nodes rather than one.
+fn Lowerer::bogus_call(
+  self : Lowerer,
+  kind : @kind.ErrorKind,
+  span : @basic.Span,
+  source : String,
+) -> @ast.Node raise @err.ShrubHtmlError {
+  let d = @err.Diagnostic::of_kind(kind, span)
+  if self.strict && d.is_error() {
+    d.raise_()
+  }
+  self.diags.push(d)
+  Bogus(
+    @ast.Bogus::new(
+      @hkind.ErrorKind::Unexpected(kind.code()),
+      hspan(span),
+      text=source,
+    ),
+  )
+}
+
 // ------------------------------------------------------------------ groups
 
 ///|
@@ -237,7 +259,7 @@ fn Lowerer::run(
             }
           None => ()
         }
-        out.push(self.call(name, args, mine, ns, rest[0], whole))
+        out.push(self.call(name, args, mine, ns, rest[0], rest[1]))
         i = i + 2
         continue
       }
@@ -279,39 +301,53 @@ fn Lowerer::call(
   block : @sast.Node?,
   ns : @ast.Namespace,
   at : @sast.Node,
-  whole : @sast.Node,
+  parens : @sast.Node,
 ) -> @ast.Node raise @err.ShrubHtmlError {
+  // A failed escape keeps the whole call, not just its name. Echoing `element`
+  // where the source said `element("text", x: "10")` would lose the arguments
+  // and leave a bare word in the output.
+  let whole = at.span.merge(parens.span)
+  let source = at.to_source() + parens.to_source()
   match raw_name {
     "text" =>
       match literal_string(args) {
         Some(s) => return Text({ text: s, raw: None, span: hspan(at.span), })
-        None => return self.bogus(BadEscapeCall("text"), at)
+        None => return self.bogus_call(BadEscapeCall("text"), whole, source)
       }
     "raw" =>
       match literal_string(args) {
         Some(s) => return RawText({ text: s, span: hspan(at.span), })
-        None => return self.bogus(BadEscapeCall("raw"), at)
+        None => return self.bogus_call(BadEscapeCall("raw"), whole, source)
       }
     "cdata" =>
       match literal_string(args) {
         Some(s) => return Cdata(s, hspan(at.span))
-        None => return self.bogus(BadEscapeCall("cdata"), at)
+        None => return self.bogus_call(BadEscapeCall("cdata"), whole, source)
       }
     "comment" =>
       match literal_string(args) {
         Some(s) => return Comment({ text: s, span: hspan(at.span), })
-        None => return self.bogus(BadEscapeCall("comment"), at)
+        None => return self.bogus_call(BadEscapeCall("comment"), whole, source)
       }
-    "doctype" => return self.doctype(args, at)
+    "doctype" => return self.doctype(args, at, whole, source)
+    // `element("text")`, and `element("text", x: "10")`: the escape takes the
+    // name and then everything an ordinary call would take, because an element
+    // that needs the escape still has attributes.
     "element" =>
-      match literal_string(args) {
-        Some(s) => return self.element(s, [], block, ns, at, whole)
-        None => return self.bogus(BadEscapeCall("element"), at)
+      if args.length() >= 1 {
+        match group_string(args[0]) {
+          Some(s) => return self.element(s, args[1:], block, ns, at)
+          None =>
+            return self.bogus_call(BadEscapeCall("element"), whole, source)
+        }
+      } else {
+        return self.bogus_call(BadEscapeCall("element"), whole, source)
       }
-    "attr" | "frag" | "bogus" => return self.bogus(ReservedCall(raw_name), at)
+    "attr" | "frag" | "bogus" =>
+      return self.bogus_call(ReservedCall(raw_name), whole, source)
     _ => ()
   }
-  self.element(@names.unkebab(raw_name), args, block, ns, at, whole)
+  self.element(@names.unkebab(raw_name), args, block, ns, at)
 }
 
 ///|
@@ -320,6 +356,8 @@ fn Lowerer::doctype(
   self : Lowerer,
   args : ArrayView[@sast.Node],
   at : @sast.Node,
+  whole : @basic.Span,
+  source : String,
 ) -> @ast.Node raise @err.ShrubHtmlError {
   if args.length() == 0 {
     return Doctype({
@@ -341,7 +379,7 @@ fn Lowerer::doctype(
             system_id: Some(system_id),
             span: hspan(at.span),
           })
-        None => self.bogus(BadEscapeCall("doctype"), at)
+        None => self.bogus_call(BadEscapeCall("doctype"), whole, source)
       }
   }
 }
@@ -355,9 +393,7 @@ fn Lowerer::element(
   block : @sast.Node?,
   parent_ns : @ast.Namespace,
   at : @sast.Node,
-  whole : @sast.Node,
 ) -> @ast.Node raise @err.ShrubHtmlError {
-  ignore(whole)
   let ns = namespace_of(name, parent_ns)
   let tag : @ast.TagName = { ns, name: spelled(name, ns), }
   let attrs = self.attributes(args, ns)

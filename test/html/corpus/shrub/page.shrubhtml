@@ -1,0 +1,27 @@
+// A whole page, in the notation.
+doctype()
+html(lang: "en"):
+  head():
+    meta(charset: "utf-8")
+    meta(name: "viewport", content: "width=device-width, initial-scale=1")
+    title(): "A page"
+    link(rel: "stylesheet", href: "/style.css")
+  body():
+    header():
+      h1(): "A page"
+      nav():
+        a(href: "/"): "Home"
+        " "
+        a(href: "/about"): "About"
+    main(class: "card"):
+      p():
+        "Read "
+        a(href: "/spec"): "the spec"
+        ", then "
+        em(): "read it again"
+        "."
+      ul():
+        li(): "one"
+        li(): "two"
+    footer():
+      small(): "© 2026"

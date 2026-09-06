@@ -52,15 +52,15 @@ test "inline content is never reflowed" {
 }
 
 ///|
-test "an implied end tag stays implied" {
+test "an implied end tag stays implied, and stops the parent laying out" {
   let d = @parse.parse("<ul><li>one<li>two</ul>").document()
+  // Not indented, and that is the point: an element with no end tag leaks, so
+  // a newline written after it would become part of its text and the file
+  // would grow every time it was formatted.
   inspect(
     @write.document(d, style=Pretty),
     content=(
-      #|<ul>
-      #|  <li>one
-      #|  <li>two
-      #|</ul>
+      #|<ul><li>one<li>two</ul>
       #|
     ),
   )
@@ -89,15 +89,17 @@ test "a table row does not end up inside the previous cell" {
   inspect(
     print("<table><tr><td>a<tr><td>b</table>", style=Pretty),
     content=(
-      #|<table>
-      #|  <tr>
-      #|    <td>a
-      #|  <tr>
-      #|    <td>b
-      #|</table>
+      #|<table><tr><td>a<tr><td>b</table>
       #|
     ),
   )
+  // Two rows, not a row inside a cell -- which is what the table in `names`
+  // buys, and what the flat printing above does not show.
+  let d = @parse.parse("<table><tr><td>a<tr><td>b</table>").document()
+  match d.children[0] {
+    Element(t) => assert_eq(t.children.length(), 2)
+    _ => fail("expected a table")
+  }
 }
 
 ///|

@@ -1,0 +1,44 @@
+{
+  "//": "Where every committed markup fixture came from, and under what licence. The corpus is committed rather than fetched so the suite is hermetic: CI needs this repository and nothing else.",
+  "buckets": {
+    "ok": {
+      "source": "this repository",
+      "licence": "Apache-2.0",
+      "count": 10,
+      "note": "Well-formed markup, written to cover every construct the parser branches on: implied end tags, tables, every attribute shape, every character reference shape, raw text, comments, custom elements, and the whitespace cases the printer has to leave alone."
+    },
+    "broken": {
+      "source": "this repository",
+      "licence": "Apache-2.0",
+      "count": 16,
+      "note": "Deliberately invalid markup, one construct per file: unclosed elements, stray end tags, EOF inside a tag and inside a comment, duplicate attributes, bogus comments, malformed character references, CDATA in HTML, a late doctype, end tags for void elements, the adoption-agency case, and the attribute-value edges where an unquoted value meets `/>`."
+    },
+    "foreign": {
+      "source": "this repository",
+      "licence": "Apache-2.0",
+      "count": 7,
+      "note": "SVG and MathML, including the four places where the same bytes mean different things: `/>`, attribute case, CDATA, and `<title>`. Also the integration points, where HTML comes back into scope."
+    },
+    "shrub": {
+      "source": "this repository",
+      "licence": "Apache-2.0",
+      "count": 5,
+      "note": "Shrubbery HTML written by hand, covering every construct the syntax can spell."
+    }
+  },
+  "borrowed": {
+    "//": "Two corpora already in this repository are used as adversarial input for `survive`, and cost nothing: almost none of either is markup, so both exercise recovery paths the authored corpus never reaches.",
+    "notation": "test/corpus -- 696 shrubbery files, the notation's own differential suite",
+    "css": "test/css/corpus -- 347 CSS files, the CSS module's own suite"
+  },
+  "pending": {
+    "//": "The vendored suites that belong here and are not here yet. Each is MIT and each would be committed under its own bucket with its provenance recorded above, exactly as `test/css/corpus` does.",
+    "html5lib-tests": "tree-construction/*.dat, split into one file per `#data` section. The adversarial corpus for `survive`, and the input a conformance oracle would need.",
+    "biome": "crates/biome_html_parser/tests -- the ok and error suites.",
+    "prettier": "Prettier's HTML specs, as vendored by biome.",
+    "//how": "Adding them is mechanical: drop the files into a new bucket directory, record the count and licence above, and add a floor per bucket to test/html-oracle-policy.json. The oracles need no change."
+  },
+  "excluded": {
+    "scraped-pages": "A real page copied from the web has unclear provenance, and a corpus that cannot be relicensed is a corpus that cannot be published. The same call test/css/corpus/manifest.json makes about lightningcss, for a different reason."
+  }
+}

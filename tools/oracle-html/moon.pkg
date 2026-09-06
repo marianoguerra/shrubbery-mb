@@ -1,0 +1,12 @@
+import {
+  "marianoguerra/html/ast",
+  "marianoguerra/html/parse",
+  "marianoguerra/html/write",
+  "marianoguerra/html/names",
+  "marianoguerra/shrubbery-html/lower",
+  "marianoguerra/shrubbery-html/emit",
+  "moonbitlang/core/env",
+  "moonbitlang/x/fs",
+}
+
+pkgtype(kind: "executable")

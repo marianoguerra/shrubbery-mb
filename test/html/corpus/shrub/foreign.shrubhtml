@@ -1,0 +1,25 @@
+// The namespace follows the element: no keyword for it.
+svg(xmlns: "http://www.w3.org/2000/svg", viewBox: "0 0 24 24", width: 24):
+  element("title"): "A leaf"
+  defs():
+    linearGradient(id: "g", gradientUnits: "userSpaceOnUse"):
+      stop(offset: "0%", stop_color: "#2F6B4F")
+      stop(offset: "100%", stop_color: "#85C7A0")
+    clipPath(id: "c"):
+      rect(width: 24, height: 24)
+  path(d: "M4 4h16v16H4z", fill: "url(#g)", clip_path: "url(#c)")
+  foreignObject(width: 24, height: 24):
+    p(): "HTML again, and "
+    br()
+  element("desc"): "A description"
+
+math(display: "block"):
+  mfrac():
+    mrow():
+      mi(): "a"
+      mo(): "+"
+      mn(): "2"
+    msqrt():
+      mi(): "b"
+  annotation_xml(encoding: "text/html"):
+    p(): "fallback"

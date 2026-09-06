@@ -48,13 +48,17 @@ and namespaces — so real markup still nests the way it reads:
 ///|
 test "an implied end tag is recognised, and stays implied" {
   let p = @html.parse("<ul><li>one<li>two</ul>")
+  // Two list items, not one containing the other -- and printed flat, because
+  // an element with no end tag leaks: a newline written after it would become
+  // part of its text.
+  match p.document().children[0] {
+    Element(ul) => inspect(ul.children.length(), content="2")
+    _ => fail("expected a ul")
+  }
   inspect(
     @html.to_html(p.document()),
     content=(
-      #|<ul>
-      #|  <li>one
-      #|  <li>two
-      #|</ul>
+      #|<ul><li>one<li>two</ul>
       #|
     ),
   )

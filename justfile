@@ -133,6 +133,16 @@ html-test:
 html-bridge-test:
     moon test -p marianoguerra/shrubbery-html --target native
 
+# Every markup oracle over the committed corpus, held to the ratchet.
+[group('html')]
+html-diff *args: build
+    {{justfile_directory()}}/tools/htmldiff.py {{args}} --show 0
+
+# One markup oracle, with the failing files shown -- the inner loop, not a gate.
+[group('html')]
+html-only oracle: build
+    {{justfile_directory()}}/tools/htmldiff.py {{oracle}} --no-ratchet --show 5
+
 # The table it writes is committed, so the suite stays hermetic and CI needs
 # no network. Regenerating is a deliberate act and the diff is the review.
 #
@@ -172,7 +182,7 @@ css-prop:
 
 # Check, format, unit tests, boundaries -- run before committing.
 [group('gates')]
-quick: check fmt test boundary-check embed-smoke diff css-diff cli-test
+quick: check fmt test boundary-check embed-smoke diff css-diff html-diff cli-test
 
 # Mirrors .github/workflows/check.yml, including the two `git diff --exit-code`
 # steps -- which is how a stale `.mbti` or an unformatted file is caught.
@@ -194,6 +204,7 @@ ci:
     tools/shrubdiff.py source --show 0
     tools/shrubdiff.py print --show 0
     tools/cssdiff.py --show 0
+    tools/htmldiff.py --show 0
     tools/cli-test.sh
 
 # ---------------------------------------------------------------------------

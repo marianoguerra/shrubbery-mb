@@ -1,0 +1,11 @@
+// Every shape an attribute can take.
+input(type: "checkbox", checked, disabled)
+input(type: "text", value: "unquoted", size: 40)
+div(data_id: "3", aria_label: "Close", role: "button", tabindex: "0")
+a(href: "?a=1&b=2", title: "a \"quoted\" title"): "link"
+img(src: "a.png", alt: "")
+// A name that `_` to `-` cannot reach.
+svg():
+  use(attr("xlink:href", "#a"))
+// A bare identifier as a value means its own text.
+input(type: submit)

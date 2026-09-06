@@ -1,0 +1,19 @@
+// At-notation is the native spelling for text that is not markup.
+script(type: "module"):
+  @{
+    if (a < b && c > d) { go() }
+  }
+style():
+  @{
+    .a > .b { content: "x" }
+  }
+title(): "A & B"
+textarea():
+  @{
+    raw & escapable
+  }
+pre():
+  @{indented
+      more}
+// And the escape, for when at-notation is inconvenient.
+script(): raw("var a = 1")

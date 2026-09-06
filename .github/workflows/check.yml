@@ -62,6 +62,16 @@ jobs:
           tools/shrubdiff.py source --show 0
           tools/shrubdiff.py print --show 0
 
+      # The CSS and markup ratchets. `just ci` has run these since they were
+      # written; this is the copy that actually decides, and a ratchet that
+      # only runs locally is a ratchet that drifts -- the first commit made
+      # from a machine that skipped `just quick` would move the floors without
+      # anyone being told.
+      - name: CSS and markup oracles
+        run: |
+          tools/cssdiff.py --show 0
+          tools/htmldiff.py --show 0
+
       # Exit codes and flag handling: nothing else runs the binary.
       - name: CLI behaviour
         run: tools/cli-test.sh

@@ -65,6 +65,23 @@ fn literal_string(args : ArrayView[@sast.Node]) -> String? {
 }
 
 ///|
+/// One argument that is a lone string literal.
+fn group_string(arg : @sast.Node) -> String? {
+  match arg.it {
+    Group(xs) =>
+      if xs.length() == 1 {
+        match xs[0].it {
+          Lit(Str(s)) => Some(s)
+          _ => None
+        }
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
 /// The two string literals inside a call's arguments.
 fn literal_pair(args : ArrayView[@sast.Node]) -> (String, String)? {
   match args {

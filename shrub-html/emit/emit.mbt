@@ -31,7 +31,7 @@ priv struct Emitter {
 /// Render a document as Shrubbery HTML.
 pub fn document(doc : @ast.Document) -> String {
   let e = { buf: StringBuilder(), depth: 0, }
-  for child in doc.children {
+  for child in kept(doc.children, true) {
     e.line(child)
   }
   e.buf.to_string()
@@ -66,13 +66,7 @@ fn Emitter::indent(self : Emitter) -> Unit {
 /// One node, on its own line, with its children indented under it.
 fn Emitter::line(self : Emitter, n : @ast.Node) -> Unit {
   match n {
-    // A whitespace-only text node between block children is layout in the
-    // markup and nothing at all in the notation, where layout carries no
-    // meaning. Keeping it would write `"\n  "` into the source as data.
     Text(t) => {
-      if is_blank(t.text) {
-        return
-      }
       self.indent()
       self.buf.write_string(@names.quote(t.text))
       self.buf.write_char('\n')
@@ -133,17 +127,39 @@ fn Emitter::element_line(self : Emitter, el : @ast.Element) -> Unit {
 ///|
 /// The children worth writing down.
 ///
-/// Whitespace-only text between block-level children is markup layout, and the
-/// notation has no layout to put it in. Inside anything else every space is
-/// data and every child is kept -- which is the same rule the printer applies
-/// in the other direction, stated once more because the two sides have to
-/// agree for the loop to close.
+/// Whitespace-only text between block-level children is markup LAYOUT, and the
+/// notation has no layout to put it in -- keeping it would write `"\n  "` into
+/// the source as data. Anywhere else every space is data and every child is
+/// kept, `<span> x </span>` included.
+///
+/// The predicate is the printer's, restated: it is exactly the condition under
+/// which `@html.write` is willing to move whitespace. The two sides have to
+/// agree or the loop cannot close, so this is the one duplication in the module
+/// that is deliberate rather than accidental.
 fn kept_children(el : @ast.Element) -> Array[@ast.Node] {
-  let all_layout = children_are_layout(el)
+  let container_is_block = if el.name.ns != Html {
+    false
+  } else {
+    match @hnames.display_of(el.name.name) {
+      Block | None_ => true
+      _ => false
+    }
+  }
+  kept(el.children, container_is_block)
+}
+
+///|
+fn kept(
+  children : Array[@ast.Node],
+  container_is_block : Bool,
+) -> Array[@ast.Node] {
+  if !is_layout(children, container_is_block) {
+    return children
+  }
   let out : Array[@ast.Node] = []
-  for c in el.children {
+  for c in children {
     match c {
-      Text(t) => if all_layout && is_blank(t.text) { continue }
+      Text(t) => if is_blank(t.text) { continue }
       _ => ()
     }
     out.push(c)
@@ -152,15 +168,11 @@ fn kept_children(el : @ast.Element) -> Array[@ast.Node] {
 }
 
 ///|
-fn children_are_layout(el : @ast.Element) -> Bool {
-  if el.name.ns != Html {
+fn is_layout(children : Array[@ast.Node], container_is_block : Bool) -> Bool {
+  if !container_is_block {
     return false
   }
-  match @hnames.display_of(el.name.name) {
-    Block | None_ => ()
-    _ => return false
-  }
-  for c in el.children {
+  for c in children {
     match c {
       Text(t) => if !is_blank(t.text) { return false }
       Element(child) =>
@@ -215,6 +227,8 @@ fn call_head(el : @ast.Element) -> String {
       }
     }
   }
+  // After `element("name"` the separator has already been written, so the
+  // first attribute is not the first argument.
   let mut first = @names.kebab(el.name.name) is Some(_)
   for a in el.attrs {
     if !first {

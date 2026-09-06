@@ -104,10 +104,18 @@ pub fn document_checked(
 ) -> (String, Array[(@kind.ErrorKind, @span.Span)]) {
   let p = Printer::new(style, whitespace)
   p.write_top(doc.children, p.children_breakable(doc.children, true))
-  if p.style != Minified && p.buf.to_string().length() > 0 {
-    p.buf.write_char('\n')
+  let text = p.buf.to_string()
+  // Only when there is not one already. A document whose last node is a text
+  // run ending in a newline already has it, and adding a second would make the
+  // next pass add a third: printing has to be a fixed point, not a ratchet.
+  let out = if p.style != Minified &&
+    text.length() > 0 &&
+    !text.has_suffix("\n") {
+    text + "\n"
+  } else {
+    text
   }
-  (p.buf.to_string(), p.problems)
+  (out, p.problems)
 }
 
 ///|
@@ -173,12 +181,24 @@ fn Printer::children_breakable(
 fn child_is_layoutable(n : @ast.Node) -> Bool {
   match n {
     Text(t) => is_all_whitespace(t.text)
-    Element(e) =>
+    Element(e) => {
+      // An element with no end tag LEAKS: anything the parent writes after it
+      // becomes part of its content, so a newline added here would be swallowed
+      // and re-added on the next pass, and the file would grow every time it
+      // was formatted. `<ul><li>a<li>b</ul>` therefore comes back on one line.
+      match e.closing {
+        Implied | Unclosed => return false
+        _ => ()
+      }
       match display_of_element(e) {
         Block | None_ => true
         _ => false
       }
-    Comment(_) | Doctype(_) | RawText(_) | Cdata(_, _) => true
+    }
+    Comment(_) | Doctype(_) => true
+    // Raw text and CDATA are text, exactly: whitespace around them is content
+    // and moving it changes what the script or the section says.
+    RawText(_) | Cdata(_, _) => false
     Bogus(_) => false
   }
 }

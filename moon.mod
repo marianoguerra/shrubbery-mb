@@ -22,6 +22,7 @@ import {
   "marianoguerra/css@0.1.0",
   "marianoguerra/html@0.1.0",
   "marianoguerra/shrubbery-css@0.1.0",
+  "marianoguerra/shrubbery-html@0.1.0",
   "moonbitlang/x@0.5.1",
 }
 

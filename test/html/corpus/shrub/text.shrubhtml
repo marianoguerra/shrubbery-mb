@@ -1,0 +1,19 @@
+// Whitespace is only ever inside a string, which is what makes the
+// indentation free.
+p():
+  "Read "
+  a(href: "/x"): "more"
+  "."
+p():
+  "Read"
+  a(href: "/x"): "more"
+  "."
+// A run on one line, where nothing in it has children.
+p(): "a" br() "b"
+// Comments are nodes, not shrubbery comments, so they survive.
+comment(" build 3 ")
+div():
+  comment(" inside ")
+  "text"
+// Characters that a reader could not see are named on the way out.
+p(): "non-breaking space"
