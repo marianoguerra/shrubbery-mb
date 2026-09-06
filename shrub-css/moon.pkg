@@ -1,7 +1,11 @@
 import {
   "marianoguerra/shrubbery-css/lower",
+  "marianoguerra/shrubbery-css/emit",
   "marianoguerra/shrubbery-css/error",
+  "marianoguerra/css/ast",
+  "marianoguerra/css/parse",
   "marianoguerra/css/write",
+  "marianoguerra/css/error" @csserror,
   "marianoguerra/error-report" @report,
 }
 

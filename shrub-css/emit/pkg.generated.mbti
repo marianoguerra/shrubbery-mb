@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/shrubbery-css/emit"
+
+import {
+  "marianoguerra/css/ast",
+}
+
+// Values
+pub fn rule(@ast.CssRule) -> String
+
+pub fn selector(@ast.Selector) -> String
+
+pub fn stylesheet(@ast.Stylesheet) -> String
+
+pub fn value(Array[@ast.ComponentValue]) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

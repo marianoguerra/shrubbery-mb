@@ -87,6 +87,37 @@ A name that genuinely contains `_` has no bare spelling, so it is written
 literally: `class("btn__primary")`, `ident("side_bar")`. Custom properties keep
 their dashes, since `--brand` is already a prefix operator and a name.
 
+## Both directions
+
+CSS in, shrubbery out, and the loop closes: what comes back lowers to the same
+tree it came from.
+
+```mbt check
+///|
+test "CSS becomes shrubbery, and back again" {
+  let shrub = @shrubbery_css.to_shrubbery(".card { display: grid }")
+  inspect(
+    shrub,
+    content=(
+      #|class(card):
+      #|  display: grid
+      #|
+    ),
+  )
+  inspect(
+    @shrubbery_css.to_css(shrub, style=Minified),
+    content=".card{display:grid}",
+  )
+}
+```
+
+It is a normalisation rather than an inverse, and two things do not survive the
+detour. A number loses its source spelling, because shrubbery's literal holds a
+value and not a spelling -- `1.50` comes back as `1.5`, `+1` as `1`. And a CSS
+comment becomes a line comment. Recovering either would mean reading the
+shrubbery node's raw metadata, which the lowering deliberately never does; that
+purity is what makes it total over hand-built trees.
+
 ## Diagnostics name the fix
 
 A syntax nobody has seen before is worth diagnosing precisely, so where the
@@ -103,6 +134,15 @@ test "a CSS habit is met with its replacement" {
 The one construct that parses cleanly and means the wrong thing is `a: hover`,
 which is structurally a declaration of a property called `a`. It gets its own
 diagnostic, guarded so that `cursor: default` stays quiet.
+
+## Layout
+
+| package | what |
+|---|---|
+| `names` | the tables: units, pseudo-classes, at-rules, relations, `_` ⇄ `-` |
+| `kind`, `error` | diagnostics, and the one bridge to `error-report` |
+| `lower` | shrubbery → a CSS tree |
+| `emit` | a CSS tree → shrubbery |
 
 ## Licence
 
