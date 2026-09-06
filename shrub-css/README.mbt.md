@@ -29,6 +29,7 @@ test "a rule" {
 | CSS | what it is | shrubbery |
 |---|---|---|
 | `.card` | a class | `class(card)` |
+| `div` | an element | `div`, or `tag("…")` when the name needs quoting |
 | `#sidebar` | an id | `id(sidebar)` |
 | `:hover` | a pseudo-class | `hover()` |
 | `::before` | a pseudo-element | `element(before)` |
@@ -84,8 +85,27 @@ test "underscores become hyphens" {
 ```
 
 A name that genuinely contains `_` has no bare spelling, so it is written
-literally: `class("btn__primary")`, `ident("side_bar")`. Custom properties keep
-their dashes, since `--brand` is already a prefix operator and a name.
+literally — and which call does it depends on where the name sits, because a
+class, an element and a value are three different things:
+
+```mbt check
+///|
+test "the literal escape, in each position it is needed" {
+  let src =
+    #|class("btn__primary"):
+    #|  color: hex(fff)
+    #|
+    #|tag("side_bar"):
+    #|  font_family: ident("side_bar")
+  inspect(
+    @shrubbery_css.to_css(src, style=Minified),
+    content=".btn__primary{color:#fff}side_bar{font-family:side_bar}",
+  )
+}
+```
+
+Custom properties keep their dashes, since `--brand` is already a prefix
+operator and a name.
 
 ## Both directions
 
