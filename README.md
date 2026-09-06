@@ -71,12 +71,16 @@ a floor per bucket in `test/css-oracle-policy.json` and
 | `lower` | the authored shrubbery corpus lowers with no diagnostic | itself |
 | `survive` | nothing crashes, on anything | itself |
 | `conform` | markup only: our output builds the same document the input does | [`moonbit-community/html`](https://mooncakes.io/docs/moonbit-community/html) |
+| `tokens` | markup only: 6,744 tokenizer cases agree with their expected answer | [html5lib-tests](https://github.com/html5lib/html5lib-tests) |
 
-`conform` is the only one with an outside opinion, and it is what makes the
-markup module's central decision — a tree of what was *written*, not of what a
-browser builds — checkable rather than merely argued. It is a MoonBit dependency
-of the development module alone, so it needs no extra toolchain and the suite
-stays hermetic.
+The last two are the ones with an outside opinion. `conform` makes the markup
+module's central decision — a tree of what was *written*, not of what a browser
+builds — checkable rather than merely argued; it is a MoonBit dependency of the
+development module alone, so it needs no extra toolchain. `tokens` runs the
+specification's own tokenizer suite, the one every browser is checked against,
+and it is the only place here where the expected answer is vendored rather than
+computed. All 6,744 runnable cases pass, including every one of the 2,231 named
+character references — which are generated, and which nothing else could check.
 
 `survive` is pointed at every corpus in the repository, not only its own: almost
 none of the 696 notation files is CSS or markup, so both are free adversarial

@@ -21,6 +21,10 @@ a separate toolchain, so the suite stays hermetic anyway.
   conform    our output, parsed by a conforming parser, builds the same document
              the input does.  The only property a formatter actually owes
              anyone, and the one that makes the markup-tree decision honest.
+  tokens     the html5lib tokenizer suite: 6,744 cases whose expected answer is
+             vendored rather than computed.  The only place here where the
+             answer comes from neither this library nor a second implementation
+             of the specification, but from the specification's own tests.
   lower      the authored Shrubbery HTML corpus lowers with no diagnostic.
   survive    nothing crashes, on any input, including the deliberately broken
              bucket, the 696 shrubbery files that are not markup at all, and
@@ -44,6 +48,7 @@ ORACLE = os.path.join(
     "_build/native/debug/build/marianoguerra/shrubbery-dev/tools/oracle-html/oracle-html.exe",
 )
 CORPUS = os.path.join(ROOT, "test/html/corpus")
+HTML5LIB = os.path.join(CORPUS, "html5lib")
 POLICY = os.path.join(ROOT, "test/html-oracle-policy.json")
 SHRUB_CORPUS = os.path.join(ROOT, "test/corpus")
 CSS_CORPUS = os.path.join(ROOT, "test/css/corpus")
@@ -179,6 +184,34 @@ def oracle_conform(show):
     return results
 
 
+def oracle_tokens(show):
+    """The html5lib tokenizer suite, counted per file and per CASE.
+
+    Every other oracle here counts files. This one counts the 6,744 cases
+    inside them, because a file that is 4,210 named-character-reference cases
+    is not one answer -- and a floor of "13 files pass" would say nothing about
+    which of them stopped passing.
+    """
+    paths = sorted(
+        os.path.join(HTML5LIB, f)
+        for f in os.listdir(HTML5LIB)
+        if f.endswith(".test")
+    )
+    answers = run("html5lib", paths)
+    results = {}
+    for path, answer in answers.items():
+        name = os.path.basename(path)[: -len(".test")]
+        passed, total = 0, 0
+        for line in answer.split("\n"):
+            if line.startswith("html5lib: "):
+                counts = line[len("html5lib: ") :].split(" ")[0]
+                passed, total = (int(x) for x in counts.split("/"))
+        results[name] = (passed, total)
+        if passed < total and show:
+            print("  {}\n{}".format(name, indent(answer)))
+    return results
+
+
 def oracle_lower(show):
     """The authored corpus lowers with nothing to complain about."""
     paths = files("shrub", ".shrubhtml")
@@ -227,6 +260,7 @@ ORACLES = {
     "loop": oracle_loop,
     "roundtrip": oracle_roundtrip,
     "conform": oracle_conform,
+    "tokens": oracle_tokens,
     "lower": oracle_lower,
     "survive": oracle_survive,
 }
@@ -272,9 +306,9 @@ def main():
                 elif passed > floor:
                     mark = "  IMPROVED (floor {}); record it".format(floor)
                     status = 1
-            print("  {:10} {:5}/{:<5}{}".format(bucket, passed, total, mark))
+            print("  {:22} {:5}/{:<5}{}".format(bucket, passed, total, mark))
             if not args.no_ratchet and floor is None:
-                print("  {:10} no floor in the policy".format(bucket))
+                print("  {:22} no floor in the policy".format(bucket))
                 status = 1
     return status
 

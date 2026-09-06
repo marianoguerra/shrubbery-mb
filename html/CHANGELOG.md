@@ -34,8 +34,31 @@ module follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-Four divergences from the specification, all found by checking our output
-against a conforming WHATWG parser rather than against ourselves:
+Twelve divergences from the specification, found by checking against a
+conforming WHATWG parser and against the specification's own tokenizer suite
+rather than against ourselves.
+
+From the html5lib tokenizer suite:
+
+- A CR was not preprocessed to an LF. It is now — but only when it was in the
+  source, because references are resolved after preprocessing and `&#013;`
+  really is a carriage return.
+- The data state replaced a NUL with U+FFFD; it should emit it. Every other
+  state should replace it and several did not, including tag and attribute
+  names, where NUL is a name character.
+- A trailing `--` or `--!` on an unterminated comment was kept. The comment-end
+  states hold those back and never append them at end of input.
+- `</xmp` ended a raw-text run even when what followed could not end a tag, so
+  `foo</xmp<` lost everything after the name.
+- A `<script>` body ended at the first `</script>` even inside `<!-- <script>
+  ... </script> -->`, cutting the script in half. It now has the escaped and
+  double-escaped states.
+- `</` at end of input became a comment; it is two characters.
+- The doctype force-quirks flag was set by the problem rather than by the state
+  it was met in. `doctype` is now written as the specification's states in
+  sequence, which is what those rules require.
+
+From the conformance oracle:
 
 - A `<title>` or `<textarea>` body was escaped as if it were an attribute value,
   which left `<` live — so a title whose text contained `</title>` ended its own

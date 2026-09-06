@@ -26,6 +26,7 @@ fn main {
     println("  lower      Shrubbery HTML -> markup")
     println("  emit       markup -> Shrubbery HTML")
     println("  conform    our output must mean what the input meant")
+    println("  html5lib   run an html5lib tokenizer .test file")
     println("  survive    parse anything at all, and say so")
     println("  diagnose   the diagnostic codes a file produces")
     return
@@ -44,6 +45,7 @@ fn main {
           "lower" => lower_shrub(text)
           "emit" => emit_shrub(text)
           "conform" => conform(text)
+          "html5lib" => html5lib(path, text)
           "survive" => survive(text)
           "diagnose" => diagnose(text)
           other => println("!error unknown command " + other)

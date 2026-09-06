@@ -143,6 +143,11 @@ html-diff *args: build
 html-only oracle: build
     {{justfile_directory()}}/tools/htmldiff.py {{oracle}} --no-ratchet --show 5
 
+# The html5lib tokenizer suite alone, with the failing cases shown.
+[group('html')]
+html-tokens:
+    {{justfile_directory()}}/tools/htmldiff.py tokens --no-ratchet --show 5
+
 # The generated properties and the fuzzer. Seeded, so a failure is reproducible.
 [group('html')]
 html-prop:

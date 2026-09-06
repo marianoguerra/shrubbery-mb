@@ -267,7 +267,7 @@ fn Parser::run(self : Parser) -> Unit raise @error.HtmlError {
         self.sink().push(Cdata(text, t.span))
         seen_content = true
       }
-      Doctype(name, public_id, system_id) => {
+      Doctype(name, public_id, system_id, _) => {
         if seen_content {
           self.report(DoctypeNotFirst, t.span)
         }

@@ -24,6 +24,14 @@
       "licence": "Apache-2.0",
       "count": 5,
       "note": "Shrubbery HTML written by hand, covering every construct the syntax can spell."
+    },
+    "html5lib": {
+      "source": "html5lib/html5lib-tests",
+      "path": "tokenizer/",
+      "licence": "MIT",
+      "count": 13,
+      "cases": 6744,
+      "note": "The tokenizer suite: each case an input and the token stream the specification says it produces. The only vendored EXPECTED ANSWERS in this repository -- everything else is either computed from a reference or compared against the library itself. `xmlViolation.test` is excluded: it tests a serialisation policy rather than the tokenizer. The tree-construction tests that used to live alongside these moved to web-platform-tests and are no longer in that repository, which is why `conform` uses a parser rather than a corpus."
     }
   },
   "borrowed": {
@@ -37,7 +45,6 @@
   },
   "pending": {
     "//": "The vendored suites that belong here and are not here yet. Each is MIT and each would be committed under its own bucket with its provenance recorded above, exactly as `test/css/corpus` does.",
-    "html5lib-tests": "The tokenizer suite at github.com/html5lib/html5lib-tests -- `tokenizer/*.test`, JSON, with expected token streams. Its tree-construction tests moved to web-platform-tests and are no longer in that repository.",
     "biome": "crates/biome_html_parser/tests -- the ok and error suites.",
     "prettier": "Prettier's HTML specs, as vendored by biome.",
     "//how": "Adding them is mechanical: drop the files into a new bucket directory, record the count and licence above, and add a floor per bucket to test/html-oracle-policy.json. The oracles need no change."

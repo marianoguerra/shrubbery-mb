@@ -25,6 +25,25 @@
     "css": 347
   },
 
+  "//tokens": "The html5lib tokenizer suite, vendored under test/html/corpus/html5lib and counted per CASE rather than per file -- a file that is 4,210 named-character-reference cases is not one answer. It is the only oracle here whose expected output comes from neither this library nor a second implementation: it is the specification's own tests, the ones every browser is checked against. Every runnable case passes, and the floors say so.",
+  "//tokens-skipped": "288 cases name an initial state this tokenizer does not have -- PLAINTEXT, which never ends, and the CDATA section state, which the tree builder enters from foreign content. Neither is a state a MARKUP tokenizer needs. They are reported as skipped rather than passed, so a skip can never be mistaken for a pass; the oracle prints the count on every run.",
+  "//tokens-why": "It closes the one hole nothing else here could reach. The 2,231 named character references are GENERATED from entities.json by a script, and before this suite arrived not a single one of them was checked. namedEntities.test checks all of them, in both spellings.",
+  "tokens": {
+    "contentModelFlags": 22,
+    "domjs": 31,
+    "entities": 80,
+    "escapeFlag": 9,
+    "namedEntities": 4210,
+    "numericEntities": 336,
+    "pendingSpecChanges": 1,
+    "test1": 56,
+    "test2": 45,
+    "test3": 1541,
+    "test4": 85,
+    "unicodeChars": 323,
+    "unicodeCharsProblematic": 5
+  },
+
   "//lower": "The authored Shrubbery HTML corpus lowers with no diagnostic at all. This one is expected to stay at 100%: it is the syntax's own examples.",
   "lower": {
     "shrub": 5

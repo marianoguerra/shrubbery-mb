@@ -39,6 +39,23 @@ pub(all) struct RawAttr {
 } derive(Eq, Debug)
 
 ///|
+/// Where a scan begins.
+///
+/// Ordinary markup, almost always. The other two exist because the content
+/// model of an element is decided by the element that opened it, and a scan can
+/// begin already INSIDE one -- `innerHTML` on a `<title>`, a fragment handed to
+/// a template engine, a conformance suite naming an initial state. The tag is
+/// carried rather than the state, because what ends a raw-text run is that
+/// element's own end tag and nothing else.
+pub(all) enum Start {
+  Markup
+  /// References resolve, markup does not: `title`, `textarea`.
+  Escapable(String)
+  /// Nothing resolves and nothing is markup: `script`, `style`.
+  Raw(String)
+} derive(Eq, Debug)
+
+///|
 pub(all) enum TokenKind {
   /// A start tag: the lowercased name, its attributes in source order, and
   /// whether it was written with a `/`. What that `/` means depends on the
@@ -51,8 +68,15 @@ pub(all) enum TokenKind {
   /// The body of a `script` or `style`, verbatim.
   RawText(String)
   Comment(String)
-  /// A doctype: name, public identifier, system identifier.
-  Doctype(String, String?, String?)
+  /// A doctype: name, public identifier, system identifier, and whether it
+  /// forces quirks mode.
+  ///
+  /// The last is the tokenizer's answer and not the tree's: `@ast.Doctype`
+  /// records what was WRITTEN, and quirks mode is a question about the document
+  /// rather than about the markup. The tokenizer is answerable for it because
+  /// the specification sets the flag while scanning, and a conformance suite
+  /// checks it.
+  Doctype(String, String?, String?, Bool)
   Cdata(String)
   /// A region that is not any of the above, kept with the source it covered so
   /// that the printer can echo it.
@@ -130,7 +154,8 @@ pub fn TokenKind::to_debug(self : TokenKind) -> String {
     Text(t, _) => "text " + t
     RawText(t) => "rawtext " + t
     Comment(t) => "comment " + t
-    Doctype(n, _, _) => "doctype " + n
+    Doctype(n, _, _, quirks) =>
+      "doctype " + n + (if quirks { " (quirks)" } else { "" })
     Cdata(t) => "cdata " + t
     Bogus(k, t) => "bogus " + k.code() + " " + t
     Eof => "eof"

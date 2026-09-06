@@ -21,17 +21,18 @@ priv struct Scanner {
   src : String
   len : Int
   mut pos : Int
-  /// The name of the last start tag emitted. This is the specification's
-  /// "appropriate end tag token" check, and it is the only piece of state the
-  /// tokenizer needs from the document it is tokenizing.
-  mut last_start : String
+  /// The raw-text run the next call has to scan, if the tag just emitted opened
+  /// one. This is the specification's "appropriate end tag token" check, and it
+  /// is the only piece of state the tokenizer needs from the document it is
+  /// tokenizing.
+  mut pending : Start
   problems : Array[(@kind.ErrorKind, @span.Span)]
 }
 
 ///|
 /// Tokenize a whole document, ending with exactly one `Eof`.
-pub fn tokenize(src : String) -> Scanned {
-  let s = { src, len: src.length(), pos: 0, last_start: "", problems: [], }
+pub fn tokenize(src : String, start? : Start = Markup) -> Scanned {
+  let s = { src, len: src.length(), pos: 0, pending: start, problems: [], }
   let out = []
   while true {
     let t = s.next()
@@ -46,8 +47,8 @@ pub fn tokenize(src : String) -> Scanned {
 
 ///|
 /// Tokenize, keeping only the tokens.
-pub fn tokens(src : String) -> Array[Token] {
-  tokenize(src).tokens
+pub fn tokens(src : String, start? : Start = Markup) -> Array[Token] {
+  tokenize(src, start~).tokens
 }
 
 // ------------------------------------------------------------------- cursor
@@ -119,6 +120,38 @@ fn lower(c : Char) -> Char {
 }
 
 ///|
+/// The specification's input preprocessing, applied per run rather than to the
+/// whole source: a CRLF pair and a lone CR both become a single LF.
+///
+/// Per run because doing it to the input up front would shift every offset
+/// after every CRLF, and a diagnostic that points one character to the left of
+/// the problem is worse than no diagnostic. The DECODED text is normalised and
+/// the source spelling is kept in `raw`, which is the same bargain a character
+/// reference already makes.
+fn normalize_newlines(s : String) -> String {
+  if !s.contains("\r") {
+    return s
+  }
+  let buf = StringBuilder()
+  let n = s.length()
+  let mut i = 0
+  while i < n {
+    let c = s.unsafe_get(i).to_int().unsafe_to_char()
+    if c == '\r' {
+      buf.write_char('\n')
+      i = i + 1
+      if i < n && s.unsafe_get(i).to_int() == 10 {
+        i = i + 1
+      }
+      continue
+    }
+    buf.write_char(c)
+    i = i + 1
+  }
+  buf.to_string()
+}
+
+///|
 fn is_ws(c : Char) -> Bool {
   c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\u{0C}'
 }
@@ -151,7 +184,7 @@ fn is_hex(c : Char) -> Bool {
 /// `xlink:href` and a custom element with an accented name arrive as one name.
 /// The parser splits the prefix off; the scanner has no reason to.
 fn is_tag_name_char(c : Char) -> Bool {
-  !is_ws(c) && c != '/' && c != '>' && c != '\u{0}'
+  !is_ws(c) && c != '/' && c != '>'
 }
 
 ///|
@@ -175,13 +208,14 @@ fn Scanner::next(self : Scanner) -> Token {
   // scanned as one piece. The check is here rather than in the tag branch
   // because the body follows the tag it belongs to, and `last_start` is what
   // remembers which tag that was.
-  if self.last_start != "" {
-    let tag = self.last_start
-    self.last_start = ""
-    if @names.is_raw_text(tag) {
+  match self.pending {
+    Markup => ()
+    Raw(tag) => {
+      self.pending = Markup
       return self.raw_text_body(tag)
     }
-    if @names.is_escapable_raw_text(tag) {
+    Escapable(tag) => {
+      self.pending = Markup
       return self.escapable_body(tag)
     }
   }
@@ -197,6 +231,7 @@ fn Scanner::text(self : Scanner) -> Token {
   let start = self.pos
   let buf = StringBuilder()
   let mut decoded = false
+  let mut normalised = false
   while self.pos < self.len && self.peek() != '<' {
     let c = self.peek()
     if c == '&' {
@@ -210,20 +245,46 @@ fn Scanner::text(self : Scanner) -> Token {
       }
     }
     if c == '\u{0}' {
+      // The data state EMITS a NUL, it does not replace it. Every other state
+      // replaces it with U+FFFD, which is the sort of asymmetry only a
+      // conformance suite finds.
       self.note(
         UnexpectedNullCharacter,
         @span.Span::new(self.pos, self.pos + 1),
       )
-      buf.write_char(REPLACEMENT)
-      decoded = true
-      self.pos = self.pos + 1
+    }
+    if self.newline_at(buf) {
+      normalised = true
       continue
     }
     buf.write_char(c)
     self.pos = self.pos + 1
   }
-  let raw = if decoded { Some(self.slice(start, self.pos)) } else { None }
+  let raw = if decoded || normalised {
+    Some(self.slice(start, self.pos))
+  } else {
+    None
+  }
   self.tok(start, Text(buf.to_string(), raw))
+}
+
+///|
+/// A CR at the cursor, written as the LF the specification preprocesses it to.
+///
+/// Inline in the scan rather than over the finished buffer, because a resolved
+/// character reference must NOT be normalised: preprocessing happens to the
+/// input stream and `&#13;` is resolved after it, so `&#013;` really is a
+/// carriage return and a literal one really is not.
+fn Scanner::newline_at(self : Scanner, buf : StringBuilder) -> Bool {
+  if self.peek() != '\r' {
+    return false
+  }
+  buf.write_char('\n')
+  self.pos = self.pos + 1
+  if self.pos < self.len && self.peek() == '\n' {
+    self.pos = self.pos + 1
+  }
+  true
 }
 
 ///|
@@ -246,6 +307,11 @@ fn Scanner::markup(self : Scanner) -> Token {
   if c1 == '/' {
     if is_alpha(self.at(self.pos + 2)) {
       return self.end_tag()
+    }
+    if self.pos + 2 >= self.len {
+      // `</` at end of input: the specification emits both characters.
+      self.pos = self.len
+      return self.tok(start, Text("</", None))
     }
     if self.at(self.pos + 2) == '>' {
       // `</>` is dropped entirely, per the specification.
@@ -279,7 +345,9 @@ fn Scanner::start_tag(self : Scanner) -> Token {
   while self.pos < self.len && is_tag_name_char(self.peek()) {
     self.pos = self.pos + 1
   }
-  let name = self.slice(name_start, self.pos).to_lower()
+  // NUL is a name character too, replaced with U+FFFD: `<a\u{0}>` is a tag
+  // called `a\u{FFFD}`, not a tag called `a`.
+  let name = self.nul_free(name_start, self.pos).to_lower()
   let attrs : Array[RawAttr] = []
   let mut self_closing = false
   while true {
@@ -342,9 +410,12 @@ fn Scanner::start_tag(self : Scanner) -> Token {
       None => self.pos = self.pos + 1
     }
   }
-  if !self_closing &&
-    (@names.is_raw_text(name) || @names.is_escapable_raw_text(name)) {
-    self.last_start = name
+  if !self_closing {
+    if @names.is_raw_text(name) {
+      self.pending = Raw(name)
+    } else if @names.is_escapable_raw_text(name) {
+      self.pending = Escapable(name)
+    }
   }
   self.tok(start, StartTag(name, attrs, self_closing))
 }
@@ -357,7 +428,7 @@ fn Scanner::end_tag(self : Scanner) -> Token {
   while self.pos < self.len && is_tag_name_char(self.peek()) {
     self.pos = self.pos + 1
   }
-  let name = self.slice(name_start, self.pos).to_lower()
+  let name = self.nul_free(name_start, self.pos).to_lower()
   // Attributes on an end tag are a parse error and are dropped, which is what
   // the specification says and what makes `</div class="x">` harmless.
   while self.pos < self.len && self.peek() != '>' {
@@ -384,7 +455,7 @@ fn Scanner::attribute(self : Scanner, lead_equals? : Bool = false) -> RawAttr? {
   if self.pos == start {
     return None
   }
-  let name = self.slice(start, self.pos).to_lower()
+  let name = self.nul_free(start, self.pos).to_lower()
   while self.pos < self.len && is_ws(self.peek()) {
     self.pos = self.pos + 1
   }
@@ -419,6 +490,7 @@ fn Scanner::attribute_value(self : Scanner) -> (String, String?) {
   let start = self.pos
   let buf = StringBuilder()
   let mut decoded = false
+  let mut normalised = false
   while self.pos < self.len {
     let c = self.peek()
     if quoted && c == quote {
@@ -453,10 +525,18 @@ fn Scanner::attribute_value(self : Scanner) -> (String, String?) {
       self.pos = self.pos + 1
       continue
     }
+    if self.newline_at(buf) {
+      normalised = true
+      continue
+    }
     buf.write_char(c)
     self.pos = self.pos + 1
   }
-  let raw = if decoded { Some(self.slice(start, self.pos)) } else { None }
+  let raw = if decoded || normalised {
+    Some(self.slice(start, self.pos))
+  } else {
+    None
+  }
   if quoted && self.pos < self.len {
     self.pos = self.pos + 1
   }
@@ -466,6 +546,85 @@ fn Scanner::attribute_value(self : Scanner) -> (String, String?) {
 // -------------------------------------------------------------- raw bodies
 
 ///|
+/// How deep inside a comment a `<script>` body is.
+///
+/// The specification gives script data five states, and the reason is one
+/// construct: `<script><!-- <script> ... </script> --></script>`. Inside the
+/// inner `<script>` the FIRST `</script>` does not end the element. A scanner
+/// that stopped at it cuts the script in half, which no browser does -- and a
+/// formatter that then rewrote the file would be handing back something that
+/// does not run.
+priv enum ScriptMode {
+  /// Ordinary script data: the next `</script>` ends the element.
+  Plain
+  /// After a `<!--`: still ends at `</script>`, but a `<script` opens a level.
+  Escaped
+  /// After a nested `<script`: `</script>` closes the level, not the element.
+  Double
+} derive(Eq)
+
+///|
+/// A `<script>` body, with the escaped and double-escaped states.
+fn Scanner::script_body(self : Scanner) -> Unit {
+  let mut mode = ScriptMode::Plain
+  while self.pos < self.len {
+    if mode != Double && self.is_end_tag_at(self.pos, "script") {
+      return
+    }
+    if mode == Plain && self.matches_ci(self.pos, "<!--") {
+      mode = Escaped
+      self.pos = self.pos + 4
+      continue
+    }
+    if mode != Plain && self.matches_ci(self.pos, "-->") {
+      mode = Plain
+      self.pos = self.pos + 3
+      continue
+    }
+    if mode == Escaped && self.opens_nested_script(self.pos) {
+      mode = Double
+      self.pos = self.pos + 7
+      continue
+    }
+    if mode == Double && self.is_end_tag_at(self.pos, "script") {
+      mode = Escaped
+      self.pos = self.pos + 8
+      continue
+    }
+    self.pos = self.pos + 1
+  }
+}
+
+///|
+/// `<script` followed by something that could end a tag.
+fn Scanner::opens_nested_script(self : Scanner, i : Int) -> Bool {
+  if !self.matches_ci(i, "<script") {
+    return false
+  }
+  let c = self.at(i + 7)
+  is_ws(c) || c == '/' || c == '>'
+}
+
+///|
+/// Whether an end tag for `tag` actually begins here.
+///
+/// `</xmp` is only an end tag if what follows it could END one -- whitespace,
+/// `/` or `>`. `foo</xmp<` is character data all the way through, and `foo</xmp`
+/// at end of input is too. Stopping at the name alone loses the rest of the run,
+/// which is invisible until something asks a conforming parser.
+fn Scanner::is_end_tag_at(self : Scanner, i : Int, tag : String) -> Bool {
+  if !self.matches_ci(i, "</" + tag) {
+    return false
+  }
+  let after = i + 2 + tag.length()
+  if after >= self.len {
+    return false
+  }
+  let c = self.at(after)
+  is_ws(c) || c == '/' || c == '>'
+}
+
+///|
 /// Everything up to `</tag`, verbatim.
 ///
 /// ASCII-case-insensitively, and inside a JavaScript string literal just the
@@ -473,24 +632,27 @@ fn Scanner::attribute_value(self : Scanner) -> (String, String?) {
 /// that contains one rather than trying to write it back.
 fn Scanner::raw_text_body(self : Scanner, tag : String) -> Token {
   let start = self.pos
-  let close = "</" + tag
-  while self.pos < self.len && !self.matches_ci(self.pos, close) {
-    self.pos = self.pos + 1
+  if tag == "script" {
+    self.script_body()
+  } else {
+    while self.pos < self.len && !self.is_end_tag_at(self.pos, tag) {
+      self.pos = self.pos + 1
+    }
   }
   if self.pos >= self.len {
     self.note(EofInRawText(tag), @span.Span::new(start, self.pos))
   }
-  self.tok(start, RawText(self.slice(start, self.pos)))
+  self.tok(start, RawText(normalize_newlines(self.slice(start, self.pos))))
 }
 
 ///|
 /// Everything up to `</tag`, with character references resolved.
 fn Scanner::escapable_body(self : Scanner, tag : String) -> Token {
   let start = self.pos
-  let close = "</" + tag
   let buf = StringBuilder()
   let mut decoded = false
-  while self.pos < self.len && !self.matches_ci(self.pos, close) {
+  let mut normalised = false
+  while self.pos < self.len && !self.is_end_tag_at(self.pos, tag) {
     if self.peek() == '&' {
       match self.reference(true) {
         Some(text) => {
@@ -501,13 +663,21 @@ fn Scanner::escapable_body(self : Scanner, tag : String) -> Token {
         None => ()
       }
     }
+    if self.newline_at(buf) {
+      normalised = true
+      continue
+    }
     buf.write_char(self.peek())
     self.pos = self.pos + 1
   }
   if self.pos >= self.len {
     self.note(EofInRawText(tag), @span.Span::new(start, self.pos))
   }
-  let raw = if decoded { Some(self.slice(start, self.pos)) } else { None }
+  let raw = if decoded || normalised {
+    Some(self.slice(start, self.pos))
+  } else {
+    None
+  }
   self.tok(start, Text(buf.to_string(), raw))
 }
 
@@ -527,7 +697,7 @@ fn Scanner::comment(self : Scanner) -> Token {
   let body_start = self.pos
   while self.pos < self.len && !self.matches_ci(self.pos, "-->") {
     if self.matches_ci(self.pos, "--!>") {
-      let body = self.slice(body_start, self.pos)
+      let body = self.comment_body(body_start, self.pos)
       self.pos = self.pos + 4
       self.note(IncorrectlyClosedComment, @span.Span::new(start, self.pos))
       return self.tok(start, Comment(body))
@@ -537,8 +707,22 @@ fn Scanner::comment(self : Scanner) -> Token {
     }
     self.pos = self.pos + 1
   }
-  let body = self.slice(body_start, self.pos)
+  let mut body = self.comment_body(body_start, self.pos)
   if self.pos >= self.len {
+    // The dashes that took the machine into comment-end-dash and comment-end
+    // are held back by those states, and at end of input they are never
+    // appended: `<!----` is a comment whose data is empty, not `--`. At most
+    // two, because a third would have fallen through and been appended.
+    if body.has_suffix("--!") {
+      // comment-end-bang holds `--!` back the same way comment-end holds `--`.
+      body = body.clamped_view(end=body.length() - 3).to_owned()
+    } else {
+      let mut drop = 0
+      while drop < 2 && body.has_suffix("-") {
+        body = body.clamped_view(end=body.length() - 1).to_owned()
+        drop = drop + 1
+      }
+    }
     self.note(EofInComment, @span.Span::new(start, self.pos))
   } else {
     self.pos = self.pos + 3
@@ -560,12 +744,24 @@ fn Scanner::bogus_comment(self : Scanner, skip : Int) -> Token {
   while self.pos < self.len && self.peek() != '>' {
     self.pos = self.pos + 1
   }
-  let body = self.slice(body_start, self.pos)
+  let body = self.comment_body(body_start, self.pos)
   if self.pos < self.len {
     self.pos = self.pos + 1
   }
   self.note(BogusComment, @span.Span::new(start, self.pos))
   self.tok(start, Comment(body))
+}
+
+///|
+/// A comment's data: newlines normalised and NUL replaced, which every state
+/// but the data state does.
+fn Scanner::comment_body(self : Scanner, from : Int, to : Int) -> String {
+  let raw = normalize_newlines(self.slice(from, to))
+  if !raw.contains("\u{0}") {
+    return raw
+  }
+  self.note(UnexpectedNullCharacter, @span.Span::new(from, to))
+  raw.replace_all(old="\u{0}", new=REPLACEMENT.to_string())
 }
 
 ///|
@@ -584,65 +780,236 @@ fn Scanner::cdata(self : Scanner) -> Token {
 }
 
 ///|
+/// A doctype, and whether it forces quirks mode.
+///
+/// Written as the specification's states in sequence rather than as a loop over
+/// the parts, because the force-quirks flag is set by the STATE a problem is met
+/// in and not by the problem. Junk after a complete system identifier is
+/// harmless -- `<!DOCTYPE a SYSTEM ''!` is a correct doctype with a parse error
+/// -- while the same junk one state earlier forces quirks, and end of input
+/// forces it everywhere except in the bogus state. A loop cannot tell those
+/// apart, which is seventy-four cases of the html5lib suite.
 fn Scanner::doctype(self : Scanner) -> Token {
   let start = self.pos
   self.pos = self.pos + 9
-  while self.pos < self.len && is_ws(self.peek()) {
+  let d = { start, name: "", public_id: None, system_id: None, quirks: false, }
+  self.skip_ws()
+  if self.pos >= self.len {
+    return self.doctype_eof(d)
+  }
+  if self.peek() == '>' {
+    // A doctype with no name at all.
     self.pos = self.pos + 1
+    d.quirks = true
+    return self.doctype_token(d)
   }
   let name_start = self.pos
   while self.pos < self.len && !is_ws(self.peek()) && self.peek() != '>' {
     self.pos = self.pos + 1
   }
-  let name = self.slice(name_start, self.pos).to_lower()
-  let mut public_id : String? = None
-  let mut system_id : String? = None
-  while self.pos < self.len && self.peek() != '>' {
-    if is_ws(self.peek()) {
-      self.pos = self.pos + 1
-      continue
-    }
-    if self.matches_ci(self.pos, "public") {
-      self.pos = self.pos + 6
-      public_id = self.doctype_quoted()
-      system_id = self.doctype_quoted()
-      continue
-    }
-    if self.matches_ci(self.pos, "system") {
-      self.pos = self.pos + 6
-      system_id = self.doctype_quoted()
-      continue
-    }
-    self.note(MalformedDoctype, @span.Span::new(self.pos, self.pos + 1))
-    self.pos = self.pos + 1
+  d.name = self.nul_free(name_start, self.pos).to_lower()
+  self.skip_ws()
+  if self.pos >= self.len {
+    return self.doctype_eof(d)
   }
-  if self.pos < self.len {
+  if self.peek() == '>' {
     self.pos = self.pos + 1
-  } else {
-    self.note(EofInDoctype, @span.Span::new(start, self.pos))
+    return self.doctype_token(d)
   }
-  self.tok(start, Doctype(name, public_id, system_id))
+  if self.matches_ci(self.pos, "public") {
+    self.pos = self.pos + 6
+    return self.doctype_public(d)
+  }
+  if self.matches_ci(self.pos, "system") {
+    self.pos = self.pos + 6
+    return self.doctype_system(d)
+  }
+  // Anything else after the name is an invalid sequence, and that one DOES
+  // force quirks before falling into the bogus state.
+  self.note(MalformedDoctype, @span.Span::new(self.pos, self.pos + 1))
+  d.quirks = true
+  self.skip_bogus_doctype()
+  self.doctype_token(d)
 }
 
 ///|
-fn Scanner::doctype_quoted(self : Scanner) -> String? {
-  while self.pos < self.len && is_ws(self.peek()) {
+/// After the `PUBLIC` keyword.
+fn Scanner::doctype_public(self : Scanner, d : Doctype) -> Token {
+  self.skip_ws()
+  if self.pos >= self.len {
+    return self.doctype_eof(d)
+  }
+  if self.peek() == '>' {
     self.pos = self.pos + 1
+    d.quirks = true
+    return self.doctype_token(d)
   }
+  if !self.at_quote() {
+    self.note(MalformedDoctype, @span.Span::new(self.pos, self.pos + 1))
+    d.quirks = true
+    self.skip_bogus_doctype()
+    return self.doctype_token(d)
+  }
+  let (public_id, done) = self.doctype_quoted(d)
+  d.public_id = Some(public_id)
+  if done {
+    return self.doctype_token(d)
+  }
+  // A system identifier may follow, with or without whitespace between them.
+  self.skip_ws()
+  if self.pos >= self.len {
+    return self.doctype_eof(d)
+  }
+  if self.peek() == '>' {
+    self.pos = self.pos + 1
+    return self.doctype_token(d)
+  }
+  if !self.at_quote() {
+    self.note(MalformedDoctype, @span.Span::new(self.pos, self.pos + 1))
+    d.quirks = true
+    self.skip_bogus_doctype()
+    return self.doctype_token(d)
+  }
+  let (system_id, done) = self.doctype_quoted(d)
+  d.system_id = Some(system_id)
+  if done {
+    return self.doctype_token(d)
+  }
+  self.doctype_after_system(d)
+}
+
+///|
+/// After the `SYSTEM` keyword.
+fn Scanner::doctype_system(self : Scanner, d : Doctype) -> Token {
+  self.skip_ws()
+  if self.pos >= self.len {
+    return self.doctype_eof(d)
+  }
+  if self.peek() == '>' {
+    self.pos = self.pos + 1
+    d.quirks = true
+    return self.doctype_token(d)
+  }
+  if !self.at_quote() {
+    self.note(MalformedDoctype, @span.Span::new(self.pos, self.pos + 1))
+    d.quirks = true
+    self.skip_bogus_doctype()
+    return self.doctype_token(d)
+  }
+  let (system_id, done) = self.doctype_quoted(d)
+  d.system_id = Some(system_id)
+  if done {
+    return self.doctype_token(d)
+  }
+  self.doctype_after_system(d)
+}
+
+///|
+/// After a complete system identifier.
+///
+/// The one place where junk is harmless: it is a parse error and the doctype is
+/// still correct. End of input here is not harmless, and end of input in the
+/// bogus state that follows the junk is harmless again.
+fn Scanner::doctype_after_system(self : Scanner, d : Doctype) -> Token {
+  self.skip_ws()
+  if self.pos >= self.len {
+    return self.doctype_eof(d)
+  }
+  if self.peek() == '>' {
+    self.pos = self.pos + 1
+    return self.doctype_token(d)
+  }
+  self.note(MalformedDoctype, @span.Span::new(self.pos, self.pos + 1))
+  self.skip_bogus_doctype()
+  self.doctype_token(d)
+}
+
+///|
+/// A quoted identifier, and whether the doctype ends here.
+///
+/// It ends here when the identifier was terminated by a `>` or by end of input
+/// rather than by its own quote; both force quirks. The caller assigns the body
+/// to the right field before returning, because only the caller knows which
+/// keyword it came from -- guessing from which field is still empty gets
+/// `<!DOCTYPE a SYSTEM"` wrong, and does so silently.
+fn Scanner::doctype_quoted(self : Scanner, d : Doctype) -> (String, Bool) {
   let quote = self.peek()
-  if quote != '"' && quote != '\'' {
-    return None
-  }
   self.pos = self.pos + 1
   let start = self.pos
   while self.pos < self.len && self.peek() != quote && self.peek() != '>' {
     self.pos = self.pos + 1
   }
-  let body = self.slice(start, self.pos)
-  if self.pos < self.len && self.peek() == quote {
+  let body = normalize_newlines(self.nul_free(start, self.pos))
+  if self.pos >= self.len {
+    d.quirks = true
+    self.note(EofInDoctype, @span.Span::new(d.start, self.pos))
+    return (body, true)
+  }
+  if self.peek() == '>' {
+    self.pos = self.pos + 1
+    d.quirks = true
+    self.note(MalformedDoctype, @span.Span::new(d.start, self.pos))
+    return (body, true)
+  }
+  self.pos = self.pos + 1
+  (body, false)
+}
+
+///|
+fn Scanner::doctype_eof(self : Scanner, d : Doctype) -> Token {
+  self.note(EofInDoctype, @span.Span::new(d.start, self.pos))
+  d.quirks = true
+  self.doctype_token(d)
+}
+
+///|
+/// The bogus doctype state: everything up to the next `>`, and end of input
+/// here does NOT force quirks.
+fn Scanner::skip_bogus_doctype(self : Scanner) -> Unit {
+  while self.pos < self.len && self.peek() != '>' {
     self.pos = self.pos + 1
   }
-  Some(body)
+  if self.pos < self.len {
+    self.pos = self.pos + 1
+  }
+}
+
+///|
+fn Scanner::doctype_token(self : Scanner, d : Doctype) -> Token {
+  self.tok(d.start, Doctype(d.name, d.public_id, d.system_id, d.quirks))
+}
+
+///|
+fn Scanner::at_quote(self : Scanner) -> Bool {
+  self.peek() == '"' || self.peek() == '\''
+}
+
+///|
+fn Scanner::skip_ws(self : Scanner) -> Unit {
+  while self.pos < self.len && is_ws(self.peek()) {
+    self.pos = self.pos + 1
+  }
+}
+
+///|
+/// A slice with NUL replaced, which every state but the data state does.
+fn Scanner::nul_free(self : Scanner, from : Int, to : Int) -> String {
+  let raw = self.slice(from, to)
+  if !raw.contains("\u{0}") {
+    return raw
+  }
+  self.note(UnexpectedNullCharacter, @span.Span::new(from, to))
+  raw.replace_all(old="\u{0}", new=REPLACEMENT.to_string())
+}
+
+///|
+/// A doctype under construction.
+priv struct Doctype {
+  start : Int
+  mut name : String
+  mut public_id : String?
+  mut system_id : String?
+  mut quirks : Bool
 }
 
 // -------------------------------------------------------- character refs

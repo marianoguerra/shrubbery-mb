@@ -200,11 +200,52 @@ test "a doctype, plain and legacy" {
     @token.tokens(
       "<!DOCTYPE html PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">",
     )[0].kind {
-    Doctype(name, public_id, system_id) => {
+    Doctype(name, public_id, system_id, quirks) => {
       assert_eq(name, "html")
       assert_eq(public_id, Some("-//W3C//DTD HTML 4.01//EN"))
       assert_eq(system_id, Some("http://www.w3.org/TR/html4/strict.dtd"))
+      assert_false(quirks)
     }
+    _ => fail("expected a doctype")
+  }
+}
+
+///|
+test "a scan can begin already inside a raw-text element" {
+  // What `innerHTML` on a `<title>` needs, and what a conformance suite means
+  // by an initial state other than the data state.
+  inspect(
+    @token.dump(@token.tokens("a &amp; b</title>", start=Escapable("title"))),
+    content=(
+      #|text a & b
+      #|end title
+      #|eof
+      #|
+    ),
+  )
+  inspect(
+    @token.dump(@token.tokens("if (a<b) {}</script>", start=Raw("script"))),
+    content=(
+      #|rawtext if (a<b) {}
+      #|end script
+      #|eof
+      #|
+    ),
+  )
+}
+
+///|
+test "a doctype that runs out forces quirks, and one with a name does not" {
+  match @token.tokens("<!DOCTYPE html>")[0].kind {
+    Doctype(_, _, _, quirks) => assert_false(quirks)
+    _ => fail("expected a doctype")
+  }
+  match @token.tokens("<!DOCTYPE html")[0].kind {
+    Doctype(_, _, _, quirks) => assert_true(quirks)
+    _ => fail("expected a doctype")
+  }
+  match @token.tokens("<!DOCTYPE>")[0].kind {
+    Doctype(_, _, _, quirks) => assert_true(quirks)
     _ => fail("expected a doctype")
   }
 }

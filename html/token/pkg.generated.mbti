@@ -10,9 +10,9 @@ import {
 // Values
 pub fn dump(Array[Token]) -> String
 
-pub fn tokenize(String) -> Scanned
+pub fn tokenize(String, start? : Start) -> Scanned
 
-pub fn tokens(String) -> Array[Token]
+pub fn tokens(String, start? : Start) -> Array[Token]
 
 // Errors
 
@@ -29,6 +29,12 @@ pub(all) struct Scanned {
   problems : Array[(@kind.ErrorKind, @span.Span)]
 }
 
+pub(all) enum Start {
+  Markup
+  Escapable(String)
+  Raw(String)
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Token {
   kind : TokenKind
   span : @span.Span
@@ -41,7 +47,7 @@ pub(all) enum TokenKind {
   Text(String, String?)
   RawText(String)
   Comment(String)
-  Doctype(String, String?, String?)
+  Doctype(String, String?, String?, Bool)
   Cdata(String)
   Bogus(@kind.ErrorKind, String)
   Eof

@@ -112,9 +112,15 @@ is recorded deliberately in a commit whose diff says what got better.
 thing for the two syntax modules. `test/css/corpus` and `test/html/corpus` are
 committed for the same reason `test/corpus` is.
 
-The markup half has an external reference where the CSS half has none:
-`moonbit-community/html`, a conforming WHATWG parser, which the `conform` oracle
-asks whether our output still means what the input meant. It is a dependency of
+The markup half has two external references where the CSS half has none. The
+first is `moonbit-community/html`, a conforming WHATWG parser, which the
+`conform` oracle asks whether our output still means what the input meant. The
+second is the html5lib tokenizer suite, vendored under
+`test/html/corpus/html5lib` — 6,744 cases whose expected answer comes from
+neither this library nor a second implementation, but from the specification's
+own tests. It is the only place in this repository where an expected answer is
+vendored, and it exists because the 2,231 named character references are
+GENERATED and nothing else could check a single one of them. It is a dependency of
 the **root module only**, and `tools/boundary-check.sh` fails if a published
 module names it — a library that imported the reference would stop being
 answerable to it and start being built on it, and would put a whole tree builder
@@ -204,6 +210,28 @@ places where an hour is lost:
   called `a<b` and `<div a<b>` has one attribute called `a<b`. `=` is the only
   character that ends an attribute name rather than joining it — and `<div =x>`
   has an attribute called `=x`, because the `=` before a name is taken INTO it.
+- **The data state emits a NUL; every other state replaces it with U+FFFD.**
+  That asymmetry is the specification's, it is not a typo, and NUL is a name
+  character too: `<a\u{0}>` is a tag called `a\u{FFFD}`.
+- **A CR becomes an LF, but only if it was in the SOURCE.** Input preprocessing
+  runs before character references are resolved, so `&#013;` really is a
+  carriage return and a literal one really is not. Normalising the finished
+  buffer gets that backwards.
+- **A trailing `--` or `--!` on an unterminated comment is dropped.** The
+  comment-end states hold those characters back and never append them at end of
+  input, so `<!----` is a comment whose data is empty.
+- **`</xmp` only ends raw text if what follows could end a tag.** `foo</xmp<` is
+  character data all the way through, and so is `foo</xmp` at end of input.
+- **A `<script>` body has three states, not one.** `<!--` enters escaped, a
+  nested `<script` enters double-escaped, and in double-escaped a `</script>`
+  closes the level rather than the element. A scanner that stopped at the first
+  one cuts the script in half, which no browser does.
+- **The doctype force-quirks flag is set by the STATE, not by the problem.**
+  Junk after a complete system identifier is harmless; the same junk one state
+  earlier forces quirks; and end of input forces it everywhere except in the
+  bogus state. A loop over the parts cannot tell those apart — which is
+  seventy-four cases of the html5lib suite, and why `doctype` is written as the
+  specification's states in sequence.
 - **`<title>` and `<textarea>` hold text, and their text is escaped as text.**
   Escaping it as an attribute value leaves the `<` live, and a title containing
   `</title>` then ends its own element. They are the only raw-text contexts that
