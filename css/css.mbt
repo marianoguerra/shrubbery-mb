@@ -41,6 +41,27 @@ pub fn tokens(src : String) -> Array[@token.Token] {
 }
 
 ///|
+/// A typed reading of a value, when one applies.
+///
+/// The lenses live in `css/value` and there are many; these three are the ones
+/// a caller reaches for first. Import that package directly for the rest --
+/// `as_angle`, `as_time`, `as_var`, `as_keyword`, `to_rgba` and the unit table.
+pub fn as_length(v : @ast.ComponentValue) -> @value.Dimension? {
+  @value.as_length(v)
+}
+
+///|
+pub fn as_color(v : @ast.ComponentValue) -> @value.Color? {
+  @value.as_color(v)
+}
+
+///|
+/// How specific a selector is, computed on demand.
+pub fn specificity(s : @ast.Selector) -> @value.Specificity {
+  @value.specificity(s)
+}
+
+///|
 /// Turn a diagnostic into a renderable report.
 pub fn to_report(
   d : @error.Diagnostic,

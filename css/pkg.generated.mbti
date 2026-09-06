@@ -6,14 +6,21 @@ import {
   "marianoguerra/css/error",
   "marianoguerra/css/parse",
   "marianoguerra/css/token",
+  "marianoguerra/css/value",
   "marianoguerra/css/write",
   "marianoguerra/error-report",
 }
 
 // Values
+pub fn as_color(@ast.ComponentValue) -> @value.Color?
+
+pub fn as_length(@ast.ComponentValue) -> @value.Dimension?
+
 pub fn parse(String, strict? : Bool) -> @parse.Parsed raise @error.CssError
 
 pub fn parse_strict(String) -> @ast.Stylesheet raise @error.CssError
+
+pub fn specificity(@ast.Selector) -> @value.Specificity
 
 pub fn to_css(@ast.Stylesheet, style? : @write.Style) -> String
 

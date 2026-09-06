@@ -37,7 +37,7 @@ pub(all) struct Bogus {
   kind : @kind.ErrorKind
   span : @span.Span
   text : String
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub fn Bogus::new(
@@ -57,7 +57,7 @@ pub fn Bogus::new(
 pub(all) struct Comment {
   text : String
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 // ---------------------------------------------------------------- stylesheet
 
@@ -65,14 +65,14 @@ pub(all) struct Comment {
 pub(all) struct Stylesheet {
   items : Array[TopItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum TopItem {
   Rule(CssRule)
   Comment(Comment)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// A rule, at any level.
@@ -101,7 +101,7 @@ pub(all) enum CssRule {
   /// must know in order to print it back.
   Unknown(UnknownAtRule)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// The body of a rule: declarations and nested rules, in source order.
@@ -115,7 +115,7 @@ pub(all) enum BlockItem {
   Rule(CssRule)
   Comment(Comment)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// A block that may hold only declarations -- `@font-face`, `@page`, a
@@ -124,14 +124,14 @@ pub(all) enum BlockItem {
 pub(all) struct DeclBlock {
   decls : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct StyleRule {
   selectors : Array[Selector]
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 // -------------------------------------------------------------- declarations
 
@@ -141,7 +141,7 @@ pub(all) struct Declaration {
   value : Array[ComponentValue]
   important : Bool
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// `Custom` carries the leading `--`, so that the two cases never have to be
@@ -149,7 +149,7 @@ pub(all) struct Declaration {
 pub(all) enum PropertyName {
   Ident(String)
   Custom(String)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub fn PropertyName::text(self : PropertyName) -> String {
@@ -172,7 +172,7 @@ pub(all) struct Number {
   repr : String
   value : Double
   is_int : Bool
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub fn Number::of_int(n : Int) -> Number {
@@ -218,7 +218,7 @@ pub(all) enum ComponentValue {
   /// Any other operator run: `+`, `-`, `*`, `<`, `=`.
   Delim(String)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, Debug)
 
 // ------------------------------------------------------------------ selectors
 
@@ -237,7 +237,7 @@ pub(all) enum Selector {
   /// `> .child`.
   Relative(Combinator, Selector)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum Combinator {
@@ -246,7 +246,7 @@ pub(all) enum Combinator {
   NextSibling
   SubsequentSibling
   Column
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// One element's worth of selector: an optional type, then qualifiers.
@@ -254,13 +254,13 @@ pub(all) struct Compound {
   type_sel : TypeSelector?
   quals : Array[Qualifier]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum TypeSelector {
   Universal(NsPrefix?)
   Named(NsPrefix?, String)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// `|a` is `None_`, `*|a` is `Any`, `svg|a` is `Named`.
@@ -268,7 +268,7 @@ pub(all) enum NsPrefix {
   None_
   Any
   Named(String)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum Qualifier {
@@ -280,7 +280,7 @@ pub(all) enum Qualifier {
   /// The `&` nesting selector.
   Nesting
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// Grouped by the *shape* of the argument, not by the name -- biome's choice,
@@ -295,20 +295,20 @@ pub(all) enum PseudoClass {
   /// A name this library does not know, kept with its arguments unparsed
   /// rather than dropped.
   Unknown(String, Array[ComponentValue])
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct AnB {
   a : Int
   b : Int
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum PseudoElement {
   Simple(String)
   Sub(String, Array[Selector])
   Fn(String, Array[ComponentValue])
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct AttrSelector {
@@ -316,7 +316,7 @@ pub(all) struct AttrSelector {
   name : String
   matcher : (AttrOp, AttrValue)?
   case_ : AttrCase
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum AttrOp {
@@ -326,7 +326,7 @@ pub(all) enum AttrOp {
   Prefix
   Suffix
   Substring
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub fn AttrOp::text(self : AttrOp) -> String {
@@ -344,14 +344,14 @@ pub fn AttrOp::text(self : AttrOp) -> String {
 pub(all) enum AttrValue {
   Str(String)
   Ident(String)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum AttrCase {
   Default
   Insensitive
   Sensitive
-} derive(Eq)
+} derive(Eq, Debug)
 
 // ----------------------------------------------------------------- conditions
 
@@ -375,14 +375,14 @@ pub(all) enum Condition {
   /// the rule, so dropping it would change what the stylesheet means.
   Unknown(Array[ComponentValue])
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum LogicalOp {
   And
   Or
   Not
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// A media or container feature test, in all four shapes CSS gives it.
@@ -401,7 +401,7 @@ pub(all) enum Feature {
     RangeOp,
     Array[ComponentValue]
   )
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum RangeOp {
@@ -410,7 +410,7 @@ pub(all) enum RangeOp {
   Gt
   Ge
   Eq
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub fn RangeOp::text(self : RangeOp) -> String {
@@ -430,27 +430,27 @@ pub(all) struct MediaQuery {
   qualifier : MediaQualifier?
   media_type : String?
   condition : Condition?
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum MediaQualifier {
   Only
   Not
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct MediaRule {
   queries : Array[MediaQuery]
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct SupportsRule {
   condition : Condition
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct ContainerRule {
@@ -458,13 +458,13 @@ pub(all) struct ContainerRule {
   condition : Condition
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// A dotted layer name: `base.theme` is `["base", "theme"]`.
 pub(all) struct LayerName {
   parts : Array[String]
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// `body` is `None` for the statement form `@layer a, b;` and `Some` for the
@@ -474,48 +474,48 @@ pub(all) struct LayerRule {
   names : Array[LayerName]
   body : Array[BlockItem]?
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum KeyframesName {
   Ident(String)
   Str(String)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum KeyframeSelector {
   From
   To
   Percentage(Number)
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct KeyframeBlock {
   selectors : Array[KeyframeSelector]
   decls : DeclBlock
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct KeyframesRule {
   name : KeyframesName
   frames : Array[KeyframeBlock]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct PageRule {
   selectors : Array[String]
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct PropertyRule {
   name : String
   decls : DeclBlock
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 /// `layer` has three states and they are all different: absent, `layer`
@@ -527,14 +527,14 @@ pub(all) struct ImportRule {
   supports : Condition?
   media : Array[MediaQuery]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct NamespaceRule {
   prefix : String?
   url : String
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct ScopeRule {
@@ -542,7 +542,7 @@ pub(all) struct ScopeRule {
   end : Array[Selector]?
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)
 
 ///|
 pub(all) struct UnknownAtRule {
@@ -550,4 +550,4 @@ pub(all) struct UnknownAtRule {
   prelude : Array[ComponentValue]
   block : Array[BlockItem]?
   span : @span.Span
-} derive(Eq)
+} derive(Eq, Debug)

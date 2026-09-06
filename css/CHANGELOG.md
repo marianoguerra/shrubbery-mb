@@ -21,6 +21,11 @@ module follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 - A **printer** (`write`) with three modes: `Pretty`, `Compact` and `Minified`.
 - **Diagnostics** (`error`) in the `error-report` style, reached from exactly
   one function.
+- **Typed lenses** (`value`): `as_length`, `as_color`, `as_var`, `as_keyword`
+  and the rest, plus specificity. All computed on demand and stored nowhere,
+  the way biome layers `value_ext.rs` over its untyped tree -- which is what
+  keeps the parser's question ("what does the text say") apart from the
+  consumer's ("what does it mean").
 
 ### Notes
 

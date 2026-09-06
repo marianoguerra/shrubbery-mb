@@ -4,6 +4,7 @@ package "marianoguerra/css/ast"
 import {
   "marianoguerra/css/kind",
   "marianoguerra/css/span",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -14,13 +15,13 @@ import {
 pub(all) struct AnB {
   a : Int
   b : Int
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum AttrCase {
   Default
   Insensitive
   Sensitive
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum AttrOp {
   Exact
@@ -29,7 +30,7 @@ pub(all) enum AttrOp {
   Prefix
   Suffix
   Substring
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 pub fn AttrOp::text(Self) -> String
 
 pub(all) struct AttrSelector {
@@ -37,25 +38,25 @@ pub(all) struct AttrSelector {
   name : String
   matcher : (AttrOp, AttrValue)?
   case_ : AttrCase
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum AttrValue {
   Str(String)
   Ident(String)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum BlockItem {
   Decl(Declaration)
   Rule(CssRule)
   Comment(Comment)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Bogus {
   kind : @kind.ErrorKind
   span : @span.Span
   text : String
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 pub fn Bogus::new(@kind.ErrorKind, @span.Span, text? : String) -> Self
 
 pub(all) enum Combinator {
@@ -64,12 +65,12 @@ pub(all) enum Combinator {
   NextSibling
   SubsequentSibling
   Column
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Comment {
   text : String
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum ComponentValue {
   Ident(String)
@@ -86,13 +87,13 @@ pub(all) enum ComponentValue {
   Slash
   Delim(String)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Compound {
   type_sel : TypeSelector?
   quals : Array[Qualifier]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Condition {
   Feature(Feature)
@@ -101,14 +102,14 @@ pub(all) enum Condition {
   Operation(LogicalOp, Array[Condition])
   Unknown(Array[ComponentValue])
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct ContainerRule {
   name : String?
   condition : Condition
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum CssRule {
   Style(StyleRule)
@@ -128,26 +129,26 @@ pub(all) enum CssRule {
   CounterStyle(String, DeclBlock)
   Unknown(UnknownAtRule)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct DeclBlock {
   decls : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Declaration {
   property : PropertyName
   value : Array[ComponentValue]
   important : Bool
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Feature {
   Boolean(String)
   Plain(String, Array[ComponentValue])
   Range(String, RangeOp, Array[ComponentValue])
   Interval(Array[ComponentValue], RangeOp, String, RangeOp, Array[ComponentValue])
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct ImportRule {
   url : String
@@ -155,100 +156,100 @@ pub(all) struct ImportRule {
   supports : Condition?
   media : Array[MediaQuery]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct KeyframeBlock {
   selectors : Array[KeyframeSelector]
   decls : DeclBlock
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum KeyframeSelector {
   From
   To
   Percentage(Number)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum KeyframesName {
   Ident(String)
   Str(String)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct KeyframesRule {
   name : KeyframesName
   frames : Array[KeyframeBlock]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct LayerName {
   parts : Array[String]
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct LayerRule {
   names : Array[LayerName]
   body : Array[BlockItem]?
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum LogicalOp {
   And
   Or
   Not
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum MediaQualifier {
   Only
   Not
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct MediaQuery {
   qualifier : MediaQualifier?
   media_type : String?
   condition : Condition?
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct MediaRule {
   queries : Array[MediaQuery]
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct NamespaceRule {
   prefix : String?
   url : String
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum NsPrefix {
   None_
   Any
   Named(String)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Number {
   repr : String
   value : Double
   is_int : Bool
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 pub fn Number::of_int(Int) -> Self
 
 pub(all) struct PageRule {
   selectors : Array[String]
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum PropertyName {
   Ident(String)
   Custom(String)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 pub fn PropertyName::text(Self) -> String
 
 pub(all) struct PropertyRule {
   name : String
   decls : DeclBlock
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum PseudoClass {
   Simple(String)
@@ -257,13 +258,13 @@ pub(all) enum PseudoClass {
   Lang(Array[String])
   Dir(String)
   Unknown(String, Array[ComponentValue])
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum PseudoElement {
   Simple(String)
   Sub(String, Array[Selector])
   Fn(String, Array[ComponentValue])
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Qualifier {
   Class(String)
@@ -273,7 +274,7 @@ pub(all) enum Qualifier {
   Element(PseudoElement)
   Nesting
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum RangeOp {
   Lt
@@ -281,7 +282,7 @@ pub(all) enum RangeOp {
   Gt
   Ge
   Eq
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 pub fn RangeOp::text(Self) -> String
 
 pub(all) struct ScopeRule {
@@ -289,49 +290,49 @@ pub(all) struct ScopeRule {
   end : Array[Selector]?
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Selector {
   Simple(Compound)
   Complex(Selector, Combinator, Compound)
   Relative(Combinator, Selector)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct StyleRule {
   selectors : Array[Selector]
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct Stylesheet {
   items : Array[TopItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct SupportsRule {
   condition : Condition
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum TopItem {
   Rule(CssRule)
   Comment(Comment)
   Bogus(Bogus)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum TypeSelector {
   Universal(NsPrefix?)
   Named(NsPrefix?, String)
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 pub(all) struct UnknownAtRule {
   name : String
   prelude : Array[ComponentValue]
   block : Array[BlockItem]?
   span : @span.Span
-} derive(Eq)
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

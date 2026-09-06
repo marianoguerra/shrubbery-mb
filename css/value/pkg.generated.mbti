@@ -1,0 +1,81 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "marianoguerra/css/value"
+
+import {
+  "marianoguerra/css/ast",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn as_angle(@ast.ComponentValue) -> Dimension?
+
+pub fn as_color(@ast.ComponentValue) -> Color?
+
+pub fn as_dimension(@ast.ComponentValue) -> Dimension?
+
+pub fn as_function(@ast.ComponentValue, String) -> Array[@ast.ComponentValue]?
+
+pub fn as_integer(@ast.ComponentValue) -> Int?
+
+pub fn as_keyword(@ast.ComponentValue, Array[String]) -> String?
+
+pub fn as_length(@ast.ComponentValue) -> Dimension?
+
+pub fn as_number(@ast.ComponentValue) -> Double?
+
+pub fn as_percentage(@ast.ComponentValue) -> Double?
+
+pub fn as_resolution(@ast.ComponentValue) -> Dimension?
+
+pub fn as_time(@ast.ComponentValue) -> Dimension?
+
+pub fn as_url(@ast.ComponentValue) -> String?
+
+pub fn as_var(@ast.ComponentValue) -> (String, Array[@ast.ComponentValue])?
+
+pub fn max_specificity(Array[@ast.Selector]) -> Specificity
+
+pub fn specificity(@ast.Selector) -> Specificity
+
+pub fn to_rgba(Color) -> (Int, Int, Int, Int)?
+
+pub fn unit_kind(String) -> UnitKind
+
+// Errors
+
+// Types and methods
+pub(all) enum Color {
+  Hex(String)
+  Named(String)
+  Function(String, Array[@ast.ComponentValue])
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Dimension {
+  value : Double
+  unit : String
+  kind : UnitKind
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Specificity {
+  ids : Int
+  classes : Int
+  elements : Int
+} derive(Eq, @debug.Debug)
+pub fn Specificity::add(Self, Self) -> Self
+pub fn Specificity::beats(Self, Self) -> Bool
+pub fn Specificity::to_triple(Self) -> (Int, Int, Int)
+pub fn Specificity::zero() -> Self
+
+pub(all) enum UnitKind {
+  Length
+  Angle
+  Time
+  Frequency
+  Resolution
+  Flex
+  Unknown
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits

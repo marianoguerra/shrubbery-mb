@@ -85,6 +85,71 @@ test "an unknown at-rule survives" {
 }
 ```
 
+## Typed readings, on demand
+
+Values parse into a generic component-value tree, which is what makes coverage
+total. Asking what one *means* is a separate question, answered by a lens: a
+pure function computed on demand and stored nowhere.
+
+```mbt check
+///|
+test "lenses read an untyped tree" {
+  let p = @css.parse("a { width: 10px; color: #f80 }")
+  match p.sheet().items[0] {
+    Rule(Style(r)) => {
+      match r.body[0] {
+        Decl(d) =>
+          match @css.as_length(d.value[0]) {
+            Some(len) => inspect(len.unit, content="px")
+            None => fail("10px is a length")
+          }
+        _ => fail("expected a declaration")
+      }
+      match r.body[1] {
+        Decl(d) =>
+          match @css.as_color(d.value[0]) {
+            Some(c) =>
+              match @value.to_rgba(c) {
+                Some((r, g, b, _)) => {
+                  assert_eq(r, 255)
+                  assert_eq(g, 136)
+                  assert_eq(b, 0)
+                }
+                None => fail("#f80 resolves")
+              }
+            None => fail("#f80 is a colour")
+          }
+        _ => fail("expected a declaration")
+      }
+    }
+    _ => fail("expected a style rule")
+  }
+}
+```
+
+Specificity is a lens too, rather than a field kept correct through every
+rewrite for a question nobody has asked yet:
+
+```mbt check
+///|
+test "specificity is computed, not stored" {
+  let p = @css.parse("#a .b c { x: y }")
+  match p.sheet().items[0] {
+    Rule(Style(r)) => {
+      let (a, b, c) = @css.specificity(r.selectors[0]).to_triple()
+      assert_eq(a, 1)
+      assert_eq(b, 1)
+      assert_eq(c, 1)
+    }
+    _ => fail("expected a style rule")
+  }
+}
+```
+
+`:is()` takes the specificity of its most specific argument and `:where()`
+contributes nothing — which is exactly why a selector list may not be spelled
+`is(...)` in the shrubbery syntax.
+
 ## Layout
 
 | package | what | depends on |
@@ -95,6 +160,7 @@ test "an unknown at-rule survives" {
 | `write` | the printer, three modes | `ast` |
 | `error` | diagnostics, and the one bridge to `error-report` | `span`, `kind` |
 | `token` | the CSS Syntax Level 3 tokenizer | `span` |
+| `value` | typed lenses over values, and specificity | `ast` |
 | `parse` | CSS text to a tree | all of the above |
 
 Building a tree and printing it links neither the diagnostic library nor the
