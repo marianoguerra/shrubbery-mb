@@ -88,11 +88,27 @@ for m in "${selected[@]}"; do
     rm -f "$log"
   else
     echo "=== publishing: $name@$version ($m/) ==="
-    moon -C "$root/$m" publish
-    # The next module in the order declares this one. Without refreshing the
-    # index, its own publish would verify against a registry that has never
-    # heard of what was just uploaded.
-    moon update
+    log="$(mktemp)"
+    if moon -C "$root/$m" publish >"$log" 2>&1; then
+      cat "$log"
+      # The next module in the order declares this one. Without refreshing the
+      # index, its own publish would verify against a registry that has never
+      # heard of what was just uploaded.
+      moon update
+    elif grep -q 'is duplicated with an existing version' "$log"; then
+      # Not a failure, and the same reading the dry run gives it. A release that
+      # moves only SOME of the modules forward -- which is every release after
+      # the first -- leaves the rest at versions already on mooncakes, and the
+      # registry answers 409 for each. Aborting on the first one made the whole
+      # script usable exactly once.
+      echo "publish: $name@$version already published"
+    else
+      cat "$log" >&2
+      rm -f "$log"
+      echo "publish: $name@$version FAILED" >&2
+      exit 1
+    fi
+    rm -f "$log"
   fi
 done
 
