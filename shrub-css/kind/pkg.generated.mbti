@@ -18,6 +18,7 @@ pub(all) enum ErrorKind {
   QuotesUnsupported
   DeclarationAtTopLevel
   RuleInDeclarationContext
+  AtRuleNotNestable(String)
   TypeSelectorNotFirst
   DanglingCombinator
   StrayKeyword(String)

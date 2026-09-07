@@ -32,6 +32,25 @@ pub fn lower(
 }
 
 ///|
+/// A SCOPED shrubbery-CSS fragment, as a CSS rule body.
+///
+/// `lower` starts at the top of a file, where CSS has no declarations at all,
+/// so a consumer holding everything that goes inside one
+/// `[data-cid="3"] { ... }` cannot use it: a fragment like that is made of
+/// exactly the declarations refused up there, and correctly refused -- the
+/// context is the first level of the rule-versus-declaration cascade.
+///
+/// This is the same lowering one level in. A declaration is a declaration, a
+/// nested rule is a nested rule, and a top-level-only at-rule is refused the
+/// way it would be inside any other rule body.
+pub fn lower_block(
+  src : String,
+  strict? : Bool = false,
+) -> @lower.LoweredBlock raise @error.ShrubCssError {
+  @lower.lower_block_source(src, strict~)
+}
+
+///|
 /// Turn a bridge diagnostic into a renderable report.
 pub fn to_report(
   d : @error.Diagnostic,

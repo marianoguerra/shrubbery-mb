@@ -124,20 +124,46 @@ fn Printer::rule_sep(self : Printer) -> Unit {
   }
 }
 
+///|
+/// A rule that is a rule only in position: it closes itself with nothing.
+fn is_bogus_rule(r : @ast.CssRule) -> Bool {
+  match r {
+    Bogus(_) => true
+    _ => false
+  }
+}
+
 // ------------------------------------------------------------------ stylesheet
 
 ///|
 fn Printer::write_stylesheet(self : Printer, sheet : @ast.Stylesheet) -> Unit {
   let mut first = true
+  // At the top of a file `rule_sep` is a newline, and in `Minified` it is
+  // nothing at all -- so an echoed unparsable region ran straight into whatever
+  // followed it. A stray `;` between statements is valid CSS and ignored, which
+  // makes it the right thing to bound one with.
+  let mut prev_needs_semi = false
   for item in sheet.items {
     if !first {
+      if prev_needs_semi {
+        self.put(";")
+      }
       self.rule_sep()
     }
     first = false
-    match item {
-      Rule(r) => self.write_rule(r)
-      Comment(c) => self.write_comment(c)
-      Bogus(b) => self.put(b.text)
+    prev_needs_semi = match item {
+      Rule(r) => {
+        self.write_rule(r)
+        is_bogus_rule(r)
+      }
+      Comment(c) => {
+        self.write_comment(c)
+        false
+      }
+      Bogus(b) => {
+        self.put(b.text)
+        true
+      }
     }
   }
   if !self.is_min() && !first {
@@ -180,7 +206,10 @@ fn Printer::write_body(
       }
       Rule(r) => {
         self.write_rule(r)
-        false
+        // A rule closes itself with `}` -- unless it is a `Bogus`, which is a
+        // rule only in position. It carries arbitrary text and closes with
+        // nothing, so it needs the same `;` a bare `Bogus` item does.
+        is_bogus_rule(r)
       }
       Comment(c) => {
         self.write_comment(c)
@@ -188,7 +217,14 @@ fn Printer::write_body(
       }
       Bogus(b) => {
         self.put(b.text)
-        false
+        // `true`, unlike a rule or a comment: those close themselves with `}`
+        // and `*/`, and a `Bogus` carries arbitrary text that closes nothing.
+        // Without the `;` the next declaration runs straight into it in
+        // `Minified`, where the newline that used to separate them is not
+        // written -- and a `;` after unparseable text is what CSS's own error
+        // recovery looks for anyway, so it bounds the damage rather than
+        // spreading it.
+        true
       }
     }
   }

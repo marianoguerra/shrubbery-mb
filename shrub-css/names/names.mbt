@@ -206,6 +206,26 @@ pub fn is_at_rule(name : String) -> Bool {
   }
 }
 
+///|
+/// May this at-rule appear inside a style rule?
+///
+/// CSS nesting admits exactly the conditional group rules inside a rule body.
+/// Everything else -- `@font-face`, `@page`, `@property`, `@counter-style`,
+/// `@keyframes`, `@import`, `@charset`, `@namespace` and the rest -- is
+/// top-level only, and a browser DROPS it rather than complaining, which is
+/// why writing one inside a rule fails silently and has to be refused here.
+///
+/// `at` is exempt: it is the escape for an at-rule this library does not know,
+/// and nothing can say where an unknown at-rule belongs.
+pub fn is_nestable_at_rule(name : String) -> Bool {
+  match name {
+    "media" | "supports" | "container" | "layer" => true
+    "scope" | "starting-style" => true
+    "at" => true
+    _ => false
+  }
+}
+
 // ---------------------------------------------------------- combinators
 
 ///|

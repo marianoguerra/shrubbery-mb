@@ -13,6 +13,8 @@ pub fn emit(@ast.Stylesheet) -> String
 
 pub fn lower(String, strict? : Bool) -> @lower.Lowered raise @marianoguerra/shrubbery-css/error.ShrubCssError
 
+pub fn lower_block(String, strict? : Bool) -> @lower.LoweredBlock raise @marianoguerra/shrubbery-css/error.ShrubCssError
+
 pub fn to_css(String, style? : @write.Style) -> String raise @marianoguerra/shrubbery-css/error.ShrubCssError
 
 pub fn to_report(@marianoguerra/shrubbery-css/error.Diagnostic, @error-report.SourceId) -> @error-report.Report

@@ -1,10 +1,11 @@
 {
   "//": "Floors for the CSS oracles, held from BOTH sides: dropping below one is a regression, and rising above one is an improvement that has to be recorded here in the same commit that earns it. Data rather than code, because these numbers move as the library grows and the diff is the point.",
 
-  "//loop": "CSS -> tree -> shrubbery -> tree -> CSS equals CSS -> tree -> CSS. The headline property. `biome-error` is deliberately absent: those files are invalid CSS, the parser recovers from them, and a recovery is not required to survive a detour through a different syntax. The gap to 100% is a long tail -- 81 files with distinct signatures -- not a cluster.",
+  "//loop": "CSS -> tree -> shrubbery -> tree -> CSS equals CSS -> tree -> CSS. The headline property. `biome-error` is deliberately absent: those files are invalid CSS, the parser recovers from them, and a recovery is not required to survive a detour through a different syntax. The gap to 100% is a long tail -- 77 files with distinct signatures -- not a cluster.",
+  "//loop.prettier": "96 -> 100 when a `Bogus` stopped closing with nothing. An echoed unparsable region used to run straight into the declaration after it in `Minified`, so the detour lost a declaration; the four files this fixed all had one IE hack in a rule with something after it.",
   "loop": {
     "biome-ok": 76,
-    "prettier": 96,
+    "prettier": 100,
     "vendor": 1
   },
 

@@ -352,9 +352,16 @@ test "an unparsable region is echoed, not deleted" {
     @write.rule(r),
     content=(
       #|.clearfix {
-      #|  *zoom: 1
+      #|  *zoom: 1;
       #|  display: block;
       #|}
     ),
+  )
+  // The `;` is not decoration. A `Bogus` carries arbitrary text and closes
+  // itself with nothing, so in `Minified` -- where the newline above is not
+  // written -- it is the only thing keeping the next declaration out of it.
+  inspect(
+    @write.rule(r, style=Minified),
+    content=".clearfix{*zoom: 1;display:block}",
   )
 }

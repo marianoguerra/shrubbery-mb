@@ -208,7 +208,12 @@ test "the hazard is named rather than silent" {
   inspect(codes("nav:\n  a: hover\n"), content="shrubcss::colon_pseudo")
   // At the top of a file there are no declarations, so the same mistake wears
   // its other spelling -- a bare word in a rule body -- and gets the same help.
-  inspect(codes("a: hover\n"), content="shrubcss::colon_pseudo")
+  inspect(
+    codes("a: hover\n"),
+    content=(
+      #|shrubcss::colon_pseudo
+    ),
+  )
   // But a real property whose value happens to be a pseudo-class name stays
   // quiet -- which is the guard that makes the check usable at all.
   inspect(codes("a:\n  cursor: default\n"), content="")
@@ -251,4 +256,106 @@ test "lowering terminates on anything, and never raises tolerantly" {
     let l = @lower.lower_source(s)
     let _ = @write.stylesheet(l.sheet(), style=Minified)
   }
+}
+
+///|
+test "a declaration at the top of a file is refused, not reinterpreted" {
+  // Reading it as a rule prints `color{ red}` -- something that looks like
+  // valid CSS, is not, and hides the mistake instead of naming it.
+  inspect(codes("color: red\n"), content="shrubcss::declaration_at_top_level")
+  inspect(css("color: red\n"), content="color: red")
+  inspect(
+    codes("font_family: system_ui\n"),
+    content="shrubcss::declaration_at_top_level",
+  )
+  // The `a: hover` mistake keeps its own diagnostic, which is the more useful
+  // one: the author meant a selector, not a declaration.
+  inspect(codes("a: hover\n"), content="shrubcss::colon_pseudo")
+}
+
+///|
+test "a top-level-only at-rule inside a rule is refused" {
+  // A browser DROPS a nested `@font-face` rather than complaining, so printing
+  // it emits CSS that silently does nothing.
+  inspect(
+    codes("class(a):\n  font_face():\n    font_family: \"X\"\n"),
+    content="shrubcss::at_rule_not_nestable",
+  )
+  // Blockless ones reach the check too, though they arrive as a bare term.
+  inspect(
+    codes("class(a):\n  charset(\"utf-8\")\n"),
+    content="shrubcss::at_rule_not_nestable",
+  )
+  inspect(
+    codes("class(a):\n  import(\"x.css\")\n"),
+    content="shrubcss::at_rule_not_nestable",
+  )
+  // The conditional group rules nest, and are unaffected.
+  inspect(
+    css("class(a):\n  media(screen):\n    color: red\n"),
+    content=".a{@media screen{color:red}}",
+  )
+  // And a `@font-face` inside an `@media` at the top of a file is still legal:
+  // the check is against the ENCLOSING context, which `media()` leaves at the
+  // top level.
+  inspect(
+    css("media(screen):\n  font_face():\n    font_family: \"X\"\n"),
+    content="@media screen{@font-face{font-family:\"X\"}}",
+  )
+  inspect(
+    codes("media(screen):\n  font_face():\n    font_family: \"X\"\n"),
+    content="",
+  )
+}
+
+///|
+test "a nested rule where only declarations belong is refused" {
+  inspect(
+    codes("font_face():\n  a:\n    color: red\n"),
+    content="shrubcss::rule_in_declaration_context",
+  )
+  // Keyframes and page bodies are unaffected: neither goes through the
+  // declaration-only context.
+  inspect(
+    css("keyframes(spin):\n  percent(0):\n    opacity: 0\n"),
+    content="@keyframes spin{0%{opacity:0}}",
+  )
+  inspect(css("page():\n  margin: cm(2)\n"), content="@page{margin:2cm}")
+}
+
+///|
+test "a refusal carries no layout into minified output" {
+  // The echo is the shrubbery that was written, printed flat -- not reproduced
+  // from the node's raw metadata, which carried its newline and its indent into
+  // a stylesheet that is supposed to have neither.
+  let out = css(
+    "class(a):\n  color: red\n  charset(\"utf-8\")\n  background: blue\n",
+  )
+  inspect(out.contains("\n"), content="false")
+  inspect(out, content=".a{color:red;charset (\"utf-8\");background:blue}")
+}
+
+///|
+test "a rule body lowers on its own" {
+  // A scoped fragment is made of the declarations `lower` refuses at the top of
+  // a file, and correctly refuses. This is the same lowering one level in.
+  let l = @lower.lower_block_source("color: red\nclass(b):\n  color: blue\n")
+  inspect(l.items().length(), content="2")
+  inspect(l.diagnostics().length(), content="0")
+  inspect(l.has_errors(), content="false")
+  let printed = StringBuilder()
+  for item in l.items() {
+    match item {
+      Decl(d) => printed.write_string(@write.declaration(d, style=Minified))
+      Rule(r) => printed.write_string(@write.rule(r, style=Minified))
+      _ => ()
+    }
+  }
+  inspect(printed.to_string(), content="color:red.b{color:blue}")
+  // The refusals a rule body has of its own still apply.
+  let bad = @lower.lower_block_source("font_face():\n  font_family: \"X\"\n")
+  inspect(
+    bad.diagnostics()[0].kind.code(),
+    content="shrubcss::at_rule_not_nestable",
+  )
 }

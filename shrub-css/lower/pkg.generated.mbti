@@ -8,6 +8,10 @@ import {
 // Values
 pub fn lower(@marianoguerra/shrubbery/ast.Node, strict? : Bool) -> Lowered raise @error.ShrubCssError
 
+pub fn lower_block(@marianoguerra/shrubbery/ast.Node, strict? : Bool) -> LoweredBlock raise @error.ShrubCssError
+
+pub fn lower_block_source(String, strict? : Bool) -> LoweredBlock raise @error.ShrubCssError
+
 pub fn lower_source(String, strict? : Bool) -> Lowered raise @error.ShrubCssError
 
 // Errors
@@ -20,6 +24,14 @@ pub struct Lowered {
 pub fn Lowered::diagnostics(Self) -> Array[@error.Diagnostic]
 pub fn Lowered::has_errors(Self) -> Bool
 pub fn Lowered::sheet(Self) -> @marianoguerra/css/ast.Stylesheet
+
+pub struct LoweredBlock {
+  items : Array[@marianoguerra/css/ast.BlockItem]
+  diagnostics : Array[@error.Diagnostic]
+}
+pub fn LoweredBlock::diagnostics(Self) -> Array[@error.Diagnostic]
+pub fn LoweredBlock::has_errors(Self) -> Bool
+pub fn LoweredBlock::items(Self) -> Array[@marianoguerra/css/ast.BlockItem]
 
 // Type aliases
 

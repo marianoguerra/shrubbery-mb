@@ -13,10 +13,10 @@
 // here has to move when one is revised.
 name = "marianoguerra/shrubbery-css"
 
-version = "0.1.0"
+version = "0.2.0"
 
 import {
-  "marianoguerra/css@0.1.0",
+  "marianoguerra/css@0.1.1",
   "marianoguerra/shrubbery@0.1.1",
   "marianoguerra/error-report@0.1.0",
 }

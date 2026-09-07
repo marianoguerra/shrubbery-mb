@@ -97,6 +97,95 @@ pub fn lower(
 }
 
 ///|
+/// A lowering of a rule BODY: the items, and everything noticed on the way.
+pub struct LoweredBlock {
+  items : Array[@ast.BlockItem]
+  diagnostics : Array[@err.Diagnostic]
+}
+
+///|
+pub fn LoweredBlock::items(self : LoweredBlock) -> Array[@ast.BlockItem] {
+  self.items
+}
+
+///|
+pub fn LoweredBlock::diagnostics(self : LoweredBlock) -> Array[@err.Diagnostic] {
+  self.diagnostics
+}
+
+///|
+pub fn LoweredBlock::has_errors(self : LoweredBlock) -> Bool {
+  for d in self.diagnostics {
+    if d.is_error() {
+      return true
+    }
+  }
+  false
+}
+
+///|
+/// Lower a parsed shrubbery tree as the BODY of a rule.
+///
+/// `lower` starts at the top of a file, where CSS has no declarations at all --
+/// so a consumer holding a SCOPED fragment cannot use it. Everything that goes
+/// inside one `[data-cid="3"] { ... }` is made of exactly the declarations that
+/// are refused up there, and correctly refused: the context is the first level
+/// of the rule-versus-declaration cascade, and at the top of a file the answer
+/// really is "rule".
+///
+/// This is the same lowering in `Nested`, the context that admits both. A
+/// declaration is a declaration, a nested rule is a nested rule, and a
+/// top-level-only at-rule is refused the way it would be inside any other rule
+/// body.
+pub fn lower_block(
+  root : @sast.Node,
+  strict? : Bool = false,
+) -> LoweredBlock raise @err.ShrubCssError {
+  let l = { diags: [], strict, }
+  let groups = match root.it {
+    Multi(gs) => gs
+    Block(gs) => gs
+    // A bare group, which is what a one-line fragment parses to.
+    Group(_) => [root]
+    _ => []
+  }
+  { items: l.block_items_of(groups, Nested), diagnostics: l.diags, }
+}
+
+///|
+/// Parse a scoped shrubbery-CSS fragment and lower it as a rule body.
+pub fn lower_block_source(
+  src : String,
+  strict? : Bool = false,
+) -> LoweredBlock raise @err.ShrubCssError {
+  let parsed = @shrub.parse(src, recover=true) catch {
+    e => {
+      let d = shrub_diagnostic(e.diagnostic(), src)
+      if strict {
+        d.raise_()
+      }
+      return { items: [], diagnostics: [d], }
+    }
+  }
+  let pre : Array[@err.Diagnostic] = []
+  for d in parsed.diagnostics() {
+    pre.push(shrub_diagnostic(d, src))
+  }
+  if strict && pre.length() > 0 {
+    pre[0].raise_()
+  }
+  let out = lower_block(parsed.root(), strict~)
+  let all : Array[@err.Diagnostic] = []
+  for d in pre {
+    all.push(d)
+  }
+  for d in out.diagnostics {
+    all.push(d)
+  }
+  { items: out.items, diagnostics: all, }
+}
+
+///|
 /// Parse shrubbery source and lower it in one step.
 ///
 /// Shrubbery's own diagnostics come first and are converted, so a caller sees
@@ -173,21 +262,28 @@ fn Lowerer::statement(
     Some(b) =>
       if is_declaration(head, b, ctx) {
         // A declaration is not a rule; the caller that wanted one gets nothing
-        // and a diagnostic saying why.
-        match ctx {
-          Top => {
-            self.error(DeclarationAtTopLevel, g.span)
-            Some(self.bogus_rule(DeclarationAtTopLevel, g))
-          }
-          _ => None
-        }
+        // and reads it as a declaration itself. `Top` cannot arrive here --
+        // `is_declaration` says so -- and the case it used to claim to handle
+        // is the one below.
+        None
       } else {
         match ctx {
-          DeclOnly => {
-            self.error(RuleInDeclarationContext, g.span)
-            Some(self.bogus_rule(RuleInDeclarationContext, g))
-          }
-          _ => {
+          DeclOnly => Some(self.bogus_rule(RuleInDeclarationContext, g))
+          Top =>
+            // Level one settled what this IS: at the top of a file a group with
+            // a block is a rule, because CSS has no declarations outside one.
+            // It did not settle what to SAY about it. A group shaped like a
+            // declaration here is a mistake with a name, and reading it as a
+            // rule prints `color{ red}` -- which looks like valid CSS, is not,
+            // and is worse than a refusal.
+            if declaration_shape(head, b) && !colon_pseudo_shape(b) {
+              Some(self.bogus_rule(DeclarationAtTopLevel, g))
+            } else {
+              let selectors = self.selector_list(head, g.span)
+              let body = self.block_items(b, Nested)
+              Some(Style({ selectors, body, span: cspan(g.span), }))
+            }
+          Nested => {
             let selectors = self.selector_list(head, g.span)
             let body = self.block_items(b, Nested)
             Some(Style({ selectors, body, span: cspan(g.span), }))
@@ -217,10 +313,27 @@ fn is_declaration(
   ctx : Ctx,
 ) -> Bool {
   match ctx {
-    Top => return false
-    DeclOnly => return true
-    Nested => ()
+    Top => false
+    // Not a bare `true`. `font_face()` holds declarations only, and saying so
+    // by fiat made `rule_in_declaration_context` unreachable in exactly the way
+    // `declaration_at_top_level` was: a nested rule in there was read as a
+    // declaration and printed as `@font-face{a:color : red}`. The context still
+    // decides -- a lone identifier over a value is a declaration here and would
+    // be a rule at the top of a file -- it just no longer decides alone.
+    DeclOnly => declaration_shape(head, block)
+    Nested => declaration_shape(head, block)
   }
+}
+
+///|
+/// Levels two and three alone: does this GROUP look like a declaration?
+///
+/// Split out from `is_declaration` because the two questions are different and
+/// were once the same function. "Is it a declaration here" is settled by the
+/// context first, and at the top of a file the answer is always no. "Does it
+/// look like one" has no context in it, which is what lets the top-level case
+/// report `declaration_at_top_level` instead of printing `color{ red}`.
+fn declaration_shape(head : ArrayView[@sast.Node], block : @sast.Node) -> Bool {
   if as_dashed(head) is Some(_) {
     return true
   }
@@ -236,6 +349,42 @@ fn is_declaration(
   match head {
     [{ it: Id(_), .. }] => block_is_value(block)
     _ => false
+  }
+}
+
+///|
+/// Is this block a single bare word naming a pseudo-class or pseudo-element?
+///
+/// The `a: hover` mistake, seen from the top of a file. It is declaration-
+/// shaped, so `declaration_at_top_level` would fire and be right in the letter
+/// and wrong in the spirit: the author meant `a:hover`, a selector, and
+/// `colon_pseudo` is the diagnostic that says so. Letting it through to the
+/// rule path is what puts it in front of the guard in `block_items_of`, which
+/// is the one that already knows how to name it.
+fn colon_pseudo_shape(block : @sast.Node) -> Bool {
+  let groups = match block.it {
+    Block(gs) => gs
+    _ => return false
+  }
+  if groups.length() != 1 {
+    return false
+  }
+  match groups[0].it {
+    Group([{ it: Id(v), .. }]) => {
+      let css_v = @names.unkebab(v)
+      @names.is_simple_pseudo(css_v) || @names.is_pseudo_element(css_v)
+    }
+    _ => false
+  }
+}
+
+///|
+/// An at-rule written as a call, in a position where one is being looked for.
+fn is_at_rule_call(head : ArrayView[@sast.Node]) -> Bool {
+  match as_call(head) {
+    Some((name, _, rest)) =>
+      rest.length() == 0 && @names.is_at_rule(@names.unkebab(name))
+    None => false
   }
 }
 
@@ -295,11 +444,23 @@ fn Lowerer::block_items(
   block : @sast.Node,
   ctx : Ctx,
 ) -> Array[@ast.BlockItem] raise @err.ShrubCssError {
-  let out : Array[@ast.BlockItem] = []
-  let groups = match block.it {
-    Block(gs) => gs
-    _ => return out
+  match block.it {
+    Block(gs) => self.block_items_of(gs, ctx)
+    _ => []
   }
+}
+
+///|
+/// The same, over a group sequence that is not wrapped in a `Block`.
+///
+/// This is what `lower_block` needs: a scoped fragment parses to a `Multi`, and
+/// its groups are a rule body without any rule around them.
+fn Lowerer::block_items_of(
+  self : Lowerer,
+  groups : Array[@sast.Node],
+  ctx : Ctx,
+) -> Array[@ast.BlockItem] raise @err.ShrubCssError {
+  let out : Array[@ast.BlockItem] = []
   for g in groups {
     match as_comment(g) {
       Some(c) => {
@@ -322,6 +483,17 @@ fn Lowerer::block_items(
     }
     match blk {
       None => {
+        // A blockless at-rule -- `charset("utf-8")`, `import("x.css")` -- has
+        // no block, so without this it would be reported as a bare word. It is
+        // not a bare word, it is an at-rule in a place that has none, and
+        // `statement` is what knows how to say so.
+        if is_at_rule_call(head) {
+          match self.statement(g, ctx) {
+            Some(r) => out.push(Rule(r))
+            None => ()
+          }
+          continue
+        }
         // A bare term: not a declaration, not a rule. When it names a
         // pseudo-class it is the `a: hover` mistake wearing its top-level
         // spelling, so it gets that diagnostic rather than a vaguer one.
@@ -468,13 +640,65 @@ fn Lowerer::bogus(
 /// A `Bogus` node whose diagnostic the caller has already recorded.
 fn bogus_node(kind : @kind.ErrorKind, n : @sast.Node) -> @ast.Bogus {
   // The CSS layer's kinds and this one's are different sets, so the reason is
-  // carried across as text. What the printer echoes is the shrubbery source,
-  // which is the useful half anyway.
+  // carried across as text. What the printer echoes is the shrubbery that was
+  // written, PRINTED FLAT rather than reproduced from the node's raw metadata.
+  //
+  // Two reasons, and both are load-bearing. Reproducing the source carries its
+  // newlines and its indentation, so a `Minified` stylesheet came back with a
+  // literal line break inside it. And `to_source` reads `Node.meta`, which this
+  // lowering promises never to do -- a hand-built tree has no metadata, so the
+  // echo was empty for exactly the trees the property tests generate.
   @ast.Bogus::new(
     @csskind.ErrorKind::Unexpected(kind.code()),
     cspan(n.span),
-    text=n.to_source(),
+    text=flat(n),
   )
+}
+
+///|
+/// A shrubbery node on one line, for echoing inside a diagnostic or a `Bogus`.
+///
+/// `Style::Flat` is not it: flat writes a block as `« ... »`, which is legal
+/// shrubbery and unreadable inside a CSS error. `Pretty` at a width nothing
+/// reaches gives the same one line without the armouring, and the collapse
+/// below makes that a guarantee rather than a hope -- a run of whitespace that
+/// contains a newline becomes one space, and a run that does not is left alone,
+/// so the spaces inside a string literal survive.
+fn flat(n : @sast.Node) -> String {
+  let s = @swrite.write(n, style=Pretty, width=Some(1_000_000))
+  let out = StringBuilder()
+  let run = StringBuilder()
+  let mut broke = false
+  let mut started = false
+  fn flush() {
+    let ws = run.to_string()
+    if ws != "" {
+      if broke {
+        if started {
+          out.write_char(' ')
+        }
+      } else {
+        out.write_string(ws)
+      }
+    }
+    run.reset()
+    broke = false
+  }
+
+  for c in s {
+    if c == '\n' || c == '\r' || c == '\t' || c == ' ' {
+      if c == '\n' || c == '\r' {
+        broke = true
+      }
+      run.write_char(c)
+    } else {
+      flush()
+      out.write_char(c)
+      started = true
+    }
+  }
+  // A trailing run is dropped: it is the newline the printer ends on.
+  out.to_string()
 }
 
 ///|

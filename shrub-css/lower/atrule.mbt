@@ -24,6 +24,21 @@ fn Lowerer::at_rule(
     Top => Ctx::Top
     _ => Ctx::Nested
   }
+  // Level one, before any shape is read: may this at-rule be HERE at all?
+  //
+  // CSS nesting admits the conditional group rules inside a rule body and
+  // nothing else, and a browser DROPS a `@font-face` written there rather than
+  // complaining -- so accepting it would print CSS that silently does nothing.
+  // The check is against the ENCLOSING context, which is why it cannot be
+  // folded into `inner`: `media()` at the top of a file keeps `Top` inside it,
+  // so a `@font-face` in an `@media` at the top level is still legal.
+  let nested = match ctx {
+    Top => false
+    _ => true
+  }
+  if nested && !@names.is_nestable_at_rule(name) {
+    return Some(self.bogus_rule(AtRuleNotNestable(name), g))
+  }
   match (name, block) {
     ("media", Some(b)) =>
       Some(

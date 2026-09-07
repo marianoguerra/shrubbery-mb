@@ -4,7 +4,62 @@ All notable changes to `marianoguerra/shrubbery-css` are recorded here. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this module follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2026-09-07
+
+Four findings from the first outside consumer, and a fifth found while fixing
+them. Three were diagnostics that could not fire.
+
+### Fixed
+
+- **`declaration_at_top_level` never fired.** The context is the first level of
+  the rule-versus-declaration cascade, and at the top of a file it answered
+  "rule" before any shape was read — so `color: red` lowered to a rule with a
+  type selector called `color` and printed `color{ red}`, which reads as valid
+  CSS and is not. What a group *is* and what it *looks like* are now two
+  questions: the context still decides the first, and the second is what lets
+  the refusal say `declaration_at_top_level` and point at `root():`. The
+  `a: hover` mistake keeps `colon_pseudo`, which is the more useful reading.
+- **`rule_in_declaration_context` never fired either**, for the same reason one
+  level in: `font_face()` said "declaration" by fiat, so a nested rule in there
+  was read as one and printed `@font-face{a:color : red}`.
+- **A top-level-only at-rule was accepted inside a style rule**, with no
+  diagnostic at all. `@font-face`, `@page`, `@property`, `@counter-style`,
+  `@keyframes`, `@import`, `@charset`, `@namespace` and the rest cannot nest,
+  and a browser *drops* one rather than complaining — so accepting it printed
+  CSS that silently did nothing. New kind: `at_rule_not_nestable`. The
+  conditional group rules (`media`, `supports`, `container`, `layer`, `scope`,
+  `starting_style`) do nest and are unaffected, and the check is against the
+  *enclosing* context, so a `@font-face` inside an `@media` at the top of a file
+  is still legal. Blockless at-rules reach the check too; they used to be
+  reported as a bare word.
+- **A refusal carried source layout into `Minified` output.** The echo came from
+  `Node::to_source`, which reproduces the source — newline and indentation
+  included — so a minified stylesheet contained a literal line break. It is now
+  the shrubbery printed flat. That also restores the module's own rule: the
+  lowering reads `Node.span` and never `Node.meta`, and `to_source` reads
+  `meta`, so the echo had been empty for exactly the hand-built trees the
+  property tests generate.
+
+### Added
+
+- **`lower_block`** (and `lower_block_source` in `lower`), for a consumer
+  holding a SCOPED fragment — everything that goes inside one
+  `[data-cid="3"] { ... }`. `lower` starts at the top of a file, where CSS has
+  no declarations, so a fragment made of exactly those could not be lowered
+  without wrapping it in a synthetic rule and unwrapping the result. This is the
+  same lowering in the context that admits both.
+- `names.is_nestable_at_rule`, the table the new check reads.
+
+### Changed
+
+- `ErrorKind` has a new member, `AtRuleNotNestable(String)`. It is `pub(all)`,
+  so an exhaustive match over it needs a new arm — which is why this is a minor
+  bump rather than a patch.
+- The `loop` oracle's `prettier` floor rises from 96 to 100: four more files
+  survive the detour now that an echoed unparsable region no longer swallows the
+  declaration after it.
+
+## [0.1.0] - 2026-09-06
 
 ### Added
 

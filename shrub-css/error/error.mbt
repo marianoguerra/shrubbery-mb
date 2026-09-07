@@ -105,6 +105,8 @@ fn Diagnostic::explain(self : Diagnostic) -> String {
     BadCallShape(n) => "`" + n + "` was given arguments of the wrong shape"
     HexDigitsLost => "this colour's leading zeros were lost before it got here"
     UnknownUnit(u) => "`" + u + "` is not a unit"
+    AtRuleNotNestable(n) =>
+      "`@" + n + "` cannot go inside a rule; a browser drops it"
     BadSelector => "this is not a selector"
     BareTermInBlock(t) =>
       "`" + t + "` is a bare word, with no value and no block"
@@ -165,6 +167,10 @@ fn Diagnostic::help(self : Diagnostic) -> String? {
     HexDigitsLost => Some("write it as a string: `hex(\"007700\")`")
     DeclarationAtTopLevel =>
       Some("put it in a rule, or use `root():` for the document element")
+    AtRuleNotNestable(_) =>
+      Some(
+        "move it to the top of the file; only `media`, `supports`, `container`, `layer`, `scope` and `starting_style` nest",
+      )
     BareTermInBlock(_) =>
       Some("a declaration needs a value, and a rule needs a block")
     UnknownUnit(_) =>

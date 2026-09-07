@@ -25,6 +25,8 @@ pub(all) enum ErrorKind {
   DeclarationAtTopLevel
   /// A rule where only declarations belong.
   RuleInDeclarationContext
+  /// A top-level-only at-rule written inside a style rule.
+  AtRuleNotNestable(String)
   /// Two type selectors touching: `a b` where a relation was meant.
   TypeSelectorNotFirst
   /// A relation keyword at the start or end of a selector, or two in a row.
@@ -70,6 +72,7 @@ pub fn ErrorKind::code(self : ErrorKind) -> String {
     QuotesUnsupported => "quotes_unsupported"
     DeclarationAtTopLevel => "declaration_at_top_level"
     RuleInDeclarationContext => "rule_in_declaration_context"
+    AtRuleNotNestable(_) => "at_rule_not_nestable"
     TypeSelectorNotFirst => "type_selector_not_first"
     DanglingCombinator => "dangling_combinator"
     StrayKeyword(_) => "stray_keyword"

@@ -4,7 +4,21 @@ All notable changes to `marianoguerra/css` are recorded here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 module follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.1] - 2026-09-07
+
+### Fixed
+
+- **A `Bogus` closed itself with nothing.** An unparsable region is echoed
+  rather than deleted, and the echo is arbitrary text — but it was printed with
+  no separator after it, so in `Minified`, where the newline between statements
+  is not written, the next declaration ran straight into it:
+  `.a{*zoom: 1display:block}`. Both statement positions now bound it with a
+  `;` — inside a rule body and at the top of a file — which is what CSS's own
+  error recovery looks for and so bounds the damage instead of spreading it.
+  A rule that is a `Bogus` is bounded the same way; a real rule closes itself
+  with `}` and is unchanged.
+
+## [0.1.0] - 2026-09-06
 
 ### Added
 

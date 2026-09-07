@@ -12,6 +12,8 @@ pub fn combinator_of(String) -> Combinator?
 
 pub fn is_at_rule(String) -> Bool
 
+pub fn is_nestable_at_rule(String) -> Bool
+
 pub fn is_nth_pseudo(String) -> Bool
 
 pub fn is_pseudo_element(String) -> Bool

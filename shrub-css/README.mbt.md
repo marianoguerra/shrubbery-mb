@@ -155,6 +155,57 @@ The one construct that parses cleanly and means the wrong thing is `a: hover`,
 which is structurally a declaration of a property called `a`. It gets its own
 diagnostic, guarded so that `cursor: default` stays quiet.
 
+## A scoped fragment is not a stylesheet
+
+At the top of a file CSS has no declarations, so `color: red` there is refused
+rather than read as a rule called `color`. But a consumer holding everything
+that goes *inside* one rule — a component's scoped styles, say — has a fragment
+made of exactly those. `lower_block` is the same lowering one level in:
+
+```mbt check
+///|
+test "a rule body lowers on its own" {
+  let l = @shrubbery_css.lower_block("color: red\nclass(b):\n  color: blue\n")
+  inspect(l.items().length(), content="2")
+  inspect(l.has_errors(), content="false")
+  // The same source at the top of a file is a mistake, and says so.
+  let top = @shrubbery_css.lower("color: red\n")
+  inspect(
+    top.diagnostics()[0].kind.code(),
+    content="shrubcss::declaration_at_top_level",
+  )
+}
+```
+
+## An at-rule that cannot nest is refused, not printed
+
+`@font-face`, `@page`, `@property`, `@keyframes`, `@charset` and the rest are
+top-level only, and a browser *drops* one written inside a rule rather than
+complaining — so printing it emits CSS that silently does nothing. Only the
+conditional group rules nest:
+
+```mbt check
+///|
+test "a nested at-rule is refused where a browser would drop it" {
+  let l = @shrubbery_css.lower(
+    "class(a):\n  font_face():\n    font_family: \"X\"\n",
+  )
+  inspect(
+    l.diagnostics()[0].kind.code(),
+    content="shrubcss::at_rule_not_nestable",
+  )
+  // `media()` nests, and the check is against the ENCLOSING context -- so a
+  // `@font-face` inside an `@media` at the top of a file is still legal.
+  inspect(
+    @shrubbery_css.to_css(
+      "media(screen):\n  font_face():\n    font_family: \"X\"\n",
+      style=Minified,
+    ),
+    content="@media screen{@font-face{font-family:\"X\"}}",
+  )
+}
+```
+
 ## Layout
 
 | package | what |
