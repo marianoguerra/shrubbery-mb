@@ -400,13 +400,13 @@ oracle-parse file:
 # Publishing to mooncakes
 # ---------------------------------------------------------------------------
 #
-# Three modules go out; the root one never does. `tools/publish.sh` is what
-# makes that structural rather than a habit -- it can only address the three
+# Seven modules go out; the root one never does. `tools/publish.sh` is what
+# makes that structural rather than a habit -- it can only address the seven
 # names, and it walks them in dependency order.
 
-# `lib` and `cli` report "pending" until their dependencies exist in the
-# registry: `moon publish` verifies the packaged zip against the registry, and
-# on a first release the dependency is not there yet.
+# A module reports "pending" until its dependencies exist in the registry:
+# `moon publish` verifies the packaged zip against the registry, and on a first
+# release the dependency is not there yet.
 #
 # Show what would go to mooncakes, without sending it.
 [group('publish')]

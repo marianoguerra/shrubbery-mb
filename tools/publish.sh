@@ -28,8 +28,9 @@ if [ "${1-}" = "--dry-run" ]; then
 fi
 
 # Dependency order. Not alphabetical, and not a set: `error-report` must exist
-# in the registry before `shrubbery` can name it.
-all=(error-report lib css html shrub-css cli)
+# in the registry before `shrubbery` can name it, and `css`/`html` before the
+# two `shrub-*` bridges that lower shrubbery into them.
+all=(error-report lib css html shrub-css shrub-html cli)
 
 if [ "$#" -gt 0 ]; then
   for m in "$@"; do
@@ -61,6 +62,11 @@ for m in "${selected[@]}"; do
     moon -C "$root/$m" publish --dry-run >"$log" 2>&1 || true
     if grep -q 'Dry run completed successfully' "$log"; then
       echo "publish: $name@$version would publish"
+    elif grep -q 'is duplicated with an existing version' "$log"; then
+      # Not a failure either: this version is already on mooncakes. A release
+      # that only moves some of the modules forward leaves the rest here, and
+      # the point of the dry run is to see which ones those are.
+      echo "publish: $name@$version already published"
     elif grep -q 'module was not found in the registry' "$log"; then
       # Not a failure: `moon publish` verifies the packaged zip by resolving it
       # against the REGISTRY, and a module of ours that has not been published
