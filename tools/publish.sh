@@ -67,10 +67,16 @@ for m in "${selected[@]}"; do
       # that only moves some of the modules forward leaves the rest here, and
       # the point of the dry run is to see which ones those are.
       echo "publish: $name@$version already published"
-    elif grep -q 'module was not found in the registry' "$log"; then
+    elif grep -qE 'module was not found in the registry|no version satisfies requirement' "$log"; then
       # Not a failure: `moon publish` verifies the packaged zip by resolving it
       # against the REGISTRY, and a module of ours that has not been published
       # yet is not there. This resolves itself as the loop walks the order.
+      #
+      # Two spellings, and the second is easy to miss. A module nobody has ever
+      # published is "not found"; a module that is up there at an OLDER version
+      # than this release needs is "no version satisfies requirement", which is
+      # the same pending situation and used to be reported as a failure -- so a
+      # release that bumped a dependency looked broken until it was published.
       missing="$(grep -o "Failed to resolve registry dependency \`[^\`]*\`" "$log" \
                  | sed 's/.*`\(.*\)`/\1/' | sort -u | tr '\n' ' ')"
       echo "publish: $name@$version pending -- waits on: ${missing% }"
