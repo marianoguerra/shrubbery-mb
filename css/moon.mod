@@ -15,10 +15,10 @@
 // neither the diagnostic library nor the parser.
 name = "marianoguerra/css"
 
-version = "0.1.1"
+version = "0.1.2"
 
 import {
-  "marianoguerra/error-report@0.1.0",
+  "marianoguerra/error-report@0.1.1",
 }
 
 readme = "README.mbt.md"

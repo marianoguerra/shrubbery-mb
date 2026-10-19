@@ -20,10 +20,10 @@
 // byte-exact output true by construction -- see the addendum in the plan.
 name = "marianoguerra/shrubbery"
 
-version = "0.1.1"
+version = "0.1.2"
 
 import {
-  "marianoguerra/error-report@0.1.0",
+  "marianoguerra/error-report@0.1.1",
   "kawaz/grapheme@0.10.4",
 }
 

@@ -4,6 +4,19 @@ All notable changes to `marianoguerra/shrubbery-cli` are recorded here. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this module follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] — 2026-10-19
+
+### Changed
+
+- **Builds clean on moonc v0.10.16** (moon 0.1.20261016). The trait methods
+  each package keeps live — `Show::to_string`, `Compare::compare` and this
+  project's own trait methods — are re-exported with an explicit `pub extend`;
+  the derived Eq/Debug/Hash/ToJson/Default methods, `Show::output` and the
+  Compare operators are deprecated and hidden, as the toolchain now expects.
+  No change in behaviour.
+- Takes `marianoguerra/shrubbery@0.1.2`, `marianoguerra/error-report@0.1.1`
+  and `moonbitlang/x@0.5.5`.
+
 ## [0.1.1] — 2026-09-05
 
 ### Fixed

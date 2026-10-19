@@ -23,13 +23,13 @@ name = "marianoguerra/shrubbery-dev"
 version = "0.0.0"
 
 import {
-  "marianoguerra/error-report@0.1.0",
-  "marianoguerra/shrubbery@0.1.1",
-  "marianoguerra/shrubbery-cli@0.1.1",
-  "marianoguerra/css@0.1.1",
-  "marianoguerra/html@0.1.0",
-  "marianoguerra/shrubbery-css@0.2.0",
-  "marianoguerra/shrubbery-html@0.1.0",
+  "marianoguerra/error-report@0.1.1",
+  "marianoguerra/shrubbery@0.1.2",
+  "marianoguerra/shrubbery-cli@0.1.2",
+  "marianoguerra/css@0.1.2",
+  "marianoguerra/html@0.1.1",
+  "marianoguerra/shrubbery-css@0.2.1",
+  "marianoguerra/shrubbery-html@0.1.1",
   "moonbitlang/x@0.5.5",
   "moonbit-community/html@0.2.2",
 }

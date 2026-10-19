@@ -23,10 +23,10 @@
 // it links neither the diagnostic library nor the parser.
 name = "marianoguerra/html"
 
-version = "0.1.0"
+version = "0.1.1"
 
 import {
-  "marianoguerra/error-report@0.1.0",
+  "marianoguerra/error-report@0.1.1",
 }
 
 readme = "README.mbt.md"
