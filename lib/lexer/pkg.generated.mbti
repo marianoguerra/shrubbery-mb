@@ -43,9 +43,9 @@ pub(all) struct Token {
   partner : String?
 }
 pub fn Token::column(Self) -> @column.Column
-pub fn Token::end_line(Self) -> Int
+pub fn Token::end_line(Self) -> Int32
 pub fn Token::is_trivia(Self) -> Bool
-pub fn Token::line(Self) -> Int
+pub fn Token::line(Self) -> Int32
 pub fn Token::name(Self) -> String
 pub fn Token::raw_text(Self) -> String
 

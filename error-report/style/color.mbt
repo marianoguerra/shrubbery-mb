@@ -38,8 +38,8 @@ pub let plain : Style = { color: Default, bold: false, dim: false, }
 ///|
 pub fn Style::of(
   color : Color,
-  bold? : Bool = false,
-  dim? : Bool = false,
+  bold~ : Bool = false,
+  dim~ : Bool = false,
 ) -> Style {
   { color, bold, dim, }
 }
@@ -159,3 +159,33 @@ pub let mono_theme : Theme = {
   note: plain,
   url: plain,
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ColorMode with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ColorMode with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Color with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Color with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Style with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Style with Debug::{to_repr}

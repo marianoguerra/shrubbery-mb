@@ -570,8 +570,8 @@ fn Lowerer::feature(
 
 ///|
 /// The comparison operators at the top of a run, with their positions.
-fn range_ops(items : ArrayView[@sast.Node]) -> Array[(Int, @ast.RangeOp)] {
-  let out : Array[(Int, @ast.RangeOp)] = []
+fn range_ops(items : ArrayView[@sast.Node]) -> Array[(Int32, @ast.RangeOp)] {
+  let out : Array[(Int32, @ast.RangeOp)] = []
   for i, n in items {
     match n.it {
       Op("<") => out.push((i, Lt))

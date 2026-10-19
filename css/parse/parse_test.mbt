@@ -11,7 +11,7 @@
 
 ///|
 /// Parse and print, tolerantly.
-fn rt(src : String, style? : @write.Style = Pretty) -> String {
+fn rt(src : String, style~ : @write.Style = Pretty) -> String {
   let p = @parse.parse(src) catch {
     e => return "raised: " + e.diagnostic().kind.code()
   }

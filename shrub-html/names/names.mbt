@@ -163,7 +163,7 @@ pub fn quote(s : String) -> String {
 }
 
 ///|
-fn hex(n : Int) -> String {
+fn hex(n : Int32) -> String {
   if n == 0 {
     return "0"
   }

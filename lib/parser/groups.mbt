@@ -16,7 +16,7 @@
 /// A consumer that knows its own stack can raise it: `parse` takes `max_depth`.
 /// Anything that nests deeper than a person would write is data rather than
 /// source, and a refusal it can catch beats a signal it cannot.
-pub let default_max_depth : Int = 64
+pub let default_max_depth : Int32 = 64
 
 ///|
 /// Parse a sequence of groups: the top level, the inside of an opener-closer
@@ -28,7 +28,7 @@ pub let default_max_depth : Int = 64
 /// recurring for the rest.
 fn Parser::parse_groups(
   self : Parser,
-  start : Int,
+  start : Int32,
   sg : GState,
 ) -> GroupsResult raise @err.ShrubberyError {
   let mut i = start

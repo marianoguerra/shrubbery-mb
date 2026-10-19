@@ -52,7 +52,7 @@ pub fn as_bool(e : @ast.Element, name : String) -> Bool {
 
 ///|
 /// An attribute as an integer, if it is one.
-pub fn as_int(e : @ast.Element, name : String) -> Int? {
+pub fn as_int(e : @ast.Element, name : String) -> Int32? {
   match attr(e, name) {
     None => None
     Some(v) => parse_int(v)
@@ -60,7 +60,7 @@ pub fn as_int(e : @ast.Element, name : String) -> Int? {
 }
 
 ///|
-fn parse_int(v : String) -> Int? {
+fn parse_int(v : String) -> Int32? {
   let n = v.length()
   if n == 0 {
     return None

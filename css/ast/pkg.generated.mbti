@@ -13,8 +13,8 @@ import {
 
 // Types and methods
 pub(all) struct AnB {
-  a : Int
-  b : Int
+  a : Int32
+  b : Int32
 } derive(Eq, @debug.Debug)
 
 pub(all) enum AttrCase {
@@ -231,7 +231,7 @@ pub(all) struct Number {
   value : Double
   is_int : Bool
 } derive(Eq, @debug.Debug)
-pub fn Number::of_int(Int) -> Self
+pub fn Number::of_int(Int32) -> Self
 
 pub(all) struct PageRule {
   selectors : Array[String]

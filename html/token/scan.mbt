@@ -19,8 +19,8 @@ const REPLACEMENT : Char = '\u{FFFD}'
 ///|
 priv struct Scanner {
   src : String
-  len : Int
-  mut pos : Int
+  len : Int32
+  mut pos : Int32
   /// The raw-text run the next call has to scan, if the tag just emitted opened
   /// one. This is the specification's "appropriate end tag token" check, and it
   /// is the only piece of state the tokenizer needs from the document it is
@@ -31,7 +31,7 @@ priv struct Scanner {
 
 ///|
 /// Tokenize a whole document, ending with exactly one `Eof`.
-pub fn tokenize(src : String, start? : Start = Markup) -> Scanned {
+pub fn tokenize(src : String, start~ : Start = Markup) -> Scanned {
   let s = { src, len: src.length(), pos: 0, pending: start, problems: [], }
   let out = []
   while true {
@@ -47,7 +47,7 @@ pub fn tokenize(src : String, start? : Start = Markup) -> Scanned {
 
 ///|
 /// Tokenize, keeping only the tokens.
-pub fn tokens(src : String, start? : Start = Markup) -> Array[Token] {
+pub fn tokens(src : String, start~ : Start = Markup) -> Array[Token] {
   tokenize(src, start~).tokens
 }
 
@@ -58,7 +58,7 @@ pub fn tokens(src : String, start? : Start = Markup) -> Array[Token] {
 ///
 /// NUL is safe as a sentinel because a real NUL in the input is replaced with
 /// U+FFFD as it is read, so one can never appear as data.
-fn Scanner::at(self : Scanner, i : Int) -> Char {
+fn Scanner::at(self : Scanner, i : Int32) -> Char {
   if i >= self.len || i < 0 {
     '\u{0}'
   } else {
@@ -72,12 +72,12 @@ fn Scanner::peek(self : Scanner) -> Char {
 }
 
 ///|
-fn Scanner::slice(self : Scanner, start : Int, end : Int) -> String {
+fn Scanner::slice(self : Scanner, start : Int32, end : Int32) -> String {
   self.src.clamped_view(start~, end~).to_owned()
 }
 
 ///|
-fn Scanner::tok(self : Scanner, start : Int, kind : TokenKind) -> Token {
+fn Scanner::tok(self : Scanner, start : Int32, kind : TokenKind) -> Token {
   { kind, span: @span.Span::new(start, self.pos), }
 }
 
@@ -92,7 +92,7 @@ fn Scanner::note(
 
 ///|
 /// Whether the input at `i` matches `what`, ASCII-case-insensitively.
-fn Scanner::matches_ci(self : Scanner, i : Int, what : String) -> Bool {
+fn Scanner::matches_ci(self : Scanner, i : Int32, what : String) -> Bool {
   let n = what.length()
   if i + n > self.len {
     return false
@@ -444,7 +444,7 @@ fn Scanner::end_tag(self : Scanner) -> Token {
 }
 
 ///|
-fn Scanner::attribute(self : Scanner, lead_equals? : Bool = false) -> RawAttr? {
+fn Scanner::attribute(self : Scanner, lead_equals~ : Bool = false) -> RawAttr? {
   let start = self.pos
   if lead_equals {
     self.pos = self.pos + 1
@@ -597,7 +597,7 @@ fn Scanner::script_body(self : Scanner) -> Unit {
 
 ///|
 /// `<script` followed by something that could end a tag.
-fn Scanner::opens_nested_script(self : Scanner, i : Int) -> Bool {
+fn Scanner::opens_nested_script(self : Scanner, i : Int32) -> Bool {
   if !self.matches_ci(i, "<script") {
     return false
   }
@@ -612,7 +612,7 @@ fn Scanner::opens_nested_script(self : Scanner, i : Int) -> Bool {
 /// `/` or `>`. `foo</xmp<` is character data all the way through, and `foo</xmp`
 /// at end of input is too. Stopping at the name alone loses the rest of the run,
 /// which is invisible until something asks a conforming parser.
-fn Scanner::is_end_tag_at(self : Scanner, i : Int, tag : String) -> Bool {
+fn Scanner::is_end_tag_at(self : Scanner, i : Int32, tag : String) -> Bool {
   if !self.matches_ci(i, "</" + tag) {
     return false
   }
@@ -737,7 +737,7 @@ fn Scanner::comment(self : Scanner) -> Token {
 /// is a warning rather than an error because it is how a browser reads the same
 /// bytes, and a library that rejected what every browser accepts would be
 /// describing a language nobody writes.
-fn Scanner::bogus_comment(self : Scanner, skip : Int) -> Token {
+fn Scanner::bogus_comment(self : Scanner, skip : Int32) -> Token {
   let start = self.pos
   self.pos = self.pos + skip
   let body_start = self.pos
@@ -755,7 +755,7 @@ fn Scanner::bogus_comment(self : Scanner, skip : Int) -> Token {
 ///|
 /// A comment's data: newlines normalised and NUL replaced, which every state
 /// but the data state does.
-fn Scanner::comment_body(self : Scanner, from : Int, to : Int) -> String {
+fn Scanner::comment_body(self : Scanner, from : Int32, to : Int32) -> String {
   let raw = normalize_newlines(self.slice(from, to))
   if !raw.contains("\u{0}") {
     return raw
@@ -993,7 +993,7 @@ fn Scanner::skip_ws(self : Scanner) -> Unit {
 
 ///|
 /// A slice with NUL replaced, which every state but the data state does.
-fn Scanner::nul_free(self : Scanner, from : Int, to : Int) -> String {
+fn Scanner::nul_free(self : Scanner, from : Int32, to : Int32) -> String {
   let raw = self.slice(from, to)
   if !raw.contains("\u{0}") {
     return raw
@@ -1005,7 +1005,7 @@ fn Scanner::nul_free(self : Scanner, from : Int, to : Int) -> String {
 ///|
 /// A doctype under construction.
 priv struct Doctype {
-  start : Int
+  start : Int32
   mut name : String
   mut public_id : String?
   mut system_id : String?
@@ -1112,7 +1112,7 @@ fn Scanner::numeric_reference(self : Scanner) -> String? {
 /// characters, and the C1 range is remapped through Windows-1252 -- which is
 /// why `&#147;` is a curly quote on half the web and a control character
 /// nowhere.
-fn scalar_of(value : Int, s : Scanner, span : @span.Span) -> String {
+fn scalar_of(value : Int32, s : Scanner, span : @span.Span) -> String {
   if value == 0 || value > 0x10FFFF || (value >= 0xD800 && value <= 0xDFFF) {
     s.note(CharacterReferenceOutsideUnicodeRange, span)
     return REPLACEMENT.to_string()
@@ -1124,7 +1124,7 @@ fn scalar_of(value : Int, s : Scanner, span : @span.Span) -> String {
 }
 
 ///|
-fn windows_1252(value : Int) -> Char {
+fn windows_1252(value : Int32) -> Char {
   match value {
     0x80 => '\u{20AC}'
     0x82 => '\u{201A}'

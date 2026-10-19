@@ -30,8 +30,8 @@ import {
   "marianoguerra/html@0.1.0",
   "marianoguerra/shrubbery-css@0.2.0",
   "marianoguerra/shrubbery-html@0.1.0",
-  "moonbitlang/x@0.5.1",
-  "moonbit-community/html@0.2.1",
+  "moonbitlang/x@0.5.5",
+  "moonbit-community/html@0.2.2",
 }
 
 license = "Apache-2.0"

@@ -22,8 +22,8 @@ pub(all) struct Diagnostic {
 pub fn Diagnostic::new(
   kind : @kind.ErrorKind,
   span : @basic.Span,
-  severity? : @report.Severity = Error,
-  related? : Array[(@basic.Span, String)] = [],
+  severity~ : @report.Severity = Error,
+  related~ : Array[(@basic.Span, String)] = [],
 ) -> Diagnostic {
   { kind, span, severity, related, }
 }

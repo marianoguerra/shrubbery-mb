@@ -65,13 +65,13 @@ fn gen_unit(r : Rng) -> String {
 }
 
 ///|
-fn gen_value(r : Rng, size : Int) -> @ast.ComponentValue {
+fn gen_value(r : Rng, size : Int32) -> @ast.ComponentValue {
   if size <= 0 {
     return gen_value_leaf(r)
   }
   let half = size / 2
   r.weighted([(10, LeafV), (3, FunctionV), (1, ParenV), (1, BracketV)])
-  |> fn(shape) {
+  |> shape => {
     match shape {
       LeafV => gen_value_leaf(r)
       FunctionV =>
@@ -119,7 +119,7 @@ fn gen_value_leaf(r : Rng) -> @ast.ComponentValue {
 
 ///|
 /// A value list: one to four components, with commas between some of them.
-fn gen_value_list(r : Rng, size : Int) -> Array[@ast.ComponentValue] {
+fn gen_value_list(r : Rng, size : Int32) -> Array[@ast.ComponentValue] {
   let n = 1 + r.below(3)
   let out : Array[@ast.ComponentValue] = []
   for i in 0..<n {
@@ -139,7 +139,7 @@ fn gen_value_list(r : Rng, size : Int) -> Array[@ast.ComponentValue] {
 }
 
 ///|
-fn gen_declaration(r : Rng, size : Int) -> @ast.Declaration {
+fn gen_declaration(r : Rng, size : Int32) -> @ast.Declaration {
   {
     property: gen_property(r),
     value: gen_value_list(r, size),
@@ -151,7 +151,7 @@ fn gen_declaration(r : Rng, size : Int) -> @ast.Declaration {
 // ------------------------------------------------------------------ selectors
 
 ///|
-fn gen_compound(r : Rng, size : Int) -> @ast.Compound {
+fn gen_compound(r : Rng, size : Int32) -> @ast.Compound {
   let quals : Array[@ast.Qualifier] = []
   let type_sel : @ast.TypeSelector? = if r.below(3) == 0 {
     None
@@ -180,7 +180,7 @@ fn gen_compound(r : Rng, size : Int) -> @ast.Compound {
 }
 
 ///|
-fn gen_qualifier(r : Rng, size : Int) -> @ast.Qualifier {
+fn gen_qualifier(r : Rng, size : Int32) -> @ast.Qualifier {
   let choice = r.below(8)
   if choice == 0 {
     Class(r.pick(["card", "is-selected", "btn__primary", "a"]))
@@ -237,7 +237,7 @@ fn gen_qualifier(r : Rng, size : Int) -> @ast.Qualifier {
 }
 
 ///|
-fn gen_selector(r : Rng, size : Int) -> @ast.Selector {
+fn gen_selector(r : Rng, size : Int32) -> @ast.Selector {
   if size <= 0 {
     return Simple(gen_compound(r, 0))
   }
@@ -266,8 +266,8 @@ fn gen_selector(r : Rng, size : Int) -> @ast.Selector {
 /// lowering produces.
 fn gen_condition(
   r : Rng,
-  size : Int,
-  supports? : Bool = false,
+  size : Int32,
+  supports~ : Bool = false,
 ) -> @ast.Condition {
   if size <= 0 {
     return gen_cond_leaf(r, supports)
@@ -336,7 +336,7 @@ fn gen_feature(r : Rng) -> @ast.Feature {
 // --------------------------------------------------------------------- rules
 
 ///|
-fn gen_block(r : Rng, size : Int) -> Array[@ast.BlockItem] {
+fn gen_block(r : Rng, size : Int32) -> Array[@ast.BlockItem] {
   let n = 1 + r.below(3)
   let out : Array[@ast.BlockItem] = []
   for _ in 0..<n {
@@ -353,7 +353,7 @@ fn gen_block(r : Rng, size : Int) -> Array[@ast.BlockItem] {
 }
 
 ///|
-fn gen_rule(r : Rng, size : Int) -> @ast.CssRule {
+fn gen_rule(r : Rng, size : Int32) -> @ast.CssRule {
   if size <= 0 {
     return gen_style_rule(r, 0)
   }
@@ -397,7 +397,7 @@ fn gen_rule(r : Rng, size : Int) -> @ast.CssRule {
 
 ///|
 /// A body of rules, for a conditional group at the top level.
-fn gen_rule_block(r : Rng, size : Int) -> Array[@ast.BlockItem] {
+fn gen_rule_block(r : Rng, size : Int32) -> Array[@ast.BlockItem] {
   let n = 1 + r.below(2)
   let out : Array[@ast.BlockItem] = []
   for _ in 0..<n {
@@ -408,7 +408,7 @@ fn gen_rule_block(r : Rng, size : Int) -> Array[@ast.BlockItem] {
 
 ///|
 /// A rule that may appear inside another rule.
-fn gen_nestable(r : Rng, size : Int) -> @ast.CssRule {
+fn gen_nestable(r : Rng, size : Int32) -> @ast.CssRule {
   if size > 0 && r.below(3) == 0 {
     let half = size / 2
     if r.bool() {
@@ -435,7 +435,7 @@ fn gen_nestable(r : Rng, size : Int) -> @ast.CssRule {
 /// `only` and `not` are qualifiers ON a media type, so neither may appear
 /// without one: `@media not and (hover)` is not a query, it is a parse error
 /// waiting to be recovered from.
-fn gen_media_query(r : Rng, size : Int) -> @ast.MediaQuery {
+fn gen_media_query(r : Rng, size : Int32) -> @ast.MediaQuery {
   let media_type : String? = if r.bool() {
     Some(r.pick(["screen", "print", "all"]))
   } else {
@@ -459,7 +459,7 @@ fn gen_media_query(r : Rng, size : Int) -> @ast.MediaQuery {
 }
 
 ///|
-fn gen_style_rule(r : Rng, size : Int) -> @ast.CssRule {
+fn gen_style_rule(r : Rng, size : Int32) -> @ast.CssRule {
   let n = 1 + r.below(2)
   let sels : Array[@ast.Selector] = []
   for _ in 0..<n {
@@ -470,7 +470,7 @@ fn gen_style_rule(r : Rng, size : Int) -> @ast.CssRule {
 
 ///|
 /// A whole stylesheet.
-pub fn gen_stylesheet(r : Rng, size : Int) -> @ast.Stylesheet {
+pub fn gen_stylesheet(r : Rng, size : Int32) -> @ast.Stylesheet {
   let n = 1 + r.below(3)
   let items : Array[@ast.TopItem] = []
   for _ in 0..<n {
@@ -481,7 +481,7 @@ pub fn gen_stylesheet(r : Rng, size : Int) -> @ast.Stylesheet {
 
 ///|
 /// How big a tree is, for the shrinker's termination argument.
-pub fn size_of(sheet : @ast.Stylesheet) -> Int {
+pub fn size_of(sheet : @ast.Stylesheet) -> Int32 {
   let mut n = 0
   for item in sheet.items {
     n = n +
@@ -494,7 +494,7 @@ pub fn size_of(sheet : @ast.Stylesheet) -> Int {
 }
 
 ///|
-fn rule_size(r : @ast.CssRule) -> Int {
+fn rule_size(r : @ast.CssRule) -> Int32 {
   match r {
     Style(s) => {
       let mut n = 1 + block_size(s.body[:])
@@ -517,7 +517,7 @@ fn rule_size(r : @ast.CssRule) -> Int {
 /// Without this, replacing `a > b` with `a` leaves the measure unchanged, so
 /// the candidate is not a shrink and `minimize`'s termination argument fails --
 /// which the meta-test catches rather than letting it spin.
-fn selector_size(s : @ast.Selector) -> Int {
+fn selector_size(s : @ast.Selector) -> Int32 {
   match s {
     Simple(c) => 1 + c.quals.length()
     Complex(l, _, right) => selector_size(l) + 1 + right.quals.length()
@@ -527,7 +527,7 @@ fn selector_size(s : @ast.Selector) -> Int {
 }
 
 ///|
-fn block_size(items : ArrayView[@ast.BlockItem]) -> Int {
+fn block_size(items : ArrayView[@ast.BlockItem]) -> Int32 {
   let mut n = 0
   for it in items {
     n = n +

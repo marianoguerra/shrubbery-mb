@@ -50,7 +50,7 @@ pub fn Parsed::has_errors(self : Parsed) -> Bool {
 priv struct Parser {
   src : String
   toks : Array[@token.Token]
-  mut pos : Int
+  mut pos : Int32
   diags : Array[@err.Diagnostic]
   strict : Bool
 }
@@ -62,7 +62,7 @@ priv struct Parser {
 /// mode this never raises, and `Parsed::has_errors` is how a caller asks.
 pub fn parse(
   src : String,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Parsed raise @err.CssError {
   let p = { src, toks: @token.tokenize(src), pos: 0, diags: [], strict, }
   let items = []
@@ -159,7 +159,7 @@ fn Parser::skip_trivia_collecting_block(
 }
 
 ///|
-fn Parser::text_between(self : Parser, from : Int, to : Int) -> String {
+fn Parser::text_between(self : Parser, from : Int32, to : Int32) -> String {
   @span.Span::new(from, to).slice(self.src)
 }
 
@@ -194,8 +194,8 @@ fn Parser::error(
 fn Parser::bogus(
   self : Parser,
   kind : @kind.ErrorKind,
-  from : Int,
-  to : Int,
+  from : Int32,
+  to : Int32,
 ) -> @ast.Bogus raise @err.CssError {
   let span = @span.Span::new(from, to)
   self.error(kind, span)

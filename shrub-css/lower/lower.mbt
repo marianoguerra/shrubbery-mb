@@ -70,7 +70,7 @@ priv enum Ctx {
 /// Lower a parsed shrubbery tree.
 pub fn lower(
   root : @sast.Node,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Lowered raise @err.ShrubCssError {
   let l = { diags: [], strict, }
   let items : Array[@ast.TopItem] = []
@@ -139,7 +139,7 @@ pub fn LoweredBlock::has_errors(self : LoweredBlock) -> Bool {
 /// body.
 pub fn lower_block(
   root : @sast.Node,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> LoweredBlock raise @err.ShrubCssError {
   let l = { diags: [], strict, }
   let groups = match root.it {
@@ -156,7 +156,7 @@ pub fn lower_block(
 /// Parse a scoped shrubbery-CSS fragment and lower it as a rule body.
 pub fn lower_block_source(
   src : String,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> LoweredBlock raise @err.ShrubCssError {
   let parsed = @shrub.parse(src, recover=true) catch {
     e => {
@@ -194,7 +194,7 @@ pub fn lower_block_source(
 /// would put the bridge's guesses where the notation's answer should be.
 pub fn lower_source(
   src : String,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Lowered raise @err.ShrubCssError {
   let parsed = @shrub.parse(src, recover=true) catch {
     e => {
@@ -772,7 +772,7 @@ fn looks_dimension(text : String) -> Bool {
 }
 
 ///|
-fn slice(src : String, from : Int, to : Int) -> String {
+fn slice(src : String, from : Int32, to : Int32) -> String {
   let a = if from < 0 { 0 } else { from }
   let b = if to < a { a } else { to }
   src.clamped_view(start=a, end=b).to_owned()

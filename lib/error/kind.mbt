@@ -53,7 +53,7 @@ pub(all) enum ErrorKind {
   /// without a bound and lets the runtime decide; on a native build that
   /// decision is a signal rather than an error, so input nested past anything
   /// a person writes is refused with a diagnostic a caller can catch.
-  NestingTooDeep(limit~ : Int)
+  NestingTooDeep(limit~ : Int32)
   // --- comments and continuations ------------------------------------------
   MisplacedGroupComment
   NoGroupForTermComment
@@ -227,3 +227,8 @@ pub fn ErrorKind::code(self : ErrorKind) -> String {
   }
   "shrubbery::" + name
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ErrorKind with Eq::{not_equal, equal}

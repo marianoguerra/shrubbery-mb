@@ -136,7 +136,7 @@ test "keywords are read against the caller's list" {
 
 ///|
 test "specificity, including the three places CSS stops being uniform" {
-  fn spec(css : String) -> (Int, Int, Int) raise {
+  fn spec(css : String) -> (Int32, Int32, Int32) raise {
     @value.specificity(first_selector(css)).to_triple()
   }
 

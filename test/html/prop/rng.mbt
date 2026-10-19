@@ -35,7 +35,7 @@ pub fn Rng::next(self : Rng) -> UInt64 {
 
 ///|
 /// A number in `[0, n)`. `n <= 0` gives 0, so a caller never has to guard.
-pub fn Rng::below(self : Rng, n : Int) -> Int {
+pub fn Rng::below(self : Rng, n : Int32) -> Int32 {
   if n <= 0 {
     0
   } else {
@@ -61,7 +61,7 @@ pub fn[T] Rng::pick(self : Rng, xs : Array[T]) -> T {
 /// Weights exist so that a leaf can be made common and a deeply recursive
 /// alternative rare, which is what keeps generated trees a useful shape rather
 /// than either trivial or enormous.
-pub fn[T] Rng::weighted(self : Rng, alts : Array[(Int, T)]) -> T {
+pub fn[T] Rng::weighted(self : Rng, alts : Array[(Int32, T)]) -> T {
   let mut total = 0
   for a in alts {
     total = total + a.0
@@ -88,7 +88,7 @@ pub fn[T] minimize(
   x : T,
   shrink : (T) -> Array[T],
   fails : (T) -> Bool,
-  fuel? : Int = 400,
+  fuel~ : Int32 = 400,
 ) -> T {
   let mut cur = x
   let mut left = fuel

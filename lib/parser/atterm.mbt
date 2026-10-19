@@ -7,7 +7,7 @@
 fn Parser::parse_at(
   self : Parser,
   t : @lexer.Token,
-  i : Int,
+  i : Int32,
   s : PState,
 ) -> GroupResult raise @err.ShrubberyError {
   self.check_block_mode(t, s)

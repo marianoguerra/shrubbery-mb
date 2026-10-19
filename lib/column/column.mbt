@@ -20,8 +20,8 @@
 /// means the half-column tolerance in `cmp` can never be triggered by a
 /// difference of one tab, which it would if the two units were mixed.
 pub enum Column {
-  Plain(Int)
-  Tabbed(Array[Int])
+  Plain(Int32)
+  Tabbed(Array[Int32])
 } derive(Eq, Debug)
 
 ///|
@@ -70,13 +70,13 @@ pub let zero : Column = Plain(0)
 
 ///|
 /// A column `n` whole character widths from the start of the line.
-pub fn Column::of_chars(n : Int) -> Column {
+pub fn Column::of_chars(n : Int32) -> Column {
   Plain(n * 2)
 }
 
 ///|
 /// The runs, leftmost first. `Plain` is the one-element case.
-fn Column::runs(self : Column) -> Array[Int] {
+fn Column::runs(self : Column) -> Array[Int32] {
   match self {
     Plain(n) => [n]
     Tabbed(rs) => rs
@@ -85,7 +85,7 @@ fn Column::runs(self : Column) -> Array[Int] {
 
 ///|
 /// This column with `n` more character widths on its right.
-pub fn Column::add_chars(self : Column, n : Int) -> Column {
+pub fn Column::add_chars(self : Column, n : Int32) -> Column {
   self.add_halves(n * 2)
 }
 
@@ -132,7 +132,7 @@ pub fn Column::half_up(self : Column) -> Column {
 }
 
 ///|
-fn Column::add_halves(self : Column, n : Int) -> Column {
+fn Column::add_halves(self : Column, n : Int32) -> Column {
   match self {
     Plain(c) => Plain(c + n)
     Tabbed(rs) => {
@@ -188,7 +188,7 @@ pub fn Column::plus(self : Column, other : Column) -> Column {
 ///
 /// Zero rather than an error because a difference across different tab
 /// structures has no meaning to report — the reference makes the same choice.
-pub fn Column::sub(self : Column, other : Column) -> Int {
+pub fn Column::sub(self : Column, other : Column) -> Int32 {
   match (self, other) {
     (Plain(a), Plain(b)) => a - b
     (Tabbed(a), Tabbed(b)) => {
@@ -351,9 +351,9 @@ fn ColumnOrder::is_gt(self : ColumnOrder) -> Bool {
 /// own under UAX #29, so no cluster ever straddles a case boundary here.
 pub fn count_graphemes(
   text : String,
-  lines? : Int = 0,
-  col? : Column = zero,
-) -> (Int, Column) {
+  lines~ : Int32 = 0,
+  col~ : Column = zero,
+) -> (Int32, Column) {
   let mut out_lines = lines
   let mut out_col = col
   for span in @unicode.grapheme_spans(text) {
@@ -371,3 +371,23 @@ pub fn count_graphemes(
   }
   (out_lines, out_col)
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Column with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Column with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ColumnOrder with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ColumnOrder with Debug::{to_repr}

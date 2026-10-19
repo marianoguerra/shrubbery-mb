@@ -10,7 +10,7 @@ pub fn short(
   cache : &@report.SourceCache,
   config : Config,
   buf : StringBuilder,
-  is_tty? : Bool = false,
+  is_tty~ : Bool = false,
 ) -> Unit {
   short_one(report, cache, config, buf, is_tty~)
   for rel in report.related {
@@ -53,7 +53,7 @@ fn short_one(
 fn locate(
   report : @report.Report,
   cache : &@report.SourceCache,
-) -> (String, Int, Int)? {
+) -> (String, Int32, Int32)? {
   let label = report.anchor()
   match label {
     None => None

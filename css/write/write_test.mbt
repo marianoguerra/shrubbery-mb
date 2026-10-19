@@ -12,7 +12,7 @@ fn num(repr : String, value : Double) -> @ast.Number {
 }
 
 ///|
-fn int(n : Int) -> @ast.Number {
+fn int(n : Int32) -> @ast.Number {
   @ast.Number::of_int(n)
 }
 
@@ -20,7 +20,7 @@ fn int(n : Int) -> @ast.Number {
 fn decl(
   name : String,
   value : Array[@ast.ComponentValue],
-  important? : Bool = false,
+  important~ : Bool = false,
 ) -> @ast.Declaration {
   {
     property: @ast.PropertyName::Ident(name),
@@ -214,7 +214,7 @@ test "important, attributes and pseudo-elements" {
 
 ///|
 test "An+B is printed in its shortest equivalent form" {
-  fn nth(a : Int, b : Int) -> String {
+  fn nth(a : Int32, b : Int32) -> String {
     @write.selector(
       Simple({
         type_sel: None,

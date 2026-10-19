@@ -29,7 +29,7 @@ fn values_of_view(toks : ArrayView[@token.Token]) -> Array[@ast.ComponentValue] 
 ///|
 priv struct ValCursor {
   toks : ArrayView[@token.Token]
-  mut pos : Int
+  mut pos : Int32
 }
 
 ///|
@@ -104,8 +104,8 @@ fn SelCursor::parse_nth(
   self : SelCursor,
   name : String,
   toks : ArrayView[@token.Token],
-  from : Int,
-  start : Int,
+  from : Int32,
+  start : Int32,
 ) -> @ast.Qualifier raise @err.CssError {
   // Split off an `of` clause first, so the formula sees only its own tokens.
   let mut of_at = -1
@@ -227,7 +227,7 @@ fn parse_anb(toks : ArrayView[@token.Token]) -> @ast.AnB? {
 
 ///|
 /// The digits of an `n-<digits>` unit, if that is what this is.
-fn ndashdigit(unit : String) -> Int? {
+fn ndashdigit(unit : String) -> Int32? {
   if !unit.has_prefix("n-") {
     return None
   }
@@ -236,7 +236,7 @@ fn ndashdigit(unit : String) -> Int? {
 
 ///|
 /// `n-1` and `-n-1` as a coefficient and its digits.
-fn ndash_ident(w : String) -> (Int, Int)? {
+fn ndash_ident(w : String) -> (Int32, Int32)? {
   if w.has_prefix("-n-") {
     match digits_of(w.clamped_view(start=3).to_owned()) {
       Some(d) => Some((-1, d))
@@ -254,7 +254,7 @@ fn ndash_ident(w : String) -> (Int, Int)? {
 
 ///|
 /// A run of decimal digits, and nothing else.
-fn digits_of(s : String) -> Int? {
+fn digits_of(s : String) -> Int32? {
   if s.length() == 0 {
     return None
   }
@@ -270,7 +270,7 @@ fn digits_of(s : String) -> Int? {
 
 ///|
 /// `n` is 1, `-n` is -1, `+n` is 1; anything else is not a coefficient.
-fn n_coefficient(w : String) -> Int? {
+fn n_coefficient(w : String) -> Int32? {
   if w == "n" {
     Some(1)
   } else if w == "-n" {

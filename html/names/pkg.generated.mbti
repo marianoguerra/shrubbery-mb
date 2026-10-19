@@ -26,7 +26,7 @@ pub fn is_raw_text(String) -> Bool
 
 pub fn is_void(String) -> Bool
 
-pub let longest_reference : Int
+pub let longest_reference : Int32
 
 pub fn named_reference(String) -> String?
 

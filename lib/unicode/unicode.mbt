@@ -4,7 +4,7 @@
 /// Tables are flat `[lo, hi, lo, hi, ...]` arrays rather than arrays of pairs:
 /// this is called once per source character, and the flat form keeps the search
 /// to one array with no indirection and no per-entry allocation at module init.
-fn in_table(table : FixedArray[Int], u : Int) -> Bool {
+fn in_table(table : FixedArray[Int32], u : Int32) -> Bool {
   let mut lo = 0
   let mut hi = table.length() / 2 - 1
   while lo <= hi {
@@ -96,7 +96,7 @@ pub fn is_one_char_emoji(c : Char) -> Bool {
 /// Longest match, and it has to be: `👨‍👩‍👦` is one identifier character, and
 /// stopping at the first `👨` would split it into three separated by
 /// zero-width joiners, which are not identifier characters at all.
-pub fn emoji_sequence_at(s : String, i : Int) -> Int {
+pub fn emoji_sequence_at(s : String, i : Int32) -> Int32 {
   let n = s.length()
   let mut node = 0
   let mut pos = i
@@ -125,7 +125,7 @@ pub fn emoji_sequence_at(s : String, i : Int) -> Int {
 ///|
 /// The trie edge out of `node` labelled `cp`, by binary search over that node's
 /// contiguous edge run.
-fn edge(node : Int, cp : Int) -> Int? {
+fn edge(node : Int32, cp : Int32) -> Int32? {
   let first = @tables.emoji_nodes[node * 3]
   let count = @tables.emoji_nodes[node * 3 + 1]
   let mut lo = 0
@@ -157,7 +157,7 @@ fn edge(node : Int, cp : Int) -> Int? {
 /// that is how it is used: a column is advanced over one token's text, and the
 /// segmenter can then do its single pass instead of restarting at every
 /// character.
-pub fn grapheme_spans(s : String) -> Iter[(Int, Int)] {
+pub fn grapheme_spans(s : String) -> Iter[(Int32, Int32)] {
   @grapheme.graphemes(s)
   .grapheme_indices()
   .map(t => {
@@ -168,6 +168,6 @@ pub fn grapheme_spans(s : String) -> Iter[(Int, Int)] {
 
 ///|
 /// How many grapheme clusters `s` contains.
-pub fn grapheme_count(s : String) -> Int {
+pub fn grapheme_count(s : String) -> Int32 {
   @grapheme.graphemes(s).length()
 }

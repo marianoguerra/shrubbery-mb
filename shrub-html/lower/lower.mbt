@@ -77,8 +77,8 @@ priv struct Lowerer {
 /// Lower a parsed shrubbery tree.
 pub fn lower(
   root : @sast.Node,
-  strict? : Bool = false,
-  hook? : RawTextHook? = None,
+  strict~ : Bool = false,
+  hook~ : RawTextHook? = None,
 ) -> Lowered raise @err.ShrubHtmlError {
   let l = { diags: [], strict, hook, }
   let groups = match root.it {
@@ -105,8 +105,8 @@ pub fn lower(
 /// would put the bridge's guesses where the notation's answer should be.
 pub fn lower_source(
   src : String,
-  strict? : Bool = false,
-  hook? : RawTextHook? = None,
+  strict~ : Bool = false,
+  hook~ : RawTextHook? = None,
 ) -> Lowered raise @err.ShrubHtmlError {
   let parsed = @shrub.parse(src, recover=true) catch {
     e => {
@@ -506,7 +506,7 @@ fn Lowerer::children(
 /// needed before the block is lowered: a call is two nodes and everything else
 /// is one. Zero for a block that is not exactly one group, which is the shape
 /// this question is about.
-fn block_run_length(b : @sast.Node) -> Int {
+fn block_run_length(b : @sast.Node) -> Int32 {
   let gs = block_groups(b)
   if gs.length() != 1 {
     return 0
@@ -789,7 +789,7 @@ fn lexical_hint(text : String) -> @kind.ErrorKind {
 }
 
 ///|
-fn slice(src : String, from : Int, to : Int) -> String {
+fn slice(src : String, from : Int32, to : Int32) -> String {
   let a = if from < 0 { 0 } else { from }
   let b = if to < a { a } else { to }
   src.clamped_view(start=a, end=b).to_owned()

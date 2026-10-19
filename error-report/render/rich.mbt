@@ -1,12 +1,12 @@
 ///|
 /// A single-line label, resolved to display columns on one line.
 priv struct InlineLabel {
-  line : Int
-  start_col : Int
-  end_col : Int
+  line : Int32
+  start_col : Int32
+  end_col : Int32
   style : @report.LabelStyle
   message : String?
-  priority : Int
+  priority : Int32
 }
 
 ///|
@@ -15,11 +15,11 @@ priv struct InlineLabel {
 /// "from here to there" across lines without lying about the columns in
 /// between.
 priv struct BlockLabel {
-  start_line : Int
-  end_line : Int
+  start_line : Int32
+  end_line : Int32
   /// Which margin column this label's bracket occupies. Assigned so that two
   /// overlapping block labels never share one.
-  margin : Int
+  margin : Int32
   style : @report.LabelStyle
   message : String?
 }
@@ -31,12 +31,12 @@ priv struct Snippet {
   inline : Array[InlineLabel]
   blocks : Array[BlockLabel]
   /// Ascending, deduplicated line numbers to print.
-  lines : Array[Int]
-  margin_width : Int
-  gutter_width : Int
+  lines : Array[Int32]
+  margin_width : Int32
+  gutter_width : Int32
   /// Where the frame header points.
-  anchor_line : Int
-  anchor_col : Int
+  anchor_line : Int32
+  anchor_col : Int32
 }
 
 ///|
@@ -46,7 +46,7 @@ pub fn rich(
   cache : &@report.SourceCache,
   config : Config,
   buf : StringBuilder,
-  is_tty? : Bool = false,
+  is_tty~ : Bool = false,
 ) -> Unit {
   rich_at(report, cache, config, buf, is_tty~, indent="")
 }
@@ -215,7 +215,7 @@ fn build_snippet(
 ) -> Snippet {
   let inline : Array[InlineLabel] = []
   let blocks : Array[BlockLabel] = []
-  let must_show : Map[Int, Bool] = Map([])
+  let must_show : Map[Int32, Bool] = Map([])
   for label in labels {
     let start_line = src.line_of(label.span.start)
     // An empty span sits between two characters; a non-empty one ends at the
@@ -283,10 +283,10 @@ fn build_snippet(
 /// Display columns of a span within one line, tabs expanded.
 fn columns(
   src : @report.Source,
-  line : Int,
+  line : Int32,
   span : @report.Span,
   config : Config,
-) -> (Int, Int) {
+) -> (Int32, Int32) {
   let text = src.line_text(line)
   let line_start = src.line_starts[line]
   let (_, cols) = expand_tabs(text, config.tab_width)
@@ -300,7 +300,7 @@ fn columns(
 }
 
 ///|
-fn clamp(v : Int, lo : Int, hi : Int) -> Int {
+fn clamp(v : Int32, lo : Int32, hi : Int32) -> Int32 {
   if v < lo {
     lo
   } else if v > hi {
@@ -311,7 +311,7 @@ fn clamp(v : Int, lo : Int, hi : Int) -> Int {
 }
 
 ///|
-fn digits(n : Int) -> Int {
+fn digits(n : Int32) -> Int32 {
   let mut d = 1
   let mut v = n
   while v >= 10 {
@@ -336,7 +336,7 @@ fn assign_margins(blocks : Array[BlockLabel]) -> Unit {
     }
   })
   // `ends[i]` is the last line still occupied by margin column `i`.
-  let ends : Array[Int] = []
+  let ends : Array[Int32] = []
   for i in 0..<blocks.length() {
     let b = blocks[i]
     let mut placed = -1
@@ -357,7 +357,7 @@ fn assign_margins(blocks : Array[BlockLabel]) -> Unit {
 }
 
 ///|
-fn margin_width_of(blocks : Array[BlockLabel]) -> Int {
+fn margin_width_of(blocks : Array[BlockLabel]) -> Int32 {
   let mut w = 0
   for b in blocks {
     if b.margin + 1 > w {
@@ -371,11 +371,11 @@ fn margin_width_of(blocks : Array[BlockLabel]) -> Int {
 /// Add `context` lines either side of every must-show line, clamp to the file,
 /// and return them sorted.
 fn expand_context(
-  must_show : Map[Int, Bool],
+  must_show : Map[Int32, Bool],
   src : @report.Source,
-  context : Int,
-) -> Array[Int] {
-  let want : Map[Int, Bool] = Map([])
+  context : Int32,
+) -> Array[Int32] {
+  let want : Map[Int32, Bool] = Map([])
   let last = src.line_count() - 1
   for line, _ in must_show {
     for l in (line - context)..<=(line + context) {
@@ -392,7 +392,7 @@ fn expand_context(
       want[l] = true
     }
   }
-  let out : Array[Int] = []
+  let out : Array[Int32] = []
   for line, _ in want {
     out.push(line)
   }

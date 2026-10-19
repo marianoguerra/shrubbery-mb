@@ -86,7 +86,7 @@ fn write_visible(buf : StringBuilder, c : Char) -> Unit {
 }
 
 ///|
-fn hex_upper(n : Int) -> String {
+fn hex_upper(n : Int32) -> String {
   if n == 0 {
     return "0"
   }

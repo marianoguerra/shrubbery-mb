@@ -12,10 +12,10 @@ pub let start : Pos
 
 // Types and methods
 pub(all) struct Pos {
-  line : Int
-  pos : Int
-  idx : Int
-  col0 : Int
+  line : Int32
+  pos : Int32
+  idx : Int32
+  col0 : Int32
   col : @column.Column
 } derive(Eq)
 pub fn Pos::to_display(Self) -> String
@@ -26,7 +26,7 @@ pub(all) struct Span {
 } derive(Eq)
 pub fn Span::at(Pos) -> Self
 pub fn Span::merge(Self, Self) -> Self
-pub fn Span::units(Self) -> Int
+pub fn Span::units(Self) -> Int32
 
 // Type aliases
 

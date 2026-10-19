@@ -7,7 +7,7 @@
 fn Scanner::scan_string(
   self : Scanner,
   start : @basic.Pos,
-  from : Int,
+  from : Int32,
 ) -> Token {
   let buf = StringBuilder()
   let mut i = from + 1
@@ -44,7 +44,7 @@ fn Scanner::scan_string(
 fn Scanner::scan_byte_string(
   self : Scanner,
   start : @basic.Pos,
-  from : Int,
+  from : Int32,
 ) -> Token {
   let out = []
   let mut i = from + 2
@@ -81,7 +81,7 @@ fn Scanner::scan_byte_string(
 ///|
 /// How far a malformed string reaches: to a closing quote if one turns up on
 /// this line, and to the end of the line otherwise.
-fn Scanner::scan_bad_string(self : Scanner, from : Int) -> Int {
+fn Scanner::scan_bad_string(self : Scanner, from : Int32) -> Int32 {
   let mut i = if self.at(from) is Some('#') { from + 2 } else { from + 1 }
   while i < self.src.length() {
     match self.at(i) {
@@ -107,9 +107,9 @@ fn Scanner::scan_bad_string(self : Scanner, from : Int) -> Int {
 /// four hex digits.
 fn Scanner::decode_escape(
   self : Scanner,
-  i : Int,
+  i : Int32,
   unicode~ : Bool,
-) -> (Int, Int)? {
+) -> (Int32, Int32)? {
   let c = match self.at(i + 1) {
     Some(c) => c
     None => return None
@@ -172,10 +172,10 @@ fn Scanner::decode_escape(
 ///|
 fn Scanner::hex_escape(
   self : Scanner,
-  from : Int,
-  min : Int,
-  max : Int,
-) -> (Int, Int)? {
+  from : Int32,
+  min : Int32,
+  max : Int32,
+) -> (Int32, Int32)? {
   let mut n = 0
   let mut k = 0
   let mut i = from
@@ -202,7 +202,7 @@ fn Scanner::hex_escape(
 /// A lone surrogate cannot be a `Char`, so it is written as its raw code unit;
 /// the grammar admits one — it "does not constrain to avoid surrogates" — and
 /// dropping it would lose text the raw metadata still has to reproduce.
-fn append_code(buf : StringBuilder, code : Int) -> Unit {
+fn append_code(buf : StringBuilder, code : Int32) -> Unit {
   if code >= 0xD800 && code <= 0xDFFF {
     buf.write_string(String::from_array([code.unsafe_to_char()]))
   } else {

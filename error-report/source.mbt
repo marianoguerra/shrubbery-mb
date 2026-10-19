@@ -1,7 +1,7 @@
 ///|
 /// Identifies one source file within a report. Opaque on purpose: it is handed
 /// out by whatever cache the consumer uses and means nothing on its own.
-pub(all) struct SourceId(Int) derive(Eq, Compare, Hash, Debug, ToJson)
+pub(all) struct SourceId(Int32) derive(Eq, Compare, Hash, Debug, ToJson)
 
 ///|
 /// A source file, with the line index precomputed.
@@ -15,7 +15,7 @@ pub struct Source {
   /// Offset of the first code unit of each line. Always starts with 0, so the
   /// length is the line count and `line_starts[i]` is the start of line `i+1`
   /// in 1-based numbering.
-  line_starts : Array[Int]
+  line_starts : Array[Int32]
 }
 
 ///|
@@ -52,7 +52,7 @@ pub fn Source::new(name : String, text : String) -> Source {
 /// Number of lines. A file with no trailing newline still counts its last line;
 /// a file that ends in a newline has a final empty line, which is what an
 /// editor shows and where an end-of-file caret has to go.
-pub fn Source::line_count(self : Source) -> Int {
+pub fn Source::line_count(self : Source) -> Int32 {
   self.line_starts.length()
 }
 
@@ -62,7 +62,7 @@ pub fn Source::line_count(self : Source) -> Int {
 /// An offset past the end clamps to the last line rather than failing: a
 /// diagnostic pointing just past the end of the file is a normal thing (an
 /// unexpected end of input), not a caller error.
-pub fn Source::line_of(self : Source, offset : Int) -> Int {
+pub fn Source::line_of(self : Source, offset : Int32) -> Int32 {
   let mut lo = 0
   let mut hi = self.line_starts.length() - 1
   while lo < hi {
@@ -78,7 +78,7 @@ pub fn Source::line_of(self : Source, offset : Int) -> Int {
 
 ///|
 /// The text of a 0-based line, without its terminator.
-pub fn Source::line_text(self : Source, line : Int) -> String {
+pub fn Source::line_text(self : Source, line : Int32) -> String {
   if line < 0 || line >= self.line_starts.length() {
     return ""
   }
@@ -106,7 +106,7 @@ pub fn Source::line_text(self : Source, line : Int) -> String {
 /// The column is not the raw offset difference: a surrogate pair is one column
 /// and two code units, so a caret under an emoji would otherwise land one
 /// column late for every character after it on the line.
-pub fn Source::line_col(self : Source, offset : Int) -> (Int, Int) {
+pub fn Source::line_col(self : Source, offset : Int32) -> (Int32, Int32) {
   let line = self.line_of(offset)
   let start = self.line_starts[line]
   let end = if offset < start { start } else { offset }
@@ -119,7 +119,7 @@ pub fn Source::line_col(self : Source, offset : Int) -> (Int, Int) {
 /// The boundary function for a producer that counts code points, which most
 /// hand-written lexers and every Racket port do. O(n) in the offset, so convert
 /// once per span and not once per lookup.
-pub fn Source::offset_of_char(self : Source, char_offset : Int) -> Int {
+pub fn Source::offset_of_char(self : Source, char_offset : Int32) -> Int32 {
   match self.text.offset_of_nth_char(char_offset) {
     Some(i) => i
     // Past the end: clamp, for the same reason `line_of` clamps.
@@ -129,7 +129,7 @@ pub fn Source::offset_of_char(self : Source, char_offset : Int) -> Int {
 
 ///|
 /// Build a span from code-point offsets.
-pub fn Source::span_of_chars(self : Source, start : Int, end : Int) -> Span {
+pub fn Source::span_of_chars(self : Source, start : Int32, end : Int32) -> Span {
   Span::of_range(self.offset_of_char(start), self.offset_of_char(end))
 }
 
@@ -187,3 +187,34 @@ pub impl SourceCache for Sources with fn fetch(self, id) {
     None
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend SourceId with Eq::{not_equal, equal}
+
+///|
+pub extend SourceId with Compare::{compare}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend SourceId with Compare::{op_lt, op_le, op_ge, op_gt}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend SourceId with Hash::{hash, hash_combine}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend SourceId with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend SourceId with ToJson::{to_json}
+
+///|
+pub extend Sources with SourceCache::{fetch}

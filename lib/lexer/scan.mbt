@@ -9,10 +9,10 @@
 /// specification.
 priv struct Scanner {
   src : String
-  mut idx : Int
-  mut pos : Int
-  mut line : Int
-  mut col0 : Int
+  mut idx : Int32
+  mut pos : Int32
+  mut line : Int32
+  mut col0 : Int32
   mut col : @column.Column
   mut mode : LexMode
   /// The `@` forms currently being scanned, innermost last. A stack rather than
@@ -40,7 +40,7 @@ fn Scanner::at_end(self : Scanner) -> Bool {
 
 ///|
 /// The character at code-unit offset `i`, or `None` past the end.
-fn Scanner::at(self : Scanner, i : Int) -> Char? {
+fn Scanner::at(self : Scanner, i : Int32) -> Char? {
   if i < 0 || i >= self.src.length() {
     None
   } else {
@@ -50,7 +50,7 @@ fn Scanner::at(self : Scanner, i : Int) -> Char? {
 
 ///|
 /// The offset just past the character at `i`.
-fn Scanner::step(self : Scanner, i : Int) -> Int {
+fn Scanner::step(self : Scanner, i : Int32) -> Int32 {
   match self.at(i) {
     Some(c) => if c.to_int() > 0xFFFF { i + 2 } else { i + 1 }
     None => i + 1
@@ -59,7 +59,7 @@ fn Scanner::step(self : Scanner, i : Int) -> Int {
 
 ///|
 /// Whether the source has `lit` at offset `i`.
-fn Scanner::has(self : Scanner, i : Int, lit : String) -> Bool {
+fn Scanner::has(self : Scanner, i : Int32, lit : String) -> Bool {
   let n = lit.length()
   if i + n > self.src.length() {
     return false
@@ -82,12 +82,12 @@ fn Scanner::has(self : Scanner, i : Int, lit : String) -> Bool {
 fn Scanner::finish(
   self : Scanner,
   start : @basic.Pos,
-  end_idx : Int,
+  end_idx : Int32,
   kind : TokenKind,
-  partner? : String? = None,
-  raw? : String? = None,
-  value? : @sexp.Datum? = None,
-  mode? : LexMode = Initial,
+  partner~ : String? = None,
+  raw~ : String? = None,
+  value~ : @sexp.Datum? = None,
+  mode~ : LexMode = Initial,
 ) -> Token {
   let text = self.src.clamped_view(start=start.idx, end=end_idx).to_owned()
   let (line_advance, col_advance) = @column.count_graphemes(text)
@@ -108,7 +108,7 @@ fn Scanner::finish(
 
 ///|
 /// The port column after `text`, starting from `col0`.
-fn advance_col0(text : String, col0 : Int) -> Int {
+fn advance_col0(text : String, col0 : Int32) -> Int32 {
   let mut c = col0
   let mut i = 0
   while i < text.length() {
@@ -148,8 +148,8 @@ fn advance_col0(text : String, col0 : Int) -> Int {
 /// tokenisation, so there is nothing to interleave for.
 pub fn lex_all(
   src : String,
-  variant? : Variant = default_variant,
-  start_column? : @column.Column = @column.zero,
+  variant~ : Variant = default_variant,
+  start_column~ : @column.Column = @column.zero,
 ) -> Array[Token] {
   let s = {
     src,
@@ -239,7 +239,7 @@ fn Scanner::shrubbery_token(self : Scanner) -> Token {
 ///
 /// Stopping at the terminator is not cosmetic: interactive mode ends a form at
 /// a blank line, and it can only see one if the newline is where a token ends.
-fn Scanner::scan_whitespace(self : Scanner, start : Int) -> Int {
+fn Scanner::scan_whitespace(self : Scanner, start : Int32) -> Int32 {
   let mut i = start
   while i < self.src.length() {
     match self.at(i) {
@@ -261,7 +261,7 @@ fn Scanner::scan_whitespace(self : Scanner, start : Int) -> Int {
 /// `//` to the end of the line. The terminator itself is NOT consumed: it
 /// belongs to the following whitespace token, which is what lets the parser see
 /// where the line ended.
-fn Scanner::scan_line_comment(self : Scanner, start : Int) -> Int {
+fn Scanner::scan_line_comment(self : Scanner, start : Int32) -> Int32 {
   let mut i = start
   while i < self.src.length() {
     match self.at(i) {
@@ -277,7 +277,7 @@ fn Scanner::scan_line_comment(self : Scanner, start : Int) -> Int {
 fn Scanner::scan_block_comment(
   self : Scanner,
   start : @basic.Pos,
-  from : Int,
+  from : Int32,
 ) -> Token {
   let mut i = from + 2
   let mut depth = 1
@@ -306,7 +306,11 @@ fn Scanner::scan_block_comment(
 /// CHARACTER even though it is not an operator by itself: `~&` is one, and
 /// stopping here would split it. Only a lone `~` is a failure, and
 /// `scan_operator` is what decides that.
-fn Scanner::scan_tilde(self : Scanner, start : @basic.Pos, from : Int) -> Token {
+fn Scanner::scan_tilde(
+  self : Scanner,
+  start : @basic.Pos,
+  from : Int32,
+) -> Token {
   if self.has(from, "~#{") {
     return self.scan_sexp_escape(start, from, keyword=true)
   }

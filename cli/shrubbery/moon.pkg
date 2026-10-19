@@ -1,8 +1,6 @@
 import {
-  "marianoguerra/shrubbery/doc",
   "marianoguerra/shrubbery/lexer",
   "marianoguerra/shrubbery/parser",
-  "marianoguerra/shrubbery/sexp",
   "marianoguerra/shrubbery/write",
   "marianoguerra/error-report" @report,
   "marianoguerra/error-report/render",

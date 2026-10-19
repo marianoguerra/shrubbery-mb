@@ -70,7 +70,7 @@ fn is_binary(c : Char) -> Bool {
 }
 
 ///|
-fn hex_value(c : Char) -> Int {
+fn hex_value(c : Char) -> Int32 {
   if is_digit(c) {
     c.to_int() - 48
   } else if c >= 'a' && c <= 'f' {

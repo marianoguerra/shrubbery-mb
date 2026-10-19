@@ -13,7 +13,7 @@
 pub fn rewrite_quotes(tokens : Array[Token]) -> Array[Token] {
   // Each entry is one level of quoting; the value counts brackets opened at
   // that level since the last `'`.
-  let quote_depth : Array[Int] = []
+  let quote_depth : Array[Int32] = []
   let out = []
   for t in tokens {
     match t.kind {
@@ -45,7 +45,7 @@ pub fn rewrite_quotes(tokens : Array[Token]) -> Array[Token] {
 }
 
 ///|
-fn bump(stack : Array[Int], by : Int) -> Unit {
+fn bump(stack : Array[Int32], by : Int32) -> Unit {
   if stack.length() > 0 {
     stack[stack.length() - 1] = stack[stack.length() - 1] + by
   }

@@ -18,8 +18,8 @@
 /// correct through every construction, for the benefit of nothing that cannot
 /// recompute them.
 pub(all) struct Span {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -32,18 +32,18 @@ pub(all) struct Span {
 pub let nowhere : Span = { start: 0, end: 0, }
 
 ///|
-pub fn Span::new(start : Int, end : Int) -> Span {
+pub fn Span::new(start : Int32, end : Int32) -> Span {
   { start, end, }
 }
 
 ///|
 /// The empty span at one offset.
-pub fn Span::at(offset : Int) -> Span {
+pub fn Span::at(offset : Int32) -> Span {
   { start: offset, end: offset, }
 }
 
 ///|
-pub fn Span::len(self : Span) -> Int {
+pub fn Span::len(self : Span) -> Int32 {
   self.end - self.start
 }
 
@@ -102,3 +102,13 @@ pub fn Span::slice(self : Span, src : String) -> String {
   let e = if self.end < s { s } else { self.end }
   src.clamped_view(start=s, end=e).to_owned()
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with Debug::{to_repr}

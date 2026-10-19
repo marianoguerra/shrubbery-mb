@@ -188,7 +188,7 @@ fn Lowerer::hex_of(
 
 ///|
 /// The digit counts CSS admits: `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`.
-fn is_hex_length(n : Int) -> Bool {
+fn is_hex_length(n : Int32) -> Bool {
   n == 3 || n == 4 || n == 6 || n == 8
 }
 

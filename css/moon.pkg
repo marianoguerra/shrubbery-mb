@@ -10,7 +10,5 @@ import {
 
 import {
   "marianoguerra/css",
-  "marianoguerra/css/ast",
   "marianoguerra/css/value",
-  "moonbitlang/core/test",
 } for "test"

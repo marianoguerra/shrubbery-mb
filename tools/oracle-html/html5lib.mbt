@@ -384,7 +384,7 @@ fn expected_row(tag : String, row : Array[Json], double : Bool) -> String? {
 }
 
 ///|
-fn str_at(row : Array[Json], i : Int, double : Bool) -> String {
+fn str_at(row : Array[Json], i : Int32, double : Bool) -> String {
   match row.get(i) {
     Some(String(s)) => unescape(s, double)
     _ => ""
@@ -467,7 +467,7 @@ fn unescape(s : String, double : Bool) -> String {
 }
 
 ///|
-fn hex_digit(c : Char) -> Int {
+fn hex_digit(c : Char) -> Int32 {
   if c >= '0' && c <= '9' {
     c.to_int() - 48
   } else if c >= 'a' && c <= 'f' {

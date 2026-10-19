@@ -54,7 +54,7 @@ pub(all) struct Node {
 pub fn Node::new(
   it : Shrub,
   span : @basic.Span,
-  meta? : @raw.Meta = @raw.Meta::new(),
+  meta~ : @raw.Meta = @raw.Meta::new(),
 ) -> Node {
   { it, span, meta, }
 }

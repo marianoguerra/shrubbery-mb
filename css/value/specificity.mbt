@@ -14,9 +14,9 @@
 /// input and reads as a magic number when it does not, and comparing three
 /// fields is not the expensive part of anything.
 pub(all) struct Specificity {
-  ids : Int
-  classes : Int
-  elements : Int
+  ids : Int32
+  classes : Int32
+  elements : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -47,7 +47,7 @@ pub fn Specificity::beats(self : Specificity, other : Specificity) -> Bool {
 
 ///|
 /// `(a, b, c)`, the way CSS writes it.
-pub fn Specificity::to_triple(self : Specificity) -> (Int, Int, Int) {
+pub fn Specificity::to_triple(self : Specificity) -> (Int32, Int32, Int32) {
   (self.ids, self.classes, self.elements)
 }
 
@@ -162,3 +162,13 @@ fn is_zero_pseudo(name : String) -> Bool {
     _ => false
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Specificity with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Specificity with Debug::{to_repr}

@@ -8,7 +8,7 @@ priv struct Parser {
   recover : Bool
   /// How deep the grammar may recur before it refuses. See
   /// `default_max_depth`.
-  max_depth : Int
+  max_depth : Int32
 }
 
 ///|
@@ -41,17 +41,17 @@ fn Parser::incomparable(
 }
 
 ///|
-fn Parser::at_end(self : Parser, i : Int) -> Bool {
+fn Parser::at_end(self : Parser, i : Int32) -> Bool {
   i >= self.toks.length()
 }
 
 ///|
-fn Parser::tok(self : Parser, i : Int) -> @lexer.Token {
+fn Parser::tok(self : Parser, i : Int32) -> @lexer.Token {
   self.toks[i]
 }
 
 ///|
-fn Parser::peek(self : Parser, i : Int) -> @lexer.Token? {
+fn Parser::peek(self : Parser, i : Int32) -> @lexer.Token? {
   if i < self.toks.length() {
     Some(self.toks[i])
   } else {
@@ -61,7 +61,7 @@ fn Parser::peek(self : Parser, i : Int) -> @lexer.Token? {
 
 ///|
 /// `a > b`, where an unknown line is never greater.
-fn line_gt(a : Int, b : Int?) -> Bool {
+fn line_gt(a : Int32, b : Int32?) -> Bool {
   match b {
     Some(v) => a > v
     None => false
@@ -70,7 +70,7 @@ fn line_gt(a : Int, b : Int?) -> Bool {
 
 ///|
 /// `a == b + n`, where an unknown line matches nothing.
-fn line_eq_plus(a : Int, b : Int?, n : Int) -> Bool {
+fn line_eq_plus(a : Int32, b : Int32?, n : Int32) -> Bool {
   match b {
     Some(v) => a == v + n
     None => false
@@ -125,9 +125,9 @@ fn Parser::col_eq(
 ///|
 /// What `next_of` and its variants answer.
 priv struct Advance {
-  rest : Int
-  last_line : Int?
-  delta : Int
+  rest : Int32
+  last_line : Int32?
+  delta : Int32
   raw : RawList
 }
 
@@ -140,9 +140,9 @@ priv struct Advance {
 /// original. That is why a continued line does not have to be indented.
 fn Parser::next_of(
   self : Parser,
-  start : Int,
-  last_line : Int?,
-  delta : Int,
+  start : Int32,
+  last_line : Int32?,
+  delta : Int32,
   raw : RawList,
   count : Bool,
 ) -> Advance raise @err.ShrubberyError {
@@ -208,8 +208,8 @@ fn Parser::next_of(
 /// Whether the token at `i` starts a line after `last_line`.
 fn Parser::next_line(
   self : Parser,
-  i : Int,
-  last_line : Int?,
+  i : Int32,
+  last_line : Int32?,
   count : Bool,
 ) -> Bool {
   count && !self.at_end(i) && line_gt(self.tok(i).line(), last_line)
@@ -240,9 +240,9 @@ fn Parser::fail_no_comment_group(
 /// `next_of`, then collect a `#//` that is alone on its line.
 fn Parser::next_of_commenting(
   self : Parser,
-  start : Int,
-  last_line : Int?,
-  delta : Int,
+  start : Int32,
+  last_line : Int32?,
+  delta : Int32,
   raw : RawList,
   count : Bool,
 ) -> (@lexer.Token?, Advance) raise @err.ShrubberyError {
@@ -264,9 +264,9 @@ fn Parser::next_of_commenting(
 /// `next_of`, then recognise an immediate `«`.
 fn Parser::next_of_opener(
   self : Parser,
-  start : Int,
-  last_line : Int?,
-  delta : Int,
+  start : Int32,
+  last_line : Int32?,
+  delta : Int32,
   raw : RawList,
   count : Bool,
 ) -> (@lexer.Token?, Advance) raise @err.ShrubberyError {
@@ -302,12 +302,12 @@ fn Parser::next_of_opener(
 /// token, and the advanced line, delta and raw.
 fn Parser::own_line_group_comment(
   self : Parser,
-  start : Int,
-  line : Int?,
-  delta : Int,
+  start : Int32,
+  line : Int32?,
+  delta : Int32,
   raw : RawList,
   count : Bool,
-) -> (@lexer.Token?, @lexer.Token, Int, Int?, Int, RawList) raise @err.ShrubberyError {
+) -> (@lexer.Token?, @lexer.Token, Int32, Int32?, Int32, RawList) raise @err.ShrubberyError {
   let mut commenting : @lexer.Token? = None
   let mut i = start
   let mut ll = line
@@ -356,10 +356,10 @@ fn Parser::own_line_group_comment(
 /// to the term before it or to whatever comes next.
 fn Parser::suffix_comments(
   self : Parser,
-  start : Int,
-  line : Int?,
-  delta : Int,
-) -> (RawList, Int, Int?, Int) {
+  start : Int32,
+  line : Int32?,
+  delta : Int32,
+) -> (RawList, Int32, Int32?, Int32) {
   let mut i = start
   let mut acc : RawList = RNil
   while !self.at_end(i) {

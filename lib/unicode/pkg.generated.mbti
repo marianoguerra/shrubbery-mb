@@ -2,11 +2,11 @@
 package "marianoguerra/shrubbery/unicode"
 
 // Values
-pub fn emoji_sequence_at(String, Int) -> Int
+pub fn emoji_sequence_at(String, Int32) -> Int32
 
-pub fn grapheme_count(String) -> Int
+pub fn grapheme_count(String) -> Int32
 
-pub fn grapheme_spans(String) -> Iter[(Int, Int)]
+pub fn grapheme_spans(String) -> Iter[(Int32, Int32)]
 
 pub fn is_alphabetic(Char) -> Bool
 

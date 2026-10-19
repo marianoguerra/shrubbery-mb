@@ -51,7 +51,7 @@ pub fn value(vs : Array[@ast.ComponentValue]) -> String {
 ///|
 priv struct Emitter {
   buf : StringBuilder
-  mut depth : Int
+  mut depth : Int32
 }
 
 ///|

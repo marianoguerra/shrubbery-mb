@@ -21,9 +21,9 @@ pub(all) struct Config {
   /// Columns a tab advances to. 8 unless the consumer knows better; a tab in a
   /// source line is expanded to spaces before rendering, because a caret cannot
   /// be positioned under a character whose width depends on the terminal.
-  tab_width : Int
+  tab_width : Int32
   /// Source lines to show either side of a labelled line.
-  context_lines : Int
+  context_lines : Int32
 }
 
 ///|
@@ -50,3 +50,13 @@ pub fn Config::use_color(self : Config, is_tty~ : Bool) -> Bool {
     Auto => is_tty
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Format with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Format with Debug::{to_repr}

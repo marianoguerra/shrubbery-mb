@@ -264,7 +264,7 @@ fn char_text(c : Char) -> String {
 }
 
 ///|
-fn pad_hex(v : Int, width : Int) -> String {
+fn pad_hex(v : Int32, width : Int32) -> String {
   let hex = v.to_string(radix=16).to_upper()
   let out = StringBuilder()
   for _ in 0..<(width - hex.length()) {

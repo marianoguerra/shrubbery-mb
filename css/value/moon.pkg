@@ -7,5 +7,4 @@ import {
   "marianoguerra/css/ast",
   "marianoguerra/css/span",
   "marianoguerra/css/parse",
-  "moonbitlang/core/test",
 } for "test"

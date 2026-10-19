@@ -14,9 +14,9 @@ import {
 // Values
 pub fn layout(@ast.Node, style? : @write.Style) -> @doc.Doc
 
-pub fn parse(String, variant? : @lexer.Variant, recover? : Bool, max_depth? : Int) -> @parser.Parsed raise @error.ShrubberyError
+pub fn parse(String, variant? : @lexer.Variant, recover? : Bool, max_depth? : Int32) -> @parser.Parsed raise @error.ShrubberyError
 
-pub fn parse_text(String, variant? : @lexer.Variant, recover? : Bool, max_depth? : Int) -> @parser.Parsed raise @error.ShrubberyError
+pub fn parse_text(String, variant? : @lexer.Variant, recover? : Bool, max_depth? : Int32) -> @parser.Parsed raise @error.ShrubberyError
 
 pub fn to_report(@error.Diagnostic, @error-report.SourceId) -> @error-report.Report
 
@@ -24,7 +24,7 @@ pub fn to_source(@ast.Node) -> String
 
 pub fn tokens(String, variant? : @lexer.Variant) -> Array[@lexer.Token]
 
-pub fn write(@ast.Node, style? : @write.Style, width? : Int?) -> String
+pub fn write(@ast.Node, style? : @write.Style, width? : Int32?) -> String
 
 // Errors
 

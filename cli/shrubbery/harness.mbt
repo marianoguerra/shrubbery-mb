@@ -9,7 +9,7 @@
 /// Every one takes many files in one process. There are 696 of them and both
 /// sides pay process startup, which is the difference between a gate people run
 /// and one they stop running.
-fn cmd_tokens(files : Array[String]) -> Int {
+fn cmd_tokens(files : Array[String]) -> Int32 {
   each_file(files, (path, src) => {
     let buf = StringBuilder()
     for t in @lexer.lex_all(src) {
@@ -42,7 +42,7 @@ fn cmd_tokens(files : Array[String]) -> Int {
 /// comparison covers both parse parity and error parity: a port that accepted a
 /// file the reference rejects, or rejected one it accepts, differs here rather
 /// than in a second oracle that could disagree with this one.
-fn cmd_parse(files : Array[String]) -> Int {
+fn cmd_parse(files : Array[String]) -> Int32 {
   each_file(files, (_, src) => {
     let line = @parser.parse(src).root().canonical() catch {
         ShrubberyError(d) => "!error " + d.kind.reference_text()
@@ -57,7 +57,7 @@ fn cmd_parse(files : Array[String]) -> Int {
 /// Between `<<<<` and `>>>>`, with a NUL before the closing marker, so that
 /// trailing whitespace and a missing final newline survive the harness reading
 /// it back.
-fn cmd_source(files : Array[String]) -> Int {
+fn cmd_source(files : Array[String]) -> Int32 {
   each_file(files, (_, src) => {
     let rebuilt = @parser.parse(src).root().to_source() catch {
         _ => {
@@ -73,7 +73,7 @@ fn cmd_source(files : Array[String]) -> Int {
 
 ///|
 /// The eleven layout modes, in the order the reference's own suite runs them.
-let print_modes : Array[(String, @write.Style, Int?)] = [
+let print_modes : Array[(String, @write.Style, Int32?)] = [
   ("flat", Flat, None),
   ("pretty", Pretty, None),
   ("pretty-0", Pretty, Some(0)),
@@ -90,7 +90,7 @@ let print_modes : Array[(String, @write.Style, Int?)] = [
 ///|
 /// One record per mode, newlines escaped, so that a record is a line and a
 /// divergence names the mode it happened in.
-fn cmd_print(files : Array[String]) -> Int {
+fn cmd_print(files : Array[String]) -> Int32 {
   each_file(files, (_, src) => {
     let root = @parser.parse(src).root() catch {
       _ => {
@@ -116,7 +116,7 @@ fn cmd_print(files : Array[String]) -> Int {
 /// The debugging tool for the printer: it separates a LAYOUT disagreement --
 /// the renderer chose differently -- from a CONSTRUCTION one, where the two
 /// documents were never the same to begin with.
-fn cmd_doc(args : Array[String]) -> Int {
+fn cmd_doc(args : Array[String]) -> Int32 {
   if args.length() < 2 {
     println("usage: shrubbery doc <pretty|armor|multi> FILE...")
     return 2
@@ -140,7 +140,7 @@ fn cmd_doc(args : Array[String]) -> Int {
 ///|
 /// Run `body` over each file, with the `==== path` header the harness splits
 /// on. Unreadable files get a marker rather than stopping the batch.
-fn each_file(files : Array[String], body : (String, String) -> Unit) -> Int {
+fn each_file(files : Array[String], body : (String, String) -> Unit) -> Int32 {
   for path in files {
     println("==== \{path}")
     match read_quiet(path) {

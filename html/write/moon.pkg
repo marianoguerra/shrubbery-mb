@@ -9,5 +9,4 @@ import {
   "marianoguerra/html/write",
   "marianoguerra/html/ast",
   "marianoguerra/html/span",
-  "moonbitlang/core/test",
 } for "test"

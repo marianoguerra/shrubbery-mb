@@ -15,7 +15,7 @@
 fn Parser::parse_selector_list(
   self : Parser,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
 ) -> Array[@ast.Selector] raise @err.CssError {
   let out : Array[@ast.Selector] = []
   let mut from = 0
@@ -67,7 +67,7 @@ fn only_trivia_toks(toks : ArrayView[@token.Token]) -> Bool {
 fn Parser::parse_selector(
   self : Parser,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
 ) -> @ast.Selector raise @err.CssError {
   let s = { toks, pos: 0, owner: self, }
   s.skip_ws()
@@ -95,7 +95,7 @@ fn Parser::parse_selector(
 /// desynchronised the main cursor.
 priv struct SelCursor {
   toks : ArrayView[@token.Token]
-  mut pos : Int
+  mut pos : Int32
   owner : Parser
 }
 
@@ -114,7 +114,7 @@ fn SelCursor::peek(self : SelCursor) -> @token.TokenKind {
 }
 
 ///|
-fn SelCursor::peek_at(self : SelCursor, n : Int) -> @token.TokenKind {
+fn SelCursor::peek_at(self : SelCursor, n : Int32) -> @token.TokenKind {
   let i = self.pos + n
   if i >= self.toks.length() || i < 0 {
     Eof
@@ -131,7 +131,7 @@ fn SelCursor::skip_ws(self : SelCursor) -> Unit {
 }
 
 ///|
-fn SelCursor::here(self : SelCursor) -> Int {
+fn SelCursor::here(self : SelCursor) -> Int32 {
   if self.at_end() {
     if self.toks.length() == 0 {
       0
@@ -144,7 +144,7 @@ fn SelCursor::here(self : SelCursor) -> Int {
 }
 
 ///|
-fn span_of_view(toks : ArrayView[@token.Token], fallback : Int) -> @span.Span {
+fn span_of_view(toks : ArrayView[@token.Token], fallback : Int32) -> @span.Span {
   if toks.length() == 0 {
     @span.Span::at(fallback)
   } else {
@@ -155,7 +155,7 @@ fn span_of_view(toks : ArrayView[@token.Token], fallback : Int) -> @span.Span {
 ///|
 fn SelCursor::parse_rest(
   self : SelCursor,
-  start : Int,
+  start : Int32,
 ) -> @ast.Selector raise @err.CssError {
   let mut acc : @ast.Selector = Simple(self.parse_compound(start))
   while true {
@@ -186,7 +186,7 @@ fn SelCursor::parse_rest(
 /// descendant.
 fn SelCursor::read_combinator(
   self : SelCursor,
-  leading? : Bool = false,
+  leading~ : Bool = false,
 ) -> @ast.Combinator? {
   let save = self.pos
   let mut saw_ws = false
@@ -244,7 +244,7 @@ fn SelCursor::read_combinator(
 /// One element's worth: an optional type selector, then qualifiers.
 fn SelCursor::parse_compound(
   self : SelCursor,
-  start : Int,
+  start : Int32,
 ) -> @ast.Compound raise @err.CssError {
   let from = self.here()
   let quals : Array[@ast.Qualifier] = []
@@ -341,7 +341,7 @@ fn SelCursor::read_ns_prefix(self : SelCursor) -> @ast.NsPrefix? {
 /// `[attr]`, `[attr=value]`, `[attr^="v" i]`.
 fn SelCursor::parse_attr(
   self : SelCursor,
-  start : Int,
+  start : Int32,
 ) -> @ast.Qualifier raise @err.CssError {
   let from = self.here()
   self.pos = self.pos + 1
@@ -436,8 +436,8 @@ fn SelCursor::parse_attr(
 /// of the compound still parses.
 fn SelCursor::attr_bogus(
   self : SelCursor,
-  from : Int,
-  start : Int,
+  from : Int32,
+  start : Int32,
 ) -> @ast.Qualifier raise @err.CssError {
   ignore(start)
   while !self.at_end() && self.peek() != RBracket {
@@ -453,7 +453,7 @@ fn SelCursor::attr_bogus(
 /// `:hover`, `::before`, `:not(...)`, `:nth-child(2n+1 of .x)`.
 fn SelCursor::parse_pseudo(
   self : SelCursor,
-  start : Int,
+  start : Int32,
 ) -> @ast.Qualifier raise @err.CssError {
   let from = self.here()
   self.pos = self.pos + 1

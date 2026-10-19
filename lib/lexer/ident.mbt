@@ -5,7 +5,7 @@
 /// Emoji are matched as SEQUENCES, longest first. `👨‍👩‍👦` is one identifier
 /// character; stopping at the first `👨` would leave zero-width joiners loose,
 /// and those are not identifier characters at all.
-fn Scanner::scan_plain_identifier(self : Scanner, from : Int) -> Int? {
+fn Scanner::scan_plain_identifier(self : Scanner, from : Int32) -> Int32? {
   let e = self.emoji_or(from, c => @unicode.is_alphabetic(c) || c == '_')
   if e == from {
     return None
@@ -26,7 +26,11 @@ fn Scanner::scan_plain_identifier(self : Scanner, from : Int) -> Int? {
 ///|
 /// One identifier character at `from`: an emoji sequence if one starts here,
 /// otherwise a single character satisfying `pred`. Returns `from` if neither.
-fn Scanner::emoji_or(self : Scanner, from : Int, pred : (Char) -> Bool) -> Int {
+fn Scanner::emoji_or(
+  self : Scanner,
+  from : Int32,
+  pred : (Char) -> Bool,
+) -> Int32 {
   let n = @unicode.emoji_sequence_at(self.src, from)
   if n > 0 {
     return from + n
@@ -39,7 +43,7 @@ fn Scanner::emoji_or(self : Scanner, from : Int, pred : (Char) -> Bool) -> Int {
 
 ///|
 /// An identifier, with the optional `#%` prefix for internal names.
-fn Scanner::scan_identifier(self : Scanner, from : Int) -> Int? {
+fn Scanner::scan_identifier(self : Scanner, from : Int32) -> Int32? {
   if self.has(from, "#%") {
     match self.scan_plain_identifier(from + 2) {
       Some(e) => Some(e)
@@ -65,7 +69,7 @@ fn Scanner::scan_identifier(self : Scanner, from : Int) -> Int? {
 ///     by `/` or `*` is absorbed afterwards, so `+/` is an operator when what
 ///     comes next could not have started a comment.
 ///   * A bare `~`, `|` or `:` is not an operator; each is its own token.
-fn Scanner::scan_operator(self : Scanner, from : Int) -> Int? {
+fn Scanner::scan_operator(self : Scanner, from : Int32) -> Int32? {
   // `#` plus one of `' , : ; |` is a two-character operator of its own; `#` is
   // not an operator character, so nothing longer can be built from it.
   match self.at(from) {
@@ -128,7 +132,7 @@ fn Scanner::scan_operator(self : Scanner, from : Int) -> Int? {
 /// Take a following `/` into the operator when it cannot start a comment.
 ///
 /// This is why `+/ 2` divides and `+// 2` is `+` and a comment.
-fn Scanner::absorb_slash(self : Scanner, end : Int) -> Int {
+fn Scanner::absorb_slash(self : Scanner, end : Int32) -> Int32 {
   match self.at(end) {
     Some('/') =>
       match self.at(end + 1) {
@@ -144,7 +148,7 @@ fn Scanner::absorb_slash(self : Scanner, end : Int) -> Int {
 ///
 /// The lookahead behind the trailing-dot rule: `1.` is the number one when
 /// nothing follows, and `1` then `.+` when `.+` is an operator.
-fn Scanner::multi_char_operator_at(self : Scanner, from : Int) -> Bool {
+fn Scanner::multi_char_operator_at(self : Scanner, from : Int32) -> Bool {
   match self.scan_operator(from) {
     Some(e) => self.src.char_length(start_offset=from, end_offset=e) > 1
     None => false

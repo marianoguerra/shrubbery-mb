@@ -10,5 +10,4 @@ import {
   "marianoguerra/error-report" @report,
   "marianoguerra/error-report/render",
   "marianoguerra/error-report/style",
-  "moonbitlang/core/test",
 } for "test"

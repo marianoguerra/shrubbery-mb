@@ -21,9 +21,9 @@
 /// a file with three mistakes report three.
 pub fn parse(
   src : String,
-  variant? : @lexer.Variant = @lexer.default_variant,
-  recover? : Bool = false,
-  max_depth? : Int = @parser.default_max_depth,
+  variant~ : @lexer.Variant = @lexer.default_variant,
+  recover~ : Bool = false,
+  max_depth~ : Int32 = @parser.default_max_depth,
 ) -> @parser.Parsed raise @err.ShrubberyError {
   @parser.parse(src, variant~, recover~, max_depth~)
 }
@@ -33,9 +33,9 @@ pub fn parse(
 /// `@{`…`}`. The result is always a `Brackets`.
 pub fn parse_text(
   src : String,
-  variant? : @lexer.Variant = @lexer.default_variant,
-  recover? : Bool = false,
-  max_depth? : Int = @parser.default_max_depth,
+  variant~ : @lexer.Variant = @lexer.default_variant,
+  recover~ : Bool = false,
+  max_depth~ : Int32 = @parser.default_max_depth,
 ) -> @parser.Parsed raise @err.ShrubberyError {
   @parser.parse(src, mode=Text, variant~, recover~, max_depth~)
 }
@@ -47,7 +47,7 @@ pub fn parse_text(
 /// stream can be reassembled into the source exactly.
 pub fn tokens(
   src : String,
-  variant? : @lexer.Variant = @lexer.default_variant,
+  variant~ : @lexer.Variant = @lexer.default_variant,
 ) -> Array[@lexer.Token] {
   @lexer.lex_all(src, variant~)
 }
@@ -70,8 +70,8 @@ pub fn to_source(node : @ast.Node) -> String {
 /// means "never break a line that could be one".
 pub fn write(
   node : @ast.Node,
-  style? : @write.Style = Flat,
-  width? : Int? = None,
+  style~ : @write.Style = Flat,
+  width~ : Int32? = None,
 ) -> String {
   @write.write(node, style~, width~)
 }
@@ -80,7 +80,7 @@ pub fn write(
 /// The layout document for a node, before a width is chosen.
 ///
 /// For a consumer with its own renderer, or its own idea of what fits.
-pub fn layout(node : @ast.Node, style? : @write.Style = Pretty) -> @doc.Doc {
+pub fn layout(node : @ast.Node, style~ : @write.Style = Pretty) -> @doc.Doc {
   @write.to_doc(node, style~)
 }
 

@@ -15,5 +15,4 @@ import {
 import {
   "marianoguerra/shrubbery-html/lower",
   "marianoguerra/html/write",
-  "moonbitlang/core/test",
 } for "test"

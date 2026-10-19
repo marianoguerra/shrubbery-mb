@@ -11,5 +11,4 @@ import {
 
 import {
   "marianoguerra/shrubbery/lexer",
-  "moonbitlang/core/test",
 } for "test"

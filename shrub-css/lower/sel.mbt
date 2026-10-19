@@ -490,7 +490,7 @@ fn parse_anb(items : ArrayView[@sast.Node]) -> @ast.AnB? {
 }
 
 ///|
-fn signed(a : Int, op : String, b : @bigint.BigInt) -> @ast.AnB? {
+fn signed(a : Int32, op : String, b : @bigint.BigInt) -> @ast.AnB? {
   match op {
     "+" => Some({ a, b: int_of(b), })
     "-" => Some({ a, b: -int_of(b), })
@@ -499,7 +499,7 @@ fn signed(a : Int, op : String, b : @bigint.BigInt) -> @ast.AnB? {
 }
 
 ///|
-fn int_of(b : @bigint.BigInt) -> Int {
+fn int_of(b : @bigint.BigInt) -> Int32 {
   @string.parse_int(b.to_string()) catch {
     _ => 0
   }

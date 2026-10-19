@@ -22,11 +22,11 @@ pub(all) struct Label {
   span : Span
   style : LabelStyle
   message : String?
-  priority : Int
+  priority : Int32
 } derive(Eq, @debug.Debug)
 pub fn Label::primary(SourceId, Span, message? : String) -> Self
 pub fn Label::secondary(SourceId, Span, message? : String) -> Self
-pub fn Label::with_priority(Self, Int) -> Self
+pub fn Label::with_priority(Self, Int32) -> Self
 
 pub(all) enum LabelStyle {
   Primary
@@ -62,40 +62,44 @@ pub(all) enum Severity {
   Warning
   Advice
 } derive(Compare, Eq, Hash, ToJson, @debug.Debug)
+pub fn Severity::compare(Self, Self) -> Int32
 pub fn Severity::name(Self) -> String
 
 pub struct Source {
   name : String
   text : String
-  line_starts : Array[Int]
+  line_starts : Array[Int32]
 }
-pub fn Source::line_col(Self, Int) -> (Int, Int)
-pub fn Source::line_count(Self) -> Int
-pub fn Source::line_of(Self, Int) -> Int
-pub fn Source::line_text(Self, Int) -> String
+pub fn Source::line_col(Self, Int32) -> (Int32, Int32)
+pub fn Source::line_count(Self) -> Int32
+pub fn Source::line_of(Self, Int32) -> Int32
+pub fn Source::line_text(Self, Int32) -> String
 pub fn Source::new(String, String) -> Self
-pub fn Source::offset_of_char(Self, Int) -> Int
+pub fn Source::offset_of_char(Self, Int32) -> Int32
 pub fn Source::slice(Self, Span) -> String
-pub fn Source::span_of_chars(Self, Int, Int) -> Span
+pub fn Source::span_of_chars(Self, Int32, Int32) -> Span
 
-pub(all) struct SourceId(Int) derive(Compare, Eq, Hash, ToJson, @debug.Debug)
+pub(all) struct SourceId(Int32) derive(Compare, Eq, Hash, ToJson, @debug.Debug)
+pub fn SourceId::compare(Self, Self) -> Int32
 
 pub struct Sources {
   entries : Array[Source]
 }
 pub fn Sources::add(Self, String, String) -> SourceId
+pub fn Sources::fetch(Self, SourceId) -> Source?
 pub fn Sources::new() -> Self
 pub impl SourceCache for Sources
 
 pub(all) struct Span {
-  start : Int
-  len : Int
+  start : Int32
+  len : Int32
 } derive(Compare, Eq, Hash, ToJson, @debug.Debug)
-pub fn Span::at(Int) -> Self
-pub fn Span::end(Self) -> Int
+pub fn Span::at(Int32) -> Self
+pub fn Span::compare(Self, Self) -> Int32
+pub fn Span::end(Self) -> Int32
 pub fn Span::is_empty(Self) -> Bool
 pub fn Span::merge(Self, Self) -> Self
-pub fn Span::of_range(Int, Int) -> Self
+pub fn Span::of_range(Int32, Int32) -> Self
 pub fn Span::overlaps(Self, Self) -> Bool
 
 // Type aliases

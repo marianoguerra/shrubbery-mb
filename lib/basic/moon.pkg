@@ -1,8 +1,3 @@
 import {
   "marianoguerra/shrubbery/column",
 }
-
-import {
-  "marianoguerra/shrubbery/basic",
-  "moonbitlang/core/test",
-} for "test"

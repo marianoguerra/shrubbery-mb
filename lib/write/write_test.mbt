@@ -1,5 +1,9 @@
 ///|
-fn w(src : String, style : @write.Style, width? : Int? = None) -> String raise {
+fn w(
+  src : String,
+  style : @write.Style,
+  width~ : Int32? = None,
+) -> String raise {
   @write.write(@parser.parse(src).root(), style~, width~)
 }
 
@@ -8,7 +12,7 @@ fn w(src : String, style : @write.Style, width? : Int? = None) -> String raise {
 /// must read back as the same tree.
 fn reparses(src : String) -> Unit raise {
   let tree = @parser.parse(src).root().canonical()
-  let cases : Array[(String, @write.Style, Int?)] = [
+  let cases : Array[(String, @write.Style, Int32?)] = [
     ("flat", Flat, None),
     ("pretty", Pretty, None),
     ("pretty/0", Pretty, Some(0)),

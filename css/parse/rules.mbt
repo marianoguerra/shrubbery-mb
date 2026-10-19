@@ -5,7 +5,7 @@
 /// One rule, at any level.
 fn Parser::parse_rule(
   self : Parser,
-  top? : Bool = false,
+  top~ : Bool = false,
 ) -> @ast.CssRule? raise @err.CssError {
   match self.peek() {
     AtKeyword(name) => self.parse_at_rule(name)
@@ -17,7 +17,7 @@ fn Parser::parse_rule(
 /// A style rule: a prelude, then a block.
 fn Parser::parse_qualified_rule(
   self : Parser,
-  top? : Bool = false,
+  top~ : Bool = false,
 ) -> @ast.CssRule? raise @err.CssError {
   ignore(top)
   let start = self.cur().span.start
@@ -58,7 +58,7 @@ fn Parser::parse_qualified_rule(
 }
 
 ///|
-fn Parser::prev_end(self : Parser) -> Int {
+fn Parser::prev_end(self : Parser) -> Int32 {
   if self.pos > 0 {
     self.toks[self.pos - 1].span.end
   } else {

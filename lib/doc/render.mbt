@@ -8,7 +8,7 @@
 /// one the measurement found.
 priv enum Fit {
   /// Reached the end of what there was to measure, at this column.
-  Col(Int)
+  Col(Int32)
   /// A line break arrived in time, so what was measured fits.
   Fits
   /// The width was exceeded.
@@ -39,15 +39,15 @@ priv enum Mode {
 /// depth the document's NESTING rather than its length.
 priv enum Cont {
   CNil
-  CCons(Doc, Int, Cont)
+  CCons(Doc, Int32, Cont)
   /// The end of a sequence. Carries the column the sequence STARTED at,
   /// because that is what the width is checked against there -- see
   /// `over_at`.
-  CCheck(Int, Cont)
+  CCheck(Int32, Cont)
   /// The end of the branch being measured: everything after this belongs to
   /// what FOLLOWS it, and a line break there means the branch fits. Carries the
   /// column the `Or` started at, for the same reason.
-  CMark(Int, Cont)
+  CMark(Int32, Cont)
 }
 
 ///|
@@ -66,10 +66,10 @@ priv enum Cont {
 pub fn render(
   doc : Doc,
   buf : StringBuilder,
-  width? : Int? = None,
-  column? : Int = 0,
-  indent? : Int = 0,
-) -> Int {
+  width~ : Int32? = None,
+  column~ : Int32 = 0,
+  indent~ : Int32 = 0,
+) -> Int32 {
   match run(CCons(doc, indent, CNil), buf, width, column, Print) {
     Col(c) => c
     // Unreachable in `Print` mode: only a measurement stops early.
@@ -80,9 +80,9 @@ pub fn render(
 ///|
 pub fn render_string(
   doc : Doc,
-  width? : Int? = None,
-  column? : Int = 0,
-  indent? : Int = 0,
+  width~ : Int32? = None,
+  column~ : Int32 = 0,
+  indent~ : Int32 = 0,
 ) -> String {
   let buf = StringBuilder()
   let _ = render(doc, buf, width~, column~, indent~)
@@ -93,8 +93,8 @@ pub fn render_string(
 fn run(
   start : Cont,
   buf : StringBuilder,
-  width : Int?,
-  column : Int,
+  width : Int32?,
+  column : Int32,
   mode0 : Mode,
 ) -> Fit {
   let mut k = start
@@ -107,7 +107,7 @@ fn run(
   // ends past the width can still be taken when nothing follows it on the line.
   // Reproducing the rule means naming what those closures captured, which is
   // what `CCheck` and `CMark` carry.
-  let over_at = (c : Int) => {
+  let over_at = (c : Int32) => {
     !(mode is Print) &&
     (match width {
       Some(w) => c >= w

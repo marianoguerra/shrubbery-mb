@@ -2,25 +2,25 @@
 package "marianoguerra/shrubbery/unicode/tables"
 
 // Values
-pub let alphabetic : FixedArray[Int]
+pub let alphabetic : FixedArray[Int32]
 
-pub let emoji_edges : FixedArray[Int]
+pub let emoji_edges : FixedArray[Int32]
 
-pub let emoji_nodes : FixedArray[Int]
+pub let emoji_nodes : FixedArray[Int32]
 
-pub let letter : FixedArray[Int]
+pub let letter : FixedArray[Int32]
 
-pub let numeric : FixedArray[Int]
+pub let numeric : FixedArray[Int32]
 
-pub let one_char_emoji : FixedArray[Int]
+pub let one_char_emoji : FixedArray[Int32]
 
-pub let punctuation : FixedArray[Int]
+pub let punctuation : FixedArray[Int32]
 
-pub let string_literal_plain : FixedArray[Int]
+pub let string_literal_plain : FixedArray[Int32]
 
-pub let symbolic : FixedArray[Int]
+pub let symbolic : FixedArray[Int32]
 
-pub let whitespace : FixedArray[Int]
+pub let whitespace : FixedArray[Int32]
 
 // Errors
 

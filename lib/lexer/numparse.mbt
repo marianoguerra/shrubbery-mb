@@ -123,7 +123,7 @@ fn parse_double(body : String) -> Double {
 }
 
 ///|
-fn is_exponent_at(s : String, i : Int) -> Bool {
+fn is_exponent_at(s : String, i : Int32) -> Bool {
   match s.get_char(i) {
     Some('e') | Some('E') => true
     _ => false

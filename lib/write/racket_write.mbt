@@ -51,7 +51,7 @@ pub fn double_to_string(d : Double) -> String {
 ///
 /// `body` is MoonBit's rendering of a non-negative finite double, in any of the
 /// forms it produces: `3.14`, `0.000001`, `100000000000000000000`, `1e+100`.
-fn decompose(body : String) -> (String, Int) {
+fn decompose(body : String) -> (String, Int32) {
   let mut mant = body
   let mut exp = 0
   match find_char(body, 'e') {
@@ -94,7 +94,7 @@ fn decompose(body : String) -> (String, Int) {
 }
 
 ///|
-fn find_char(s : String, c : Char) -> Int? {
+fn find_char(s : String, c : Char) -> Int32? {
   for i in 0..<s.length() {
     if s.get_char(i) is Some(x) && x == c {
       return Some(i)
@@ -104,7 +104,7 @@ fn find_char(s : String, c : Char) -> Int? {
 }
 
 ///|
-fn parse_signed_int(s : String) -> Int {
+fn parse_signed_int(s : String) -> Int32 {
   let mut i = 0
   let mut neg = false
   if s.get_char(0) is Some('-') {
@@ -130,7 +130,11 @@ fn parse_signed_int(s : String) -> Int {
 
 ///|
 /// `1.0`, `10.0`, `0.0001` — always with a point and at least one digit after.
-fn write_positional(out : StringBuilder, digits : String, exp10 : Int) -> Unit {
+fn write_positional(
+  out : StringBuilder,
+  digits : String,
+  exp10 : Int32,
+) -> Unit {
   if exp10 >= 0 {
     let int_len = exp10 + 1
     for i in 0..<int_len {
@@ -157,7 +161,11 @@ fn write_positional(out : StringBuilder, digits : String, exp10 : Int) -> Unit {
 
 ///|
 /// `1e+14`, `1.5e-7` — a point only when there is more than one digit.
-fn write_exponential(out : StringBuilder, digits : String, exp10 : Int) -> Unit {
+fn write_exponential(
+  out : StringBuilder,
+  digits : String,
+  exp10 : Int32,
+) -> Unit {
   out.write_char(digits.get_char(0).unwrap())
   if digits.length() > 1 {
     out.write_char('.')
@@ -212,7 +220,7 @@ pub fn string_to_string(s : String) -> String {
 }
 
 ///|
-fn pad_upper_hex(v : Int, width : Int) -> String {
+fn pad_upper_hex(v : Int32, width : Int32) -> String {
   let hex = v.to_string(radix=16).to_upper()
   let out = StringBuilder()
   for _ in 0..<(width - hex.length()) {

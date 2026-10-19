@@ -112,3 +112,8 @@ pub fn Meta::is_empty(self : Meta) -> Bool {
   self.inner_suffix.is_empty() &&
   self.suffix.is_empty()
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Raw with Eq::{not_equal, equal}

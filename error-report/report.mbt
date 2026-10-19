@@ -43,7 +43,7 @@ pub(all) struct Label {
   message : String?
   /// Tie-break for two labels that would occupy the same underline row: the
   /// larger wins the row nearer the source line. Defaults to 0.
-  priority : Int
+  priority : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -65,7 +65,7 @@ pub fn Label::secondary(
 }
 
 ///|
-pub fn Label::with_priority(self : Label, priority : Int) -> Label {
+pub fn Label::with_priority(self : Label, priority : Int32) -> Label {
   { ..self, priority, }
 }
 
@@ -196,3 +196,66 @@ pub fn Report::anchor(self : Report) -> Label? {
   }
   self.labels.get(0)
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Severity with Eq::{not_equal, equal}
+
+///|
+pub extend Severity with Compare::{compare}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Severity with Compare::{op_lt, op_le, op_ge, op_gt}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Severity with Hash::{hash, hash_combine}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Severity with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Severity with ToJson::{to_json}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend LabelStyle with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend LabelStyle with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend LabelStyle with ToJson::{to_json}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Label with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Label with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Fix with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Fix with Debug::{to_repr}

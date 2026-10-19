@@ -6,9 +6,9 @@ pub let empty : Doc
 
 pub fn join(Array[Doc], Doc) -> Doc
 
-pub fn render(Doc, StringBuilder, width? : Int?, column? : Int, indent? : Int) -> Int
+pub fn render(Doc, StringBuilder, width? : Int32?, column? : Int32, indent? : Int32) -> Int32
 
-pub fn render_string(Doc, width? : Int?, column? : Int, indent? : Int) -> String
+pub fn render_string(Doc, width? : Int32?, column? : Int32, indent? : Int32) -> String
 
 pub fn seq(Array[Doc]) -> Doc
 
@@ -19,7 +19,7 @@ pub(all) enum Doc {
   Str(String)
   Nl
   Seq(Array[Doc])
-  Nest(Int, Doc)
+  Nest(Int32, Doc)
   Align(Doc)
   Or(Doc, Doc)
 }

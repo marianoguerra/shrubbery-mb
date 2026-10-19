@@ -14,7 +14,7 @@
 /// `strict=true` to have the first error raised instead.
 pub fn parse(
   src : String,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> @parse.Parsed raise @error.CssError {
   @parse.parse(src, strict~)
 }
@@ -29,7 +29,7 @@ pub fn parse_strict(src : String) -> @ast.Stylesheet raise @error.CssError {
 /// Print a stylesheet as CSS.
 pub fn to_css(
   sheet : @ast.Stylesheet,
-  style? : @write.Style = Pretty,
+  style~ : @write.Style = Pretty,
 ) -> String {
   @write.stylesheet(sheet, style~)
 }

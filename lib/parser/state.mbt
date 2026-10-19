@@ -183,24 +183,24 @@ priv struct PState {
   count : Bool
   /// The line the group is on. `None` after a `\` continuation, which means
   /// "whatever line follows continues this one".
-  line : Int?
+  line : Int32?
   column : @column.Column?
   /// Where a `|` should line up, when that is not the group's own column.
   bar_column : @column.Column?
   /// The column of the operator that continued this group onto a new line.
   operator_column : @column.Column?
   bar_closes : Bool
-  bar_closes_line : Int?
+  bar_closes_line : Int32?
   block_mode : BlockMode
   can_empty : Bool
   /// Lines accumulated by `\` continuations. The reference also tracks a column
   /// here and has it commented out; it is always zero.
-  delta : Int
+  delta : Int32
   raw : RawList
   at_mode : AtMode?
   variant : @lexer.Variant
   /// How many sequences are open around this one. See `GState::depth`.
-  depth : Int
+  depth : Int32
 }
 
 ///|
@@ -231,11 +231,11 @@ priv struct AtMode {
 
 ///|
 fn AtMode::new(
-  initial? : Bool = false,
-  rev_prefix? : Array[@ast.Node] = [],
-  splice? : Bool = false,
-  stop_at_at? : Bool = false,
-  stop_at_next_at? : Bool = false,
+  initial~ : Bool = false,
+  rev_prefix~ : Array[@ast.Node] = [],
+  splice~ : Bool = false,
+  stop_at_at~ : Bool = false,
+  stop_at_next_at~ : Bool = false,
 ) -> AtMode {
   { initial, rev_prefix, splice, stop_at_at, stop_at_next_at, }
 }
@@ -253,15 +253,15 @@ priv struct GState {
   /// each group: only a group that starts a new line has to line up.
   check_column : Bool
   bar_closes : Bool
-  bar_closes_line : Int?
+  bar_closes_line : Int32?
   block_mode : BlockMode
   can_empty : Bool
   /// Whether a `,` is expected before the next group.
   comma_time : Bool
   sequence_mode : SequenceMode
   /// `None` after a `\` continuation. See `PState::line`.
-  last_line : Int?
-  delta : Int
+  last_line : Int32?
+  delta : Int32
   /// A `#//` waiting for the group it comments out.
   commenting : @lexer.Token?
   /// A `#//` seen after the last group, which may yet find one.
@@ -273,7 +273,7 @@ priv struct GState {
   /// through the grammar. Bounded, so that input nested past anything a person
   /// writes is refused with a diagnostic rather than by running out of stack --
   /// which on the native backend is a signal, not an error a caller can catch.
-  depth : Int
+  depth : Int32
 }
 
 ///|
@@ -297,9 +297,9 @@ priv struct PendingGroup {
 /// change that makes the port readable, and it costs one allocation per group.
 priv struct GroupsResult {
   groups : Array[PendingGroup]
-  rest : Int
-  end_line : Int?
-  end_delta : Int
+  rest : Int32
+  end_line : Int32?
+  end_delta : Int32
   /// The token that ended the sequence, when that was a closer. NOT consumed
   /// unless it was matched: `rest` may still point at it, which is the
   /// reference's "leave it in place" contract made explicit.
@@ -312,9 +312,9 @@ priv struct GroupsResult {
 /// What `parse_group` answers.
 priv struct GroupResult {
   items : Array[@ast.Node]
-  rest : Int
-  end_line : Int?
-  end_delta : Int
+  rest : Int32
+  end_line : Int32?
+  end_delta : Int32
   tail_commenting : @lexer.Token?
   tail_raw : RawList
 }

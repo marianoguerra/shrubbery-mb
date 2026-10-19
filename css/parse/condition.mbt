@@ -18,7 +18,7 @@ priv enum CondKind {
 fn Parser::parse_media_list(
   self : Parser,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
 ) -> Array[@ast.MediaQuery] raise @err.CssError {
   let out : Array[@ast.MediaQuery] = []
   if only_trivia(toks) {
@@ -34,7 +34,7 @@ fn Parser::parse_media_list(
 fn Parser::parse_media_query(
   self : Parser,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
 ) -> @ast.MediaQuery raise @err.CssError {
   let c = { toks, pos: 0, }
   let mut qualifier : @ast.MediaQualifier? = None
@@ -95,7 +95,7 @@ fn is_logical(w : String) -> Bool {
 fn Parser::parse_condition(
   self : Parser,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
 ) -> @ast.Condition raise @err.CssError {
   self.parse_cond(toks, start, Supports)
 }
@@ -104,7 +104,7 @@ fn Parser::parse_condition(
 fn Parser::parse_cond(
   self : Parser,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
   kind : CondKind,
 ) -> @ast.Condition raise @err.CssError {
   if only_trivia(toks) {
@@ -167,7 +167,7 @@ fn flatten_into(
 fn Parser::parse_cond_leaf(
   self : Parser,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
   kind : CondKind,
 ) -> @ast.Condition raise @err.CssError {
   let c = { toks, pos: 0, }
@@ -229,7 +229,7 @@ fn contains_group_or_logical(toks : ArrayView[@token.Token]) -> Bool {
 fn Parser::parse_feature(
   self : Parser,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
   kind : CondKind,
 ) -> @ast.Condition raise @err.CssError {
   // `(display: grid)` inside `@supports` is a declaration, not a feature.
@@ -314,8 +314,10 @@ fn flip(op : @ast.RangeOp) -> @ast.RangeOp {
 ///
 /// `<=` is two delimiters, because the tokenizer does not fuse them -- outside
 /// a media query those two characters are unrelated.
-fn range_ops(toks : ArrayView[@token.Token]) -> Array[(Int, @ast.RangeOp, Int)] {
-  let out : Array[(Int, @ast.RangeOp, Int)] = []
+fn range_ops(
+  toks : ArrayView[@token.Token],
+) -> Array[(Int32, @ast.RangeOp, Int32)] {
+  let out : Array[(Int32, @ast.RangeOp, Int32)] = []
   let mut depth = 0
   let mut i = 0
   while i < toks.length() {
@@ -381,7 +383,7 @@ fn has_top_colon(toks : ArrayView[@token.Token]) -> Bool {
 }
 
 ///|
-fn top_index(toks : ArrayView[@token.Token], what : @token.TokenKind) -> Int {
+fn top_index(toks : ArrayView[@token.Token], what : @token.TokenKind) -> Int32 {
   let mut depth = 0
   for i, t in toks {
     let k = t.kind
@@ -471,7 +473,7 @@ fn Parser::bogus_view(
   self : Parser,
   kind : @kind.ErrorKind,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
 ) -> @ast.Bogus raise @err.CssError {
   let sp = span_of_view(toks, start)
   self.bogus(kind, sp.start, sp.end)
@@ -636,7 +638,7 @@ fn namespace_parts(toks : ArrayView[@token.Token]) -> (String?, String?) {
 fn Parser::split_scope(
   self : Parser,
   toks : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
 ) -> (Array[@ast.Selector]?, Array[@ast.Selector]?) raise @err.CssError {
   let c = { toks, pos: 0, }
   let mut s : Array[@ast.Selector]? = None

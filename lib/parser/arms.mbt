@@ -66,7 +66,7 @@ fn Parser::parse_splice(
 fn Parser::parse_bar_group(
   self : Parser,
   t : @lexer.Token,
-  i : Int,
+  i : Int32,
   sg : GState,
   column : @column.Column,
 ) -> GroupsResult raise @err.ShrubberyError {
@@ -193,7 +193,7 @@ fn Parser::parse_bar_group(
 fn Parser::parse_one_group(
   self : Parser,
   t : @lexer.Token,
-  i : Int,
+  i : Int32,
   sg : GState,
   column : @column.Column,
   check_column : (@lexer.Token, @column.Column) -> Unit raise @err.ShrubberyError,
@@ -306,7 +306,11 @@ fn group_source(items : Array[@ast.Node]) -> @raw.Raw {
 ///|
 /// A block that ends on the line a `|` was waiting for moves that expectation
 /// to the block's own last line.
-fn next_block_close_line(bcl : Int?, pre_line : Int?, post_line : Int?) -> Int? {
+fn next_block_close_line(
+  bcl : Int32?,
+  pre_line : Int32?,
+  post_line : Int32?,
+) -> Int32? {
   match (bcl, pre_line) {
     (Some(a), Some(b)) => if a == b { post_line } else { bcl }
     _ => bcl

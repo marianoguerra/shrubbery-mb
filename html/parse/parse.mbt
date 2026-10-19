@@ -29,7 +29,7 @@
 /// segfaulted on one would be unusable in exactly the place a tolerant parser
 /// is wanted. Past the bound a start tag becomes a `Bogus` node holding its own
 /// source, so nothing is lost and nothing recurses.
-const MAX_DEPTH : Int = 400
+const MAX_DEPTH : Int32 = 400
 
 ///|
 /// A document, and everything noticed while reading it.
@@ -64,14 +64,14 @@ priv struct Frame {
   name : @ast.TagName
   attrs : Array[@ast.Attribute]
   children : Array[@ast.Node]
-  start : Int
+  start : Int32
   name_span : @span.Span
 }
 
 ///|
 priv struct Parser {
   toks : Array[@token.Token]
-  mut pos : Int
+  mut pos : Int32
   stack : Array[Frame]
   roots : Array[@ast.Node]
   diagnostics : Array[@error.Diagnostic]
@@ -86,7 +86,7 @@ priv struct Parser {
 /// `strict=true` to have the first error raised instead.
 pub fn parse(
   src : String,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Parsed raise @error.HtmlError {
   let scanned = @token.tokenize(src)
   let p = {
@@ -195,7 +195,7 @@ fn Parser::tag_name(self : Parser, lowered : String) -> @ast.TagName {
 
 ///|
 /// Close the innermost open element and hand it to its parent.
-fn Parser::pop(self : Parser, closing : @ast.Closing, end : Int) -> Unit {
+fn Parser::pop(self : Parser, closing : @ast.Closing, end : Int32) -> Unit {
   let n = self.stack.length()
   if n == 0 {
     return
@@ -220,7 +220,7 @@ fn Parser::pop(self : Parser, closing : @ast.Closing, end : Int) -> Unit {
 /// arrives lowercased and `foreignObject` is stored the way SVG spells it.
 /// Comparing the two directly is a bug that shows only inside foreign content,
 /// which is exactly where nobody looks.
-fn Parser::find_open(self : Parser, lowered : String) -> Int? {
+fn Parser::find_open(self : Parser, lowered : String) -> Int32? {
   let mut i = self.stack.length() - 1
   while i >= 0 {
     if self.stack[i].name.name.to_lower() == lowered {
@@ -290,7 +290,7 @@ fn Parser::run(self : Parser) -> Unit raise @error.HtmlError {
 }
 
 ///|
-fn Parser::document_end(self : Parser) -> Int {
+fn Parser::document_end(self : Parser) -> Int32 {
   let n = self.toks.length()
   if n == 0 {
     0

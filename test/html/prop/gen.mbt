@@ -98,7 +98,7 @@ fn split_prefix(name : String) -> @ast.AttrName {
 }
 
 ///|
-fn gen_attrs(r : Rng, size : Int) -> Array[@ast.Attribute] {
+fn gen_attrs(r : Rng, size : Int32) -> Array[@ast.Attribute] {
   let out : Array[@ast.Attribute] = []
   let n = r.below(if size > 3 { 3 } else { size + 1 })
   let mut i = 0
@@ -125,9 +125,9 @@ fn gen_attrs(r : Rng, size : Int) -> Array[@ast.Attribute] {
 /// An element, in a namespace.
 fn gen_element(
   r : Rng,
-  size : Int,
+  size : Int32,
   ns : @ast.Namespace,
-  parent? : String = "",
+  parent~ : String = "",
 ) -> @ast.Node {
   match ns {
     Html => gen_html_element(r, size, parent)
@@ -136,7 +136,7 @@ fn gen_element(
 }
 
 ///|
-fn gen_html_element(r : Rng, size : Int, parent : String) -> @ast.Node {
+fn gen_html_element(r : Rng, size : Int32, parent : String) -> @ast.Node {
   if size <= 0 || r.below(4) == 0 {
     let picked = r.pick(void_names())
     // `<hr>` closes an open `<p>`, so it is not a child of one. `<br>` closes
@@ -175,7 +175,7 @@ fn gen_html_element(r : Rng, size : Int, parent : String) -> @ast.Node {
 }
 
 ///|
-fn gen_foreign_element(r : Rng, size : Int, ns : @ast.Namespace) -> @ast.Node {
+fn gen_foreign_element(r : Rng, size : Int32, ns : @ast.Namespace) -> @ast.Node {
   let name = r.pick(svg_names())
   let inner = if name == "foreignObject" { @ast.Namespace::Html } else { ns }
   let children = if size <= 0 || r.below(3) == 0 {
@@ -200,7 +200,7 @@ fn gen_foreign_element(r : Rng, size : Int, ns : @ast.Namespace) -> @ast.Node {
 
 ///|
 /// `<svg>` and its subtree, which is the only way into foreign content.
-fn gen_svg_root(r : Rng, size : Int) -> @ast.Node {
+fn gen_svg_root(r : Rng, size : Int32) -> @ast.Node {
   let children = if size <= 1 { [] } else { gen_children(r, size / 2, Svg) }
   Element({
     name: { ns: Svg, name: "svg", },
@@ -224,9 +224,9 @@ fn gen_svg_root(r : Rng, size : Int) -> @ast.Node {
 /// round-trip property fail for a reason that is about the generator.
 fn gen_children(
   r : Rng,
-  size : Int,
+  size : Int32,
   ns : @ast.Namespace,
-  parent? : String = "",
+  parent~ : String = "",
 ) -> Array[@ast.Node] {
   let out : Array[@ast.Node] = []
   let n = 1 + r.below(if size > 3 { 3 } else { size + 1 })
@@ -244,15 +244,15 @@ fn gen_children(
 ///|
 fn gen_node(
   r : Rng,
-  size : Int,
+  size : Int32,
   ns : @ast.Namespace,
   allow_text~ : Bool,
-  parent? : String = "",
+  parent~ : String = "",
 ) -> @ast.Node {
   if size <= 0 {
     return if allow_text { gen_text(r) } else { gen_element(r, 0, ns, parent~) }
   }
-  let alts : Array[(Int, Int)] = if allow_text {
+  let alts : Array[(Int32, Int32)] = if allow_text {
     [(4, 0), (5, 1), (1, 2), (1, 3)]
   } else {
     [(6, 1), (1, 2), (1, 3)]
@@ -291,7 +291,7 @@ fn ignore_ns(n : @ast.Node, ns : @ast.Namespace) -> @ast.Node {
 
 ///|
 /// A whole document.
-pub fn gen_document(r : Rng, size : Int) -> @ast.Document {
+pub fn gen_document(r : Rng, size : Int32) -> @ast.Document {
   let children : Array[@ast.Node] = []
   if r.bool() {
     children.push(
@@ -440,7 +440,7 @@ fn child_ns(e : @ast.Element) -> @ast.Namespace {
 ///|
 /// How many nodes a document holds, for the test that says shrinking makes
 /// progress.
-pub fn size_of(doc : @ast.Document) -> Int {
+pub fn size_of(doc : @ast.Document) -> Int32 {
   let mut total = 0
   for c in doc.children {
     total = total + node_size(c)
@@ -449,7 +449,7 @@ pub fn size_of(doc : @ast.Document) -> Int {
 }
 
 ///|
-fn node_size(n : @ast.Node) -> Int {
+fn node_size(n : @ast.Node) -> Int32 {
   match n {
     Element(e) => {
       let mut total = 1 + e.attrs.length()

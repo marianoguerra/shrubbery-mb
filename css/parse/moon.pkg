@@ -9,5 +9,4 @@ import {
 import {
   "marianoguerra/css/parse",
   "marianoguerra/css/write",
-  "moonbitlang/core/test",
 } for "test"

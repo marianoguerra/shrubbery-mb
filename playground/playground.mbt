@@ -183,7 +183,7 @@ fn quote(s : String) -> String {
 }
 
 ///|
-fn hex_digit(v : Int) -> Char {
+fn hex_digit(v : Int32) -> Char {
   if v < 10 {
     (48 + v).unsafe_to_char()
   } else {

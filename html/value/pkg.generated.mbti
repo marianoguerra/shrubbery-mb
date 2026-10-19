@@ -9,7 +9,7 @@ import {
 // Values
 pub fn as_bool(@ast.Element, String) -> Bool
 
-pub fn as_int(@ast.Element, String) -> Int?
+pub fn as_int(@ast.Element, String) -> Int32?
 
 pub fn attr(@ast.Element, String) -> String?
 

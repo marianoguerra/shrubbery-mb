@@ -8,11 +8,11 @@ import {
 }
 
 // Values
-pub fn char_width(Char) -> Int
+pub fn char_width(Char) -> Int32
 
 pub let default_config : Config
 
-pub fn expand_tabs(String, Int) -> (String, Array[Int])
+pub fn expand_tabs(String, Int32) -> (String, Array[Int32])
 
 pub fn json(@error-report.Report, &@error-report.SourceCache, StringBuilder) -> Unit
 
@@ -26,7 +26,7 @@ pub fn rich(@error-report.Report, &@error-report.SourceCache, Config, StringBuil
 
 pub fn short(@error-report.Report, &@error-report.SourceCache, Config, StringBuilder, is_tty? : Bool) -> Unit
 
-pub fn str_width(String) -> Int
+pub fn str_width(String) -> Int32
 
 // Errors
 
@@ -36,8 +36,8 @@ pub(all) struct Config {
   chars : @style.CharSet
   theme : @style.Theme
   color : @style.ColorMode
-  tab_width : Int
-  context_lines : Int
+  tab_width : Int32
+  context_lines : Int32
 }
 pub fn Config::use_color(Self, is_tty~ : Bool) -> Bool
 

@@ -78,3 +78,13 @@ pub fn ErrorKind::is_warning(self : ErrorKind) -> Bool {
     _ => false
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ErrorKind with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend ErrorKind with Debug::{to_repr}

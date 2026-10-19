@@ -37,7 +37,7 @@ priv struct AtFrame {
   /// Bracket nesting while reading the command and arguments.
   openers : Array[String]
   /// Brace nesting inside the text.
-  mut depth : Int
+  mut depth : Int32
 }
 
 ///|
@@ -77,7 +77,7 @@ fn opener_to_closer(opener : String) -> String {
 ///
 /// ASCII-only, deliberately: the prefix has to be typed twice, once as itself
 /// and once mirrored, and restricting it keeps the mirroring total.
-fn Scanner::peek_at_opener(self : Scanner, i : Int) -> String? {
+fn Scanner::peek_at_opener(self : Scanner, i : Int32) -> String? {
   match self.at(i) {
     Some('{') => Some("")
     Some('|') => {
@@ -108,7 +108,7 @@ fn Scanner::peek_at_opener(self : Scanner, i : Int) -> String? {
 /// Whether `opener` followed by `c` sits at `i`.
 fn Scanner::peek_at_prefixed(
   self : Scanner,
-  i : Int,
+  i : Int32,
   opener : String,
   c : Char,
 ) -> Bool {
@@ -120,7 +120,7 @@ fn Scanner::peek_at_prefixed(
 
 ///|
 /// Whether the closer for `opener` sits at `i`.
-fn Scanner::peek_at_closer(self : Scanner, i : Int, opener : String) -> Bool {
+fn Scanner::peek_at_closer(self : Scanner, i : Int32, opener : String) -> Bool {
   if !(self.at(i) is Some('}')) {
     return false
   }
@@ -143,7 +143,7 @@ fn Scanner::at_top(self : Scanner) -> AtFrame? {
 /// line comment that also swallows the newline and the next line's indentation
 /// — without that, commenting out a line of text would leave its line break
 /// behind and change the text around it.
-fn Scanner::scan_at(self : Scanner, start : @basic.Pos, from : Int) -> Token {
+fn Scanner::scan_at(self : Scanner, start : @basic.Pos, from : Int32) -> Token {
   if self.has(from, "@//") {
     match self.peek_at_opener(from + 3) {
       Some(opener) => {
@@ -182,7 +182,7 @@ fn Scanner::scan_at(self : Scanner, start : @basic.Pos, from : Int) -> Token {
 ///|
 /// A `@//` line comment: to the end of the line, then the newline, then the
 /// leading whitespace of the next line.
-fn Scanner::scan_at_line_comment(self : Scanner, from : Int) -> Int {
+fn Scanner::scan_at_line_comment(self : Scanner, from : Int32) -> Int32 {
   let mut i = from
   while i < self.src.length() {
     match self.at(i) {
@@ -406,7 +406,7 @@ fn Scanner::after_at_token(self : Scanner, frame : AtFrame, t : Token) -> Token 
 /// Whether an operator and then an identifier follow, with no space between.
 ///
 /// This is what makes `@a.b.c` one command rather than `@a` followed by text.
-fn Scanner::peek_operator_then_identifier(self : Scanner, i : Int) -> Bool {
+fn Scanner::peek_operator_then_identifier(self : Scanner, i : Int32) -> Bool {
   match self.scan_operator(i) {
     Some(e) => self.scan_identifier(e) is Some(_)
     None => false
@@ -424,3 +424,8 @@ fn closes(opener : String, closer : String) -> Bool {
     _ => false
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend AtMode with Eq::{not_equal, equal}

@@ -39,7 +39,7 @@ pub fn as_number(v : @ast.ComponentValue) -> Double? {
 ///
 /// `is_int` rather than a floor: `2.0` is written as a number with a fractional
 /// part, and a grammar asking for an integer should not silently accept it.
-pub fn as_integer(v : @ast.ComponentValue) -> Int? {
+pub fn as_integer(v : @ast.ComponentValue) -> Int32? {
   match v {
     Num(n) => if n.is_int { Some(n.value.to_int()) } else { None }
     _ => None
@@ -215,7 +215,7 @@ pub fn as_color(v : @ast.ComponentValue) -> Color? {
 /// and resolving `red` means carrying the named-colour table's values. Both are
 /// real work with real answers, and neither belongs behind a function that
 /// looks this cheap.
-pub fn to_rgba(c : Color) -> (Int, Int, Int, Int)? {
+pub fn to_rgba(c : Color) -> (Int32, Int32, Int32, Int32)? {
   match c {
     Hex(d) => {
       let n = d.length()
@@ -247,12 +247,12 @@ pub fn to_rgba(c : Color) -> (Int, Int, Int, Int)? {
 }
 
 ///|
-fn hex1(s : String, i : Int) -> Int? {
+fn hex1(s : String, i : Int32) -> Int32? {
   hex_value(s.unsafe_get(i).to_int().unsafe_to_char())
 }
 
 ///|
-fn hex2(s : String, i : Int) -> Int? {
+fn hex2(s : String, i : Int32) -> Int32? {
   match (hex1(s, i), hex1(s, i + 1)) {
     (Some(a), Some(b)) => Some(a * 16 + b)
     _ => None
@@ -260,7 +260,7 @@ fn hex2(s : String, i : Int) -> Int? {
 }
 
 ///|
-fn hex_value(c : Char) -> Int? {
+fn hex_value(c : Char) -> Int32? {
   if c >= '0' && c <= '9' {
     Some(c.to_int() - 48)
   } else if c >= 'a' && c <= 'f' {
@@ -420,3 +420,33 @@ pub fn as_keyword(v : @ast.ComponentValue, allowed : Array[String]) -> String? {
     _ => None
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend UnitKind with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend UnitKind with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Dimension with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Dimension with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Color with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Color with Debug::{to_repr}

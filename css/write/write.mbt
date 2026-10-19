@@ -28,12 +28,12 @@ pub(all) enum Style {
 priv struct Printer {
   buf : StringBuilder
   style : Style
-  mut depth : Int
+  mut depth : Int32
 }
 
 ///|
 /// Render a stylesheet.
-pub fn stylesheet(sheet : @ast.Stylesheet, style? : Style = Pretty) -> String {
+pub fn stylesheet(sheet : @ast.Stylesheet, style~ : Style = Pretty) -> String {
   let p = { buf: StringBuilder(), style, depth: 0, }
   p.write_stylesheet(sheet)
   p.buf.to_string()
@@ -41,7 +41,7 @@ pub fn stylesheet(sheet : @ast.Stylesheet, style? : Style = Pretty) -> String {
 
 ///|
 /// Render one rule, for tests and for error messages that quote a rule.
-pub fn rule(r : @ast.CssRule, style? : Style = Pretty) -> String {
+pub fn rule(r : @ast.CssRule, style~ : Style = Pretty) -> String {
   let p = { buf: StringBuilder(), style, depth: 0, }
   p.write_rule(r)
   p.buf.to_string()
@@ -49,7 +49,7 @@ pub fn rule(r : @ast.CssRule, style? : Style = Pretty) -> String {
 
 ///|
 /// Render one declaration.
-pub fn declaration(d : @ast.Declaration, style? : Style = Pretty) -> String {
+pub fn declaration(d : @ast.Declaration, style~ : Style = Pretty) -> String {
   let p = { buf: StringBuilder(), style, depth: 0, }
   p.write_decl(d)
   p.buf.to_string()
@@ -57,7 +57,7 @@ pub fn declaration(d : @ast.Declaration, style? : Style = Pretty) -> String {
 
 ///|
 /// Render one selector.
-pub fn selector(s : @ast.Selector, style? : Style = Pretty) -> String {
+pub fn selector(s : @ast.Selector, style~ : Style = Pretty) -> String {
   let p = { buf: StringBuilder(), style, depth: 0, }
   p.write_selector(s)
   p.buf.to_string()
@@ -67,7 +67,7 @@ pub fn selector(s : @ast.Selector, style? : Style = Pretty) -> String {
 /// Render a value list, the contents of one declaration.
 pub fn value(
   vs : Array[@ast.ComponentValue],
-  style? : Style = Pretty,
+  style~ : Style = Pretty,
 ) -> String {
   let p = { buf: StringBuilder(), style, depth: 0, }
   p.write_values(vs[:])
@@ -608,3 +608,8 @@ fn Printer::write_pseudo_element(
     }
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Style with Eq::{not_equal, equal}

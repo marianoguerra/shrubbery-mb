@@ -15,7 +15,7 @@
 /// `strict=true` to have the first error raised instead.
 pub fn parse(
   src : String,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> @parse.Parsed raise @error.HtmlError {
   @parse.parse(src, strict~)
 }
@@ -30,8 +30,8 @@ pub fn parse_strict(src : String) -> @ast.Document raise @error.HtmlError {
 /// Print a document as markup.
 pub fn to_html(
   doc : @ast.Document,
-  style? : @write.Style = Pretty,
-  whitespace? : @write.Whitespace = Css,
+  style~ : @write.Style = Pretty,
+  whitespace~ : @write.Whitespace = Css,
 ) -> String {
   @write.document(doc, style~, whitespace~)
 }

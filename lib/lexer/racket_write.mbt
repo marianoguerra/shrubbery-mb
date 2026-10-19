@@ -156,7 +156,7 @@ fn write_racket_char(buf : StringBuilder, c : Char) -> Unit {
 ///|
 /// Uppercase, which is what Racket prints in a character escape: `#\\u001F`,
 /// `#\\U0001FFFF`.
-fn write_hex_padded(buf : StringBuilder, v : Int, width : Int) -> Unit {
+fn write_hex_padded(buf : StringBuilder, v : Int32, width : Int32) -> Unit {
   let hex = v.to_string(radix=16).to_upper()
   for _ in 0..<(width - hex.length()) {
     buf.write_char('0')

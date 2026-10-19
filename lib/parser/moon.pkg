@@ -5,10 +5,8 @@ import {
   "marianoguerra/shrubbery/error" @err,
   "marianoguerra/shrubbery/lexer",
   "marianoguerra/shrubbery/raw",
-  "marianoguerra/shrubbery/sexp",
 }
 
 import {
   "marianoguerra/shrubbery/parser",
-  "moonbitlang/core/test",
 } for "test"

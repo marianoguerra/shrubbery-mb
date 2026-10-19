@@ -15,8 +15,8 @@
 /// hands back the diagnostics alongside the tree.
 pub fn to_html(
   src : String,
-  style? : @write.Style = Pretty,
-  whitespace? : @write.Whitespace = Css,
+  style~ : @write.Style = Pretty,
+  whitespace~ : @write.Whitespace = Css,
 ) -> String raise @error.ShrubHtmlError {
   let l = @lower.lower_source(src)
   @write.document(l.document(), style~, whitespace~)
@@ -31,8 +31,8 @@ pub fn to_html(
 /// and an HTML user should not pay for the CSS tables.
 pub fn lower(
   src : String,
-  strict? : Bool = false,
-  hook? : @lower.RawTextHook? = None,
+  strict~ : Bool = false,
+  hook~ : @lower.RawTextHook? = None,
 ) -> @lower.Lowered raise @error.ShrubHtmlError {
   @lower.lower_source(src, strict~, hook~)
 }

@@ -10,8 +10,8 @@
 fn el(
   name : String,
   children : Array[@ast.Node],
-  attrs? : Array[@ast.Attribute] = [],
-  closing? : @ast.Closing = Explicit,
+  attrs~ : Array[@ast.Attribute] = [],
+  closing~ : @ast.Closing = Explicit,
 ) -> @ast.Node {
   Element({
     name: @ast.TagName::html(name),

@@ -3,9 +3,9 @@
 /// never trailing, never doubled.
 fn Scanner::scan_uinteger(
   self : Scanner,
-  from : Int,
+  from : Int32,
   digit : (Char) -> Bool,
-) -> Int? {
+) -> Int32? {
   match self.at(from) {
     Some(c) if digit(c) => ()
     _ => return None
@@ -27,7 +27,7 @@ fn Scanner::scan_uinteger(
 
 ///|
 /// `e` or `E`, an optional sign, and digits.
-fn Scanner::scan_exponent(self : Scanner, from : Int) -> Int? {
+fn Scanner::scan_exponent(self : Scanner, from : Int32) -> Int32? {
   match self.at(from) {
     Some('e') | Some('E') => ()
     _ => return None
@@ -46,7 +46,7 @@ fn Scanner::scan_exponent(self : Scanner, from : Int) -> Int? {
 /// leading `.`; `Continuing` — which the scanner enters after an identifier, a
 /// literal, a closer or a keyword — admits neither, so that `1+2` is three
 /// tokens while `1 +2` is two.
-fn Scanner::scan_number(self : Scanner, from : Int) -> Int? {
+fn Scanner::scan_number(self : Scanner, from : Int32) -> Int32? {
   let signed = self.mode is Initial
   let body = match self.at(from) {
     Some('+') | Some('-') if signed => from + 1
@@ -124,7 +124,7 @@ fn Scanner::scan_number(self : Scanner, from : Int) -> Int? {
 /// This is what makes `1x` an error rather than `1` beside `x`, and `1.2.3` an
 /// error rather than `1.2` beside `.3`. Returns `from` when the number is
 /// properly delimited.
-fn Scanner::scan_bad_number_tail(self : Scanner, from : Int) -> Int {
+fn Scanner::scan_bad_number_tail(self : Scanner, from : Int32) -> Int32 {
   let mut i = from
   while i < self.src.length() {
     match self.at(i) {
@@ -169,7 +169,7 @@ fn is_decimal_integer(s : String) -> Bool {
 fn Scanner::scan_number_or_operator(
   self : Scanner,
   start : @basic.Pos,
-  from : Int,
+  from : Int32,
 ) -> Token {
   let num = self.scan_number(from)
   match num {
@@ -216,7 +216,7 @@ fn Scanner::scan_number_or_operator(
 
 ///|
 /// Widen a failure to the next whitespace or structural character.
-fn Scanner::extend_error(self : Scanner, from : Int) -> Int {
+fn Scanner::extend_error(self : Scanner, from : Int32) -> Int32 {
   let mut i = self.step(from)
   while i < self.src.length() {
     match self.at(i) {
@@ -240,8 +240,8 @@ fn Scanner::extend_error(self : Scanner, from : Int) -> Int {
 fn Scanner::finish_number(
   self : Scanner,
   start : @basic.Pos,
-  from : Int,
-  num_end : Int,
+  from : Int32,
+  num_end : Int32,
 ) -> Token {
   let lexeme = self.src.clamped_view(start=from, end=num_end).to_owned()
   // A trailing `.` joins the number only when it could not be starting a
@@ -282,7 +282,7 @@ fn Scanner::finish_number(
 /// The last condition is what keeps `1/2.0` from becoming the rational a half
 /// beside `.0`: a `.` after the digits means the denominator was meant to be a
 /// decimal, so the `/` is division and not a fraction bar.
-fn Scanner::scan_fraction(self : Scanner, from : Int) -> (Int, String)? {
+fn Scanner::scan_fraction(self : Scanner, from : Int32) -> (Int32, String)? {
   if !(self.at(from) is Some('/')) {
     return None
   }

@@ -7,10 +7,10 @@
 /// what knows where the group starts.
 fn Parser::parse_group(
   self : Parser,
-  start : Int,
+  start : Int32,
   s : PState,
 ) -> GroupResult raise @err.ShrubberyError {
-  let done = (i : Int, s : PState) => {
+  let done = (i : Int32, s : PState) => {
     (
       {
         items: [],
@@ -208,11 +208,11 @@ fn Parser::check_block_mode(
 /// Take one token as a term and carry on with the rest of the group.
 fn Parser::keep(
   self : Parser,
-  i : Int,
+  i : Int32,
   s : PState,
-  operator_column? : @column.Column? = None,
-  at_mode? : AtMode? = None,
-  suffix? : Bool = true,
+  operator_column~ : @column.Column? = None,
+  at_mode~ : AtMode? = None,
+  suffix~ : Bool = true,
 ) -> GroupResult raise @err.ShrubberyError {
   let t = self.tok(i)
   self.check_block_mode(t, s)
@@ -280,12 +280,12 @@ fn Parser::keep(
 fn Parser::parse_alts_block(
   self : Parser,
   t : @lexer.Token,
-  i : Int,
+  i : Int32,
   s : PState,
-  delta~ : Int,
+  delta~ : Int32,
   raw~ : RawList,
-  done_at~ : Int,
-  group_commenting? : @lexer.Token? = None,
+  done_at~ : Int32,
+  group_commenting~ : @lexer.Token? = None,
 ) -> GroupResult raise @err.ShrubberyError {
   let line = t.line()
   if s.bar_closes || line_eq_plus(line, s.bar_closes_line, s.delta) {

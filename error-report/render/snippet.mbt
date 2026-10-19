@@ -54,7 +54,7 @@ fn blank_gutter(
 /// ` 12 │ ` — the line number, right-aligned, and the frame bar.
 fn write_line_head(
   snip : Snippet,
-  line : Int?,
+  line : Int32?,
   config : Config,
   buf : StringBuilder,
   color~ : Bool,
@@ -79,11 +79,11 @@ fn write_line_head(
 /// The left margin: one column per concurrent multi-line label.
 fn write_margin(
   snip : Snippet,
-  line : Int,
+  line : Int32,
   config : Config,
   buf : StringBuilder,
   color~ : Bool,
-  closing? : Int = -1,
+  closing~ : Int32 = -1,
 ) -> Unit {
   if snip.margin_width == 0 {
     return
@@ -137,7 +137,7 @@ fn write_margin(
 ///|
 fn write_source_line(
   snip : Snippet,
-  line : Int,
+  line : Int32,
   config : Config,
   buf : StringBuilder,
   color~ : Bool,
@@ -162,7 +162,7 @@ fn label_style(config : Config, style : @report.LabelStyle) -> @style.Style {
 /// The underline row for a line, then one row per label message.
 fn write_underlines(
   snip : Snippet,
-  line : Int,
+  line : Int32,
   config : Config,
   buf : StringBuilder,
   color~ : Bool,
@@ -221,7 +221,7 @@ fn write_underlines(
   buf.write_char('\n')
 
   // Messages, rightmost first, so each one's stem is shorter than the last.
-  let with_msg : Array[Int] = []
+  let with_msg : Array[Int32] = []
   for i in 0..<here.length() {
     if here[i].message is Some(_) {
       with_msg.push(i)
@@ -254,7 +254,7 @@ fn write_underlines(
 ///|
 /// The column a label's message stem descends from: the middle of its
 /// underline, which reads better than either end when several sit side by side.
-fn stem_col(l : InlineLabel) -> Int {
+fn stem_col(l : InlineLabel) -> Int32 {
   l.start_col + (l.end_col - l.start_col - 1) / 2
 }
 
@@ -262,7 +262,7 @@ fn stem_col(l : InlineLabel) -> Int {
 /// Write a prepared row, one styled write per run of identical owner.
 fn write_row(
   row : Array[Char],
-  owner : Array[Int],
+  owner : Array[Int32],
   labels : Array[InlineLabel],
   config : Config,
   buf : StringBuilder,
@@ -293,7 +293,7 @@ fn write_row(
 /// Messages for multi-line labels that end on this line.
 fn write_block_messages(
   snip : Snippet,
-  line : Int,
+  line : Int32,
   config : Config,
   buf : StringBuilder,
   color~ : Bool,

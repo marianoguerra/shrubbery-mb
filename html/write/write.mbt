@@ -58,7 +58,7 @@ priv struct Printer {
   /// a parse; non-empty only for a hand-built tree that asked for something
   /// markup cannot express.
   problems : Array[(@kind.ErrorKind, @span.Span)]
-  mut depth : Int
+  mut depth : Int32
   /// Whether the attribute written most recently went out without quotes.
   /// Read by the `/>` branch, which cannot be emitted straight after one.
   mut unquoted_last : Bool
@@ -80,8 +80,8 @@ fn Printer::new(style : Style, ws : Whitespace) -> Printer {
 /// Render a document.
 pub fn document(
   doc : @ast.Document,
-  style? : Style = Pretty,
-  whitespace? : Whitespace = Css,
+  style~ : Style = Pretty,
+  whitespace~ : Whitespace = Css,
 ) -> String {
   let (text, _) = document_checked(doc, style~, whitespace~)
   text
@@ -99,8 +99,8 @@ pub fn document(
 /// unchanged, and the caller is told the tree cannot be printed.
 pub fn document_checked(
   doc : @ast.Document,
-  style? : Style = Pretty,
-  whitespace? : Whitespace = Css,
+  style~ : Style = Pretty,
+  whitespace~ : Whitespace = Css,
 ) -> (String, Array[(@kind.ErrorKind, @span.Span)]) {
   let p = Printer::new(style, whitespace)
   p.write_top(doc.children, p.children_breakable(doc.children, true))
@@ -122,8 +122,8 @@ pub fn document_checked(
 /// Render one node, for a test or for a diagnostic that quotes one.
 pub fn node(
   n : @ast.Node,
-  style? : Style = Pretty,
-  whitespace? : Whitespace = Css,
+  style~ : Style = Pretty,
+  whitespace~ : Whitespace = Css,
 ) -> String {
   let p = Printer::new(style, whitespace)
   p.write_node(n)
@@ -134,8 +134,8 @@ pub fn node(
 /// Render one element.
 pub fn element(
   e : @ast.Element,
-  style? : Style = Pretty,
-  whitespace? : Whitespace = Css,
+  style~ : Style = Pretty,
+  whitespace~ : Whitespace = Css,
 ) -> String {
   node(Element(e), style~, whitespace~)
 }
@@ -492,3 +492,13 @@ fn Printer::write_doctype(self : Printer, d : @ast.Doctype) -> Unit {
   }
   self.buf.write_char('>')
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Style with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Whitespace with Eq::{not_equal, equal}

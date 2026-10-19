@@ -9,7 +9,7 @@ pub fn render(
   cache : &@report.SourceCache,
   config : Config,
   buf : StringBuilder,
-  is_tty? : Bool = false,
+  is_tty~ : Bool = false,
 ) -> Unit {
   match config.format {
     Rich => rich(report, cache, config, buf, is_tty~)
@@ -25,7 +25,7 @@ pub fn render_string(
   report : @report.Report,
   cache : &@report.SourceCache,
   config : Config,
-  is_tty? : Bool = false,
+  is_tty~ : Bool = false,
 ) -> String {
   let buf = StringBuilder()
   render(report, cache, config, buf, is_tty~)

@@ -40,11 +40,11 @@ pub fn Parsed::diagnostics(self : Parsed) -> Array[@err.Diagnostic] {
 /// never the positions reported.
 pub fn parse(
   src : String,
-  mode? : Mode = Top,
-  variant? : @lexer.Variant = @lexer.default_variant,
-  start_column? : @column.Column = @column.zero,
-  recover? : Bool = false,
-  max_depth? : Int = default_max_depth,
+  mode~ : Mode = Top,
+  variant~ : @lexer.Variant = @lexer.default_variant,
+  start_column~ : @column.Column = @column.zero,
+  recover~ : Bool = false,
+  max_depth~ : Int32 = default_max_depth,
 ) -> Parsed raise @err.ShrubberyError {
   let toks = @lexer.lex_all(src, variant~, start_column~)
   parse_tokens(toks, mode~, variant~, recover~, max_depth~)
@@ -57,10 +57,10 @@ pub fn parse(
 /// an editor, a highlighter -- should not have to scan twice.
 pub fn parse_tokens(
   toks : Array[@lexer.Token],
-  mode? : Mode = Top,
-  variant? : @lexer.Variant = @lexer.default_variant,
-  recover? : Bool = false,
-  max_depth? : Int = default_max_depth,
+  mode~ : Mode = Top,
+  variant~ : @lexer.Variant = @lexer.default_variant,
+  recover~ : Bool = false,
+  max_depth~ : Int32 = default_max_depth,
 ) -> Parsed raise @err.ShrubberyError {
   // The end-of-input token has served its purpose in the scanner; the parser
   // asks "are there tokens left?" instead, as the reference does.
@@ -115,3 +115,8 @@ pub fn parse_tokens(
     }
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Mode with Eq::{not_equal, equal}

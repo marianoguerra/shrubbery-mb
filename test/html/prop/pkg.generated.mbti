@@ -6,24 +6,24 @@ import {
 }
 
 // Values
-pub fn gen_document(Rng, Int) -> @ast.Document
+pub fn gen_document(Rng, Int32) -> @ast.Document
 
-pub fn[T] minimize(T, (T) -> Array[T], (T) -> Bool, fuel? : Int) -> T
+pub fn[T] minimize(T, (T) -> Array[T], (T) -> Bool, fuel? : Int32) -> T
 
 pub fn shrink_document(@ast.Document) -> Array[@ast.Document]
 
-pub fn size_of(@ast.Document) -> Int
+pub fn size_of(@ast.Document) -> Int32
 
 // Errors
 
 // Types and methods
 type Rng
-pub fn Rng::below(Self, Int) -> Int
+pub fn Rng::below(Self, Int32) -> Int32
 pub fn Rng::bool(Self) -> Bool
 pub fn Rng::new(UInt64) -> Self
 pub fn Rng::next(Self) -> UInt64
 pub fn[T] Rng::pick(Self, Array[T]) -> T
-pub fn[T] Rng::weighted(Self, Array[(Int, T)]) -> T
+pub fn[T] Rng::weighted(Self, Array[(Int32, T)]) -> T
 
 // Type aliases
 

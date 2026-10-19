@@ -3,8 +3,3 @@ import {
   "marianoguerra/shrubbery/raw",
   "marianoguerra/shrubbery/sexp",
 }
-
-import {
-  "marianoguerra/shrubbery/ast",
-  "moonbitlang/core/test",
-} for "test"

@@ -23,8 +23,8 @@ pub(all) enum Style {
 /// every line that could be broken".
 pub fn write(
   node : @ast.Node,
-  style? : Style = Flat,
-  width? : Int? = None,
+  style~ : Style = Flat,
+  width~ : Int32? = None,
 ) -> String {
   match style {
     Flat => {
@@ -42,7 +42,7 @@ pub fn write(
 /// Exposed because the document is the interesting object: it describes every
 /// legal layout at once, and a consumer with its own renderer -- or its own
 /// idea of what fits -- can take it from here.
-pub fn to_doc(node : @ast.Node, style? : Style = Pretty) -> @doc.Doc {
+pub fn to_doc(node : @ast.Node, style~ : Style = Pretty) -> @doc.Doc {
   let target = match style {
     Armoured => ArmorDoc
     PreferMultiline => MultiDoc
@@ -86,3 +86,8 @@ priv struct Built {
 fn twice(text : String) -> Built {
   { single: Some(Str(text)), multi: Str(text), quotes: false, is_atom: true, }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Style with Eq::{not_equal, equal}

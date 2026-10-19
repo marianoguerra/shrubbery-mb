@@ -14,16 +14,16 @@
 ///     tabs and grapheme clusters both make it something else.
 pub(all) struct Pos {
   /// 1-based.
-  line : Int
+  line : Int32
   /// 1-based code points from the start of the source.
-  pos : Int
+  pos : Int32
   /// 0-based UTF-16 code units from the start of the source. Slicing only.
-  idx : Int
+  idx : Int32
   /// 0-based CODE POINTS from the start of the line — Racket's port column,
   /// and what its `syntax-column` reports. Not the indentation column below:
   /// a tab advances this by one and `col` to a new run, and de-indenting a
   /// block of `@` text is measured in this one.
-  col0 : Int
+  col0 : Int32
   /// The indentation column.
   col : @column.Column
 } derive(Eq)
@@ -59,7 +59,7 @@ pub fn Span::merge(self : Span, other : Span) -> Span {
 
 ///|
 /// Length in UTF-16 code units — the unit `error-report` spans are in.
-pub fn Span::units(self : Span) -> Int {
+pub fn Span::units(self : Span) -> Int32 {
   self.end.idx - self.start.idx
 }
 
@@ -68,3 +68,13 @@ pub fn Span::units(self : Span) -> Int {
 pub fn Pos::to_display(self : Pos) -> String {
   "\{self.line}:\{self.col.to_display()}"
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Pos with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with Eq::{not_equal, equal}

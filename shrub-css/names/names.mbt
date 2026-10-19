@@ -292,3 +292,13 @@ pub fn is_reserved_call(name : String) -> Bool {
     _ => is_plain_unit(name)
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Combinator with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Combinator with Debug::{to_repr}

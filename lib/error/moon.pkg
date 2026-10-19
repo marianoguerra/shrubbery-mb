@@ -8,5 +8,4 @@ import {
   "marianoguerra/shrubbery/column",
   "marianoguerra/error-report/render",
   "marianoguerra/error-report/style",
-  "moonbitlang/core/test",
 } for "test"

@@ -3,7 +3,11 @@
 ///
 /// The order here is the order of decreasing length, because the reference's
 /// lexer takes the longest match: `#//` before `#/`, `#true` before `#`.
-fn Scanner::scan_hash(self : Scanner, start : @basic.Pos, from : Int) -> Token {
+fn Scanner::scan_hash(
+  self : Scanner,
+  start : @basic.Pos,
+  from : Int32,
+) -> Token {
   if self.has(from, "#//") {
     return self.finish(start, from + 3, GroupComment)
   }
@@ -64,7 +68,7 @@ fn Scanner::scan_hash(self : Scanner, start : @basic.Pos, from : Int) -> Token {
 
 ///|
 /// One of the `#` constants, if the source has it here.
-fn Scanner::hash_word(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
+fn Scanner::hash_word(self : Scanner, from : Int32) -> (Int32, @sexp.Datum)? {
   if self.has(from, "#true") {
     Some((from + 5, Bool_(true)))
   } else if self.has(from, "#false") {
@@ -85,7 +89,7 @@ fn Scanner::hash_word(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
 ///|
 /// How far `#` plus alphanumerics reaches — the extent of a `bad-hash`, and the
 /// delimiter check for the constants.
-fn Scanner::hash_tail(self : Scanner, from : Int) -> Int {
+fn Scanner::hash_tail(self : Scanner, from : Int32) -> Int32 {
   let mut i = from + 1
   while i < self.src.length() {
     match self.at(i) {
@@ -98,7 +102,7 @@ fn Scanner::hash_tail(self : Scanner, from : Int) -> Int {
 
 ///|
 /// `#!` to the end of the line, with a trailing `\` continuing onto the next.
-fn Scanner::scan_script(self : Scanner, from : Int) -> Int {
+fn Scanner::scan_script(self : Scanner, from : Int32) -> Int32 {
   let mut i = from + 2
   while i < self.src.length() {
     match self.at(i) {

@@ -18,7 +18,7 @@ pub(all) enum Doc {
   /// Printed in order, at the same indentation.
   Seq(Array[Doc])
   /// Printed with the indentation increased by `n`.
-  Nest(Int, Doc)
+  Nest(Int32, Doc)
   /// Printed with the indentation set to the CURRENT column.
   Align(Doc)
   /// The single-line reading, then the multi-line one.

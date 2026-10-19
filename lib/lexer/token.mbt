@@ -101,12 +101,12 @@ pub fn Token::column(self : Token) -> @column.Column {
 }
 
 ///|
-pub fn Token::line(self : Token) -> Int {
+pub fn Token::line(self : Token) -> Int32 {
   self.span.start.line
 }
 
 ///|
-pub fn Token::end_line(self : Token) -> Int {
+pub fn Token::end_line(self : Token) -> Int32 {
   self.span.end.line
 }
 
@@ -182,3 +182,13 @@ pub fn TokenKind::kind_name(self : TokenKind) -> String {
     Fail(_) => "fail"
   }
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend TokenKind with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend LexMode with Eq::{not_equal, equal}

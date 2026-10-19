@@ -8,7 +8,7 @@
 fn Scanner::scan_sexp_escape(
   self : Scanner,
   start : @basic.Pos,
-  from : Int,
+  from : Int32,
   keyword~ : Bool,
 ) -> Token {
   let open_len = if keyword { 3 } else { 2 }
@@ -98,7 +98,7 @@ fn Scanner::scan_sexp_escape(
 }
 
 ///|
-fn Scanner::skip_racket_space(self : Scanner, from : Int) -> Int {
+fn Scanner::skip_racket_space(self : Scanner, from : Int32) -> Int32 {
   let mut i = from
   while i < self.src.length() {
     match self.at(i) {
@@ -130,7 +130,7 @@ fn is_racket_delim(c : Char) -> Bool {
 /// every use in the corpus is. Lists, vectors, strings and characters are here
 /// because the grammar admits them; anything stranger is kept verbatim as
 /// `Other`, which round-trips and reports honestly rather than failing to lex.
-fn Scanner::read_datum(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
+fn Scanner::read_datum(self : Scanner, from : Int32) -> (Int32, @sexp.Datum)? {
   let c = match self.at(from) {
     Some(c) => c
     None => return None
@@ -152,8 +152,8 @@ fn Scanner::read_datum(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
 ///|
 fn Scanner::read_symbol_or_number(
   self : Scanner,
-  from : Int,
-) -> (Int, @sexp.Datum)? {
+  from : Int32,
+) -> (Int32, @sexp.Datum)? {
   let buf = StringBuilder()
   let mut escaped = false
   let mut i = from
@@ -300,7 +300,10 @@ fn racket_real(text : String) -> @sexp.Datum? {
 }
 
 ///|
-fn Scanner::read_bar_symbol(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
+fn Scanner::read_bar_symbol(
+  self : Scanner,
+  from : Int32,
+) -> (Int32, @sexp.Datum)? {
   let buf = StringBuilder()
   let mut i = from + 1
   while i < self.src.length() {
@@ -319,8 +322,8 @@ fn Scanner::read_bar_symbol(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
 ///|
 fn Scanner::read_racket_string(
   self : Scanner,
-  from : Int,
-) -> (Int, @sexp.Datum)? {
+  from : Int32,
+) -> (Int32, @sexp.Datum)? {
   let buf = StringBuilder()
   let mut i = from + 1
   while i < self.src.length() {
@@ -346,7 +349,10 @@ fn Scanner::read_racket_string(
 
 ///|
 /// A list, only so that the "must not be a pair" rule has something to reject.
-fn Scanner::read_racket_list(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
+fn Scanner::read_racket_list(
+  self : Scanner,
+  from : Int32,
+) -> (Int32, @sexp.Datum)? {
   let close = if self.at(from) is Some('[') { ']' } else { ')' }
   let items = []
   let mut i = self.skip_racket_space(from + 1)
@@ -370,7 +376,10 @@ fn Scanner::read_racket_list(self : Scanner, from : Int) -> (Int, @sexp.Datum)? 
 }
 
 ///|
-fn Scanner::read_hash_datum(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
+fn Scanner::read_hash_datum(
+  self : Scanner,
+  from : Int32,
+) -> (Int32, @sexp.Datum)? {
   if self.has(from, "#true") {
     return Some((from + 5, Bool_(true)))
   }
@@ -469,7 +478,10 @@ fn Scanner::read_hash_datum(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
 }
 
 ///|
-fn Scanner::read_racket_char(self : Scanner, from : Int) -> (Int, @sexp.Datum)? {
+fn Scanner::read_racket_char(
+  self : Scanner,
+  from : Int32,
+) -> (Int32, @sexp.Datum)? {
   let named = [
     ("space", ' '),
     ("newline", '\n'),

@@ -26,8 +26,8 @@ const REPLACEMENT : Char = '\u{FFFD}'
 ///|
 priv struct Scanner {
   src : String
-  len : Int
-  mut pos : Int
+  len : Int32
+  mut pos : Int32
 }
 
 ///|
@@ -54,7 +54,7 @@ pub fn tokenize(src : String) -> Array[Token] {
 /// NUL is safe as a sentinel because the specification already requires a real
 /// NUL in the input to be replaced by U+FFFD before tokenizing, so one can
 /// never appear as data.
-fn Scanner::at(self : Scanner, i : Int) -> Char {
+fn Scanner::at(self : Scanner, i : Int32) -> Char {
   if i >= self.len || i < 0 {
     '\u{0}'
   } else {
@@ -78,12 +78,12 @@ fn Scanner::peek3(self : Scanner) -> Char {
 }
 
 ///|
-fn Scanner::slice(self : Scanner, start : Int, end : Int) -> String {
+fn Scanner::slice(self : Scanner, start : Int32, end : Int32) -> String {
   self.src.clamped_view(start~, end~).to_owned()
 }
 
 ///|
-fn Scanner::tok(self : Scanner, start : Int, kind : TokenKind) -> Token {
+fn Scanner::tok(self : Scanner, start : Int32, kind : TokenKind) -> Token {
   { kind, span: @span.Span::new(start, self.pos), }
 }
 
@@ -122,7 +122,7 @@ fn is_ident_char(c : Char) -> Bool {
 ///|
 /// Whether `\` at `i` begins a valid escape. A backslash before a newline does
 /// not: that is a line continuation inside a string and an error outside one.
-fn Scanner::is_valid_escape_at(self : Scanner, i : Int) -> Bool {
+fn Scanner::is_valid_escape_at(self : Scanner, i : Int32) -> Bool {
   self.at(i) == '\\' && self.at(i + 1) != '\n' && self.at(i + 1) != '\r'
 }
 
@@ -130,7 +130,7 @@ fn Scanner::is_valid_escape_at(self : Scanner, i : Int) -> Bool {
 /// Whether an identifier starts at `i`. The three-character lookahead is the
 /// specification's, and it is what makes `-` ambiguous between a negative
 /// number, a `--custom-property` and the identifier `-webkit-x`.
-fn Scanner::starts_ident_at(self : Scanner, i : Int) -> Bool {
+fn Scanner::starts_ident_at(self : Scanner, i : Int32) -> Bool {
   let c = self.at(i)
   if c == '-' {
     let d = self.at(i + 1)
@@ -144,7 +144,7 @@ fn Scanner::starts_ident_at(self : Scanner, i : Int) -> Bool {
 
 ///|
 /// Whether a number starts at `i`.
-fn Scanner::starts_number_at(self : Scanner, i : Int) -> Bool {
+fn Scanner::starts_number_at(self : Scanner, i : Int32) -> Bool {
   let c = self.at(i)
   if c == '+' || c == '-' {
     is_digit(self.at(i + 1)) ||
@@ -290,7 +290,7 @@ fn Scanner::next(self : Scanner) -> Token {
 // ------------------------------------------------------------------ scanners
 
 ///|
-fn Scanner::scan_comment(self : Scanner, start : Int) -> Token {
+fn Scanner::scan_comment(self : Scanner, start : Int32) -> Token {
   self.pos = self.pos + 2
   let body_start = self.pos
   while self.pos < self.len {
@@ -308,7 +308,7 @@ fn Scanner::scan_comment(self : Scanner, start : Int) -> Token {
 }
 
 ///|
-fn Scanner::scan_string(self : Scanner, start : Int, quote : Char) -> Token {
+fn Scanner::scan_string(self : Scanner, start : Int32, quote : Char) -> Token {
   self.pos = self.pos + 1
   let buf = StringBuilder()
   while true {
@@ -381,7 +381,7 @@ fn Scanner::consume_escape(self : Scanner) -> Char {
 }
 
 ///|
-fn hex_value(c : Char) -> Int {
+fn hex_value(c : Char) -> Int32 {
   if is_digit(c) {
     c.to_int() - 48
   } else if c >= 'a' && c <= 'f' {
@@ -434,7 +434,7 @@ fn Scanner::consume_name_escaped(self : Scanner) -> String {
 }
 
 ///|
-fn Scanner::scan_ident_like(self : Scanner, start : Int) -> Token {
+fn Scanner::scan_ident_like(self : Scanner, start : Int32) -> Token {
   let name = self.consume_name()
   if self.peek() == '(' {
     self.pos = self.pos + 1
@@ -457,7 +457,7 @@ fn Scanner::scan_ident_like(self : Scanner, start : Int) -> Token {
 
 ///|
 /// The body of an unquoted `url(`.
-fn Scanner::scan_url(self : Scanner, start : Int) -> Token {
+fn Scanner::scan_url(self : Scanner, start : Int32) -> Token {
   while is_ws(self.peek()) {
     self.pos = self.pos + 1
   }
@@ -525,7 +525,7 @@ fn Scanner::consume_bad_url(self : Scanner) -> Unit {
 
 ///|
 /// A number, and whatever makes it a dimension or a percentage.
-fn Scanner::scan_numeric(self : Scanner, start : Int) -> Token {
+fn Scanner::scan_numeric(self : Scanner, start : Int32) -> Token {
   let (repr, value, is_int) = self.consume_number()
   if self.starts_ident_at(self.pos) {
     let unit = self.consume_name()

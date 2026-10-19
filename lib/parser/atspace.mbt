@@ -13,7 +13,7 @@ priv struct TextPiece {
   /// The port column where this piece starts, which is what makes the shared
   /// indentation of the FIRST line -- the one that shares a line with the
   /// opener -- comparable to the rest.
-  col0 : Int
+  col0 : Int32
   span : @basic.Span
 }
 
@@ -189,8 +189,8 @@ fn discard_immediate_newline(pieces : Array[Piece], from_end~ : Bool) -> Piece? 
 /// starts at, so that the first line -- which starts wherever the opener left
 /// off -- is measured on the same scale as the rest. A line holding anything
 /// other than text starts at its own column and contributes that.
-fn get_min_column(pieces : Array[Piece]) -> Int? {
-  let mut min_col : Int? = None
+fn get_min_column(pieces : Array[Piece]) -> Int32? {
+  let mut min_col : Int32? = None
   let mut saw_nl = true
   for p in pieces {
     if p.is_newline() {
@@ -223,7 +223,7 @@ fn get_min_column(pieces : Array[Piece]) -> Int? {
 }
 
 ///|
-fn leading_space_count(s : String) -> Int {
+fn leading_space_count(s : String) -> Int32 {
   let mut i = 0
   while i < s.length() {
     match s.get_char(i) {
@@ -239,7 +239,7 @@ fn leading_space_count(s : String) -> Int {
 /// leading whitespace into a piece of its own.
 fn trim_shared_column(
   pieces : Array[Piece],
-  min_col : Int?,
+  min_col : Int32?,
   start_nl : Bool,
 ) -> Array[Piece] {
   let out : Array[Piece] = []

@@ -264,7 +264,7 @@ test "an unmatched closer after an at-sign is a read error" {
 /// It raises even under `recover=true`: recovery means carrying on, and there
 /// is nowhere to carry on to when the parser cannot descend.
 test "nesting past the limit is refused rather than fatal" {
-  let deep = (n : Int) => {
+  let deep = (n : Int32) => {
     let b = StringBuilder()
     for _ in 0..<n {
       b.write_string("(")

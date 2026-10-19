@@ -2,7 +2,7 @@
 /// Parse, and render whatever goes wrong.
 ///
 /// Answers 1 when anything was reported, so that a script can gate on it.
-fn cmd_check(args : Array[String]) -> Int {
+fn cmd_check(args : Array[String]) -> Int32 {
   let mut format : @render.Format = Rich
   let mut color : @style.ColorMode = Auto
   let files = []

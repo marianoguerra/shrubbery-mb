@@ -6,9 +6,9 @@ priv struct AtContinue {
   /// identity when there is no `@` form in play.
   adjust : (Array[@ast.Node]) -> Array[@ast.Node] raise @err.ShrubberyError
   at_mode : AtMode?
-  rest : Int
-  line : Int?
-  delta : Int
+  rest : Int32
+  line : Int32?
+  delta : Int32
 }
 
 ///|
@@ -21,12 +21,12 @@ fn Parser::continue_at(
   self : Parser,
   am : AtMode?,
   after_paren : Bool,
-  start : Int,
-  line : Int?,
-  delta : Int,
+  start : Int32,
+  line : Int32?,
+  delta : Int32,
   count : Bool,
   variant : @lexer.Variant,
-  depth : Int,
+  depth : Int32,
 ) -> AtContinue raise @err.ShrubberyError {
   let mode = match am {
     None => return { adjust: g => g, at_mode: None, rest: start, line, delta, }
@@ -200,22 +200,22 @@ fn at_call(
 /// What `parse_text_sequence` answers.
 priv struct TextSequence {
   node : @ast.Node
-  rest : Int
-  line : Int?
-  delta : Int
+  rest : Int32
+  line : Int32?
+  delta : Int32
 }
 
 ///|
 /// Read the body of a `{...}`, escapes and all, into a bracketed sequence.
 fn Parser::parse_text_sequence(
   self : Parser,
-  start : Int,
-  line : Int?,
-  delta : Int,
+  start : Int32,
+  line : Int32?,
+  delta : Int32,
   opener_t : @lexer.Token?,
   count : Bool,
   variant : @lexer.Variant,
-  depth : Int,
+  depth : Int32,
 ) -> TextSequence raise @err.ShrubberyError {
   let content : Array[ContentPiece] = []
   let mut i = start

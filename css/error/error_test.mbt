@@ -5,7 +5,7 @@
 /// while the spans are off by one, and only drawing the caret shows that.
 
 ///|
-fn sp(a : Int, b : Int) -> @span.Span {
+fn sp(a : Int32, b : Int32) -> @span.Span {
   @span.Span::new(a, b)
 }
 

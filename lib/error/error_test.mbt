@@ -1,5 +1,5 @@
 ///|
-fn span(a : Int, b : Int) -> @basic.Span {
+fn span(a : Int32, b : Int32) -> @basic.Span {
   {
     start: {
       line: 1,

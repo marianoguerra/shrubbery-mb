@@ -10,5 +10,4 @@ import {
   "marianoguerra/shrubbery-css/lower",
   "marianoguerra/shrubbery-css/emit",
   "marianoguerra/shrubbery-dev/test/css/prop",
-  "moonbitlang/core/test",
 } for "test"

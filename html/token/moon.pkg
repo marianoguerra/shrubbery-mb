@@ -6,5 +6,4 @@ import {
 
 import {
   "marianoguerra/html/token",
-  "moonbitlang/core/test",
 } for "test"

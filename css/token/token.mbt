@@ -183,3 +183,33 @@ pub fn dump(toks : Array[Token]) -> String {
   }
   b.to_string()
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend HashKind with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend HashKind with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend TokenKind with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend TokenKind with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Token with Eq::{not_equal, equal}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Token with Debug::{to_repr}

@@ -15,7 +15,7 @@ pub fn string_to_string(String) -> String
 
 pub fn to_doc(@ast.Node, style? : Style) -> @doc.Doc
 
-pub fn write(@ast.Node, style? : Style, width? : Int?) -> String
+pub fn write(@ast.Node, style? : Style, width? : Int32?) -> String
 
 // Errors
 

@@ -41,7 +41,7 @@ fn structural() -> Array[String] {
 
 ///|
 /// One mutation of `src`.
-fn mutate(r : Rng, src : String, others : Array[String]) -> String {
+fn mutate(r : @prop.Rng, src : String, others : Array[String]) -> String {
   let n = src.length()
   if n == 0 {
     return r.pick(structural())
@@ -88,7 +88,7 @@ fn mutate(r : Rng, src : String, others : Array[String]) -> String {
 /// P6: a tolerant parse terminates and yields a stylesheet, whatever it is
 /// given -- and whatever it yields can be printed, and printed again.
 test "fuzz: the CSS parser survives anything" {
-  let r = Rng::new(default_seed)
+  let r = @prop.Rng::new(default_seed)
   let base = seeds()
   let mut src = r.pick(base)
   for _ in 0..<3000 {
@@ -133,7 +133,7 @@ test "fuzz: the CSS parser survives anything" {
 /// Shrubbery CSS -- which is the point. `test/corpus` already proves this over
 /// 696 real files; this covers the shapes a hand-written corpus does not have.
 test "fuzz: the lowering survives anything the notation accepts" {
-  let r = Rng::new(default_seed + 1UL)
+  let r = @prop.Rng::new(default_seed + 1UL)
   let base = [
     "class(card):\n  gap: rem(1)\n", "media(width <= rem(40)):\n  a:\n    b: c\n",
     "[h1, h2]:\n  a: b\n", "nav ~in a hover():\n  color: hex(fff)\n", "at(\"x\", y):\n  a: b\n",

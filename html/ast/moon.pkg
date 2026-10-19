@@ -2,8 +2,3 @@ import {
   "marianoguerra/html/span",
   "marianoguerra/html/kind",
 }
-
-import {
-  "marianoguerra/html/ast",
-  "moonbitlang/core/test",
-} for "test"

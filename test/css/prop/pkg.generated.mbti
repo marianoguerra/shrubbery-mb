@@ -6,22 +6,22 @@ import {
 }
 
 // Values
-pub fn gen_stylesheet(Rng, Int) -> @ast.Stylesheet
+pub fn gen_stylesheet(Rng, Int32) -> @ast.Stylesheet
 
-pub fn[T] minimize(T, (T) -> Array[T], (T) -> Bool, fuel? : Int) -> T
+pub fn[T] minimize(T, (T) -> Array[T], (T) -> Bool, fuel? : Int32) -> T
 
-pub fn size_of(@ast.Stylesheet) -> Int
+pub fn size_of(@ast.Stylesheet) -> Int32
 
 // Errors
 
 // Types and methods
 type Rng
-pub fn Rng::below(Self, Int) -> Int
+pub fn Rng::below(Self, Int32) -> Int32
 pub fn Rng::bool(Self) -> Bool
 pub fn Rng::new(UInt64) -> Self
 pub fn Rng::next(Self) -> UInt64
 pub fn[T] Rng::pick(Self, Array[T]) -> T
-pub fn[T] Rng::weighted(Self, Array[(Int, T)]) -> T
+pub fn[T] Rng::weighted(Self, Array[(Int32, T)]) -> T
 
 // Type aliases
 

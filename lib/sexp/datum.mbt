@@ -161,7 +161,7 @@ fn write_escaped(buf : StringBuilder, s : String) -> Unit {
 }
 
 ///|
-fn write_hex2(buf : StringBuilder, v : Int) -> Unit {
+fn write_hex2(buf : StringBuilder, v : Int32) -> Unit {
   let hex = v.to_string(radix=16)
   if hex.length() < 2 {
     buf.write_char('0')
@@ -171,7 +171,7 @@ fn write_hex2(buf : StringBuilder, v : Int) -> Unit {
 
 ///|
 /// An exact integer.
-pub fn Datum::of_int(n : Int) -> Datum {
+pub fn Datum::of_int(n : Int32) -> Datum {
   Int_(@bigint.BigInt::from_int(n))
 }
 
@@ -213,3 +213,8 @@ fn gcd(a : @bigint.BigInt, b : @bigint.BigInt) -> @bigint.BigInt {
   }
   x
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Datum with Eq::{not_equal, equal}

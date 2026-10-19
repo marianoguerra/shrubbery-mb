@@ -14,5 +14,4 @@ import {
 
 import {
   "marianoguerra/shrubbery-dev/test/embed-html" @embed_html,
-  "moonbitlang/core/test",
 } for "test"

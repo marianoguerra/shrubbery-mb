@@ -31,16 +31,16 @@ fn same(a : @ast.Stylesheet, b : @ast.Stylesheet) -> Bool {
 fn check(
   name : String,
   holds : (@ast.Stylesheet) -> Bool,
-  runs? : Int = 120,
-  max_size? : Int = 14,
-  seed? : UInt64 = default_seed,
+  runs~ : Int32 = 120,
+  max_size~ : Int32 = 14,
+  seed~ : UInt64 = default_seed,
 ) -> Unit raise {
-  let r = Rng::new(seed)
+  let r = @prop.Rng::new(seed)
   for i in 0..<runs {
     let size = 1 + i % max_size
-    let sheet = gen_stylesheet(r, size)
+    let sheet = @prop.gen_stylesheet(r, size)
     if !holds(sheet) {
-      let small = minimize(sheet, shrink_sheet, x => !holds(x))
+      let small = @prop.minimize(sheet, shrink_sheet, x => !holds(x))
       fail(
         name +
         "\n  seed=" +
@@ -232,8 +232,8 @@ test "P3: emitting then lowering is the identity" {
 /// something else -- so the whole harness rests on it.
 test "the same seed draws the same tree" {
   for size in [1, 5, 14] {
-    let a = gen_stylesheet(Rng::new(default_seed), size)
-    let b = gen_stylesheet(Rng::new(default_seed), size)
+    let a = @prop.gen_stylesheet(@prop.Rng::new(default_seed), size)
+    let b = @prop.gen_stylesheet(@prop.Rng::new(default_seed), size)
     assert_eq(
       @write.stylesheet(a, style=Minified),
       @write.stylesheet(b, style=Minified),
@@ -249,12 +249,12 @@ test "the same seed draws the same tree" {
 /// progress would silently return the original tree and make every failure
 /// report useless.
 test "shrinking strictly decreases size" {
-  let r = Rng::new(default_seed)
+  let r = @prop.Rng::new(default_seed)
   for _ in 0..<60 {
-    let sheet = gen_stylesheet(r, 12)
-    let before = size_of(sheet)
+    let sheet = @prop.gen_stylesheet(r, 12)
+    let before = @prop.size_of(sheet)
     for candidate in shrink_sheet(sheet) {
-      let after = size_of(candidate)
+      let after = @prop.size_of(candidate)
       if after >= before {
         fail(
           "a shrink candidate was not smaller: " +
@@ -275,7 +275,7 @@ test "shrinking strictly decreases size" {
 /// Without this a property can pass vacuously on a variant that is never drawn,
 /// which is the failure mode of a generator nobody checks.
 test "the generator covers the shapes it claims to" {
-  let r = Rng::new(default_seed)
+  let r = @prop.Rng::new(default_seed)
   let mut saw_media = false
   let mut saw_supports = false
   let mut saw_keyframes = false
@@ -283,7 +283,7 @@ test "the generator covers the shapes it claims to" {
   let mut saw_important = false
   let mut saw_custom = false
   for _ in 0..<400 {
-    let sheet = gen_stylesheet(r, 12)
+    let sheet = @prop.gen_stylesheet(r, 12)
     let text = @write.stylesheet(sheet, style=Minified)
     if text.contains("@media") {
       saw_media = true

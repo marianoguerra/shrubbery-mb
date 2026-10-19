@@ -15,7 +15,7 @@
 /// `lower`, which hands back the diagnostics alongside the tree.
 pub fn to_css(
   src : String,
-  style? : @write.Style = Pretty,
+  style~ : @write.Style = Pretty,
 ) -> String raise @error.ShrubCssError {
   let l = @lower.lower_source(src)
   @write.stylesheet(l.sheet(), style~)
@@ -26,7 +26,7 @@ pub fn to_css(
 /// way.
 pub fn lower(
   src : String,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> @lower.Lowered raise @error.ShrubCssError {
   @lower.lower_source(src, strict~)
 }
@@ -45,7 +45,7 @@ pub fn lower(
 /// way it would be inside any other rule body.
 pub fn lower_block(
   src : String,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> @lower.LoweredBlock raise @error.ShrubCssError {
   @lower.lower_block_source(src, strict~)
 }

@@ -13,7 +13,7 @@
 /// long tail nobody's source code contains. Replace it with a generated table
 /// if a real input ever proves it wrong -- and add that input to the tests when
 /// you do.
-pub fn char_width(c : Char) -> Int {
+pub fn char_width(c : Char) -> Int32 {
   let u = c.to_int()
   if u < 0x0300 {
     // Fast path: everything below the first combining block is width 1, except
@@ -30,7 +30,7 @@ pub fn char_width(c : Char) -> Int {
 }
 
 ///|
-fn is_zero_width(u : Int) -> Bool {
+fn is_zero_width(u : Int32) -> Bool {
   (u >= 0x0300 && u <= 0x036F) ||
   (u >= 0x0483 && u <= 0x0489) ||
   (u >= 0x0591 && u <= 0x05BD) ||
@@ -58,7 +58,7 @@ fn is_zero_width(u : Int) -> Bool {
 }
 
 ///|
-fn is_wide(u : Int) -> Bool {
+fn is_wide(u : Int32) -> Bool {
   (u >= 0x1100 && u <= 0x115F) ||
   (u >= 0x2E80 && u <= 0x303E) ||
   (u >= 0x3041 && u <= 0x33FF) ||
@@ -80,7 +80,7 @@ fn is_wide(u : Int) -> Bool {
 
 ///|
 /// The display width of a string.
-pub fn str_width(s : String) -> Int {
+pub fn str_width(s : String) -> Int32 {
   let mut w = 0
   for c in s {
     w = w + char_width(c)
@@ -97,11 +97,11 @@ pub fn str_width(s : String) -> Int {
 /// it in one pass is what keeps the two from disagreeing -- and a caret one
 /// column off a tab is the classic way a diagnostic renderer embarrasses
 /// itself.
-pub fn expand_tabs(line : String, tab_width : Int) -> (String, Array[Int]) {
+pub fn expand_tabs(line : String, tab_width : Int32) -> (String, Array[Int32]) {
   let buf = StringBuilder()
   // One entry per code unit, plus a final entry for the end of the line, so
   // that a span ending at end-of-line has a column to point at.
-  let cols = Array::new(capacity=line.length() + 1)
+  let cols = Array(capacity=line.length() + 1)
   let mut col = 0
   let mut i = 0
   let n = line.length()

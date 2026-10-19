@@ -24,7 +24,7 @@
 ///|
 priv struct Emitter {
   buf : StringBuilder
-  mut depth : Int
+  mut depth : Int32
 }
 
 ///|

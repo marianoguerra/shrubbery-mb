@@ -11,5 +11,4 @@ import {
 
 import {
   "marianoguerra/shrubbery-css" @shrubbery_css,
-  "moonbitlang/core/test",
 } for "test"

@@ -16,26 +16,26 @@
 /// every label of every report, is not.
 pub(all) struct Span {
   /// Offset of the first code unit.
-  start : Int
+  start : Int32
   /// Number of code units. Zero is legal and means an insertion point.
-  len : Int
+  len : Int32
 } derive(Eq, Compare, Hash, Debug, ToJson)
 
 ///|
 /// The span `[start, end)`.
-pub fn Span::of_range(start : Int, end : Int) -> Span {
+pub fn Span::of_range(start : Int32, end : Int32) -> Span {
   { start, len: if end > start { end - start } else { 0 }, }
 }
 
 ///|
 /// An insertion point: an empty span at `offset`.
-pub fn Span::at(offset : Int) -> Span {
+pub fn Span::at(offset : Int32) -> Span {
   { start: offset, len: 0, }
 }
 
 ///|
 /// Offset one past the last code unit.
-pub fn Span::end(self : Span) -> Int {
+pub fn Span::end(self : Span) -> Int32 {
   self.start + self.len
 }
 
@@ -62,3 +62,31 @@ pub fn Span::merge(self : Span, other : Span) -> Span {
   let end = if self.end() > other.end() { self.end() } else { other.end() }
   Span::of_range(start, end)
 }
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with Eq::{not_equal, equal}
+
+///|
+pub extend Span with Compare::{compare}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with Compare::{op_lt, op_le, op_ge, op_gt}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with Hash::{hash, hash_combine}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with Debug::{to_repr}
+
+///|
+#deprecated(skip_current_package=true)
+#doc(hidden)
+pub extend Span with ToJson::{to_json}

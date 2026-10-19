@@ -31,9 +31,9 @@ fn same(a : @ast.Document, b : @ast.Document) -> Bool {
 fn check(
   name : String,
   holds : (@ast.Document) -> Bool,
-  runs? : Int = 120,
-  max_size? : Int = 12,
-  seed? : UInt64 = default_seed,
+  runs~ : Int32 = 120,
+  max_size~ : Int32 = 12,
+  seed~ : UInt64 = default_seed,
 ) -> Unit raise {
   let r = @prop.Rng::new(seed)
   for i in 0..<runs {

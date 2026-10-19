@@ -4,9 +4,9 @@
 /// The contract is the printer's: reading the output back gives the same tree.
 /// A file that does not parse is reported and left alone -- reformatting
 /// something you could not read is how a formatter loses someone's work.
-fn cmd_fmt(args : Array[String]) -> Int {
+fn cmd_fmt(args : Array[String]) -> Int32 {
   let mut style : @write.Style = Pretty
-  let mut width : Int? = None
+  let mut width : Int32? = None
   let mut in_place = false
   let files = []
   let mut i = 0
@@ -108,7 +108,7 @@ fn cmd_fmt(args : Array[String]) -> Int {
 }
 
 ///|
-fn parse_width(s : String) -> Int? {
+fn parse_width(s : String) -> Int32? {
   if s.length() == 0 {
     return None
   }

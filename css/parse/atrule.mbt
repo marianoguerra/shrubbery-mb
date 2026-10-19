@@ -57,7 +57,7 @@ fn Parser::build_at_rule(
   lower : String,
   prelude : ArrayView[@token.Token],
   has_block : Bool,
-  start : Int,
+  start : Int32,
 ) -> @ast.CssRule? raise @err.CssError {
   match (lower, has_block) {
     ("media", true) => {
@@ -197,7 +197,7 @@ fn Parser::build_at_rule(
 }
 
 ///|
-fn Parser::span_from(self : Parser, start : Int) -> @span.Span {
+fn Parser::span_from(self : Parser, start : Int32) -> @span.Span {
   @span.Span::new(start, self.prev_end())
 }
 
@@ -233,7 +233,7 @@ fn first_meaningful(toks : ArrayView[@token.Token]) -> @token.TokenKind? {
 /// A block that may hold only declarations.
 fn Parser::parse_decl_block(
   self : Parser,
-  start : Int,
+  start : Int32,
 ) -> @ast.DeclBlock raise @err.CssError {
   let items = self.parse_block()
   // A nested rule here is not a CSS error the parser can fix, but it is one it
@@ -250,7 +250,7 @@ fn Parser::parse_decl_block(
 ///|
 fn Parser::parse_keyframes_body(
   self : Parser,
-  start : Int,
+  start : Int32,
 ) -> Array[@ast.KeyframeBlock] raise @err.CssError {
   let frames : Array[@ast.KeyframeBlock] = []
   if self.peek() != LBrace {
@@ -289,7 +289,7 @@ fn Parser::parse_keyframes_body(
 fn Parser::keyframe_selectors(
   self : Parser,
   toks : ArrayView[@token.Token],
-  at : Int,
+  at : Int32,
 ) -> Array[@ast.KeyframeSelector] raise @err.CssError {
   let out : Array[@ast.KeyframeSelector] = []
   for t in toks {
@@ -321,7 +321,7 @@ fn Parser::parse_import(
   self : Parser,
   name : String,
   prelude : ArrayView[@token.Token],
-  start : Int,
+  start : Int32,
 ) -> @ast.CssRule? raise @err.CssError {
   let c = { toks: prelude, pos: 0, }
   let url = match c.next_meaningful() {
