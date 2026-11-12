@@ -15,6 +15,7 @@
 
 ///|
 /// How much whitespace to spend.
+#derive(Eq)
 pub(all) enum Style {
   /// One declaration per line, two-space indent. What a person reads.
   Pretty
@@ -22,7 +23,7 @@ pub(all) enum Style {
   Compact
   /// No whitespace that can be dropped, no trailing semicolons.
   Minified
-} derive(Eq)
+}
 
 ///|
 priv struct Printer {

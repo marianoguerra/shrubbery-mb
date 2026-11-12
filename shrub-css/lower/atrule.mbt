@@ -355,10 +355,11 @@ fn Lowerer::condition(
 /// `@supports` it is a declaration being tested for support, and in `@media`
 /// or `@container` it is a plain feature test. Nothing in the text tells them
 /// apart, so the context has to.
+#derive(Eq)
 priv enum CondKind {
   Query
   Supports
-} derive(Eq)
+}
 
 ///|
 /// A condition: features and parenthesised groups, joined by `and`/`or`.

@@ -3,6 +3,7 @@
 ///
 /// The names are the reference's own, because the parser is written against
 /// them and a rename here would be a rename in two places that must agree.
+#derive(Eq)
 pub(all) enum TokenKind {
   Identifier
   Keyword
@@ -35,7 +36,7 @@ pub(all) enum TokenKind {
   /// A lexical failure, carried as a token rather than raised so that recovery
   /// mode can keep scanning and report every problem in a file at once.
   Fail(@err.ErrorKind)
-} derive(Eq)
+}
 
 ///|
 /// A token, and the exact text it was made of.
@@ -127,10 +128,11 @@ pub fn Token::is_trivia(self : Token) -> Bool {
 /// as a signed literal, `Continuing` — entered after an identifier, a literal,
 /// a closer or a keyword — reads it as `+` applied to `2`. That single bit is
 /// the whole of why `1+2` is addition and `1 +2` is two terms.
+#derive(Eq)
 pub(all) enum LexMode {
   Initial
   Continuing
-} derive(Eq)
+}
 
 ///|
 /// The two predicates that are the entire configurability of the notation.

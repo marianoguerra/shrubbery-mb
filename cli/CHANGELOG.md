@@ -4,6 +4,16 @@ All notable changes to `marianoguerra/shrubbery-cli` are recorded here. The
 format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this module follows [semantic versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] — 2026-11-12
+
+### Changed
+
+- **Builds clean on moonc v0.10.20** (moon 0.1.20261104), through siblings
+  that moved off the deprecated postfix `} derive(...)`. No change in
+  behaviour.
+- Takes `marianoguerra/shrubbery@0.1.3`, `marianoguerra/error-report@0.1.2` and
+  `moonbitlang/x@0.5.7`.
+
 ## [0.1.2] — 2026-10-19
 
 ### Changed

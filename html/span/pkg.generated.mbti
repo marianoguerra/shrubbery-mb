@@ -11,10 +11,11 @@ pub let nowhere : Span
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Span {
   start : Int32
   end : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn Span::at(Int32) -> Self
 pub fn Span::contains(Self, Self) -> Bool
 pub fn Span::is_empty(Self) -> Bool

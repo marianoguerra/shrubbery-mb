@@ -3,12 +3,12 @@
 // pay. Everything about the notation itself is in `marianoguerra/shrubbery`.
 name = "marianoguerra/shrubbery-cli"
 
-version = "0.1.2"
+version = "0.1.3"
 
 import {
-  "marianoguerra/shrubbery@0.1.2",
-  "marianoguerra/error-report@0.1.1",
-  "moonbitlang/x@0.5.5",
+  "marianoguerra/shrubbery@0.1.3",
+  "marianoguerra/error-report@0.1.2",
+  "moonbitlang/x@0.5.7",
 }
 
 readme = "README.md"

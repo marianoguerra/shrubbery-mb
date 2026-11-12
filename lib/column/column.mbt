@@ -19,10 +19,11 @@
 /// takes part in comparisons as N.5, and storing tab counts in the same unit
 /// means the half-column tolerance in `cmp` can never be triggered by a
 /// difference of one tab, which it would if the two units were mixed.
+#derive(Eq, Debug)
 pub enum Column {
   Plain(Int32)
   Tabbed(Array[Int32])
-} derive(Eq, Debug)
+}
 
 ///|
 /// The result of comparing two columns.
@@ -33,13 +34,14 @@ pub enum Column {
 /// half-a-column-before-a-tab tolerance: every comparison of the pair is false,
 /// but it is not an error. Collapsing the two would either turn a tolerated
 /// case into a failure or a failure into silence.
+#derive(Eq, Debug)
 pub(all) enum ColumnOrder {
   Lt
   Eq
   Gt
   Unordered
   Incomparable
-} derive(Eq, Debug)
+}
 
 ///|
 /// A readable column, for a diagnostic or a test failure.

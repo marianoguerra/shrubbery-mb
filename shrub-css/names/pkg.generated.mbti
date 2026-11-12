@@ -37,13 +37,14 @@ pub fn unkebab(String) -> String
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Combinator {
   Descendant
   Child
   NextSibling
   SubsequentSibling
   Column
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 

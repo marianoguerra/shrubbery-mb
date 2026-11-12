@@ -19,11 +19,12 @@ pub fn value(Array[@ast.ComponentValue], style? : Style) -> String
 // Errors
 
 // Types and methods
+#derive(Eq)
 pub(all) enum Style {
   Pretty
   Compact
   Minified
-} derive(Eq)
+}
 
 // Type aliases
 

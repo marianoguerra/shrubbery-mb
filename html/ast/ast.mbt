@@ -39,11 +39,12 @@
 /// printer echo an unparsable region verbatim instead of deleting it -- a page
 /// with one templating directive the parser has never seen should come back
 /// with that directive still in it.
+#derive(Eq, Debug)
 pub(all) struct Bogus {
   kind : @kind.ErrorKind
   span : @span.Span
   text : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Bogus::new(
@@ -64,12 +65,14 @@ pub fn Bogus::new(
 /// the same operation. html5ever needs the distinction because its tree builder
 /// runs different insertion modes for the two; a markup parser has no insertion
 /// modes to run.
+#derive(Eq, Debug)
 pub(all) struct Document {
   children : Array[Node]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Node {
   Element(Element)
   Text(Text)
@@ -82,11 +85,12 @@ pub(all) enum Node {
   /// was looking at.
   Cdata(String, @span.Span)
   Bogus(Bogus)
-} derive(Eq, Debug)
+}
 
 // ---------------------------------------------------------------- elements
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Element {
   name : TagName
   attrs : Array[Attribute]
@@ -96,7 +100,7 @@ pub(all) struct Element {
   /// Where the name sits inside the start tag, for a diagnostic that wants to
   /// point at `div` rather than at `<div class="...">`.
   name_span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// How an element ended.
@@ -105,6 +109,7 @@ pub(all) struct Element {
 /// can be made to say it. It is the same argument `LayerRule::body` makes on
 /// the CSS side: the alternatives are different constructs, not one construct
 /// with an optional part.
+#derive(Eq, Debug)
 pub(all) enum Closing {
   /// `<div>...</div>`.
   Explicit
@@ -117,7 +122,7 @@ pub(all) enum Closing {
   Implied
   /// Ran to the end of the input. A diagnostic, not a failure.
   Unclosed
-} derive(Eq, Debug)
+}
 
 ///|
 /// An element's name: a namespace and a local name.
@@ -127,10 +132,11 @@ pub(all) enum Closing {
 /// `<LINEARGRADIENT>` and `<linearGradient>` are the one that exists. Case is
 /// not a semantic difference in either vocabulary, which is why this normalises
 /// where `Text::raw` preserves.
+#derive(Eq, Debug)
 pub(all) struct TagName {
   ns : Namespace
   name : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn TagName::html(name : String) -> TagName {
@@ -144,6 +150,7 @@ pub fn TagName::html(name : String) -> TagName {
 /// same bytes -- whether `/>` closes an element or is ignored, whether an
 /// attribute name is lowercased or table-adjusted, whether `<![CDATA[` is CDATA
 /// or a bogus comment, and whether `<title>` holds text or elements.
+#derive(Eq, Debug)
 pub(all) enum Namespace {
   Html
   Svg
@@ -151,25 +158,27 @@ pub(all) enum Namespace {
   /// Reached only through an `xmlns` this library does not interpret. Kept so
   /// that a name can say it is neither of the three rather than pretending.
   Other(String)
-} derive(Eq, Debug)
+}
 
 // -------------------------------------------------------------- attributes
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Attribute {
   name : AttrName
   value : AttrValue
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// `xlink:href` is `prefix = Some("xlink")`. The prefix is kept unresolved:
 /// resolving it needs the `xmlns` declarations in scope, which is a document
 /// question and not a markup one.
+#derive(Eq, Debug)
 pub(all) struct AttrName {
   prefix : String?
   name : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn AttrName::plain(name : String) -> AttrName {
@@ -193,12 +202,13 @@ pub fn AttrName::text(self : AttrName) -> String {
 /// with it. Quoting style is deliberately NOT kept: `Pretty` always
 /// double-quotes and `Minified` drops the quotes where that is legal, the same
 /// way the CSS printer normalises `'x'` to `"x"`.
+#derive(Eq, Debug)
 pub(all) enum AttrValue {
   Empty
   /// The decoded value, and the source spelling when decoding was not the
   /// identity -- `&amp;` in a query string, say. `None` when it was.
   Value(String, String?)
-} derive(Eq, Debug)
+}
 
 ///|
 /// The decoded text of a value, with `Empty` reading as `""`.
@@ -219,11 +229,12 @@ pub fn AttrValue::text(self : AttrValue) -> String {
 /// asked to reindent a file must not also rewrite every entity in it, and
 /// turning `&nbsp;` into an invisible byte is a change a reviewer cannot see
 /// and a reader cannot undo.
+#derive(Eq, Debug)
 pub(all) struct Text {
   text : String
   raw : String?
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Text::new(
@@ -241,10 +252,11 @@ pub fn Text::new(
 /// it, nothing in it is escaped on the way out, and the printer must refuse to
 /// emit a body containing the element's own end tag rather than escaping it,
 /// because there is no escape.
+#derive(Eq, Debug)
 pub(all) struct RawText {
   text : String
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// A `<!-- ... -->`. `text` is the body, without the delimiters.
@@ -253,19 +265,21 @@ pub(all) struct RawText {
 /// Conditional comments, `<!-- /ko -->` and every framework that hides a
 /// directive in one depend on it, and the CSS module's decision to drop them
 /// through the notation is the one lossy spot this module does not repeat.
+#derive(Eq, Debug)
 pub(all) struct Comment {
   text : String
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// A `<!DOCTYPE html>`, or a legacy one with its identifiers.
+#derive(Eq, Debug)
 pub(all) struct Doctype {
   name : String
   public_id : String?
   system_id : String?
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 // ---------------------------------------------------------------- accessors
 

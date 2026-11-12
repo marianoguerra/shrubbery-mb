@@ -7,6 +7,7 @@
 /// parses prose. `reference_text` reproduces the Racket wording verbatim, which
 /// is what the error-parity oracle compares, and `Diagnostic::to_report` is
 /// free to say something better without breaking it.
+#derive(Eq)
 pub(all) enum ErrorKind {
   // --- lexical -------------------------------------------------------------
   /// Anything the scanner could not make a token of.
@@ -68,7 +69,7 @@ pub(all) enum ErrorKind {
   EmptyGroupAfterAt
   BlockAfterMidGroupAt
   SecondGroupAfterAt
-} derive(Eq)
+}
 
 ///|
 /// What the reference says, byte for byte.

@@ -12,6 +12,7 @@
 ///   * `col` is the INDENTATION column, which is a partial order rather than a
 ///     number — see `@column.Column`. It is not `pos` minus the line start:
 ///     tabs and grapheme clusters both make it something else.
+#derive(Eq)
 pub(all) struct Pos {
   /// 1-based.
   line : Int32
@@ -26,17 +27,18 @@ pub(all) struct Pos {
   col0 : Int32
   /// The indentation column.
   col : @column.Column
-} derive(Eq)
+}
 
 ///|
 pub let start : Pos = { line: 1, pos: 1, idx: 0, col0: 0, col: @column.zero, }
 
 ///|
 /// A half-open range of a source file.
+#derive(Eq)
 pub(all) struct Span {
   start : Pos
   end : Pos
-} derive(Eq)
+}
 
 ///|
 /// An empty span at `p`, for an error that has no extent — an unexpected end of

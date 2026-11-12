@@ -5,6 +5,7 @@
 /// before the braces, where ordinary shrubbery tokens are read and the mode
 /// only decides what may come next; `Open`, `Inside`, `Escape` and `Close` are
 /// the braced text, where the scanner is reading characters rather than tokens.
+#derive(Eq)
 pub(all) enum AtMode {
   /// After `@` with no immediate `{`: read a command term.
   Initial
@@ -22,7 +23,7 @@ pub(all) enum AtMode {
   Escape
   /// At the final `}`.
   Close
-} derive(Eq)
+}
 
 ///|
 /// One `@` form being scanned.

@@ -17,10 +17,11 @@
 /// and column from the text itself. Carrying them would mean keeping them
 /// correct through every construction, for the benefit of nothing that cannot
 /// recompute them.
+#derive(Eq, Debug)
 pub(all) struct Span {
   start : Int32
   end : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 /// The empty span at offset 0, for a node that came from no source at all.

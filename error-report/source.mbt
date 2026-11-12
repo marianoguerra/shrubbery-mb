@@ -1,7 +1,8 @@
 ///|
 /// Identifies one source file within a report. Opaque on purpose: it is handed
 /// out by whatever cache the consumer uses and means nothing on its own.
-pub(all) struct SourceId(Int32) derive(Eq, Compare, Hash, Debug, ToJson)
+#derive(Eq, Compare, Hash, Debug, ToJson)
+pub(all) struct SourceId(Int32)
 
 ///|
 /// A source file, with the line index precomputed.
@@ -110,7 +111,7 @@ pub fn Source::line_col(self : Source, offset : Int32) -> (Int32, Int32) {
   let line = self.line_of(offset)
   let start = self.line_starts[line]
   let end = if offset < start { start } else { offset }
-  (line + 1, self.text.char_length(start_offset=start, end_offset=end))
+  (line + 1, self.text.char_length(start~, end~))
 }
 
 ///|

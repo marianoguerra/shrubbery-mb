@@ -266,13 +266,14 @@ pub fn combinator_keyword(c : Combinator) -> String {
 /// It mirrors `@ast.Combinator` exactly; `lower` and `emit` convert between
 /// them. The duplication buys a table anyone can check without following an
 /// import.
+#derive(Eq, Debug)
 pub(all) enum Combinator {
   Descendant
   Child
   NextSibling
   SubsequentSibling
   Column
-} derive(Eq, Debug)
+}
 
 // ------------------------------------------------------- reserved callables
 

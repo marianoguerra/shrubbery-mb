@@ -11,10 +11,11 @@
 #      `shrubbery-cli` declares both, and the registry rejects a module whose
 #      dependency it has never seen. The order below is the dependency order.
 #
-# It also reads the dry run's RESULT rather than its exit code: `moon publish
-# --dry-run` reports "202 Accepted ... Dry run completed successfully" and then
-# exits 255 regardless, so an exit-code check would call every dry run a
-# failure.
+# It also reads the dry run's RESULT rather than its exit code. Up to moon
+# 0.1.20261016 `moon publish --dry-run` reported "202 Accepted ... Dry run
+# completed successfully" and then exited 255 regardless; from 0.1.20261104 it
+# prints only "Server status: 202 Accepted" and exits 0. The server's reply is
+# the answer under both, so both spellings are accepted.
 #
 # usage: tools/publish.sh [--dry-run] [module ...]
 set -euo pipefail
@@ -60,14 +61,14 @@ for m in "${selected[@]}"; do
     log="$(mktemp)"
     # The exit code is not the answer here; the server's reply is.
     moon -C "$root/$m" publish --dry-run >"$log" 2>&1 || true
-    if grep -q 'Dry run completed successfully' "$log"; then
+    if grep -qE 'Dry run completed successfully|Server status: 202 Accepted' "$log"; then
       echo "publish: $name@$version would publish"
     elif grep -q 'is duplicated with an existing version' "$log"; then
       # Not a failure either: this version is already on mooncakes. A release
       # that only moves some of the modules forward leaves the rest here, and
       # the point of the dry run is to see which ones those are.
       echo "publish: $name@$version already published"
-    elif grep -qE 'module was not found in the registry|no version satisfies requirement' "$log"; then
+    elif grep -qE 'module was not found in the registry|no version satisfies requirement|version `[^`]*` was not found in the registry' "$log"; then
       # Not a failure: `moon publish` verifies the packaged zip by resolving it
       # against the REGISTRY, and a module of ours that has not been published
       # yet is not there. This resolves itself as the loop walks the order.
@@ -77,6 +78,8 @@ for m in "${selected[@]}"; do
       # than this release needs is "no version satisfies requirement", which is
       # the same pending situation and used to be reported as a failure -- so a
       # release that bumped a dependency looked broken until it was published.
+      # moon 0.1.20261104 spells the second one "version `X` was not found in
+      # the registry".
       missing="$(grep -o "Failed to resolve registry dependency \`[^\`]*\`" "$log" \
                  | sed 's/.*`\(.*\)`/\1/' | sort -u | tr '\n' ' ')"
       echo "publish: $name@$version pending -- waits on: ${missing% }"

@@ -10,6 +10,7 @@ import {
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum ErrorKind {
   SigilTag(String)
   ReservedCall(String)
@@ -24,7 +25,7 @@ pub(all) enum ErrorKind {
   TrailingRunAfterBlock
   NameNotSpellable(String)
   Unsupported(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ErrorKind::code(Self) -> String
 pub fn ErrorKind::is_warning(Self) -> Bool
 

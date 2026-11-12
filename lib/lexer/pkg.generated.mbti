@@ -18,6 +18,7 @@ pub fn rewrite_quotes(Array[Token]) -> Array[Token]
 // Errors
 
 // Types and methods
+#derive(Eq)
 pub(all) enum AtMode {
   Initial
   Args
@@ -27,12 +28,13 @@ pub(all) enum AtMode {
   Inside
   Escape
   Close
-} derive(Eq)
+}
 
+#derive(Eq)
 pub(all) enum LexMode {
   Initial
   Continuing
-} derive(Eq)
+}
 
 pub(all) struct Token {
   kind : TokenKind
@@ -49,6 +51,7 @@ pub fn Token::line(Self) -> Int32
 pub fn Token::name(Self) -> String
 pub fn Token::raw_text(Self) -> String
 
+#derive(Eq)
 pub(all) enum TokenKind {
   Identifier
   Keyword
@@ -73,7 +76,7 @@ pub(all) enum TokenKind {
   SQuote
   EndOfInput
   Fail(@error.ErrorKind)
-} derive(Eq)
+}
 pub fn TokenKind::kind_name(Self) -> String
 
 pub(all) struct Variant {

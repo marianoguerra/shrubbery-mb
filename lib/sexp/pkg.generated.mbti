@@ -10,6 +10,7 @@ import {
 // Errors
 
 // Types and methods
+#derive(Eq)
 pub(all) enum Datum {
   Sym(String)
   Kw(String)
@@ -26,7 +27,7 @@ pub(all) enum Datum {
   Vec(Array[Datum])
   Rx(Bool, String)
   Other(String)
-} derive(Eq)
+}
 pub fn Datum::canonical(Self) -> String
 pub fn Datum::of_int(Int32) -> Self
 pub fn Datum::of_ratio(@bigint.BigInt, @bigint.BigInt) -> Self

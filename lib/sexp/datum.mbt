@@ -4,6 +4,7 @@
 /// `Pair` and `Nil` exist because a `#{...}` escape can contain an improper
 /// list. `Rat` exists because `1/2` is an exact rational and turning it into a
 /// `Double` would lose the exactness the reference keeps.
+#derive(Eq)
 pub(all) enum Datum {
   Sym(String)
   Kw(String)
@@ -27,7 +28,7 @@ pub(all) enum Datum {
   /// hash table, a complex number. Held as the text Racket would print for it,
   /// so it round-trips, and opaque because nothing downstream inspects it.
   Other(String)
-} derive(Eq)
+}
 
 ///|
 /// A canonical text form, for comparing our parse against the reference's.

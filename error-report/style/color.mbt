@@ -5,14 +5,16 @@
 /// descriptor without a dependency, and guessing wrong either strips colour
 /// from a terminal or writes escapes into a file. `Config::resolve_color` takes
 /// the answer as a parameter for exactly that reason.
+#derive(Eq, Debug)
 pub(all) enum ColorMode {
   Always
   Never
   Auto
-} derive(Eq, Debug)
+}
 
 ///|
 /// The eight ANSI colours plus "leave it alone".
+#derive(Eq, Debug)
 pub(all) enum Color {
   Default
   Black
@@ -23,14 +25,15 @@ pub(all) enum Color {
   Magenta
   Cyan
   White
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Style {
   color : Color
   bold : Bool
   dim : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub let plain : Style = { color: Default, bold: false, dim: false, }

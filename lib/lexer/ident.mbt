@@ -150,7 +150,7 @@ fn Scanner::absorb_slash(self : Scanner, end : Int32) -> Int32 {
 /// nothing follows, and `1` then `.+` when `.+` is an operator.
 fn Scanner::multi_char_operator_at(self : Scanner, from : Int32) -> Bool {
   match self.scan_operator(from) {
-    Some(e) => self.src.char_length(start_offset=from, end_offset=e) > 1
+    Some(e) => self.src.char_length(start=from, end=e) > 1
     None => false
   }
 }

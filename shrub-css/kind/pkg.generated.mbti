@@ -10,6 +10,7 @@ import {
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum ErrorKind {
   ExpectedBlock
   HeadlessBlock
@@ -34,7 +35,7 @@ pub(all) enum ErrorKind {
   SemicolonDeclarations
   BadAnB
   Unsupported(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ErrorKind::code(Self) -> String
 
 // Type aliases

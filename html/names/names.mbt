@@ -219,6 +219,7 @@ fn closes_paragraph(incoming : String) -> Bool {
 /// is also why it is here and not derived from the CSS module: the answer is a
 /// property of the HTML element, not of any stylesheet, and reaching for `css`
 /// to ask it would put a dependency in the manifest for a lookup table.
+#derive(Eq, Debug)
 pub(all) enum Display {
   /// Whitespace at the edges is insignificant; the printer may indent.
   Block
@@ -228,7 +229,7 @@ pub(all) enum Display {
   Pre
   /// Not rendered: whitespace around it is insignificant either way.
   None_
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn display_of(name : String) -> Display {

@@ -17,30 +17,34 @@ pub fn tokens(String, start? : Start) -> Array[Token]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct RawAttr {
   name : String
   value : String?
   raw : String?
   span : @span.Span
-} derive(Eq, @debug.Debug)
+}
 
 pub(all) struct Scanned {
   tokens : Array[Token]
   problems : Array[(@kind.ErrorKind, @span.Span)]
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Start {
   Markup
   Escapable(String)
   Raw(String)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Token {
   kind : TokenKind
   span : @span.Span
-} derive(Eq, @debug.Debug)
+}
 pub fn Token::is_whitespace(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TokenKind {
   StartTag(String, Array[RawAttr], Bool)
   EndTag(String)
@@ -51,7 +55,7 @@ pub(all) enum TokenKind {
   Cdata(String)
   Bogus(@kind.ErrorKind, String)
   Eof
-} derive(Eq, @debug.Debug)
+}
 pub fn TokenKind::to_debug(Self) -> String
 
 // Type aliases

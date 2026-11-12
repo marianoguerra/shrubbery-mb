@@ -7,12 +7,13 @@
 
 ///|
 /// What a leaf of a condition is allowed to be.
+#derive(Eq)
 priv enum CondKind {
   /// `@media`, `@container`: a leaf is a feature test.
   Query
   /// `@supports`: a leaf may also be a declaration or `selector(...)`.
   Supports
-} derive(Eq)
+}
 
 ///|
 fn Parser::parse_media_list(

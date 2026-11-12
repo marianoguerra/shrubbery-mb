@@ -5,12 +5,13 @@
 /// lines, and for `grep`; `Compact` is `Rich` without the source snippet, for
 /// when the source is not available or a hundred reports are being listed;
 /// `Json` is for a tool.
+#derive(Eq, Debug)
 pub(all) enum Format {
   Rich
   Compact
   Short
   Json
-} derive(Eq, Debug)
+}
 
 ///|
 pub(all) struct Config {

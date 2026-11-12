@@ -5,6 +5,7 @@ import {
   "marianoguerra/error-report",
   "marianoguerra/error-report/style",
   "moonbitlang/core/debug",
+  "moonbitlang/core/json",
 }
 
 // Values
@@ -20,7 +21,7 @@ pub fn render(@error-report.Report, &@error-report.SourceCache, Config, StringBu
 
 pub fn render_string(@error-report.Report, &@error-report.SourceCache, Config, is_tty? : Bool) -> String
 
-pub fn report_json(@error-report.Report, &@error-report.SourceCache) -> Json
+pub fn report_json(@error-report.Report, &@error-report.SourceCache) -> @json.Json
 
 pub fn rich(@error-report.Report, &@error-report.SourceCache, Config, StringBuilder, is_tty? : Bool) -> Unit
 
@@ -41,12 +42,13 @@ pub(all) struct Config {
 }
 pub fn Config::use_color(Self, is_tty~ : Bool) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Format {
   Rich
   Compact
   Short
   Json
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 

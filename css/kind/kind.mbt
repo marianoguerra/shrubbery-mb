@@ -11,6 +11,7 @@
 /// match on it -- an editor deciding which quick fix to offer, a harness
 /// deciding whether a corpus file is expected to fail. A string would make
 /// every such decision a spelling comparison.
+#derive(Eq, Debug)
 pub(all) enum ErrorKind {
   /// The input ended in the middle of something.
   UnexpectedEof
@@ -68,7 +69,7 @@ pub(all) enum ErrorKind {
   RuleInDeclarationContext
   /// Anything else that could not be read. Carries what was expected.
   Unexpected(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A stable identifier for this kind.

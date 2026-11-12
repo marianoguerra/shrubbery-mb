@@ -39,12 +39,13 @@ pub fn svg_tag(String) -> String?
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Display {
   Block
   Inline
   Pre
   None_
-} derive(Eq, @debug.Debug)
+}
 
 // Type aliases
 

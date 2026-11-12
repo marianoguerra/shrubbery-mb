@@ -5,11 +5,12 @@
 /// suspicious, which a formatter or a linter wants and a compiler mostly does
 /// not. Keeping it here rather than making consumers extend the enum is what
 /// stops every consumer inventing a fourth name for the same thing.
+#derive(Eq, Compare, Hash, Debug, ToJson)
 pub(all) enum Severity {
   Error
   Warning
   Advice
-} derive(Eq, Compare, Hash, Debug, ToJson)
+}
 
 ///|
 /// The lowercase name used in rendered output and in JSON.
@@ -27,13 +28,15 @@ pub fn Severity::name(self : Severity) -> String {
 /// codespan-reporting's distinction, and worth keeping: a report with three
 /// labels is unreadable unless the reader can tell which one is the defect and
 /// which two are "declared here" and "first used here".
+#derive(Eq, Debug, ToJson)
 pub(all) enum LabelStyle {
   Primary
   Secondary
-} derive(Eq, Debug, ToJson)
+}
 
 ///|
 /// A span of source with an optional note attached.
+#derive(Eq, Debug)
 pub(all) struct Label {
   source : SourceId
   span : Span
@@ -44,7 +47,7 @@ pub(all) struct Label {
   /// Tie-break for two labels that would occupy the same underline row: the
   /// larger wins the row nearer the source line. Defaults to 0.
   priority : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Label::primary(
@@ -77,12 +80,13 @@ pub fn Label::with_priority(self : Label, priority : Int32) -> Label {
 /// wiring up an editor's quick-fix applies the edit and ignores the prose.
 /// Conflating the two is what forces the second consumer to parse the first
 /// one's output.
+#derive(Eq, Debug)
 pub(all) struct Fix {
   source : SourceId
   span : Span
   replacement : String
   description : String
-} derive(Eq, Debug)
+}
 
 ///|
 /// One diagnostic: what is wrong, where, and what to do about it.

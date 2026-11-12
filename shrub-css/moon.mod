@@ -13,12 +13,12 @@
 // here has to move when one is revised.
 name = "marianoguerra/shrubbery-css"
 
-version = "0.2.1"
+version = "0.2.2"
 
 import {
-  "marianoguerra/css@0.1.2",
-  "marianoguerra/shrubbery@0.1.2",
-  "marianoguerra/error-report@0.1.1",
+  "marianoguerra/css@0.1.3",
+  "marianoguerra/shrubbery@0.1.3",
+  "marianoguerra/error-report@0.1.2",
 }
 
 readme = "README.mbt.md"

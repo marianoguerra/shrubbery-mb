@@ -14,12 +14,13 @@
 /// at the boundary, with `Source::span_of_chars` or `Source::span_of_bytes`.
 /// Converting at the boundary is cheap; converting inside the renderer, on
 /// every label of every report, is not.
+#derive(Eq, Compare, Hash, Debug, ToJson)
 pub(all) struct Span {
   /// Offset of the first code unit.
   start : Int32
   /// Number of code units. Zero is legal and means an insertion point.
   len : Int32
-} derive(Eq, Compare, Hash, Debug, ToJson)
+}
 
 ///|
 /// The span `[start, end)`.

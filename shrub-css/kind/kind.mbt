@@ -10,6 +10,7 @@
 /// No dependencies, for the same reason `@css.kind` has none: a lowered tree
 /// stores kinds on its `Bogus` nodes, and naming a problem must not link a
 /// renderer.
+#derive(Eq, Debug)
 pub(all) enum ErrorKind {
   /// A group that should have opened a block did not.
   ExpectedBlock
@@ -58,7 +59,7 @@ pub(all) enum ErrorKind {
   BadAnB
   /// A shrubbery construct with no CSS reading at all.
   Unsupported(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A stable identifier, namespaced apart from `css::` so a consumer can tell

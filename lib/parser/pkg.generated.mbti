@@ -18,10 +18,11 @@ pub fn parse_tokens(Array[@lexer.Token], mode? : Mode, variant? : @lexer.Variant
 // Errors
 
 // Types and methods
+#derive(Eq)
 pub(all) enum Mode {
   Top
   Text
-} derive(Eq)
+}
 
 pub struct Parsed {
   root : @ast.Node

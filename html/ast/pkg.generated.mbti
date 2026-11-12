@@ -12,57 +12,66 @@ import {
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct AttrName {
   prefix : String?
   name : String
-} derive(Eq, @debug.Debug)
+}
 pub fn AttrName::plain(String) -> Self
 pub fn AttrName::text(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum AttrValue {
   Empty
   Value(String, String?)
-} derive(Eq, @debug.Debug)
+}
 pub fn AttrValue::text(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Attribute {
   name : AttrName
   value : AttrValue
   span : @span.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Bogus {
   kind : @kind.ErrorKind
   span : @span.Span
   text : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Bogus::new(@kind.ErrorKind, @span.Span, text? : String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Closing {
   Explicit
   SelfClosing
   Void
   Implied
   Unclosed
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Comment {
   text : String
   span : @span.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Doctype {
   name : String
   public_id : String?
   system_id : String?
   span : @span.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Document {
   children : Array[Node]
   span : @span.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Element {
   name : TagName
   attrs : Array[Attribute]
@@ -70,15 +79,17 @@ pub(all) struct Element {
   closing : Closing
   span : @span.Span
   name_span : @span.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Namespace {
   Html
   Svg
   MathMl
   Other(String)
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Node {
   Element(Element)
   Text(Text)
@@ -87,26 +98,29 @@ pub(all) enum Node {
   Doctype(Doctype)
   Cdata(String, @span.Span)
   Bogus(Bogus)
-} derive(Eq, @debug.Debug)
+}
 pub fn Node::children(Self) -> Array[Self]
 pub fn Node::span(Self) -> @span.Span
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RawText {
   text : String
   span : @span.Span
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TagName {
   ns : Namespace
   name : String
-} derive(Eq, @debug.Debug)
+}
 pub fn TagName::html(String) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Text {
   text : String
   raw : String?
   span : @span.Span
-} derive(Eq, @debug.Debug)
+}
 pub fn Text::new(String, raw? : String?, span? : @span.Span) -> Self
 
 // Type aliases

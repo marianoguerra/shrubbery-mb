@@ -18,12 +18,14 @@
 /// The distinction is the specification's and it is load-bearing: `#1a2b3c` is
 /// a colour but not a valid id, so `#foo` and `#1a2b3c` cannot be the same
 /// token if a selector parser is to reject the second.
+#derive(Eq, Debug)
 pub(all) enum HashKind {
   Id
   Unrestricted
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TokenKind {
   Ident(String)
   /// An ident immediately followed by `(`. The `(` is part of this token, so a
@@ -62,13 +64,14 @@ pub(all) enum TokenKind {
   /// A real variant rather than an `Option`, so that no lookahead has to
   /// unwrap and every parser loop has a terminating case to match.
   Eof
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Token {
   kind : TokenKind
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// Whether this token is skipped when looking for the next meaningful one.

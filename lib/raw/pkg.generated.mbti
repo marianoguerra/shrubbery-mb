@@ -24,11 +24,12 @@ pub(all) struct Meta {
 pub fn Meta::is_empty(Self) -> Bool
 pub fn Meta::new() -> Self
 
+#derive(Eq)
 pub(all) enum Raw {
   Empty
   Str(String)
   Cons(Raw, Raw)
-} derive(Eq)
+}
 pub fn Raw::combine(Self, Self) -> Self
 pub fn Raw::is_empty(Self) -> Bool
 pub fn Raw::to_text(Self) -> String

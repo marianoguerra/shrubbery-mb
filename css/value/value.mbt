@@ -65,6 +65,7 @@ pub fn as_percentage(v : @ast.ComponentValue) -> Double? {
 ///
 /// The grouping is the one CSS's own grammars use: a property takes a length,
 /// or an angle, or a time -- never "a dimension".
+#derive(Eq, Debug)
 pub(all) enum UnitKind {
   Length
   Angle
@@ -76,15 +77,16 @@ pub(all) enum UnitKind {
   /// CSS gains units and a lens that refused an unknown one would be wrong
   /// every time it did.
   Unknown
-} derive(Eq, Debug)
+}
 
 ///|
 /// A dimension: a number and the unit it was written with.
+#derive(Eq, Debug)
 pub(all) struct Dimension {
   value : Double
   unit : String
   kind : UnitKind
-} derive(Eq, Debug)
+}
 
 ///|
 /// The dimension a value is, if it is one.
@@ -173,6 +175,7 @@ pub fn unit_kind(unit : String) -> UnitKind {
 /// `#fff`, `#ffffff` and `white` the same value -- so a formatter built on it
 /// cannot give a stylesheet back the way it arrived. `to_rgba` below is
 /// available for a caller that wants the numbers; the tree keeps the text.
+#derive(Eq, Debug)
 pub(all) enum Color {
   /// `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, digits as written.
   Hex(String)
@@ -181,7 +184,7 @@ pub(all) enum Color {
   /// `rgb(...)`, `oklch(...)`, `color-mix(...)` -- the function and its
   /// arguments, uninterpreted.
   Function(String, Array[@ast.ComponentValue])
-} derive(Eq, Debug)
+}
 
 ///|
 /// The colour a value is, if it looks like one.

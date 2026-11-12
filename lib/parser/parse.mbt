@@ -4,12 +4,13 @@
 /// The mode decides the shape of the answer, which is why it is a parameter
 /// rather than something inferred: `Top` always gives a `multi`, `Text` always
 /// gives a `brackets`.
+#derive(Eq)
 pub(all) enum Mode {
   /// A whole document. Every group must start at the same column.
   Top
   /// As if the whole input were inside `@{`…`}`.
   Text
-} derive(Eq)
+}
 
 ///|
 /// A successful parse, and anything reported along the way.

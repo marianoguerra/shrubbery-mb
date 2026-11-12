@@ -6,11 +6,12 @@
 /// suffix, a commented-out group is rendered into the text around it -- and a
 /// `String` would make each of those a copy. It is flattened once, by a
 /// preorder walk, when something finally asks for the text.
+#derive(Eq)
 pub(all) enum Raw {
   Empty
   Str(String)
   Cons(Raw, Raw)
-} derive(Eq)
+}
 
 ///|
 /// The reference's `combine-shrubbery-raw`: joins two, and answers with the

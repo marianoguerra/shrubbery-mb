@@ -33,11 +33,12 @@
 /// printer echo an unparsable region verbatim instead of deleting it -- a
 /// stylesheet with one vendor hack the parser does not know should come back
 /// with that hack still in it.
+#derive(Eq, Debug)
 pub(all) struct Bogus {
   kind : @kind.ErrorKind
   span : @span.Span
   text : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Bogus::new(
@@ -54,25 +55,28 @@ pub fn Bogus::new(
 /// `text` is the body, without the delimiters. Comments are attached to the
 /// construct they precede rather than being free-floating, because a printer
 /// that keeps them has to know where to put them back.
+#derive(Eq, Debug)
 pub(all) struct Comment {
   text : String
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 // ---------------------------------------------------------------- stylesheet
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Stylesheet {
   items : Array[TopItem]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TopItem {
   Rule(CssRule)
   Comment(Comment)
   Bogus(Bogus)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A rule, at any level.
@@ -80,6 +84,7 @@ pub(all) enum TopItem {
 /// Style rules and at-rules are one enum rather than two because CSS nesting
 /// lets either appear wherever the other can, and splitting them would mean
 /// every body was a pair of lists that had lost their relative order.
+#derive(Eq, Debug)
 pub(all) enum CssRule {
   Style(StyleRule)
   Media(MediaRule)
@@ -101,7 +106,7 @@ pub(all) enum CssRule {
   /// must know in order to print it back.
   Unknown(UnknownAtRule)
   Bogus(Bogus)
-} derive(Eq, Debug)
+}
 
 ///|
 /// The body of a rule: declarations and nested rules, in source order.
@@ -110,46 +115,51 @@ pub(all) enum CssRule {
 /// and CSS nesting interleaves them. lightningcss splits `!important` out into
 /// a second vector for the same reason a minifier would; that reordering is
 /// unrecoverable, so importance is a field on `Declaration` here.
+#derive(Eq, Debug)
 pub(all) enum BlockItem {
   Decl(Declaration)
   Rule(CssRule)
   Comment(Comment)
   Bogus(Bogus)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A block that may hold only declarations -- `@font-face`, `@page`, a
 /// keyframe. Typed separately so the parser can refuse a nested rule there
 /// rather than accepting one and printing something invalid.
+#derive(Eq, Debug)
 pub(all) struct DeclBlock {
   decls : Array[BlockItem]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct StyleRule {
   selectors : Array[Selector]
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 // -------------------------------------------------------------- declarations
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Declaration {
   property : PropertyName
   value : Array[ComponentValue]
   important : Bool
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// `Custom` carries the leading `--`, so that the two cases never have to be
 /// re-joined to be printed and a `--` can never be lost.
+#derive(Eq, Debug)
 pub(all) enum PropertyName {
   Ident(String)
   Custom(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn PropertyName::text(self : PropertyName) -> String {
@@ -168,11 +178,12 @@ pub fn PropertyName::text(self : PropertyName) -> String {
 /// but everywhere visually, and a formatter that rewrote every number would
 /// produce a diff on every line of a file it was asked only to reindent.
 /// `value` is what arithmetic uses; `repr` is what the printer emits.
+#derive(Eq, Debug)
 pub(all) struct Number {
   repr : String
   value : Double
   is_int : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Number::of_int(n : Int32) -> Number {
@@ -193,6 +204,7 @@ pub fn Number::of_int(n : Int32) -> Number {
 /// untyped tree. That keeps coverage total and makes the typed view something
 /// you opt into per question rather than something the parser must decide up
 /// front for every property in existence.
+#derive(Eq, Debug)
 pub(all) enum ComponentValue {
   /// A bare identifier, including a `--dashed-ident`.
   Ident(String)
@@ -218,7 +230,7 @@ pub(all) enum ComponentValue {
   /// Any other operator run: `+`, `-`, `*`, `<`, `=`.
   Delim(String)
   Bogus(Bogus)
-} derive(Eq, Debug)
+}
 
 // ------------------------------------------------------------------ selectors
 
@@ -230,6 +242,7 @@ pub(all) enum ComponentValue {
 /// needs no normalisation pass. lightningcss stores a flat right-to-left
 /// component vector, which is the right thing for a matcher and the wrong thing
 /// for a printer; biome's recursion is what this follows.
+#derive(Eq, Debug)
 pub(all) enum Selector {
   Simple(Compound)
   Complex(Selector, Combinator, Compound)
@@ -237,40 +250,45 @@ pub(all) enum Selector {
   /// `> .child`.
   Relative(Combinator, Selector)
   Bogus(Bogus)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Combinator {
   Descendant
   Child
   NextSibling
   SubsequentSibling
   Column
-} derive(Eq, Debug)
+}
 
 ///|
 /// One element's worth of selector: an optional type, then qualifiers.
+#derive(Eq, Debug)
 pub(all) struct Compound {
   type_sel : TypeSelector?
   quals : Array[Qualifier]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TypeSelector {
   Universal(NsPrefix?)
   Named(NsPrefix?, String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// `|a` is `None_`, `*|a` is `Any`, `svg|a` is `Named`.
+#derive(Eq, Debug)
 pub(all) enum NsPrefix {
   None_
   Any
   Named(String)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Qualifier {
   Class(String)
   Id(String)
@@ -280,12 +298,13 @@ pub(all) enum Qualifier {
   /// The `&` nesting selector.
   Nesting
   Bogus(Bogus)
-} derive(Eq, Debug)
+}
 
 ///|
 /// Grouped by the *shape* of the argument, not by the name -- biome's choice,
 /// and the one that makes printing expressible. `Simple` takes nothing, `Sub`
 /// takes a selector list, `Nth` takes `An+B` with an optional `of` clause.
+#derive(Eq, Debug)
 pub(all) enum PseudoClass {
   Simple(String)
   Nth(String, AnB, Array[Selector]?)
@@ -295,30 +314,34 @@ pub(all) enum PseudoClass {
   /// A name this library does not know, kept with its arguments unparsed
   /// rather than dropped.
   Unknown(String, Array[ComponentValue])
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct AnB {
   a : Int32
   b : Int32
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum PseudoElement {
   Simple(String)
   Sub(String, Array[Selector])
   Fn(String, Array[ComponentValue])
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct AttrSelector {
   ns : NsPrefix?
   name : String
   matcher : (AttrOp, AttrValue)?
   case_ : AttrCase
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum AttrOp {
   Exact
   Includes
@@ -326,7 +349,7 @@ pub(all) enum AttrOp {
   Prefix
   Suffix
   Substring
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn AttrOp::text(self : AttrOp) -> String {
@@ -341,17 +364,19 @@ pub fn AttrOp::text(self : AttrOp) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum AttrValue {
   Str(String)
   Ident(String)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum AttrCase {
   Default
   Insensitive
   Sensitive
-} derive(Eq, Debug)
+}
 
 // ----------------------------------------------------------------- conditions
 
@@ -363,6 +388,7 @@ pub(all) enum AttrCase {
 /// language cannot express an n-ary list with interleaved keywords; there is no
 /// such constraint here, and the flat form is what makes the round-trip
 /// property a plain equality instead of an equality-modulo-associativity.
+#derive(Eq, Debug)
 pub(all) enum Condition {
   Feature(Feature)
   /// `@supports (display: grid)`.
@@ -375,17 +401,19 @@ pub(all) enum Condition {
   /// the rule, so dropping it would change what the stylesheet means.
   Unknown(Array[ComponentValue])
   Bogus(Bogus)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum LogicalOp {
   And
   Or
   Not
-} derive(Eq, Debug)
+}
 
 ///|
 /// A media or container feature test, in all four shapes CSS gives it.
+#derive(Eq, Debug)
 pub(all) enum Feature {
   /// `(hover)`
   Boolean(String)
@@ -401,16 +429,17 @@ pub(all) enum Feature {
     RangeOp,
     Array[ComponentValue]
   )
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum RangeOp {
   Lt
   Le
   Gt
   Ge
   Eq
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn RangeOp::text(self : RangeOp) -> String {
@@ -426,131 +455,148 @@ pub fn RangeOp::text(self : RangeOp) -> String {
 // -------------------------------------------------------------------- at-rules
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct MediaQuery {
   qualifier : MediaQualifier?
   media_type : String?
   condition : Condition?
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum MediaQualifier {
   Only
   Not
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct MediaRule {
   queries : Array[MediaQuery]
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct SupportsRule {
   condition : Condition
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ContainerRule {
   name : String?
   condition : Condition
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// A dotted layer name: `base.theme` is `["base", "theme"]`.
+#derive(Eq, Debug)
 pub(all) struct LayerName {
   parts : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
 /// `body` is `None` for the statement form `@layer a, b;` and `Some` for the
 /// block form. The two are different rules in CSS, not one rule with an
 /// optional body, and the parser must know which it is to print it back.
+#derive(Eq, Debug)
 pub(all) struct LayerRule {
   names : Array[LayerName]
   body : Array[BlockItem]?
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum KeyframesName {
   Ident(String)
   Str(String)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum KeyframeSelector {
   From
   To
   Percentage(Number)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct KeyframeBlock {
   selectors : Array[KeyframeSelector]
   decls : DeclBlock
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct KeyframesRule {
   name : KeyframesName
   frames : Array[KeyframeBlock]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct PageRule {
   selectors : Array[String]
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct PropertyRule {
   name : String
   decls : DeclBlock
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// `layer` has three states and they are all different: absent, `layer`
 /// (anonymous), and `layer(name)`. The nested option is what says so in the
 /// type rather than in a comment.
+#derive(Eq, Debug)
 pub(all) struct ImportRule {
   url : String
   layer : LayerName??
   supports : Condition?
   media : Array[MediaQuery]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct NamespaceRule {
   prefix : String?
   url : String
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ScopeRule {
   start : Array[Selector]?
   end : Array[Selector]?
   body : Array[BlockItem]
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct UnknownAtRule {
   name : String
   prelude : Array[ComponentValue]
   block : Array[BlockItem]?
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 #deprecated(skip_current_package=true)

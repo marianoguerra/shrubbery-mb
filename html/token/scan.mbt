@@ -554,6 +554,7 @@ fn Scanner::attribute_value(self : Scanner) -> (String, String?) {
 /// that stopped at it cuts the script in half, which no browser does -- and a
 /// formatter that then rewrote the file would be handing back something that
 /// does not run.
+#derive(Eq)
 priv enum ScriptMode {
   /// Ordinary script data: the next `</script>` ends the element.
   Plain
@@ -561,7 +562,7 @@ priv enum ScriptMode {
   Escaped
   /// After a nested `<script`: `</script>` closes the level, not the element.
   Double
-} derive(Eq)
+}
 
 ///|
 /// A `<script>` body, with the escaped and double-escaped states.

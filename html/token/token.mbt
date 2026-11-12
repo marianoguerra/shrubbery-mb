@@ -28,6 +28,7 @@
 /// lowercasing and then un-lowercasing, or not lowercasing and getting HTML
 /// wrong; doing it there is one table lookup at the point where the answer is
 /// known.
+#derive(Eq, Debug)
 pub(all) struct RawAttr {
   name : String
   /// The decoded value. `None` is a valueless attribute -- `disabled` -- which
@@ -36,7 +37,7 @@ pub(all) struct RawAttr {
   /// The source spelling of the value, when decoding was not the identity.
   raw : String?
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// Where a scan begins.
@@ -47,15 +48,17 @@ pub(all) struct RawAttr {
 /// a template engine, a conformance suite naming an initial state. The tag is
 /// carried rather than the state, because what ends a raw-text run is that
 /// element's own end tag and nothing else.
+#derive(Eq, Debug)
 pub(all) enum Start {
   Markup
   /// References resolve, markup does not: `title`, `textarea`.
   Escapable(String)
   /// Nothing resolves and nothing is markup: `script`, `style`.
   Raw(String)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TokenKind {
   /// A start tag: the lowercased name, its attributes in source order, and
   /// whether it was written with a `/`. What that `/` means depends on the
@@ -82,13 +85,14 @@ pub(all) enum TokenKind {
   /// that the printer can echo it.
   Bogus(@kind.ErrorKind, String)
   Eof
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Token {
   kind : TokenKind
   span : @span.Span
-} derive(Eq, Debug)
+}
 
 ///|
 /// Everything noticed while scanning, in source order.

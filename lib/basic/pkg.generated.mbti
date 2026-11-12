@@ -11,19 +11,21 @@ pub let start : Pos
 // Errors
 
 // Types and methods
+#derive(Eq)
 pub(all) struct Pos {
   line : Int32
   pos : Int32
   idx : Int32
   col0 : Int32
   col : @column.Column
-} derive(Eq)
+}
 pub fn Pos::to_display(Self) -> String
 
+#derive(Eq)
 pub(all) struct Span {
   start : Pos
   end : Pos
-} derive(Eq)
+}
 pub fn Span::at(Pos) -> Self
 pub fn Span::merge(Self, Self) -> Self
 pub fn Span::units(Self) -> Int32

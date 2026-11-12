@@ -13,11 +13,12 @@
 /// A triple rather than a packed integer: the packed form overflows on absurd
 /// input and reads as a magic number when it does not, and comparing three
 /// fields is not the expensive part of anything.
+#derive(Eq, Debug)
 pub(all) struct Specificity {
   ids : Int32
   classes : Int32
   elements : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Specificity::zero() -> Specificity {

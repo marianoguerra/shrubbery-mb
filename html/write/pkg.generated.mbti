@@ -27,17 +27,19 @@ pub fn raw_text_is_printable(String, String) -> Bool
 // Errors
 
 // Types and methods
+#derive(Eq)
 pub(all) enum Style {
   Pretty
   Compact
   Minified
-} derive(Eq)
+}
 
+#derive(Eq)
 pub(all) enum Whitespace {
   Css
   Strict
   Ignore
-} derive(Eq)
+}
 
 // Type aliases
 

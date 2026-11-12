@@ -25,6 +25,7 @@ pub fn Diagnostic::new(ErrorKind, @basic.Span, severity? : @error-report.Severit
 pub fn[T] Diagnostic::raise_(Self) -> T raise ShrubberyError
 pub fn Diagnostic::to_report(Self, @error-report.SourceId) -> @error-report.Report
 
+#derive(Eq)
 pub(all) enum ErrorKind {
   ReadError
   ExpectedSExp(keyword~ : Bool)
@@ -63,7 +64,7 @@ pub(all) enum ErrorKind {
   EmptyGroupAfterAt
   BlockAfterMidGroupAt
   SecondGroupAfterAt
-} derive(Eq)
+}
 pub fn ErrorKind::code(Self) -> String
 pub fn ErrorKind::reference_text(Self) -> String
 

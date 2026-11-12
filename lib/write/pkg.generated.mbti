@@ -20,12 +20,13 @@ pub fn write(@ast.Node, style? : Style, width? : Int32?) -> String
 // Errors
 
 // Types and methods
+#derive(Eq)
 pub(all) enum Style {
   Flat
   Pretty
   Armoured
   PreferMultiline
-} derive(Eq)
+}
 
 // Type aliases
 

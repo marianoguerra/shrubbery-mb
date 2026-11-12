@@ -9,6 +9,7 @@
 ///
 /// This package has no dependencies, for the reason `html/kind` has none: a
 /// kind is a name, and naming a problem must not link a renderer.
+#derive(Eq, Debug)
 pub(all) enum ErrorKind {
   /// A `<div>` in the source: someone is writing HTML rather than notation.
   /// Recognised specifically, because the message can then say what to type.
@@ -38,7 +39,7 @@ pub(all) enum ErrorKind {
   NameNotSpellable(String)
   /// Anything else this bridge does not implement. Carries what it was.
   Unsupported(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A stable identifier for this kind.

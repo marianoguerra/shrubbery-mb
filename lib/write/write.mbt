@@ -1,5 +1,6 @@
 ///|
 /// How the output should be laid out.
+#derive(Eq)
 pub(all) enum Style {
   /// One line, with `«»`, `;` and `,` doing the grouping. Reads back the same
   /// however it is later re-indented, which is what makes it the safe default
@@ -12,7 +13,7 @@ pub(all) enum Style {
   Armoured
   /// Pretty, and preferring line breaks to `«»` where either would do.
   PreferMultiline
-} derive(Eq)
+}
 
 ///|
 /// Write a shrubbery.

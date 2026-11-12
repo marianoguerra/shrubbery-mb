@@ -14,6 +14,7 @@
 /// other parser's output. Where a kind has no counterpart there, because it is
 /// about the markup tree rather than the token stream, the name is ours and
 /// says so by being ordinary English.
+#derive(Eq, Debug)
 pub(all) enum ErrorKind {
   /// The input ended in the middle of a tag.
   EofInTag
@@ -82,7 +83,7 @@ pub(all) enum ErrorKind {
   UnprintableRawText(String)
   /// Anything else that could not be read. Carries what was expected.
   Unexpected(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A stable identifier for this kind.

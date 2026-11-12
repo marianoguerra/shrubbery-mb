@@ -10,7 +10,7 @@
 // spin-out a `git filter-repo` rather than an untangling.
 name = "marianoguerra/error-report"
 
-version = "0.1.1"
+version = "0.1.2"
 
 readme = "README.mbt.md"
 

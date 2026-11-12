@@ -26,6 +26,7 @@
 
 ///|
 /// How much whitespace to spend.
+#derive(Eq)
 pub(all) enum Style {
   /// One node per line, two-space indent. What a person reads.
   Pretty
@@ -33,7 +34,7 @@ pub(all) enum Style {
   Compact
   /// No whitespace that can be dropped without changing what renders.
   Minified
-} derive(Eq)
+}
 
 ///|
 /// How much whitespace is allowed to move.
@@ -43,11 +44,12 @@ pub(all) enum Style {
 /// reformats nothing; `Ignore` treats none of them as significant and lays out
 /// freely, which is right for generated markup and wrong for a page a person
 /// wrote.
+#derive(Eq)
 pub(all) enum Whitespace {
   Css
   Strict
   Ignore
-} derive(Eq)
+}
 
 ///|
 priv struct Printer {

@@ -36,6 +36,7 @@ pub(all) struct CharSet {
   ellipsis : Char
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Color {
   Default
   Black
@@ -46,19 +47,21 @@ pub(all) enum Color {
   Magenta
   Cyan
   White
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ColorMode {
   Always
   Never
   Auto
-} derive(Eq, @debug.Debug)
+}
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Style {
   color : Color
   bold : Bool
   dim : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn Style::is_plain(Self) -> Bool
 pub fn Style::of(Color, bold? : Bool, dim? : Bool) -> Self
 pub fn Style::write(Self, StringBuilder, String, color~ : Bool) -> Unit
